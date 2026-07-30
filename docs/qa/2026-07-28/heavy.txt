@@ -1,0 +1,33 @@
+窓辺の描画コール: 1993 / 三角形: 720529
+建物統合: {"区画メッシュ":86,"元メッシュ":657,"走査メッシュ":1159,"区画":86,"削減":571}
+town直下のchild: 1732 / 10メッシュ以上の「重いchild」: 32件・合計 809メッシュ
+
+順位 メッシュ数 材質数 位置(x,z)  内訳(材質ごとのメッシュ数: 種別/色/透過/絵柄/頂点色/形状)
+ 1    74    29  (24,-20)  14:Toon/#cfc6b6/Box  11:Toon/#2a2e34/RoundedBox  11:Toon/#17171b/Buffer  11:Basic/#000000/透/絵/Plane  3:Toon/#3b4a55/Box
+
+静的メッシュ 381 / 動くメッシュ 2846 / 材質の種類 381
+棟をまたぐ統合の伸びしろ: {"対象メッシュ":0,"統合後":0,"削減見込み":0}
+材質上位20（同じ材質を使う静的メッシュの数）
+  1      1  Toon/#c2b4a4/頂色
+  2      1  Toon/#e2ddd0/頂色
+  3      1  Toon/#cabb9f/頂色
+  4      1  Toon/#c7a695/頂色
+  5      1  Toon/#bcc0b6/頂色
+  6      1  Toon/#e2ddd0/頂色
+  7      1  Toon/#b6a892/頂色
+  8      1  Toon/#c7a695/頂色
+  9      1  Toon/#bcc0b6/頂色
+ 10      1  Toon/#d8cfbf/頂色
+ 11      1  Toon/#d8cfbf/頂色
+ 12      1  Toon/#e2ddd0/頂色
+ 13      1  Toon/#c7a695/頂色
+ 14      1  Toon/#a7b09c/頂色
+ 15      1  Toon/#a9a094/頂色
+ 16      1  Toon/#c7a695/頂色
+ 17      1  Toon/#bcc0b6/頂色
+ 18      1  Toon/#d8cfbf/頂色
+ 19      1  Toon/#a9a094/頂色
+ 20      1  Toon/#b6a892/頂色
+
+カテゴリ別の描画コール寄与: {"base":1992,"residents":194,"critters":5,"cityWalkers":0,"trees":74,"clouds":7,"birds":40,"skyDrifters":0,"winRoom":125,"school":0,"ferris":108,"park":135,"temple":45,"downtown":0,"outlines":11,"outlineN":161,"townChildren":1732}
+errors=0

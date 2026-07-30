@@ -7866,8 +7866,14 @@ export async function mountTown3d(parent, opts = {}) {
   const paper = document.createElement('div')
   paper.className = 'town3d-paper'
   stage.appendChild(paper)
-  const paper2 = document.createElement('div'); paper2.className = 'town3d-paper2'; stage.appendChild(paper2) // 紙目2層め（粗いにじみ）
-  const bleed = document.createElement('div'); bleed.className = 'town3d-bleed'; stage.appendChild(bleed) // 縁のにじみ（一枚の絵として縁取る）
+  // 画面全体に重ねる層は、端末の実解像度ぶんの塗り仕事が層の数だけ増える（iPhoneの発熱の最大項）。
+  // 効きの小さい「紙目2層め」と「縁のにじみ」は既定で作らない＝5層→3層。?fullcss=1 で従来の5層に完全復元できる（非破壊）。
+  const FULLCSS = /[?&]fullcss=1/.test(location.search)
+  let paper2 = null, bleed = null
+  if (FULLCSS) {
+    paper2 = document.createElement('div'); paper2.className = 'town3d-paper2'; stage.appendChild(paper2) // 紙目2層め（粗いにじみ）
+    bleed = document.createElement('div'); bleed.className = 'town3d-bleed'; stage.appendChild(bleed) // 縁のにじみ（一枚の絵として縁取る）
+  }
   const glass = document.createElement('div'); glass.className = 'town3d-glass'; stage.appendChild(glass)
   const cross = document.createElement('div'); cross.className = 'town3d-cross'; stage.appendChild(cross)
   const sill = document.createElement('div'); sill.className = 'town3d-sill'; stage.appendChild(sill)
@@ -8704,6 +8710,60 @@ export async function mountTown3d(parent, opts = {}) {
     if (Math.hypot(b.position.x, b.position.z) > 58) { _bbox.setFromObject(b); _bbox.getSize(_bsz); _bbox.getCenter(_bctr); const r = Math.max(_bsz.x, _bsz.z) * 0.42; if (r > 0.6 && r < 14) bldgShadowSpecs.push([_bctr.x, heightAt(_bctr.x, _bctr.z), _bctr.z, r]) }
   }
   if (bldgShadowSpecs.length) addContactShadows(bldgShadowSpecs) // 遠景建物の足元影を1メッシュへ統合＝描画コール+1で浮きを一掃
+
+  // ── 発熱の本丸: 街の建物を「区画ごと・材質の設定ごと」に1メッシュへ統合する（描画コールの提出コストがiPhoneの発熱の主因）。──
+  //    絵は変えない: 材質の色を頂点色へ焼き込み、白い材質を1つ共有するだけ（最終色は 材質色×頂点色 の掛け算なので等価）。
+  //    霧の彼方の描画カリングは「1棟ごと」から「区画ごと」へ引き継ぐ。?nomerge=1 で統合を止め従来の姿に戻せる（非破壊）。
+  const bldgTiles = [] // 統合後の区画メッシュ＝新しいカリング単位
+  let mergeInfo = { 区画メッシュ: 0, 元メッシュ: 0 }
+  if (!/[?&]nomerge=1/.test(location.search) && BufferGeometryUtils.mergeGeometries && homeBldgs.length) {
+    const TILE = 36 // 区画の大きさ(m)。小さいほどカリングが効き、大きいほど描画コールが減る
+    const groups = new Map(), _inv = new THREE.Matrix4(), _mm = new THREE.Matrix4()
+    town.updateMatrixWorld(true); _inv.copy(town.matrixWorld).invert()
+    for (const b of homeBldgs) {
+      const tx = Math.round(b.position.x / TILE), tz = Math.round(b.position.z / TILE)
+      b.traverse((o) => {
+        if (!o.isMesh || !o.geometry || !o.material || Array.isArray(o.material)) return
+        const m = o.material
+        // 絵柄つき・半透明は対象外（統合すると描き順が変わり絵が変わるため）。トゥーン材質の不透明部分だけを束ねる
+        mergeInfo.走査メッシュ = (mergeInfo.走査メッシュ || 0) + 1
+        if (m.type !== 'MeshToonMaterial' && m.type !== 'MeshBasicMaterial') { mergeInfo['除外_' + m.type] = (mergeInfo['除外_' + m.type] || 0) + 1; return }
+        if (m.alphaMap) { mergeInfo.除外_抜き = (mergeInfo.除外_抜き || 0) + 1; return }
+        if (m.transparent) { mergeInfo.除外_半透明 = (mergeInfo.除外_半透明 || 0) + 1; return }
+        // 絵柄は「同じテクスチャどうし」なら一緒に統合できる（別テクスチャは別の束になる）
+        const sig = `${tx}|${tz}|${m.type}|${m.map ? m.map.uuid : '-'}|${m.side}|${o.castShadow ? 1 : 0}|${o.receiveShadow ? 1 : 0}|${o.renderOrder}|${m.fog ? 1 : 0}|${m.flatShading ? 1 : 0}`
+        let g = groups.get(sig)
+        if (!g) { g = { src: m, geos: [], olds: [], cast: o.castShadow, recv: o.receiveShadow, ro: o.renderOrder, x: tx * TILE, z: tz * TILE }; groups.set(sig, g) }
+        const geo = o.geometry.clone()
+        _mm.multiplyMatrices(_inv, o.matrixWorld); geo.applyMatrix4(_mm) // 区画の位置・回転を焼き込む
+        for (const k of Object.keys(geo.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'color' && !(m.map && k === 'uv')) geo.deleteAttribute(k) // 属性を揃えないと統合できない（絵柄つきはuvを残す）
+        geo.clearGroups(); geo.morphAttributes = {}
+        if (!geo.attributes.normal) geo.computeVertexNormals()
+        const n = geo.attributes.position.count, vc = geo.attributes.color, col = new Float32Array(n * 3)
+        for (let i = 0; i < n; i++) { col[i * 3] = (vc ? vc.getX(i) : 1) * m.color.r; col[i * 3 + 1] = (vc ? vc.getY(i) : 1) * m.color.g; col[i * 3 + 2] = (vc ? vc.getZ(i) : 1) * m.color.b }
+        geo.setAttribute('color', new THREE.BufferAttribute(col, 3))
+        g.geos.push(geo); g.olds.push(o)
+      })
+    }
+    for (const g of groups.values()) {
+      if (g.geos.length < 3) { g.geos.forEach((x) => x.dispose()); continue } // 少数は統合の得が小さいのでそのまま
+      const mg = BufferGeometryUtils.mergeGeometries(g.geos, false)
+      g.geos.forEach((x) => x.dispose())
+      if (!mg) continue
+      const mat = g.src.clone() // 材質の設定（陰影の階調・霧・冬の雪化粧）をそのまま引き継ぐ。cloneが写さない関数は手で移す
+      mat.onBeforeCompile = g.src.onBeforeCompile; mat.customProgramCacheKey = g.src.customProgramCacheKey
+      mat.color.set(0xffffff); mat.vertexColors = true; mat.needsUpdate = true
+      const me = new THREE.Mesh(mg, mat)
+      me.castShadow = g.cast; me.receiveShadow = g.recv; me.renderOrder = g.ro
+      me.matrixAutoUpdate = false; me.updateMatrix()
+      town.add(me); bldgTiles.push({ o: me, x: g.x, z: g.z })
+      mergeInfo.区画メッシュ++; mergeInfo.元メッシュ += g.olds.length
+      for (const o of g.olds) o.visible = false // 非破壊: 元のメッシュは消さず隠すだけ
+    }
+    // 中身が全部統合された棟は、毎フレームの走査対象から降ろす（データは homeBldgs に温存＝消していない）
+    for (const b of homeBldgs) { let live = false; b.traverse((o) => { if (o.isMesh && o.visible) live = true }); if (!live) { b.userData.mergedAway = true; town.remove(b) } }
+  }
+  window.__town3dMerge = () => ({ ...mergeInfo, 区画: bldgTiles.length, 削減: mergeInfo.元メッシュ - mergeInfo.区画メッシュ }) // 検証用: 建物統合の効き
   for (const w of cityWalkers) if (w.g) w.g.userData.walker = true // 動く旅人は近接微揺れの対象外（自前で動くため）
   window.__town3dFrozen = () => frozenStatic // 検証用: 凍結した静的ノード数
 
@@ -8818,6 +8878,11 @@ export async function mountTown3d(parent, opts = {}) {
     // ── 自動品質調整：能動飛行中、描画が30fpsに間に合わない状態が続いたら解像度を一段下げて「常に滑らか」を死守。
     //    安定が長く続けば鮮やかさ(qCap)へ少しずつ戻す。ヒステリシスで頻繁な切替を防ぐ。restIdle/タブ復帰の巨大gapは無視。
     lastDDT = drawDt
+    // 飛んでいる間だけ解像度の天井をひと段下げる（景色が流れるので粗さが目立たず、塗る画素が約4割減る＝発熱を直接削る）。
+    // 窓辺で静かに眺める時は従来どおりの鮮明さ(1.6)。離着陸の瞬間だけ切り替えるので毎フレームの作り直しは起きない。
+    const wantFly = !!(active && active.mode !== 'window' && active.flyP > 0.5)
+    if (wantFly !== prFly) { prFly = wantFly; curPR = Math.min(window.devicePixelRatio || 1, prFly ? Math.min(qCap, 1.2) : qCap); applySize() }
+    const effCap = prFly ? Math.min(qCap, 1.2) : qCap
     if (!restIdle && drawDt > 0.001 && drawDt < 0.4) {
       if (drawDt > 0.047) { adQLow++; adQOk = 0 } else if (drawDt < 0.038) { adQOk++; adQLow = 0 } else { if (adQLow) adQLow--; if (adQOk) adQOk-- }
       // 重い時はまず「重い後処理(ブルーム=複数回のぼかしパス)」を切る＝解像度(鮮明さ)を保ったまま大きく軽くする。次に解像度を譲る。
@@ -8825,7 +8890,7 @@ export async function mountTown3d(parent, opts = {}) {
       if (adQLow >= 10 && bloomPass && bloomPass.enabled) { bloomPass.enabled = false; adQLow = 0; adQOk = 0 } // 段1: ブルームを落とす（最大の塗り負荷を削り鮮明さは保つ）
       else if (adQLow >= 16 && curPR > PR_FLOOR + 0.001) { curPR = Math.max(PR_FLOOR, curPR - 0.12); applySize(); adQLow = 0; adQOk = 0 } // 段2: 解像度を譲る
       else if (adQOk >= 40) { // 安定が続けば逆順で戻す: まず解像度、次にブルーム
-        if (curPR < qCap - 0.001) { curPR = Math.min(qCap, curPR + 0.12); applySize(); adQOk = 0 }
+        if (curPR < effCap - 0.001) { curPR = Math.min(effCap, curPR + 0.12); applySize(); adQOk = 0 }
         else if (bloomPass && bloomWanted && !bloomPass.enabled) { bloomPass.enabled = true; adQOk = 0 }
       }
     }
@@ -8873,7 +8938,10 @@ export async function mountTown3d(parent, opts = {}) {
     // 影は初回に全建物で焼く(autoUpdate=false)ので、影焼き後(数フレーム後)から開始。窓辺(fog.far≈132)で特に効く。
     bcFrame++
     if (bcFrame > 3 && homeBldgs.length) { const ff = scene.fog.far + 6, ff2 = ff * ff
-      for (const b of homeBldgs) { const bdx = b.position.x - active.flyPos.x, bdz = b.position.z - active.flyPos.z; const vis = bdx * bdx + bdz * bdz < ff2; if (b.visible !== vis) b.visible = vis } }
+      // 統合後は「区画ごと」に霧の彼方を隠す（区画の対角の半分＝25mぶん余裕を持たせ、端の建物が早く消えるのを防ぐ）
+      if (bldgTiles.length) { const tf = (ff + 26) * (ff + 26)
+        for (const t of bldgTiles) { const dx = t.x - active.flyPos.x, dz = t.z - active.flyPos.z; const vis = dx * dx + dz * dz < tf; if (t.o.visible !== vis) t.o.visible = vis } }
+      for (const b of homeBldgs) { if (b.userData.mergedAway) continue; const bdx = b.position.x - active.flyPos.x, bdz = b.position.z - active.flyPos.z; const vis = bdx * bdx + bdz * bdz < ff2; if (b.visible !== vis) b.visible = vis } }
     // ステージ実寸が変わったら（飛行で枠が変わる／回転／レイアウト変化）即 aspect を直す＝「横に伸びる」を自動補正
     if (stage.clientWidth !== lastStageW || stage.clientHeight !== lastStageH) applySize()
     // 車が通りを行き交う。走行区間は建物コライダーの無い z∈[-16,22] に限定
@@ -10324,6 +10392,55 @@ export async function mountTown3d(parent, opts = {}) {
       // 上位childの位置（どの構造物か特定用）
       const withPos = town.children.filter((c) => c.visible).map((c) => ({ n: countMesh(c), x: +c.position.x.toFixed(0), z: +c.position.z.toFixed(0) })).sort((a, b) => b.n - a.n).slice(0, 18)
       return { townChildren: town.children.length, totalMeshInTown: totalMesh, totalSprite, lines, buckets, heavyMeshSum, topChildren: withPos }
+    }
+    window.__town3dHeavy = (topN = 20) => { // 検証用: 描画コールを食っている重いchildの正体（メッシュ数・材質の内訳・位置）＝統合の当てどころ
+      const rows = []
+      for (const ch of town.children) {
+        if (!ch.visible) continue
+        const mats = new Map(); let n = 0
+        ch.traverse((c) => {
+          if (!c.visible || !(c.isMesh || c.isPoints)) return
+          n++
+          const m = c.material
+          const key = !m ? '(材質なし)'
+            : (m.uuid + '|' + (m.type || '') + '|' + (m.color ? m.color.getHexString() : '') + '|' + (m.transparent ? 't' : 'o') + '|' + (m.map ? 'map' : '') + '|' + (m.vertexColors ? 'vc' : ''))
+          const cur = mats.get(key) || { n: 0, type: m ? m.type : '?', col: m && m.color ? '#' + m.color.getHexString() : '?', tr: !!(m && m.transparent), map: !!(m && m.map), vc: !!(m && m.vertexColors), geo: c.geometry && c.geometry.type }
+          cur.n++; mats.set(key, cur)
+        })
+        if (n < 2) continue
+        const list = [...mats.values()].sort((a, b) => b.n - a.n)
+        rows.push({ n, mats: list.length, x: +ch.position.x.toFixed(0), z: +ch.position.z.toFixed(0), top: list.slice(0, 5) })
+      }
+      rows.sort((a, b) => b.n - a.n)
+      const heavy = rows.filter((r) => r.n >= 10)
+      // 街全体で「同じ材質を使う静的メッシュ」がどれだけ散っているか＝棟をまたいだ統合の伸びしろ
+      const byMat = new Map()
+      let staticMesh = 0, animMesh = 0
+      for (const ch of town.children) {
+        if (!ch.visible) continue
+        const anim = ch.matrixAutoUpdate === true // 動くものは matrixAutoUpdate が生きている（統合できない）
+        ch.traverse((c) => {
+          if (!c.visible || !c.isMesh || !c.material) return
+          if (anim) { animMesh++; return }
+          staticMesh++
+          const k = c.material.uuid
+          const cur = byMat.get(k) || { n: 0, type: c.material.type, col: c.material.color ? '#' + c.material.color.getHexString() : '?', tr: !!c.material.transparent, vc: !!c.material.vertexColors }
+          cur.n++; byMat.set(k, cur)
+        })
+      }
+      const mats = [...byMat.values()].sort((a, b) => b.n - a.n)
+      const mergeable = mats.filter((m) => m.n >= 8).reduce((s, m) => s + m.n, 0)
+      return {
+        townChildren: town.children.length, heavyN: heavy.length, heavyMeshSum: heavy.reduce((s, r) => s + r.n, 0), rows: rows.slice(0, topN),
+        静的メッシュ: staticMesh, 動くメッシュ: animMesh, 材質の種類: mats.length,
+        統合の伸びしろ: { 対象メッシュ: mergeable, 統合後: mats.filter((m) => m.n >= 8).length, 削減見込み: mergeable - mats.filter((m) => m.n >= 8).length },
+        材質上位: mats.slice(0, 20),
+      }
+    }
+    window.__town3dPoints = () => { // 検証用: 粒(Points)の材質一覧。絵柄(map/alphaMap)が無い粒は WebGL の既定で「四角」に描かれる
+      const out = []
+      scene.traverse((o) => { if (o.visible && o.isPoints && o.material) out.push({ n: o.geometry.attributes.position.count, size: o.material.size, 絵柄: !!(o.material.map || o.material.alphaMap), op: +(o.material.opacity ?? 1).toFixed(2), par: (o.parent && o.parent.name) || (o.parent && o.parent.type) || '' }) })
+      return out
     }
     window.__town3dLoad = () => { // 検証用: 毎フレーム更新される配列の件数（CPU負荷の実体）
       const n = (a) => Array.isArray(a) ? a.length : (a && a.size) || 0
