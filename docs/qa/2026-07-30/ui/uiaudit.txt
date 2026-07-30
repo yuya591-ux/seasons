@@ -1,0 +1,164 @@
+
+==========================================================================
+■ 画面幅 390×844
+
+   ── gate ── 操作要素 1個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 44個  情景←gate / 設定←gate / この眺めをとどめる（UIを消す）←gate / 操作のヒントをもう一度みる←gate / 今の季節と時刻に合う窓辺←gate / これまでの窓辺の記録（通い帳）←gate / 閉じる←gate / すべて←gate / 春←gate / 夏←gate / 秋←gate / 冬←gate / 北寺尾の坂の街立体の坂の街を窓辺から。飛←gate / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←gate / 高台の角部屋二面採光の角部屋から、街を広←gate / 雨の窓ガラスをつたう雨だれ、にじむ街あか←gate / 海辺と山あい波の音、朝もやの谷。旅先の窓←gate / 閉じる←gate / 閉じる←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / ×←gate / 音のオン・オフ←gate / 音量←gate / 雨脚←gate / 明るさ←gate / こまやか←gate__title / ふつう←gate__title / 軽やか←gate / 傾きで見回す←gate / 全画面←gate / 時間をとどめる←gate / なし←gate / 15分←gate / 30分←gate / 60分←gate / 通い帳をひらく←gate / この作品について←gate
+
+   ── 窓辺 ── 操作要素 5個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 45個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←town3d-zoom__btn / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-zoom zoom--on / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 情景メニュー ── 操作要素 18個
+      44px未満: 6個  閉じる(42×44) / すべて(64×32) / 春(38×32) / 夏(38×32) / 秋(38×32) / 冬(38×32)
+      はみ出し: 0個
+      重なり  : 2組  海辺と山あい波の音、朝もやの谷。旅先の窓辺　・2×寄る(1104px²) / 海辺と山あい波の音、朝もやの谷。旅先の窓辺　・2×引く(2304px²)
+      押せない: 34個  閉じる←scene-card__swatch / 閉じる←panel panel--scene panel--open / 出典を見る←scene-card__desc / 出典を見る←scene-card__swatch / 出典を見る←scene-card__body / 出典を見る←gallery / 出典を見る←scene-card__swatch / 出典を見る←scene-card__desc / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←gallery-filter / 音のオン・オフ←scene-card__swatch / 音量←scene-card__swatch / 雨脚←scene-card__desc / 明るさ←scene-card__body / こまやか←scene-card__swatch / ふつう←scene-card__swatch / 軽やか←scene-card__swatch / 傾きで見回す←scene-card__swatch / 全画面←scene-card__swatch / 時間をとどめる←scene-card__label / なし←scene-card__desc / 15分←scene-card / 30分←scene-card__desc / 60分←scene-card__desc / 通い帳をひらく←scene-card__swatch / この作品について←scene-card__label / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 寄る←scene-card / 引く←scene-card__label / 上昇←panel panel--scene panel--open / 下降←panel panel--scene panel--open / 速さ・視界の操作を開く←CANVAS
+
+   ── ふりかえり ── 操作要素 6個
+      44px未満: 1個  閉じる(42×44)
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 44個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←panel__head / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←panel__head / 高台の角部屋二面採光の角部屋から、街を広←journal__thumb / 雨の窓ガラスをつたう雨だれ、にじむ街あか←journal__grid / 海辺と山あい波の音、朝もやの谷。旅先の窓←town3d-zoom__btn / 閉じる←CANVAS / 出典を見る←journal__lead / 出典を見る←journal__thumb / 出典を見る←journal__thumb / 出典を見る←journal__name / 出典を見る←CANVAS / 出典を見る←town3d-zoom zoom--on / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←panel__head / 音量←panel__head / 雨脚←journal__lead / 明るさ←journal__lead / こまやか←journal__grid / ふつう←journal__thumb / 軽やか←journal__grid / 傾きで見回す←journal__thumb / 全画面←journal__grid / 時間をとどめる←journal__thumb / なし←journal__name / 15分←journal__name / 30分←journal__grid / 60分←journal__grid / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 設定 ── 操作要素 22個
+      44px未満: 17個  ×(42×44) / 音のオン・オフ(41×44) / 音量(128×4) / 雨脚(128×4) / 明るさ(128×4) / こまやか(77×32) / ふつう(64×32) / 軽やか(64×32) / 傾きで見回す(103×32) / 全画面(64×32) / 時間をとどめる(116×32) / なし(51×32) / 15分(52×32) / 30分(52×32) / 60分(52×32) / 通い帳をひらく(116×32) / この作品について(129×32)
+      はみ出し: 0個
+      重なり  : 1組  この作品について×引く(195px²)
+      押せない: 30個  今の季節と時刻に合う窓辺←panel__head / これまでの窓辺の記録（通い帳）←panel__head / 閉じる←iconbtn / すべて←panel panel--set panel--open / 春←panel panel--set panel--open / 夏←panel panel--set panel--open / 秋←panel panel--set panel--open / 冬←panel panel--set panel--open / 北寺尾の坂の街立体の坂の街を窓辺から。飛←slider / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←setrow / 高台の角部屋二面採光の角部屋から、街を広←panel panel--set panel--open / 雨の窓ガラスをつたう雨だれ、にじむ街あか←panel panel--set panel--open / 海辺と山あい波の音、朝もやの谷。旅先の窓←panel panel--set panel--open / 閉じる←panel panel--set panel--open / 閉じる←iconbtn / 出典を見る←slider slider--centered / 出典を見る←chip / 出典を見る←chip / 出典を見る←panel__section / 出典を見る←chip / 出典を見る←panel panel--set panel--open / 出典を見る←CANVAS / 出典を見る←town3d-sill / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 寄る←panel panel--set panel--open / 引く←panel panel--set panel--open / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 飛行 ── 操作要素 10個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 41個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←town3d-zoom__btn / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-zoom zoom--on / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / ジャンプ←CANVAS
+
+   ── 歩行 ── 操作要素 6個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 44個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←town3d-zoom__btn / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-zoom zoom--on / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+==========================================================================
+■ 画面幅 900×500
+
+   ── gate ── 操作要素 1個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 41個  情景←gate / 設定←gate / この眺めをとどめる（UIを消す）←gate / 操作のヒントをもう一度みる←gate / 今の季節と時刻に合う窓辺←gate / これまでの窓辺の記録（通い帳）←gate / 閉じる←gate / すべて←gate / 春←gate / 夏←gate / 秋←gate / 冬←gate / 北寺尾の坂の街立体の坂の街を窓辺から。飛←gate / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←gate__title / 高台の角部屋二面採光の角部屋から、街を広←gate / 雨の窓ガラスをつたう雨だれ、にじむ街あか←gate / 海辺と山あい波の音、朝もやの谷。旅先の窓←gate / 閉じる←gate / 閉じる←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / ×←gate / 音のオン・オフ←gate / 音量←gate / 雨脚←gate / 明るさ←gate / こまやか←gate / ふつう←gate / 軽やか←gate / 傾きで見回す←gate / 全画面←gate / 時間をとどめる←gate / なし←gate / 15分←gate / 30分←gate / 60分←gate / 通い帳をひらく←gate / この作品について←gate
+
+   ── 窓辺 ── 操作要素 5個
+      44px未満: 5個  情景(53×37) / 設定(53×37) / この眺めをとどめる（UIを消す）(53×37) / 寄る(42×42) / 引く(42×42)
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 42個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←CANVAS / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 情景メニュー ── 操作要素 18個
+      44px未満: 13個  情景(53×37) / 設定(53×37) / この眺めをとどめる（UIを消す）(53×37) / 今の季節と時刻に合う窓辺(53×37) / これまでの窓辺の記録（通い帳）(67×37) / 閉じる(33×37) / すべて(64×32) / 春(38×32) / 夏(38×32) / 秋(38×32) / 冬(38×32) / 寄る(42×42) / 引く(42×42)
+      はみ出し: 3個  今の季節と時刻に合う窓辺@326,-16 53×37 / これまでの窓辺の記録（通い帳）@563,-16 67×37 / 閉じる@814,-16 33×37
+      重なり  : 4組  設定×閉じる(60px²) / この眺めをとどめる（UIを消す）×閉じる(80px²) / 雨の窓ガラスをつたう雨だれ、にじむ街あかり　・4×寄る(210px²) / 雨の窓ガラスをつたう雨だれ、にじむ街あかり　・4×引く(1764px²)
+      押せない: 37個  情景←gallery-filter / 設定←gallery-filter / この眺めをとどめる（UIを消す）←panel panel--scene panel--open / 今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / 閉じる←scene-card__desc / 閉じる←scene-card__swatch / 出典を見る←scene-card__label / 出典を見る←scene-card__swatch / 出典を見る←scene-card__swatch / 出典を見る←scene-card__label / 出典を見る←town3d-sill / ×←panel panel--scene panel--open / 音のオン・オフ←scene-card__swatch / 音量←scene-card__swatch / 雨脚←scene-card__swatch / 明るさ←scene-card__body / こまやか←scene-card__desc / ふつう←scene-card__desc / 軽やか←scene-card__desc / 傾きで見回す←scene-card__swatch / 全画面←scene-card__swatch / 時間をとどめる←scene-card__swatch / なし←scene-card__swatch / 15分←scene-card__swatch / 30分←scene-card__swatch / 60分←gallery / 通い帳をひらく←scene-card__body / この作品について←scene-card__body / すすむ・とまるの切替←scene-card__desc / ジャンプ←gallery / 寄る←panel panel--scene panel--open / 引く←scene-card__swatch / 上昇←panel panel--scene panel--open / 下降←scene-card__swatch / 速さ・視界の操作を開く←panel panel--scene panel--open
+
+   ── ふりかえり ── 操作要素 6個
+      44px未満: 6個  情景(53×37) / 設定(53×37) / この眺めをとどめる（UIを消す）(53×37) / 閉じる(33×37) / 寄る(42×42) / 引く(42×42)
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 43個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←panel__head / 春←panel__head / 夏←panel__head / 秋←panel__head / 冬←panel__head / 北寺尾の坂の街立体の坂の街を窓辺から。飛←journal__thumb / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←journal__thumb / 高台の角部屋二面採光の角部屋から、街を広←journal__grid / 雨の窓ガラスをつたう雨だれ、にじむ街あか←journal__thumb / 海辺と山あい波の音、朝もやの谷。旅先の窓←journal__thumb / 閉じる←iconbtn / 出典を見る←journal__thumb / 出典を見る←journal__thumb / 出典を見る←journal__thumb / 出典を見る←journal__thumb / 出典を見る←town3d-sill / ×←iconbtn / 音のオン・オフ←journal__thumb / 音量←journal__thumb / 雨脚←journal__thumb / 明るさ←journal__thumb / こまやか←journal__thumb / ふつう←journal__thumb / 軽やか←journal__thumb / 傾きで見回す←journal__thumb / 全画面←journal__thumb / 時間をとどめる←journal__thumb / なし←journal__thumb / 15分←journal__thumb / 30分←journal__thumb / 60分←journal__grid / 通い帳をひらく←journal__thumb / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / ジャンプ←journal__grid / 寄る←panel panel--journal panel--open / 引く←journal__thumb / 上昇←panel panel--journal panel--open / 下降←journal__thumb / 速さ・視界の操作を開く←CANVAS
+
+   ── 設定 ── 操作要素 22個
+      44px未満: 22個  情景(53×37) / 設定(53×37) / この眺めをとどめる（UIを消す）(53×37) / ×(33×37) / 音のオン・オフ(32×37) / 音量(128×4) / 雨脚(128×4) / 明るさ(128×4) / こまやか(77×32) / ふつう(64×32) / 軽やか(64×32) / 傾きで見回す(103×32) / 全画面(64×32) / 時間をとどめる(116×32) / なし(51×32) / 15分(52×32) / 30分(52×32) / 60分(52×32) / 通い帳をひらく(116×32) / この作品について(129×32) / 寄る(42×42) / 引く(42×42)
+      はみ出し: 0個
+      重なり  : 2組  設定××(276px²) / この眺めをとどめる（UIを消す）××(368px²)
+      押せない: 30個  情景←panel__head / 設定←panel__head / この眺めをとどめる（UIを消す）←panel panel--set panel--open / 今の季節と時刻に合う窓辺←panel panel--set panel--open / これまでの窓辺の記録（通い帳）←panel panel--set panel--open / 閉じる←panel panel--set panel--open / すべて←panel__head / 春←panel__head / 夏←panel__head / 秋←panel__head / 冬←panel__head / 北寺尾の坂の街立体の坂の街を窓辺から。飛←panel panel--set panel--open / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←panel panel--set panel--open / 高台の角部屋二面採光の角部屋から、街を広←panel panel--set panel--open / 雨の窓ガラスをつたう雨だれ、にじむ街あか←chip / 海辺と山あい波の音、朝もやの谷。旅先の窓←setrow / 閉じる←panel__section / 閉じる←panel__section / 出典を見る←chip / 出典を見る←panel panel--set panel--open / 出典を見る←panel__section / 出典を見る←chip / 出典を見る←town3d-sill / すすむ・とまるの切替←setrow / ジャンプ←setrow / 寄る←panel panel--set panel--open / 引く←panel__section / 上昇←panel panel--set panel--open / 下降←setrow__label / 速さ・視界の操作を開く←panel panel--set panel--open
+
+   ── 飛行 ── 操作要素 10個
+      44px未満: 7個  情景(53×37) / 設定(53×37) / この眺めをとどめる（UIを消す）(53×37) / 寄る(42×42) / 引く(42×42) / 上昇(42×42) / 下降(42×42)
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 38個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←town3d-low / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / ジャンプ←CANVAS
+
+   ── 歩行 ── 操作要素 6個
+      44px未満: 5個  情景(53×37) / 設定(53×37) / この眺めをとどめる（UIを消す）(53×37) / 寄る(42×42) / 引く(42×42)
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 41個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←CANVAS / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+==========================================================================
+■ 画面幅 1600×900
+
+   ── gate ── 操作要素 1個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 45個  情景←gate / 設定←gate / この眺めをとどめる（UIを消す）←gate / 操作のヒントをもう一度みる←gate / 今の季節と時刻に合う窓辺←gate / これまでの窓辺の記録（通い帳）←gate / 閉じる←gate / すべて←gate / 春←gate / 夏←gate / 秋←gate / 冬←gate / 北寺尾の坂の街立体の坂の街を窓辺から。飛←gate / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←gate / 高台の角部屋二面採光の角部屋から、街を広←gate / 雨の窓ガラスをつたう雨だれ、にじむ街あか←gate / 海辺と山あい波の音、朝もやの谷。旅先の窓←gate / 閉じる←gate / 閉じる←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / 出典を見る←gate / ×←gate / 音のオン・オフ←gate / 音量←gate / 雨脚←gate / 明るさ←gate__title / こまやか←gate / ふつう←gate / 軽やか←gate / 傾きで見回す←gate / 全画面←gate / 時間をとどめる←gate / なし←gate / 15分←gate / 30分←gate / 60分←gate / 通い帳をひらく←gate / この作品について←gate
+
+   ── 窓辺 ── 操作要素 5個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 51個  情景←CANVAS / 設定←CANVAS / この眺めをとどめる（UIを消す）←CANVAS / 今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←CANVAS / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 寄る←CANVAS / 引く←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 情景メニュー ── 操作要素 18個
+      44px未満: 6個  閉じる(42×44) / すべて(64×32) / 春(38×32) / 夏(38×32) / 秋(38×32) / 冬(38×32)
+      はみ出し: 0個
+      重なり  : 9組  今の季節と時刻に合う窓辺×北寺尾の坂の街立体の坂の街を窓辺から。飛んで歩い(186px²) / これまでの窓辺の記録（通い帳）×獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふるさとの窓(231px²) / 閉じる×獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふるさとの窓(117px²) / すべて×北寺尾の坂の街立体の坂の街を窓辺から。飛んで歩い(2048px²) / 春×北寺尾の坂の街立体の坂の街を窓辺から。飛んで歩い(1216px²) / 夏×北寺尾の坂の街立体の坂の街を窓辺から。飛んで歩い(1216px²)
+      押せない: 33個  閉じる←scene-card__swatch / 閉じる←panel panel--scene panel--open / 出典を見る←scene-card__desc / 出典を見る←scene-card__swatch / 出典を見る←scene-card__swatch / 出典を見る←scene-card__label / 出典を見る←scene-card__swatch / 出典を見る←scene-card__swatch / 出典を見る←scene-card__body / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←scene-card__swatch / 音のオン・オフ←scene-card__desc / 音量←scene-card__desc / 雨脚←gallery / 明るさ←scene-card__swatch / こまやか←scene-card__swatch / ふつう←scene-card__swatch / 軽やか←scene-card__swatch / 傾きで見回す←scene-card__swatch / 全画面←scene-card__swatch / 時間をとどめる←scene-card__swatch / なし←scene-card__label / 15分←scene-card__label / 30分←scene-card__body / 60分←scene-card__label / 通い帳をひらく←scene-card__swatch / この作品について←scene-card__swatch / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── ふりかえり ── 操作要素 6個
+      44px未満: 1個  閉じる(42×44)
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 50個  情景←CANVAS / 設定←CANVAS / この眺めをとどめる（UIを消す）←CANVAS / 今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←panel__head / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←panel__head / 高台の角部屋二面採光の角部屋から、街を広←journal__thumb / 雨の窓ガラスをつたう雨だれ、にじむ街あか←journal__grid / 海辺と山あい波の音、朝もやの谷。旅先の窓←CANVAS / 閉じる←CANVAS / 出典を見る←journal__lead / 出典を見る←journal__thumb / 出典を見る←journal__thumb / 出典を見る←journal__thumb / 出典を見る←panel panel--journal panel--open / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←panel panel--journal panel--open / 音量←panel panel--journal panel--open / 雨脚←journal / 明るさ←journal__thumb / こまやか←journal__thumb / ふつう←journal__thumb / 軽やか←journal__thumb / 傾きで見回す←journal__thumb / 全画面←journal__thumb / 時間をとどめる←journal__grid / なし←journal__thumb / 15分←journal__thumb / 30分←journal__thumb / 60分←journal__thumb / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 寄る←CANVAS / 引く←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 設定 ── 操作要素 22個
+      44px未満: 17個  ×(42×44) / 音のオン・オフ(41×44) / 音量(128×4) / 雨脚(128×4) / 明るさ(128×4) / こまやか(77×32) / ふつう(64×32) / 軽やか(64×32) / 傾きで見回す(103×32) / 全画面(64×32) / 時間をとどめる(116×32) / なし(51×32) / 15分(52×32) / 30分(52×32) / 60分(52×32) / 通い帳をひらく(116×32) / この作品について(129×32)
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 29個  今の季節と時刻に合う窓辺←panel panel--set panel--open / これまでの窓辺の記録（通い帳）←panel panel--set panel--open / 閉じる←panel panel--set panel--open / すべて←panel__head / 春←panel__head / 夏←panel__head / 秋←panel__head / 冬←panel__head / 北寺尾の坂の街立体の坂の街を窓辺から。飛←hud__audio / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←setrow / 高台の角部屋二面採光の角部屋から、街を広←chip chip--on / 雨の窓ガラスをつたう雨だれ、にじむ街あか←setrow / 海辺と山あい波の音、朝もやの谷。旅先の窓←CANVAS / 閉じる←setrow / 閉じる←panel panel--set panel--open / 出典を見る←slider / 出典を見る←chip / 出典を見る←chip / 出典を見る←panel panel--set panel--open / 出典を見る←chip / 出典を見る←panel panel--set panel--open / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 飛行 ── 操作要素 10個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 52個  情景←CANVAS / 設定←CANVAS / この眺めをとどめる（UIを消す）←CANVAS / 今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←CANVAS / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / ジャンプ←CANVAS / 低く流す（自転車のように坂を滑空）←CANVAS / 寄る←CANVAS / 引く←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+   ── 歩行 ── 操作要素 6個
+      44px未満: 0個
+      はみ出し: 0個
+      重なり  : 0組
+      押せない: 45個  今の季節と時刻に合う窓辺←CANVAS / これまでの窓辺の記録（通い帳）←CANVAS / 閉じる←CANVAS / すべて←CANVAS / 春←CANVAS / 夏←CANVAS / 秋←CANVAS / 冬←CANVAS / 北寺尾の坂の街立体の坂の街を窓辺から。飛←CANVAS / 獅子ヶ谷の谷戸谷あいの棚田と茅葺き、ふる←CANVAS / 高台の角部屋二面採光の角部屋から、街を広←CANVAS / 雨の窓ガラスをつたう雨だれ、にじむ街あか←CANVAS / 海辺と山あい波の音、朝もやの谷。旅先の窓←CANVAS / 閉じる←CANVAS / 閉じる←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←CANVAS / 出典を見る←town3d-sill / ×←CANVAS / 音のオン・オフ←CANVAS / 音量←CANVAS / 雨脚←CANVAS / 明るさ←CANVAS / こまやか←CANVAS / ふつう←CANVAS / 軽やか←CANVAS / 傾きで見回す←CANVAS / 全画面←CANVAS / 時間をとどめる←CANVAS / なし←CANVAS / 15分←CANVAS / 30分←CANVAS / 60分←CANVAS / 通い帳をひらく←CANVAS / この作品について←CANVAS / すすむ・とまるの切替←CANVAS / 上昇←CANVAS / 下降←CANVAS / 速さ・視界の操作を開く←CANVAS
+
+==========================================================================
+■ #9 初見の導線（390×844・実際のボタンだけを押す）
+   flow_01.png  起動の間（gate）
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+   flow_02.png  窓辺に着いた直後
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+   flow_03.png  「窓をあける」を押した
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+   flow_04.png  次の一歩（乗り出す）を押した
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+   flow_05.png  次の一歩（空へ）を押した
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+   flow_06.png  空を飛んでいる（少し進んだ）
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+   flow_07.png  次の一歩（おりる）を押した
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+   flow_08.png  地上を歩いている
+      画面の案内: ["夏の雨の夜、にじむ街あかり"]
+      押せるボタン: ["情景","設定","写真"]   段階表示: 非表示
+
+エラー: 0件
