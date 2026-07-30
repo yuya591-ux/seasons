@@ -1,0 +1,15 @@
+#11 粒(Points)の材質一覧: [{"n":160,"size":2.1,"絵柄":true,"op":0,"par":"Group"},{"n":130,"size":2,"絵柄":true,"op":0,"par":"Group"},{"n":150,"size":2.3,"絵柄":true,"op":0,"par":"Group"},{"n":46,"size":0.034,"絵柄":true,"op":0.33,"par":"Group"}]
+#9 着地直後の姿勢: undefined
+#9 着地6秒後の姿勢: undefined
+#10 雲海地点a [0,100,-150,0,0] → {"平均輝度":0,"白飛び画素率":0}
+#10 雲海地点b [0,92,-60,0,-0.25] → {"平均輝度":0,"白飛び画素率":0}
+#10 雲海地点c [40,108,-200,0.6,0] → {"平均輝度":0,"白飛び画素率":0}
+NaN混入 30件
+[setTargetAtTime] 引数=["NaN","19.930666666666667","0.25"]
+  元: Error
+    at AudioParam.<computed> [as setTargetAtTime] (<anonymous>:7:21)
+    at setStation (http://localhost:4890/seasons/src/audio/audio.js:563:53)
+    at Object.setAmbience (http://localhost:4890/seasons/src/audio/audio.js:570:5)
+    at onAmbience (http://localhost:4890/seasons/src/main.js:207:100)
+    at frame (http://localhost:4890/seasons/src/engine/town3dViewer.js?t=1785402682527:9952:7)    at AudioParam.<computed> [as setTargetAtTime] (<anonymous>:7:80) >>     at setStation (http://localhost:4890/seasons/src/audio/audio.js:563:53) >>     at Object.setAmbience (http://localhost:4890/seasons/src/audio/audio.js:570:5) >>     at onAmbience (http://localhost:4890/seasons/src/main.js:207:100) >>     at frame (http://localhost:4890/seasons/src/engine/town3dViewer.js?t=1785402682527:9952:7)
+errors=0

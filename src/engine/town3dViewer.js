@@ -9922,7 +9922,9 @@ export async function mountTown3d(parent, opts = {}) {
       // 空間音(③-c): 音源の方角を、飛行の進行向き(flyYaw)を基準にした左右パン(-1..1)へ。飛びながら横を抜けると音が左右へ流れ、
       //  振り向く(flyYaw変化)と反対へ回る＝「その世界に居る」。基準向き＝飛行はflyYaw／窓辺は見回しyaw。
       const aOut = (active.flyP || 0) > 0.2, baseYaw = aOut ? (active.flyYaw || 0) : (active.yaw || 0)
-      const bearingPan = (sx, sz) => { const rel = Math.atan2(sx - fp.x, -(sz - fp.z)) - baseYaw; return Math.sin(rel) } // 右=+
+      // 右=+。位置や向きが一瞬でも壊れた値になると定位がNaNになり、音の更新がまるごと例外で止まる
+      //（実機の検収で毎フレーム例外が出ていた）。計算できない時は「正面(0)」に倒す。
+      const bearingPan = (sx, sz) => { const p = Math.sin(Math.atan2(sx - fp.x, -(sz - fp.z)) - baseYaw); return Number.isFinite(p) ? p : 0 }
       // 夏祭りの囃子＝遠くでほんのり聞こえ、近づくほど大きくなる（音で会場を探す）。窓辺でも遠くの祭りが届く。
       let festAmt = 0, festPan = 0
       if (festivalSpots.length) {

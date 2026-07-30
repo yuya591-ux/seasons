@@ -1,0 +1,7 @@
+#11 粒(Points)の材質一覧: [{"n":160,"size":2.1,"絵柄":true,"op":0,"par":"Group"},{"n":130,"size":2,"絵柄":true,"op":0,"par":"Group"},{"n":150,"size":2.3,"絵柄":true,"op":0,"par":"Group"},{"n":46,"size":0.034,"絵柄":true,"op":0.33,"par":"Group"}]
+#9 着地直後の姿勢: undefined
+#9 着地6秒後の姿勢: undefined
+#10 雲海地点a [0,100,-150,0,0] → {"平均輝度":0,"白飛び画素率":0}
+#10 雲海地点b [0,92,-60,0,-0.25] → {"平均輝度":0,"白飛び画素率":0}
+#10 雲海地点c [40,108,-200,0.6,0] → {"平均輝度":0,"白飛び画素率":0}
+errors=199 :: Failed to execute 'setTargetAtTime' on 'AudioParam': The provided float value is non-finite. | Failed to execute 'setTargetAtTime' on 'AudioParam': The provided float value is non-finite. | Failed to execute 'setTargetAtTime' on 'AudioParam': The provided float value is non-finite. | Failed to execute 'setTargetAtTime' on 'AudioParam': The provided float value is non-finite. | Failed to execute 'setTargetAtTime' on 'AudioParam': The provided float value is non-finite.

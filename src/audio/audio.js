@@ -517,7 +517,7 @@ export function createAudio(opts) {
     const t = now(), a = Math.max(0, Math.min(1, amt || 0))
     festNode.fg.gain.setTargetAtTime(a <= 0.01 ? 0 : a * 0.2, t, 0.8) // 実機FBで音量を下げる（0.5→0.3→0.2＝もっと控えめに）
     festNode.bright.frequency.setTargetAtTime(560 + a * a * 3600, t, 0.8)   // 遠=太鼓だけがこもって届く／近=笛・鉦が際立つ
-    if (festNode.pan && pan != null) festNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 会場の方角へ定位（振り向くと反対へ流れる）
+    if (festNode.pan && Number.isFinite(pan)) festNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 会場の方角へ定位（振り向くと反対へ流れる）
     festState.amt = a
   }
   //  駅の音（発車ベル＋電車の通過音）。setStation(近さ0..1)が満ち引きさせ、遠いとこもり近づくと澄む。
@@ -560,7 +560,7 @@ export function createAudio(opts) {
     const t = now(), a = Math.max(0, Math.min(1, amt || 0))
     staNode.sg.gain.setTargetAtTime(a <= 0.01 ? 0 : a * 0.5, t, 0.7)
     staNode.bright.frequency.setTargetAtTime(640 + a * a * 3200, t, 0.7)  // 遠=こもったベル／近=澄んだベル
-    if (staNode.pan && pan != null) staNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 駅の方角へ定位
+    if (staNode.pan && Number.isFinite(pan)) staNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 駅の方角へ定位
     staState.amt = a
   }
   // 夏の風鈴の「チリン」は実機FBで不快につき廃止（合成関数ごと削除＝死蔵コードを残さない）。風鈴の見た目は3D側に残す。
