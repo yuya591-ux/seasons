@@ -1,5 +1,5 @@
 窓辺の描画コール: 1993 / 三角形: 721089
-建物統合: {"区画メッシュ":86,"元メッシュ":657,"走査メッシュ":1159,"区画":86,"削減":571}
+建物統合: {"区画メッシュ":86,"元メッシュ":657,"走査メッシュ":1159,"絵柄あり":460,"取りこぼし":502,"取りこぼし束":487,"区画":86,"削減":571}
 town直下のchild: 1731 / 10メッシュ以上の「重いchild」: 32件・合計 809メッシュ
 
 順位 メッシュ数 材質数 位置(x,z)  内訳(材質ごとのメッシュ数: 種別/色/透過/絵柄/頂点色/形状)
@@ -29,5 +29,5 @@ town直下のchild: 1731 / 10メッシュ以上の「重いchild」: 32件・合
  19      1  Toon/#a9a094/頂色
  20      1  Toon/#b6a892/頂色
 
-カテゴリ別の描画コール寄与: {"base":1992,"residents":194,"critters":5,"cityWalkers":0,"trees":74,"clouds":7,"birds":40,"skyDrifters":0,"winRoom":125,"school":0,"ferris":108,"park":135,"temple":45,"downtown":0,"outlines":11,"outlineN":161,"townChildren":1731}
+カテゴリ別の描画コール寄与: {"base":1991,"residents":194,"critters":5,"cityWalkers":0,"trees":75,"clouds":7,"birds":40,"skyDrifters":0,"winRoom":125,"school":0,"ferris":108,"park":135,"temple":45,"downtown":0,"outlines":11,"outlineN":161,"townChildren":1731}
 errors=0

@@ -8759,14 +8759,14 @@ export async function mountTown3d(parent, opts = {}) {
         const n = geo.attributes.position.count, vc = geo.attributes.color, col = new Float32Array(n * 3)
         for (let i = 0; i < n; i++) { col[i * 3] = (vc ? vc.getX(i) : 1) * m.color.r; col[i * 3 + 1] = (vc ? vc.getY(i) : 1) * m.color.g; col[i * 3 + 2] = (vc ? vc.getZ(i) : 1) * m.color.b }
         geo.setAttribute('color', new THREE.BufferAttribute(col, 3))
-        g.geos.push(geo); g.olds.push(o)
+        g.geos.push(geo); g.olds.push(o); if (m.map) mergeInfo.絵柄あり = (mergeInfo.絵柄あり || 0) + 1
       })
     }
     for (const g of groups.values()) {
-      if (g.geos.length < 3) { g.geos.forEach((x) => x.dispose()); continue } // 少数は統合の得が小さいのでそのまま
+      if (g.geos.length < 3) { mergeInfo.取りこぼし = (mergeInfo.取りこぼし || 0) + g.geos.length; mergeInfo.取りこぼし束 = (mergeInfo.取りこぼし束 || 0) + 1; g.geos.forEach((x) => x.dispose()); continue } // 少数は統合の得が小さいのでそのまま
       const mg = BufferGeometryUtils.mergeGeometries(g.geos, false)
       g.geos.forEach((x) => x.dispose())
-      if (!mg) continue
+      if (!mg) { mergeInfo.結合失敗 = (mergeInfo.結合失敗 || 0) + g.olds.length; continue }
       const mat = g.src.clone() // 材質の設定（陰影の階調・霧・冬の雪化粧）をそのまま引き継ぐ。cloneが写さない関数は手で移す
       mat.onBeforeCompile = g.src.onBeforeCompile; mat.customProgramCacheKey = g.src.customProgramCacheKey
       mat.color.set(0xffffff); mat.vertexColors = true; mat.needsUpdate = true
@@ -10411,6 +10411,50 @@ export async function mountTown3d(parent, opts = {}) {
       // 上位childの位置（どの構造物か特定用）
       const withPos = town.children.filter((c) => c.visible).map((c) => ({ n: countMesh(c), x: +c.position.x.toFixed(0), z: +c.position.z.toFixed(0) })).sort((a, b) => b.n - a.n).slice(0, 18)
       return { townChildren: town.children.length, totalMeshInTown: totalMesh, totalSprite, lines, buckets, heavyMeshSum, topChildren: withPos }
+    }
+    window.__town3dCalls = (topN = 30, detail = null) => { // 検証用: 「いま画面に描かれている物」を種類ごとに数える＝残った描画コールの正体を画面基準で特定する
+      if (!active || !active.camera) return null
+      const cam = active.camera
+      cam.updateMatrixWorld(); scene.updateMatrixWorld()
+      const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse))
+      const groups = new Map()
+      let drawn = 0
+      scene.traverse((o) => {
+        if (!o.visible || !(o.isMesh || o.isPoints) || !o.geometry || !o.material) return
+        for (let p = o.parent; p; p = p.parent) if (!p.visible) return // 親が隠れていれば描かれない
+        if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere()
+        if (o.frustumCulled && o.geometry.boundingSphere && !fr.intersectsObject(o)) return
+        drawn++
+        const m = Array.isArray(o.material) ? o.material[0] : o.material
+        const key = `${(o.geometry.type || '?').replace('Geometry', '')}|${(m.type || '?').replace('Mesh', '').replace('Material', '')}|${m.color ? '#' + m.color.getHexString() : ''}|${m.transparent ? '透' : ''}${m.map ? '絵' : ''}${m.vertexColors ? '頂色' : ''}`
+        const g = groups.get(key) || { n: 0, tri: 0, sample: null }
+        g.n++
+        g.tri += (o.geometry.index ? o.geometry.index.count : (o.geometry.attributes.position ? o.geometry.attributes.position.count : 0)) / 3
+        if (!g.sample) { const wp = new THREE.Vector3(); o.getWorldPosition(wp); g.sample = [+wp.x.toFixed(0), +wp.y.toFixed(0), +wp.z.toFixed(0)] }
+        if (!g.親) { const chain = []; for (let p = o.parent, i = 0; p && i < 3; p = p.parent, i++) chain.push(p === town ? 'town' : p === scene ? 'scene' : p.type); g.親 = chain.join('<') }
+        if (!g.材) g.材 = []
+        if (g.材.length < 3 && !g.材.includes(m.uuid)) g.材.push(m.uuid) // 材質が1つに揃っているか＝そのまま統合できるか
+        groups.set(key, g)
+      })
+      const rows = [...groups.entries()].map(([k, v]) => ({ 種類: k, 数: v.n, 三角形: Math.round(v.tri), 位置: v.sample, 親: v.親, 材: (v.材 || []).length })).sort((a, b) => b.数 - a.数)
+      if (detail != null && rows[detail]) { // 指定した種類の正体を詳しく（親グループの構成・所属している配列・userData）
+        const want = rows[detail].種類, out = []
+        scene.traverse((o) => {
+          if (out.length >= 4 || !o.visible || !(o.isMesh || o.isPoints) || !o.material) return
+          const m = Array.isArray(o.material) ? o.material[0] : o.material
+          const key = `${(o.geometry.type || '?').replace('Geometry', '')}|${(m.type || '?').replace('Mesh', '').replace('Material', '')}|${m.color ? '#' + m.color.getHexString() : ''}|${m.transparent ? '透' : ''}${m.map ? '絵' : ''}${m.vertexColors ? '頂色' : ''}`
+          if (key !== want) return
+          const par = o.parent, wp = new THREE.Vector3(); o.getWorldPosition(wp)
+          out.push({
+            位置: [+wp.x.toFixed(1), +wp.y.toFixed(1), +wp.z.toFixed(1)], 三角形: Math.round((o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3),
+            親の子数: par ? par.children.length : 0, 親の位置: par ? [+par.position.x.toFixed(1), +par.position.y.toFixed(1), +par.position.z.toFixed(1)] : null,
+            親が動く: par ? par.matrixAutoUpdate : null, 影: o.castShadow, userData: Object.keys(o.userData || {}), 親userData: par ? Object.keys(par.userData || {}) : [],
+            木か: treesArr.includes(par), 建物か: homeBldgs.includes(par),
+          })
+        })
+        return { 種類: want, 見本: out }
+      }
+      return { 画面に描かれる物: drawn, 種類数: rows.length, 上位: rows.slice(0, topN) }
     }
     window.__town3dHeavy = (topN = 20) => { // 検証用: 描画コールを食っている重いchildの正体（メッシュ数・材質の内訳・位置）＝統合の当てどころ
       const rows = []
