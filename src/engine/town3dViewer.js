@@ -303,6 +303,7 @@ export async function mountTown3d(parent, opts = {}) {
   // 旧 standard 1.4 を 1.6 へ引き上げ素のシェーダ情景(1.75)へ寄せる。発熱はピクセル塗りの二乗で効くが、
   // 重い時は自動品質(curPR↓・下のadQ)が実測で天井から下げる安全網に任せる（先回りで眠くしない）。
   // ※起動時(ここ)と setQuality(設定変更時)で上限が食い違うと「設定を触ると急に鮮明化」する＝両者を同値に統一。
+  const NOMERGE = /[?&]nomerge=1/.test(location.search) // 検証用: メッシュの統合をすべて止めて従来の姿に戻す（絵が変わっていないことのA/B用）
   const PR_CAP = LIGHT ? 1.2 : QUAL === 'soft' ? 2 : 1.6
   const PR_FLOOR = LIGHT ? 0.82 : 0.96 // 自動品質調整で下げられる解像度の下限（これ以上は下げない＝鮮やかさを保つ）。高DPR端末で「荒すぎる」のを防ぐため一段引き上げ
   const SHADOW_SIZE = LIGHT ? 1024 : 2048
@@ -2808,7 +2809,14 @@ export async function mountTown3d(parent, opts = {}) {
   // ── 電柱・電線（手前から奥へ一列＝強い遠近＝立体感の決め手） ──
   const poleMat = toon(0x6a5c4a)
   const transMat = toon(0x8f8f93), insMat = toon(0xcfcabf) // 柱上変圧器・碍子（共有）
+  // 電柱まわりは1本につき 柱・腕金・変圧器・碍子×2 で、街全体だと数百メッシュになる。材質は共有なので形を焼いて溜め、最後に4メッシュへ統合する（絵は不変）。
+  const mainPoleGeos = { 柱: [], 腕: [], 変圧器: [], 碍子: [] }
+  const keepPole = (mesh, kind) => { if (NOMERGE) { town.add(mesh); return } mesh.updateMatrix(); mainPoleGeos[kind].push(mesh.geometry.clone().applyMatrix4(mesh.matrix)); mesh.geometry.dispose() }
   const wireMat = new THREE.MeshBasicMaterial({ color: 0x2a2a30, fog: true }) // 電線（共有・軽量）
+  // 電線は本数が多く、1本ずつ描くと描画コールを食う（窓辺で57本＝発熱の一因）。形を焼いて溜め、最後に1メッシュへ統合する。
+  // 同じ形・同じ色を少ない回数で送るだけなので、絵は1ミリも変わらない。
+  const wireGeos = []
+  const keepWire = (mesh) => { if (NOMERGE) { town.add(mesh); return } mesh.updateMatrix(); wireGeos.push(mesh.geometry.clone().applyMatrix4(mesh.matrix)); mesh.geometry.dispose() }
   // スズメ（夕暮れの電線に集まる小鳥）の共有部材＝体・尾・頭。近い数スパンに数羽だけ＝郷愁の決め手。
   const sparrowMat = toon(0x554a3c), sparrowBody = new THREE.SphereGeometry(0.1, 6, 5), sparrowTail = new THREE.BoxGeometry(0.045, 0.03, 0.17)
   const sparrowBeakMat = toon(0x3a3026), sparrowBeak = new THREE.ConeGeometry(0.02, 0.07, 4) // くちばし（球の塊→小鳥らしく）
@@ -2819,9 +2827,9 @@ export async function mountTown3d(parent, opts = {}) {
     const gy = heightAt(x, z)
     const ph = 9
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, ph, 12), poleMat) // 近景の縦線＝丸く（低ポリの六角柱を脱す）
-    pole.position.set(x, gy + ph / 2, z); pole.castShadow = true; town.add(pole)
+    pole.position.set(x, gy + ph / 2, z); pole.castShadow = true; keepPole(pole, '柱')
     const arm = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.18, 0.18), poleMat)
-    arm.position.set(x, gy + ph - 1.0, z); town.add(arm)
+    arm.position.set(x, gy + ph - 1.0, z); keepPole(arm, '腕')
     // 街灯（夜のみ・一部の電柱に）。暖色の灯り＋足元の淡い光だまりで、近景の坂を照らし暗黒を救う。
     if (isNight && i % 2 === 0) {
       const lampX = x + 0.9
@@ -2835,19 +2843,19 @@ export async function mountTown3d(parent, opts = {}) {
     // 柱上変圧器（半分の電柱に＝街の象徴）
     if (R() < 0.5) {
       const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.95, 10), transMat)
-      tr.position.set(x + 0.55, gy + ph - 2.3, z); tr.castShadow = true; town.add(tr)
+      tr.position.set(x + 0.55, gy + ph - 2.3, z); tr.castShadow = true; keepPole(tr, '変圧器')
     }
     // 碍子（腕の両端の小さな白い碍子）
     for (const ex of [-1.05, 1.05]) {
       const ins = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.32, 6), insMat)
-      ins.position.set(x + ex, gy + ph - 0.82, z); town.add(ins)
+      ins.position.set(x + ex, gy + ph - 0.82, z); keepPole(ins, '碍子')
     }
     // 支線（電柱を支える斜めのワイヤー＝日本の電柱の細部。一部の柱に）
     if (R() < 0.4) {
       const ax = x + (R() < 0.5 ? 2.3 : -2.3)
       const topG = new THREE.Vector3(x, gy + ph - 1.4, z), anc = new THREE.Vector3(ax, gy + 0.1, z + 0.3)
       const guy = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, topG.distanceTo(anc), 4), wireMat)
-      guy.position.copy(topG).lerp(anc, 0.5); guy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), anc.clone().sub(topG).normalize()); town.add(guy)
+      guy.position.copy(topG).lerp(anc, 0.5); guy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), anc.clone().sub(topG).normalize()); keepWire(guy)
     }
     // 引き込み線（電柱から家の軒へ＝細い斜めの線。一部の柱に。本物の街は電柱から各戸へ線が伸びる）
     if (R() < 0.5) {
@@ -2855,7 +2863,7 @@ export async function mountTown3d(parent, opts = {}) {
       const top2 = new THREE.Vector3(x + sgn * 0.9, gy + ph - 1.2, z)
       const eave = new THREE.Vector3(x + sgn * (5.0 + R() * 2.5), gy + 3.0 + R() * 1.6, z + (R() - 0.5) * 3)
       const drop = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, top2.distanceTo(eave), 4), wireMat)
-      drop.position.copy(top2).lerp(eave, 0.5); drop.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), eave.clone().sub(top2).normalize()); town.add(drop)
+      drop.position.copy(top2).lerp(eave, 0.5); drop.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), eave.clone().sub(top2).normalize()); keepWire(drop)
     }
     // 電線を複数本に（碍子の両端＋下段の通信ケーブル＝日本の街の“電線の多さ”が本物感の決め手）
     const anchors = [
@@ -2870,7 +2878,7 @@ export async function mountTown3d(parent, opts = {}) {
         const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, a.distanceTo(bn), 4), wireMat)
         wire.position.copy(a).lerp(bn, 0.5)
         wire.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bn.clone().sub(a).normalize())
-        town.add(wire)
+        keepWire(wire)
       }
       // スズメが上段の線にとまる（夜は塒へ帰り不在）。最も近いスパンは並んで一列＝郷愁の決め手、
       // 奥のスパンは時々まばらに。頭を上げ尾を跳ね上げた小さな影。
@@ -2922,6 +2930,12 @@ export async function mountTown3d(parent, opts = {}) {
     if (BufferGeometryUtils.mergeGeometries) {
       const pm = BufferGeometryUtils.mergeGeometries(secPoleGeos, false); if (pm) { const mesh = new THREE.Mesh(pm, poleMat); mesh.castShadow = true; town.add(mesh) } secPoleGeos.forEach((g) => g.dispose())
       const wm2 = BufferGeometryUtils.mergeGeometries(secWireGeos, false); if (wm2) town.add(new THREE.Mesh(wm2, wireMat)); secWireGeos.forEach((g) => g.dispose())
+      for (const [kind, mat, cast] of [['柱', poleMat, true], ['腕', poleMat, false], ['変圧器', transMat, true], ['碍子', insMat, false]]) { // 電柱まわりを種類ごとに1メッシュへ
+        const arr = mainPoleGeos[kind]; if (!arr.length) continue
+        const pm2 = BufferGeometryUtils.mergeGeometries(arr, false); if (pm2) { const me = new THREE.Mesh(pm2, mat); me.castShadow = cast; town.add(me) }
+        arr.forEach((g) => g.dispose()); arr.length = 0
+      }
+      if (wireGeos.length) { const wm3 = BufferGeometryUtils.mergeGeometries(wireGeos, false); if (wm3) town.add(new THREE.Mesh(wm3, wireMat)); wireGeos.forEach((g) => g.dispose()); wireGeos.length = 0 } // 電線・支線・引き込み線を1メッシュへ
       if (secLampGeos.length) {
         const lm = BufferGeometryUtils.mergeGeometries(secLampGeos, false); if (lm) town.add(new THREE.Mesh(lm, new THREE.MeshBasicMaterial({ color: 0xffd79a, fog: true })))
         const gm = BufferGeometryUtils.mergeGeometries(secGlowGeos, false); if (gm) town.add(new THREE.Mesh(gm, new THREE.MeshBasicMaterial({ color: 0xffcf8a, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })))
@@ -3273,6 +3287,8 @@ export async function mountTown3d(parent, opts = {}) {
       // 太鼓橋（池に架かる朱の反り橋）。円弧に沿う板＋欄干。span を池より少し長く取り両岸に乗せる。
       {
         const deckMat = toon(0xc24a33), span = pondR * 2 + 2.8, archH = 1.6, baseLift = 0.7, N = 13, width = 2.2
+        // 板・親柱・手すりで51個。同じ材質なので最後に「影を落とす板」と「落とさない欄干」の2メッシュへ束ねる（影の出方が変わらないよう分ける）
+        const deckGeos = [[], []], keepDeck = (m, shadow) => { if (NOMERGE) { grp.add(m); return } m.updateMatrix(); deckGeos[shadow ? 0 : 1].push(m.geometry.clone().applyMatrix4(m.matrix)); m.geometry.dispose() }
         const grp = new THREE.Group(); grp.position.set(px0, 0, pz0); town.add(grp)
         for (let i = 0; i < N; i++) {
           const t = i / (N - 1)
@@ -3280,9 +3296,9 @@ export async function mountTown3d(parent, opts = {}) {
           const ly = waterY + baseLift + archH * Math.sin(Math.PI * t)
           const ang = Math.atan2(archH * Math.PI * Math.cos(Math.PI * t), span) // 円弧の接線の傾き
           const plank = new THREE.Mesh(new THREE.BoxGeometry(span / (N - 1) * 1.25, 0.28, width), deckMat)
-          plank.position.set(lx, ly, 0); plank.rotation.z = -ang; plank.castShadow = true; plank.receiveShadow = true; grp.add(plank)
+          plank.position.set(lx, ly, 0); plank.rotation.z = -ang; plank.castShadow = true; plank.receiveShadow = true; keepDeck(plank, true)
           if (i % 2 === 0) for (const rs of [-1, 1]) { // 欄干の親柱
-            const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.5, 0.16), deckMat); post.position.set(lx, ly + 0.35, rs * (width / 2 - 0.12)); grp.add(post)
+            const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.5, 0.16), deckMat); post.position.set(lx, ly + 0.35, rs * (width / 2 - 0.12)); keepDeck(post, false)
           }
         }
         for (const rs of [-1, 1]) for (let i = 0; i < N - 1; i++) { // 欄干の手すり（弧に沿う）
@@ -3290,8 +3306,9 @@ export async function mountTown3d(parent, opts = {}) {
           const ly = waterY + baseLift + archH * Math.sin(Math.PI * t) + 0.58
           const ang = Math.atan2(archH * Math.PI * Math.cos(Math.PI * t), span)
           const rail = new THREE.Mesh(new THREE.BoxGeometry(span / (N - 1) * 1.2, 0.12, 0.12), deckMat)
-          rail.position.set(lx, ly, rs * (width / 2 - 0.12)); rail.rotation.z = -ang; grp.add(rail)
+          rail.position.set(lx, ly, rs * (width / 2 - 0.12)); rail.rotation.z = -ang; keepDeck(rail, false)
         }
+        if (BufferGeometryUtils.mergeGeometries) for (let k = 0; k < 2; k++) { if (!deckGeos[k].length) continue; const dm = BufferGeometryUtils.mergeGeometries(deckGeos[k], false); if (dm) { const me = new THREE.Mesh(dm, deckMat); me.castShadow = k === 0; me.receiveShadow = k === 0; grp.add(me) } deckGeos[k].forEach((g) => g.dispose()) }
       }
       // 桜（季節で姿が変わる）。春=淡紅の満開・夏=新緑・秋=紅葉・冬=雪をかぶった裸枝。
       const blossomHex = season === 'spring' ? 0xf0bcce : season === 'autumn' ? 0xd6743a : season === 'winter' ? 0xe4eaf0 : 0x6f9a52
@@ -8733,7 +8750,7 @@ export async function mountTown3d(parent, opts = {}) {
   //    霧の彼方の描画カリングは「1棟ごと」から「区画ごと」へ引き継ぐ。?nomerge=1 で統合を止め従来の姿に戻せる（非破壊）。
   const bldgTiles = [] // 統合後の区画メッシュ＝新しいカリング単位
   let mergeInfo = { 区画メッシュ: 0, 元メッシュ: 0 }
-  if (!/[?&]nomerge=1/.test(location.search) && BufferGeometryUtils.mergeGeometries && homeBldgs.length) {
+  if (!NOMERGE && BufferGeometryUtils.mergeGeometries && homeBldgs.length) {
     const TILE = 36 // 区画の大きさ(m)。小さいほどカリングが効き、大きいほど描画コールが減る
     const groups = new Map(), _inv = new THREE.Matrix4(), _mm = new THREE.Matrix4()
     town.updateMatrixWorld(true); _inv.copy(town.matrixWorld).invert()
