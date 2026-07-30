@@ -1,0 +1,48 @@
+■ GPUへ送り込まれた絵: 14回
+      7回  1x1 (生データ)
+      3回  393x852 (生データ)
+      2回  377x817 (生データ)
+      1回  991x594 (IMG)
+      1回  2048x2048 (生データ)
+
+■ 区画統合の内訳（__town3dMerge）
+   区画メッシュ: 86
+   元メッシュ: 657
+   走査メッシュ: 1159
+   絵柄あり: 460
+   取りこぼし: 502
+   取りこぼし束: 487
+   区画: 86
+   削減: 571
+
+■ 窓辺（眺める・既定）: 画面に描かれる物=1821（種類 422） 描画コール=1834
+   建物の壁（窓テクスチャつき）: 80個（19種類）← 共有化すれば区画統合に載る候補
+   その他の絵つき: 184個 / 絵なし: 1557個
+       11個  Box|Toon|#c7a695|絵頂色  親=Group<town<scene  材質数=3
+        8個  Box|Toon|#e2ddd0|絵頂色  親=Group<town<scene  材質数=3
+        8個  Box|Toon|#a9a094|絵頂色  親=Group<town<scene  材質数=3
+        7個  Box|Toon|#bcc0b6|絵頂色  親=Group<town<scene  材質数=3
+        6個  Box|Toon|#cabb9f|絵頂色  親=Group<town<scene  材質数=3
+        6個  Box|Toon|#a7b09c|絵頂色  親=Group<town<scene  材質数=3
+
+■ 低空飛行（街の中心）: 画面に描かれる物=1517（種類 332） 描画コール=1528
+   建物の壁（窓テクスチャつき）: 91個（11種類）← 共有化すれば区画統合に載る候補
+   その他の絵つき: 143個 / 絵なし: 1283個
+       13個  Box|Toon|#c7a695|絵頂色  親=Group<town<scene  材質数=3
+       11個  Box|Toon|#a9a094|絵頂色  親=Group<town<scene  材質数=3
+       10個  Box|Toon|#bcc0b6|絵頂色  親=Group<town<scene  材質数=3
+       10個  Box|Toon|#cabb9f|絵頂色  親=Group<town<scene  材質数=3
+        9個  Box|Toon|#a7b09c|絵頂色  親=Group<town<scene  材質数=3
+        9個  Box|Toon|#e2ddd0|絵頂色  親=Group<town<scene  材質数=3
+
+■ 着地して歩く: 画面に描かれる物=747（種類 214） 描画コール=756
+   建物の壁（窓テクスチャつき）: 120個（21種類）← 共有化すれば区画統合に載る候補
+   その他の絵つき: 79個 / 絵なし: 548個
+       14個  Box|Toon|#cabb9f|絵頂色  親=Group<town<scene  材質数=3
+       11個  Box|Toon|#c2b4a4|絵頂色  親=Group<town<scene  材質数=3
+       10個  Box|Toon|#a9a094|絵頂色  親=Group<town<scene  材質数=3
+        9個  Box|Toon|#e2ddd0|絵頂色  親=Group<town<scene  材質数=3
+        8個  Box|Toon|#a7b09c|絵頂色  親=Group<town<scene  材質数=3
+        8個  Box|Toon|#aab2b8|絵頂色  親=Group<town<scene  材質数=3
+
+エラー: 0件
