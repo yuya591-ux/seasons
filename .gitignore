@@ -16,3 +16,5 @@ scripts/.pollinations-token
 scripts/_eval-art
 scripts/_eval-ux
 scripts/_eval-tech
+# 検収スクショは容量が大きいのでローカル保管（計画・ログのmd/jsonのみ追跡）
+docs/qa/**/*.png
