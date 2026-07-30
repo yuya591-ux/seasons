@@ -1,0 +1,10 @@
+y=70 中央: BufferGeometry@83.2m #52784a 不透明1 / PlaneGeometry@88.3m #ffffff 不透明1 / BufferGeometry@88.3m #ffffff 不透明1
+y=70 下:   PlaneGeometry@82.4m #ffffff 不透明1 / PlaneGeometry@82.5m #ffffff 不透明1 / PlaneGeometry@86.7m #ffffff 不透明1
+y=84 中央: PlaneGeometry@96.4m #ffffff 不透明1 / PlaneGeometry@96.5m #ffffff 不透明1 / PlaneGeometry@105.8m #ffffff 不透明1
+y=84 下:   BufferGeometry@101.3m #ffffff 不透明1 / PlaneGeometry@101.3m #ffffff 不透明0.07 / BufferGeometry@101.4m #6e6c68 不透明1
+y=92 中央: BufferGeometry@6.2m #ffffff 不透明0.42 / PlaneGeometry@105.3m #ffffff 不透明1 / PlaneGeometry@105.3m #ffffff 不透明1
+y=92 下:   BufferGeometry@4.6m #ffffff 不透明0.42 / PlaneGeometry@107.4m #ffffff 不透明1 / PlaneGeometry@107.5m #ffffff 不透明1
+y=100 中央: BufferGeometry@3m #ffffff 不透明0.88 / BufferGeometry@15.1m #ffffff 不透明0.88 / BoxGeometry@114.3m #d0b0a0 不透明1
+y=100 下:   BufferGeometry@2.5m #ffffff 不透明0.88 / BufferGeometry@11.2m #ffffff 不透明0.88 / BufferGeometry@110.2m #ffffff 不透明1
+y=112 中央: BufferGeometry@17.6m #ffffff 不透明1 / PlaneGeometry@126.2m #ffffff 不透明1 / PlaneGeometry@126.4m #ffffff 不透明1
+y=112 下:   BufferGeometry@14.3m #ffffff 不透明1 / BufferGeometry@22.6m #ffffff 不透明1 / BufferGeometry@122.1m #ffffff 不透明1

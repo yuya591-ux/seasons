@@ -2549,7 +2549,10 @@ export async function mountTown3d(parent, opts = {}) {
       const cz = -12 - R() * 54
       const cy = heightAt(cx, cz)
       town.add(mkCar(cx, cy, cz, side > 0 ? 0.05 : -0.05, carCols[(R() * carCols.length) | 0])) // 車体＋窓＋4輪
-
+      // 車は「すり抜けられる」「真上に降りられる」物ではない。歩きの当たり判定と、着地地点の回避に登録する
+      // （実機で降り立った時に車の中へ着地し、白い車体が画面の下半分を塞いだ＝2026-07-28の検収で判明）。
+      colliders.push({ x: cx, z: cz, r: 1.5 })      // 車体1.7×3.4mを包む当たり
+      spawnAvoid.push({ x: cx, z: cz, r: 4.2 })     // 降り立つ時は車1台ぶん離れる
     }
   }
 
@@ -2694,6 +2697,12 @@ export async function mountTown3d(parent, opts = {}) {
       for (const cx2 of [-1, 1]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2, 6), trimMat); post.position.set(cx2, 1.1, 0); corral.add(post) }
       for (let k = 0; k < 4; k++) { const cart = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.9), toon(0x9aa0a4)); cart.position.set(0, 0.5, -1.2 + k * 0.45); corral.add(cart) } }
     g.position.set(x, gy, z); g.rotation.y = -0.3; town.add(g)
+    // 駐車場は車がぎっしり並ぶ場所。ここへ降り立つと車の中に着地してしまうので、区画ごと着地の対象外にする。
+    // 並んだ車にも当たり判定を入れる（すり抜けて歩けてしまうのを防ぐ）。局所座標を建物の向き(-0.3)で回して世界座標へ。
+    { const s = Math.sin(-0.3), c = Math.cos(-0.3)
+      const toWorld = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c]
+      const [lotX, lotZ] = toWorld(0, 15); spawnAvoid.push({ x: lotX, z: lotZ, r: 12 })
+      for (let i = 0; i < (LIGHT ? 7 : 11); i++) { const [wx, wz] = toWorld(-9 + (i % 6) * 3, 12.6 + ((i / 6) | 0) * 4.6); colliders.push({ x: wx, z: wz, r: 1.4 }) } }
   }
   // ── パチンコ屋（建物＋縦長の袖看板。夜/夕にだけネオンが煌々と灯る。昼は派手にしない） ──
   {
@@ -6112,11 +6121,12 @@ export async function mountTown3d(parent, opts = {}) {
         sh.uniforms.uSeaR = { value: seaR }
         sh.uniforms.uWarm = { value: seaWarm }; sh.uniforms.uWarmAmt = { value: seaWarmAmt }
         sh.vertexShader = sh.vertexShader
-          .replace('#include <common>', '#include <common>\nuniform float uTime; varying vec3 vSeaN; varying float vSeaC;')
+          .replace('#include <common>', '#include <common>\nuniform float uTime; varying vec3 vSeaN; varying float vSeaC; varying float vSeaD;')
+          .replace('#include <project_vertex>', '#include <project_vertex>\n  vSeaD = -mvPosition.z;') // カメラからの距離＝近接フェード用
           .replace('#include <begin_vertex>', '#include <begin_vertex>\n  float _wx = transformed.x, _wz = transformed.z;\n  float _p1 = _wx*0.020 + uTime*0.16, _p2 = _wz*0.024 - uTime*0.12, _p3 = (_wx+_wz)*0.012 + uTime*0.08;\n  transformed.y += sin(_p1)*cos(_p2)*3.0 + sin(_p3)*1.8;\n  float _dx = 0.020*cos(_p1)*cos(_p2)*3.0 + 0.012*cos(_p3)*1.8;\n  float _dz = -0.024*sin(_p1)*sin(_p2)*3.0 + 0.012*cos(_p3)*1.8;\n  vSeaN = normalize(vec3(-_dx, 1.0, -_dz));\n  vSeaC = length((modelMatrix * vec4(transformed,1.0)).xz);')
         sh.fragmentShader = sh.fragmentShader
-          .replace('#include <common>', '#include <common>\nuniform vec3 uSunDir; uniform vec3 uSunCol; uniform float uSeaR; uniform vec3 uWarm; uniform float uWarmAmt; varying vec3 vSeaN; varying float vSeaC;')
-          .replace('#include <dithering_fragment>', '  float _ndl = dot(normalize(vSeaN), uSunDir);\n  gl_FragColor.rgb *= (0.90 + smoothstep(-0.2, 0.7, _ndl) * 0.10);\n  gl_FragColor.rgb += uSunCol * pow(max(_ndl, 0.0), 10.0) * 0.05;\n  float _lum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));\n  gl_FragColor.rgb = mix(gl_FragColor.rgb, uWarm, uWarmAmt * (0.45 + 0.55 * (1.0 - clamp(_lum, 0.0, 1.0))));\n  gl_FragColor.a *= 1.0 - smoothstep(uSeaR*0.80, uSeaR*0.998, vSeaC);\n#include <dithering_fragment>')
+          .replace('#include <common>', '#include <common>\nuniform vec3 uSunDir; uniform vec3 uSunCol; uniform float uSeaR; uniform vec3 uWarm; uniform float uWarmAmt; varying vec3 vSeaN; varying float vSeaC; varying float vSeaD;')
+          .replace('#include <dithering_fragment>', '  float _ndl = dot(normalize(vSeaN), uSunDir);\n  gl_FragColor.rgb *= (0.90 + smoothstep(-0.2, 0.7, _ndl) * 0.10);\n  gl_FragColor.rgb += uSunCol * pow(max(_ndl, 0.0), 10.0) * 0.05;\n  float _lum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));\n  gl_FragColor.rgb = mix(gl_FragColor.rgb, uWarm, uWarmAmt * (0.45 + 0.55 * (1.0 - clamp(_lum, 0.0, 1.0))));\n  gl_FragColor.a *= 1.0 - smoothstep(uSeaR*0.80, uSeaR*0.998, vSeaC);\n  gl_FragColor.a *= smoothstep(3.0, 26.0, vSeaD);\n#include <dithering_fragment>')
       }
       mat.customProgramCacheKey = () => 'cloudsea'
       return mat
@@ -7604,7 +7614,11 @@ export async function mountTown3d(parent, opts = {}) {
       for (let i = 0; i < N; i++) { const x0 = (R() - 0.5) * 3.1, y0 = FY + 0.45 + R() * (oT - FY - 0.3), z0 = 0.5 + R() * 2.7; dp[i * 3] = x0; dp[i * 3 + 1] = y0; dp[i * 3 + 2] = z0; base.push({ x0, y0, z0, ph: R() * 6.28, sp: 0.25 + R() * 0.4, amp: 0.05 + R() * 0.07 }) }
       const dgeo = new THREE.BufferGeometry(); dgeo.setAttribute('position', new THREE.BufferAttribute(dp, 3))
       const dCol = isNight ? new THREE.Color(0xffe0a8) : new THREE.Color(0xffeccb).lerp(sunCol, 0.5) // 夜は灯り色の微粒
-      const dmat = new THREE.PointsMaterial({ color: dCol, size: 0.026, transparent: true, opacity: isNight ? 0.14 : (0.22 + duskAmt * 0.16), depthWrite: false, fog: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }); winRoomMats.push(dmat)
+      // 絵柄を持たない粒は WebGL の既定で「硬い四角」に描かれる（高精細な画面ほど四角が見える）。
+      // 中心から柔らかく消える丸を1枚与えて、空気に浮かぶ埃らしい滲みにする。
+      const dotTex = cv(32, 32, (x) => { const g = x.createRadialGradient(16, 16, 0.5, 16, 16, 16); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.45, 'rgba(255,255,255,0.42)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32) })
+      // 絵柄の縁がなだらかな分だけ見かけが淡くなるので、粒をわずかに大きく・濃くして今までの見え方に揃える
+      const dmat = new THREE.PointsMaterial({ map: dotTex, color: dCol, size: 0.034, transparent: true, opacity: isNight ? 0.2 : (0.3 + duskAmt * 0.2), depthWrite: false, fog: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }); winRoomMats.push(dmat)
       const dust = new THREE.Points(dgeo, dmat); dust.frustumCulled = false; dust.renderOrder = 6; winRoom.add(dust)
       winDust = { geo: dgeo, arr: dp, base }
     }
@@ -7789,6 +7803,9 @@ export async function mountTown3d(parent, opts = {}) {
       if (Math.abs(x - RIVER.x) < RIVER.halfW + 1.3) return true // 川には降りない
     }
     for (const c of spawnAvoid) { const dx = x - c.x, dz = z - c.z; if (dx * dx + dz * dz < c.r * c.r) return true }
+    // 走っている車・バスの上には降りない。動く物なので静的な回避リストには載せられず、降りる瞬間の位置を見て避ける
+    // （実機で降り立つとバスの車体が画面の下半分を塞いだ＝2026-07-28の検収で判明）。
+    for (const v of cars) { const dx = x - v.position.x, dz = z - v.position.z; if (dx * dx + dz * dz < 42) return true } // 6.5m以内は不可（バス全長7m）
     return false
   }
   // 着地点の開放度＝8方位で歩ける距離の最大。降りた所が箱詰め（密集の谷間）なら低い。
