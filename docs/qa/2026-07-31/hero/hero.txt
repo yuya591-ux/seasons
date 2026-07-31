@@ -1,0 +1,36 @@
+■ #7 主人公（2Dの立ち絵）を4方向から撮り、3Dの住人と並べる
+   立ち絵の数: 9 体
+   立ち絵_正面.png  （板の見かけの幅 1.05m・板の高さ 2.1m）
+      板に描かれている絵の実測: {"キャンバス":"360x720","絵の高さm":1.712,"絵の幅m":0.426,"板に対する縦の占有率":0.815,"足元が板の下端から":0.21}
+   立ち絵_斜め.png  （板の見かけの幅 0.849m・板の高さ 2.1m）
+      板に描かれている絵の実測: {"キャンバス":"360x720","絵の高さm":1.712,"絵の幅m":0.426,"板に対する縦の占有率":0.815,"足元が板の下端から":0.21}
+   立ち絵_横.png  （板の見かけの幅 0.7m・板の高さ 2.1m）
+      板に描かれている絵の実測: {"キャンバス":"360x720","絵の高さm":1.712,"絵の幅m":0.426,"板に対する縦の占有率":0.815,"足元が板の下端から":0.21}
+   立ち絵_後ろ.png  （板の見かけの幅 1.05m・板の高さ 2.1m）
+      板に描かれている絵の実測: {"キャンバス":"360x720","絵の高さm":1.712,"絵の幅m":0.426,"板に対する縦の占有率":0.815,"足元が板の下端から":0.21}
+   立ち絵と住人_並び.png  （左＝2Dの立ち絵 {"高さm":2.1,"幅m":1.05}／右＝3Dの住人 {"高さm":1.39,"幅m":0.428}）
+
+■ #8 歩行時にアバターが居ないことの記録（ズーム4段）
+   （選んだ情景: 北寺尾の窓辺、立体の街本物の3Dで組んだ坂の街を、窓から見下）
+   段階ボタンを押した（画面の文言: 窓をあける／期待: 窓をあける）
+   段階ボタンを押した（画面の文言: 乗り出す／期待: 乗り出す）
+   段階ボタンを押した（画面の文言: 空へ／期待: 空へ）
+   段階ボタンを押した（画面の文言: 地上へ／期待: 地上へ）
+   いまの居場所: 地上を歩く　現代の街
+   アバター不在_zoom0_4.png
+      画面中央に当たった物: ["BufferGeometry(Group) 127.9m 色#6e6a64","BoxGeometry(Group) 127.9m 色#a9a094","BufferGeometry(Group) 133m 色#5e8444"]
+      画面中央のやや下（本来アバターが立つ位置）: ["PlaneGeometry(Group) 10.7m 色#ffffff","BufferGeometry(Group) 10.8m 色#ffffff","BufferGeometry(Group) 10.8m 色#ffffff"]
+   アバター不在_zoom1.png
+      画面中央に当たった物: ["BufferGeometry(Group) 100.2m 色#52784a","BufferGeometry(Group) 106.5m 色#748f4c","BufferGeometry(Group) 127.3m 色#ada79a"]
+      画面中央のやや下（本来アバターが立つ位置）: ["PlaneGeometry(Group) 8.5m 色#ffffff","PlaneGeometry(Group) 9.1m 色#ffffff","BufferGeometry(Group) 10.5m 色#ada79a"]
+   アバター不在_zoom1_56.png
+      画面中央に当たった物: ["BufferGeometry(Group) 101.2m 色#52784a","BufferGeometry(Group) 101.4m 色#52784a","BufferGeometry(Group) 102.5m 色#52784a"]
+      画面中央のやや下（本来アバターが立つ位置）: ["PlaneGeometry(Group) 7.4m 色#ffffff","PlaneGeometry(Group) 7.8m 色#ffffff","PlaneGeometry(Group) 28.6m 色#ffffff"]
+   アバター不在_zoom3.png
+      画面中央に当たった物: ["BufferGeometry(Group) 104.1m 色#52784a","BufferGeometry(Group) 105.4m 色#52784a","BufferGeometry(Group) 105.7m 色#52784a"]
+      画面中央のやや下（本来アバターが立つ位置）: ["PlaneGeometry(Group) 7m 色#ffffff","BufferGeometry(Group) 7m 色#ffffff","BufferGeometry(Group) 7m 色#ffffff"]
+
+   ※ カメラの設定（45〜67行の FLY 定数）: walkBack 2.9m（カメラは立ち位置の2.9m後ろ）／walkUp 1.1m／walkAhead 7.2m／画角 78°
+   　 アバターが居れば、カメラから 2.9m 前後の位置に必ず写る。上のレイキャストで一番近い物はいずれも 7.0m 以遠だった。
+
+エラー: 0件
