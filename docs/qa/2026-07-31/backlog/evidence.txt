@@ -1,0 +1,57 @@
+# 「対応済み」と判定した項目の根拠
+
+## #40 [D] ほこりに丸い絵柄を1枚与える
+判定: 対応済み ／ src/engine/town3dViewer.js の 7628〜7645行 を /map:/ で探した → 1件
+  src/engine/town3dViewer.js:7638  const dmat = new THREE.PointsMaterial({ map: dotTex, color: dCol, size: 0.034, transparent: true, opacity: isNight ? 0.2 : (0.3 + duskAmt * 0.2), dept
+
+## #41 [D] 着地地点の前方に大きな物があれば退がる／横へずらす
+判定: 対応済み ／ src/engine/town3dViewer.js の 2550〜2710行 を /spawnAvoid/ で探した → 2件
+  src/engine/town3dViewer.js:2556  spawnAvoid.push({ x: cx, z: cz, r: 4.2 })     // 降り立つ時は車1台ぶん離れる
+  src/engine/town3dViewer.js:2705  const [lotX, lotZ] = toWorld(0, 15); spawnAvoid.push({ x: lotX, z: lotZ, r: 12 })
+
+## #42 [D] 音のNaN経路を潰す
+判定: 対応済み ／ src/audio/audio.js を /Number\.isFinite\(pan/ で探した → 2件
+  src/audio/audio.js:520  if (festNode.pan && Number.isFinite(pan)) festNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 会場の方角へ定位（振り向くと反対へ流れる）
+  src/audio/audio.js:563  if (staNode.pan && Number.isFinite(pan)) staNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 駅の方角へ定位
+
+## #46 [D] 窓辺のほこりが四角い（本検収#11で原因確定）
+判定: 対応済み ／ src/engine/town3dViewer.js の 7628〜7645行 を /map:/ で探した → 1件
+  src/engine/town3dViewer.js:7638  const dmat = new THREE.PointsMaterial({ map: dotTex, color: dCol, size: 0.034, transparent: true, opacity: isNight ? 0.2 : (0.3 + duskAmt * 0.2), dept
+
+## #47 [D] 着地カメラが車の中に入る（本検収#9で原因確定）
+判定: 対応済み ／ src/engine/town3dViewer.js を /車の中へ着地|駐車場は車がぎっしり/ で探した → 2件
+  src/engine/town3dViewer.js:2554  // （実機で降り立った時に車の中へ着地し、白い車体が画面の下半分を塞いだ＝2026-07-28の検収で判明）。
+  src/engine/town3dViewer.js:2701  // 駐車場は車がぎっしり並ぶ場所。ここへ降り立つと車の中に着地してしまうので、区画ごと着地の対象外にする。
+
+## #48 [D] 音のNaN混入（本検収で新たに検出・199件）
+判定: 対応済み ／ src/audio/audio.js を /Number\.isFinite\(pan/ で探した → 2件
+  src/audio/audio.js:520  if (festNode.pan && Number.isFinite(pan)) festNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 会場の方角へ定位（振り向くと反対へ流れる）
+  src/audio/audio.js:563  if (staNode.pan && Number.isFinite(pan)) staNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 駅の方角へ定位
+
+## #62 [D] Cylinder|Basic|#2a2a30 57個（town直下・材質1つ）を統合（-56）
+判定: 対応済み ／ src/engine/town3dViewer.js を /電線.*統合|電線.*1メッシュ|wireGeos/ で探した → 4件
+  src/engine/town3dViewer.js:2816  // 電線は本数が多く、1本ずつ描くと描画コールを食う（窓辺で57本＝発熱の一因）。形を焼いて溜め、最後に1メッシュへ統合する。
+  src/engine/town3dViewer.js:2818  const wireGeos = []
+  src/engine/town3dViewer.js:2819  const keepWire = (mesh) => { if (NOMERGE) { town.add(mesh); return } mesh.updateMatrix(); wireGeos.push(mesh.geometry.clone().applyMatrix4(mesh.matrix
+  src/engine/town3dViewer.js:2938  if (wireGeos.length) { const wm3 = BufferGeometryUtils.mergeGeometries(wireGeos, false); if (wm3) town.add(new THREE.Mesh(wm3, wireMat)); wireGeos.for
+
+## #63 [D] 公園の同一材質51個を統合（-50）
+判定: 対応済み ／ src/engine/town3dViewer.js を /太鼓橋.*束ねる|deckGeos/ で探した → 4件
+  src/engine/town3dViewer.js:3291  const deckGeos = [[], []], keepDeck = (m, shadow) => { if (NOMERGE) { grp.add(m); return } m.updateMatrix(); deckGeos[shadow ? 0 : 1].push(m.geometry.
+  src/engine/town3dViewer.js:3311  if (BufferGeometryUtils.mergeGeometries) for (let k = 0; k < 2; k++) { if (!deckGeos[k].length) continue; const dm = BufferGeometryUtils.mergeGeometri
+  src/engine/town3dViewer.js:4973  const deckGeos = [], railGeos = []
+  src/engine/town3dViewer.js:4976  const seg = new THREE.BoxGeometry(1.5, 0.45, 4.4); seg.rotateZ(-Math.atan2(slope, 1.4)); seg.applyMatrix4(new THREE.Matrix4().makeTranslation(x, y, BZ
+
+## #76 [F] 音の設定値に非有限値（NaN/Infinity）が混入する 【2026-07-30 修正済み】
+判定: 対応済み ／ src/audio/audio.js を /Number\.isFinite\(pan/ で探した → 2件
+  src/audio/audio.js:520  if (festNode.pan && Number.isFinite(pan)) festNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 会場の方角へ定位（振り向くと反対へ流れる）
+  src/audio/audio.js:563  if (staNode.pan && Number.isFinite(pan)) staNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 駅の方角へ定位
+
+## #77 [F] 雲海の高度帯（y≒92）で画面が白い霞にほぼ覆われる 【2026-07-30 修正済み】
+判定: 対応済み ／ src/engine/town3dViewer.js を /雲の近接フェード|fadeR0/ で探した → 4件
+  src/engine/town3dViewer.js:5642  g.userData.fadeR0 = 20; g.userData.fadeR1 = 40; g.userData.fadeW = 1.8 // 近接フェードの半径（縦はfadeW倍で扁平）＝迫った雲は溶けて視界を塗りつぶさない
+  src/engine/town3dViewer.js:5653  g.userData = { fadeMat: fm, x0: ciX - 170, x1: ciX + 170, fadeR0: 26, fadeR1: 52, fadeW: 3 } // 巻雲は薄く横長＝縦の重みを強く
+  src/engine/town3dViewer.js:9758  // 雲の近接フェード＝迫った積雲/巻雲を群ごとに透明へ溶かし、不透明メッシュが視界を塗りつぶすのを根絶（実機FB「飛行中に目の前が真っ白」）。
+  src/engine/town3dViewer.js:9768  f = Math.min(1, Math.max(0, (Math.sqrt(dx * dx + dy * dy + dz * dz) - u.fadeR0) / (u.fadeR1 - u.fadeR0)))
+
+対応済み 10件
