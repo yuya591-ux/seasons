@@ -1,10 +1,9 @@
 {
  "note": "外し回しの記録 mutate2.json（回ごと）から、名前ごとに最新の回を1件ずつ取り出した物。S44-smoke は外し回しの台本の外で手で回した（台本はスモークを回せないため）",
- "at": "2026-10-12T20:45:51.334Z",
- "total": 72,
- "caught": 70,
+ "at": "2026-10-12T21:48:18.881Z",
+ "total": 73,
+ "caught": 72,
  "notCaught": [
-  "V10-horizonGlow",
   "V10-sunGlow"
  ],
  "results": [
@@ -497,12 +496,12 @@
    ],
    "caught": true,
    "failed": [
-    "V54 不合格 (40.8秒)"
+    "V54 不合格 (39.1秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T15:22:25.129Z",
-   "commit": "c33a11e"
+   "run": "2026-10-12T21:44:44.294Z",
+   "commit": "e6f0bcd"
   },
   {
    "name": "V55-countLine",
@@ -623,12 +622,14 @@
    "checks": [
     "V10"
    ],
-   "caught": false,
-   "failed": [],
+   "caught": true,
+   "failed": [
+    "V10 不合格 (23.3秒)"
+   ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T17:37:52.646Z",
-   "commit": "e0e21fb"
+   "run": "2026-10-12T21:48:01.144Z",
+   "commit": "f951041"
   },
   {
    "name": "V10-sunGlow",
@@ -641,8 +642,8 @@
    "failed": [],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T17:37:52.646Z",
-   "commit": "e0e21fb"
+   "run": "2026-10-12T21:48:01.144Z",
+   "commit": "f951041"
   },
   {
    "name": "V14-cloudShade",
@@ -671,12 +672,12 @@
    ],
    "caught": true,
    "failed": [
-    "V33 不合格 (75.0秒)"
+    "V33 不合格 (27.9秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T17:37:52.646Z",
-   "commit": "e0e21fb"
+   "run": "2026-10-12T21:41:41.930Z",
+   "commit": "10a8972"
   },
   {
    "name": "V36-latticeMountains",
@@ -1145,6 +1146,22 @@
    "restored": true,
    "run": "2026-10-12T20:45:39.988Z",
    "commit": "222fe0a"
+  },
+  {
+   "name": "V10-snowExposure",
+   "group": "g3",
+   "what": "雪の日の露出を 1.15（ほかの情景と同じ）へ戻す",
+   "checks": [
+    "V10"
+   ],
+   "caught": true,
+   "failed": [
+    "V10 不合格 (23.2秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T21:48:01.144Z",
+   "commit": "f951041"
   },
   {
    "name": "S44-smoke",
