@@ -1,9 +1,9 @@
 {
- "pass": false,
+ "pass": true,
  "contrast": {
-  "text": 0.7871,
-  "bg": 0.1885,
-  "ratio": 3.51
+  "text": 0.931,
+  "bg": 0.0576,
+  "ratio": 9.11
  },
  "rect": {
   "x": 67.921875,
@@ -20,8 +20,8 @@
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V54_iphone_後.png",
  "errs": [],
  "id": "V54",
- "ms": 25585,
- "at": "2026-10-12T21:59:20.268Z",
+ "ms": 26303,
+ "at": "2026-10-12T22:36:32.031Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

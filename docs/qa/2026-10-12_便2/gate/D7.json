@@ -32,7 +32,7 @@
    0.0011
   ],
   "duskShelf": -5,
-  "flyWind": 0.3708894519295599,
+  "flyWind": 0.36851046753406164,
   "cache": [
    "audio/summer-rain-dusk/rain.mp3",
    "audio/summer-rain-dusk/higurashi.mp3",
@@ -76,8 +76,8 @@
  "loopRatio": 1,
  "errs": [],
  "id": "D7",
- "ms": 44885,
- "at": "2026-10-12T21:49:09.851Z",
+ "ms": 44894,
+ "at": "2026-10-12T22:26:15.761Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

@@ -7,17 +7,17 @@
     "cap": 2,
     "floor": 1,
     "fly": 1.5,
-    "pr": 1.88,
+    "pr": 2,
     "shadow": 4096,
     "bloom": false,
-    "p75": 0.055,
-    "changes": 1,
-    "failedCap": 2,
+    "p75": 0.0334,
+    "changes": 0,
+    "failedCap": 0,
     "compiled": "async"
    },
    "canvas": [
-    3609,
-    2030
+    3840,
+    2160
    ]
   },
   "standard": {
@@ -29,7 +29,7 @@
     "pr": 1,
     "shadow": 2048,
     "bloom": false,
-    "p75": 0.0533,
+    "p75": 0.0334,
     "changes": 0,
     "failedCap": 0,
     "compiled": "async"
@@ -45,17 +45,17 @@
     "cap": 0.822,
     "floor": 0.8,
     "fly": 0.8,
-    "pr": 0.8,
+    "pr": 0.822,
     "shadow": 1024,
     "bloom": false,
     "p75": 0.0334,
-    "changes": 1,
-    "failedCap": 0.822,
+    "changes": 0,
+    "failedCap": 0,
     "compiled": "async"
    },
    "canvas": [
-    1536,
-    864
+    1578,
+    887
    ]
   }
  },
@@ -69,7 +69,7 @@
     "pr": 2,
     "shadow": 4096,
     "bloom": false,
-    "p75": 0.0335,
+    "p75": 0.0334,
     "changes": 0,
     "failedCap": 0,
     "compiled": "async"
@@ -88,7 +88,7 @@
     "pr": 1.25,
     "shadow": 2048,
     "bloom": false,
-    "p75": 0.0335,
+    "p75": 0.0334,
     "changes": 0,
     "failedCap": 0,
     "compiled": "async"
@@ -119,8 +119,8 @@
   }
  },
  "id": "D1",
- "ms": 120912,
- "at": "2026-10-12T22:07:07.335Z",
+ "ms": 100186,
+ "at": "2026-10-12T22:43:58.773Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

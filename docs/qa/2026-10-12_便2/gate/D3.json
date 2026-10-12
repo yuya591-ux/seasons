@@ -12,11 +12,11 @@
   "fly": 1.2,
   "walk": 1.6,
   "flyCap": 1.2,
-  "walkCalls": 578
+  "walkCalls": 558
  },
  "id": "D3",
- "ms": 58753,
- "at": "2026-10-12T22:12:27.844Z",
+ "ms": 57893,
+ "at": "2026-10-12T22:49:20.027Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

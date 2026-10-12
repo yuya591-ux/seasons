@@ -1,12 +1,12 @@
 {
  "pass": true,
  "timers": 3,
- "fired": 4,
+ "fired": 3,
  "bound": 4,
  "errs": [],
  "id": "S18",
- "ms": 35656,
- "at": "2026-10-12T21:50:30.193Z",
+ "ms": 35645,
+ "at": "2026-10-12T22:27:36.348Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

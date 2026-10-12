@@ -15,8 +15,8 @@
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/U2_iphone_後.png",
  "errs": [],
  "id": "U2",
- "ms": 27934,
- "at": "2026-10-12T22:18:51.295Z",
+ "ms": 27462,
+ "at": "2026-10-12T22:56:10.828Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

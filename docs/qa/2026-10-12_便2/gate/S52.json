@@ -2,8 +2,8 @@
  "pass": true,
  "line": "quality: autoQuality(), // 'soft'(こまやか) | 'standard'(ふつう) | 'light'(軽やか)＝設定の画面の言葉に合わせる",
  "id": "S52",
- "ms": 0,
- "at": "2026-10-12T21:52:44.639Z",
+ "ms": 1,
+ "at": "2026-10-12T22:29:51.990Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

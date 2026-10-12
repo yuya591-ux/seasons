@@ -3,11 +3,8 @@
  "kiroku": "真因未特定（候補は地平の光の帯の板・直していない）",
  "views": {
   "kitaterao-window-3d": {
-   "blobs": 2,
-   "sizes": [
-    4074,
-    751
-   ],
+   "blobs": 0,
+   "sizes": [],
    "errs": [],
    "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V28_pc_後.png"
   },
@@ -18,8 +15,8 @@
   }
  },
  "id": "V28",
- "ms": 64125,
- "at": "2026-10-12T22:02:30.582Z",
+ "ms": 65239,
+ "at": "2026-10-12T22:39:43.461Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }

@@ -22,7 +22,7 @@
    "pr": 1,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.084,
+   "p75": 0.0887,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -112,7 +112,7 @@
    "pr": 1.25,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0829,
+   "p75": 0.0835,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -121,8 +121,8 @@
   "maxPr": 1.25
  },
  "id": "D2",
- "ms": 125420,
- "at": "2026-10-12T22:09:12.796Z",
+ "ms": 126144,
+ "at": "2026-10-12T22:46:04.970Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0929255"
+ "commit": "4e09380"
 }
