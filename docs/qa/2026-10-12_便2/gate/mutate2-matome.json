@@ -1,0 +1,1084 @@
+{
+ "note": "外し回しの記録 mutate2.json（回ごと）から、名前ごとに最新の回を1件ずつ取り出した物。作り直す時は同じ手順で上書きする。S44-smoke は外し回しの台本の外で手で回した（台本はスモークを回せないため）",
+ "at": "2026-10-12T19:27:57.678Z",
+ "total": 67,
+ "caught": 65,
+ "notCaught": [
+  "V10-horizonGlow",
+  "V10-sunGlow"
+ ],
+ "results": [
+  {
+   "name": "D7-resetPlaces",
+   "group": "g1",
+   "what": "情景を替える時に場所の音の値を戻す呼び出しを外す",
+   "checks": [
+    "D7"
+   ],
+   "caught": true,
+   "failed": [
+    "D7 不合格 (78.6秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S14-duskShelf",
+   "group": "g1",
+   "what": "新しい情景で夕方の高音しぼりを戻す行を外す",
+   "checks": [
+    "D7"
+   ],
+   "caught": true,
+   "failed": [
+    "D7 不合格 (69.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S2-chimeBus",
+   "group": "g1",
+   "what": "起動の鈴を防音の経路（master）へ戻す",
+   "checks": [
+    "S2"
+   ],
+   "caught": true,
+   "failed": [
+    "S2 不合格 (30.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "S4-cacheTrim",
+   "group": "g1",
+   "what": "解読した音の控えの掃除を外す",
+   "checks": [
+    "S4"
+   ],
+   "caught": true,
+   "failed": [
+    "S4 不合格 (66.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S16-retry",
+   "group": "g1",
+   "what": "起動に失敗した後のタップでのやり直しを外す",
+   "checks": [
+    "S16"
+   ],
+   "caught": true,
+   "failed": [
+    "S16 不合格 (21.8秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S18-timers",
+   "group": "g1",
+   "what": "発火したタイマーを配列から外す処理を外す",
+   "checks": [
+    "S18"
+   ],
+   "caught": true,
+   "failed": [
+    "S18 不合格 (50.6秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "D8-uiPersist",
+   "group": "g1",
+   "what": "おやすみの選択を設定へ書き、点灯を設定から読む形へ戻す",
+   "checks": [
+    "D8"
+   ],
+   "caught": true,
+   "failed": [
+    "D8 不合格 (42.6秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "D8-afterSleep",
+   "group": "g1",
+   "what": "暗転が終わった後に点灯を「なし」へ戻す呼び出しを外す",
+   "checks": [
+    "D8"
+   ],
+   "caught": true,
+   "failed": [
+    "D8 不合格 (67.2秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S50-enableAtGate",
+   "group": "g1",
+   "what": "起動のタップで保存された傾きを有効にする処理を外す",
+   "checks": [
+    "S50"
+   ],
+   "caught": true,
+   "failed": [
+    "S50 不合格 (42.5秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S50-route3d",
+   "group": "g1",
+   "what": "傾きを町の3Dへ渡す分岐を外す",
+   "checks": [
+    "S50"
+   ],
+   "caught": true,
+   "failed": [
+    "S50 不合格 (33.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S50-axes",
+   "group": "g1",
+   "what": "画面の向きでの軸の入れ替えを外す",
+   "checks": [
+    "S50"
+   ],
+   "caught": true,
+   "failed": [
+    "S50 不合格 (34.2秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S50-tiltYaw",
+   "group": "g1",
+   "what": "町の3Dで傾きを見回しへ足す更新を外す",
+   "checks": [
+    "S50"
+   ],
+   "caught": true,
+   "failed": [
+    "S50 不合格 (36.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "S34-holds",
+   "group": "g1",
+   "what": "止めている理由があっても再開する形へ戻す",
+   "checks": [
+    "S34"
+   ],
+   "caught": true,
+   "failed": [
+    "S34 不合格 (46.5秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S34-sleepReason",
+   "group": "g1",
+   "what": "おやすみから戻る時に町の3Dの理由まで外す形へ戻す",
+   "checks": [
+    "S34"
+   ],
+   "caught": true,
+   "failed": [
+    "S34 不合格 (48.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S53-bgKey",
+   "group": "g1",
+   "what": "前の情景の背景が後から届いても貼る形へ戻す",
+   "checks": [
+    "S53"
+   ],
+   "caught": true,
+   "failed": [
+    "S53 不合格 (22.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S38-frameTry",
+   "group": "g1",
+   "what": "描画ループの更新の囲いを外す",
+   "checks": [
+    "S38"
+   ],
+   "caught": true,
+   "failed": [
+    "S38 不合格 (41.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S38-composerRetry",
+   "group": "g1",
+   "what": "後処理の例外の後に後処理を試し直す形を、捨てる形へ戻す",
+   "checks": [
+    "S38"
+   ],
+   "caught": true,
+   "failed": [
+    "S38 不合格 (43.4秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "D9-statsGuard",
+   "group": "g1",
+   "what": "測りの口が今の町だけを見る判定を外す",
+   "checks": [
+    "D9"
+   ],
+   "caught": true,
+   "failed": [
+    "D9 不合格 (39.4秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S41-regex",
+   "group": "g1",
+   "what": "検証用の口の判定を includes へ戻す",
+   "checks": [
+    "S41"
+   ],
+   "caught": true,
+   "failed": [
+    "S41 不合格 (13.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S52-comment",
+   "group": "g1",
+   "what": "品質の表記を前の言葉へ戻す",
+   "checks": [
+    "S52"
+   ],
+   "caught": true,
+   "failed": [
+    "S52 不合格 (0.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S39-activate",
+   "group": "g1",
+   "what": "SW の掃除を前の版の名前だけ見る形へ戻す",
+   "checks": [
+    "S39"
+   ],
+   "caught": true,
+   "failed": [
+    "S39 不合格 (83.6秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S39-buildId",
+   "group": "g1",
+   "what": "sw.js の版をビルドで埋める処理を外す",
+   "checks": [
+    "S39"
+   ],
+   "caught": true,
+   "failed": [
+    "S39 不合格 (85.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S40-cacheFirst",
+   "group": "g1",
+   "what": "ハッシュ付きの資産も裏で取り直す形へ戻す",
+   "checks": [
+    "S40"
+   ],
+   "caught": true,
+   "failed": [
+    "S40 不合格 (105.9秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S26-reserve",
+   "group": "g1",
+   "what": "祭りの会場の予約を開催の日だけにする形へ戻す",
+   "checks": [
+    "S26"
+   ],
+   "caught": true,
+   "failed": [
+    "S26 不合格 (154.3秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "S26-localR",
+   "group": "g1",
+   "what": "祭りを町の乱数で作る形へ戻す",
+   "checks": [
+    "S26"
+   ],
+   "caught": true,
+   "failed": [
+    "S26 不合格 (139.6秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "L1-ledger",
+   "group": "g1",
+   "what": "台帳1の「再現せず」の書き足しを外す",
+   "checks": [
+    "L1"
+   ],
+   "caught": true,
+   "failed": [
+    "L1 不合格 (0.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T14:31:16.018Z",
+   "commit": "23813f6"
+  },
+  {
+   "name": "D4-panelZ",
+   "group": "g2",
+   "what": "パネルの重なり順の指定を外す",
+   "checks": [
+    "D4"
+   ],
+   "caught": true,
+   "failed": [
+    "D4 不合格 (213.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V46-label",
+   "group": "g2",
+   "what": "設定の見出しの幅を前の 3.2rem へ戻す",
+   "checks": [
+    "V46"
+   ],
+   "caught": true,
+   "failed": [
+    "V46 不合格 (41.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V47-restAbovePad",
+   "group": "g2",
+   "what": "スティックの常駐位置をトレイより上に置く計算を外す",
+   "checks": [
+    "V47"
+   ],
+   "caught": true,
+   "failed": [
+    "V47 不合格 (50.2秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V48-hintNearStick",
+   "group": "g2",
+   "what": "歩く案内を前の固定位置（左8%・下22%）へ戻す",
+   "checks": [
+    "V48"
+   ],
+   "caught": true,
+   "failed": [
+    "V48 不合格 (99.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V54-stageBg",
+   "group": "g2",
+   "what": "主ボタンの地を前の淡い茶へ戻す",
+   "checks": [
+    "V54"
+   ],
+   "caught": true,
+   "failed": [
+    "V54 不合格 (40.8秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V55-countLine",
+   "group": "g2",
+   "what": "眺めの数を説明の末尾へ戻す",
+   "checks": [
+    "V55"
+   ],
+   "caught": true,
+   "failed": [
+    "V55 不合格 (38.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V61-band",
+   "group": "g2",
+   "what": "飛行の案内の帯を外す",
+   "checks": [
+    "V61"
+   ],
+   "caught": true,
+   "failed": [
+    "V61 不合格 (43.8秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V61-abovePad",
+   "group": "g2",
+   "what": "飛行の案内をトレイの上端より上に出す計算を外す",
+   "checks": [
+    "V61"
+   ],
+   "caught": true,
+   "failed": [
+    "V61 不合格 (46.4秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "V49-rootPx",
+   "group": "g2",
+   "what": "広い画面の文字の基準を 16px へ戻す",
+   "checks": [
+    "V49"
+   ],
+   "caught": true,
+   "failed": [
+    "V49 不合格 (90.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e"
+  },
+  {
+   "name": "D5-headY0",
+   "group": "g3",
+   "what": "住人の頭を 1.6 で書き戻す形へ戻す",
+   "checks": [
+    "D5"
+   ],
+   "caught": true,
+   "failed": [
+    "D5 不合格 (68.2秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "D6-cover",
+   "group": "g3",
+   "what": "雨の窓の画を画面の 0〜1 へそのまま当てる形へ戻す",
+   "checks": [
+    "D6"
+   ],
+   "caught": true,
+   "failed": [
+    "D6 不合格 (72.8秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "D6-aspect",
+   "group": "g3",
+   "what": "画像の縦横比を描画へ渡す行を外す",
+   "checks": [
+    "D6"
+   ],
+   "caught": true,
+   "failed": [
+    "D6 不合格 (52.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "V10-horizonGlow",
+   "group": "g3",
+   "what": "雪の日の地平のにじみを晴れの日と同じ濃さへ戻す",
+   "checks": [
+    "V10"
+   ],
+   "caught": false,
+   "failed": [],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "V10-sunGlow",
+   "group": "g3",
+   "what": "雪の日の太陽の光輪と円盤を前の濃さへ戻す",
+   "checks": [
+    "V10"
+   ],
+   "caught": false,
+   "failed": [],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "V14-cloudShade",
+   "group": "g3",
+   "what": "雲の陰に空の色を足す自発光を外す",
+   "checks": [
+    "V14",
+    "V27"
+   ],
+   "caught": true,
+   "failed": [
+    "V14 不合格 (60.8秒)",
+    "V27 不合格 (70.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "V33-horizon",
+   "group": "g3",
+   "what": "海辺の地平を窓の横桟と同じ 0.52 へ戻す",
+   "checks": [
+    "V33"
+   ],
+   "caught": true,
+   "failed": [
+    "V33 不合格 (75.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "V36-latticeMountains",
+   "group": "g3",
+   "what": "山あいの雑音の格子点を前の小数のハッシュへ戻す",
+   "checks": [
+    "V36",
+    "V38"
+   ],
+   "caught": true,
+   "failed": [
+    "V36 不合格 (46.5秒)",
+    "V38 不合格 (66.6秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "V38-latticeSea",
+   "group": "g3",
+   "what": "海辺の雑音の格子点を前の小数のハッシュへ戻す",
+   "checks": [
+    "V38"
+   ],
+   "caught": true,
+   "failed": [
+    "V38 不合格 (77.2秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "S24-table2d",
+   "group": "g4",
+   "what": "2D に前の段の表を書き戻す（表が2か所になる）",
+   "checks": [
+    "S24"
+   ],
+   "caught": true,
+   "failed": [
+    "S24 不合格 (0.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "D1-pcSoft",
+   "group": "g4",
+   "what": "PC の「こまやか」も端末の倍率で頭打ちにする形へ戻す",
+   "checks": [
+    "D1"
+   ],
+   "caught": true,
+   "failed": [
+    "D1 不合格 (376.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "D2-floor",
+   "group": "g4",
+   "what": "下限を画面の素の細かさで止めない形へ戻す",
+   "checks": [
+    "D2"
+   ],
+   "caught": true,
+   "failed": [
+    "D2 不合格 (304.5秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "U1-p75",
+   "group": "g4",
+   "what": "上位25%点でなく一番遅い1フレームで判定する形へ",
+   "checks": [
+    "U1"
+   ],
+   "caught": true,
+   "failed": [
+    "U1 不合格 (277.5秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "U1-failedCap",
+   "group": "g4",
+   "what": "一度重かった細かさにすぐ戻す形へ",
+   "checks": [
+    "U1"
+   ],
+   "caught": true,
+   "failed": [
+    "U1 不合格 (250.4秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "D3-walk",
+   "group": "g4",
+   "what": "歩く時も天井を下げる形へ戻す",
+   "checks": [
+    "D3"
+   ],
+   "caught": true,
+   "failed": [
+    "D3 不合格 (153.8秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "S23-pxCap",
+   "group": "g4",
+   "what": "総画素数の上限を外す",
+   "checks": [
+    "S23"
+   ],
+   "caught": true,
+   "failed": [
+    "S23 不合格 (196.3秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "S25-genCounts",
+   "group": "g4",
+   "what": "町の乱数を回す物の数を軽やかで減らす形へ戻す",
+   "checks": [
+    "S25"
+   ],
+   "caught": true,
+   "failed": [
+    "S25 不合格 (288.4秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "S27-rebuild",
+   "group": "g4",
+   "what": "段を変えても組み直さない形へ戻す",
+   "checks": [
+    "S27"
+   ],
+   "caught": true,
+   "failed": [
+    "S27 不合格 (135.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "S20-recover",
+   "group": "g4",
+   "what": "2D の戻す判定を前の 26 ミリ秒へ戻す",
+   "checks": [
+    "S20"
+   ],
+   "caught": true,
+   "failed": [
+    "S20 不合格 (80.4秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "S20-stall",
+   "group": "g4",
+   "what": "1回だけの詰まりも数える形へ戻す",
+   "checks": [
+    "S20"
+   ],
+   "caught": true,
+   "failed": [
+    "S20 不合格 (67.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "S43-passes",
+   "group": "g4",
+   "what": "測りから後処理のパス数を外す",
+   "checks": [
+    "S43"
+   ],
+   "caught": true,
+   "failed": [
+    "S43 不合格 (55.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T17:37:52.646Z",
+   "commit": "e0e21fb"
+  },
+  {
+   "name": "U13-async",
+   "group": "g4",
+   "what": "シェーダーの温めを同期へ戻す",
+   "checks": [
+    "U13"
+   ],
+   "caught": true,
+   "failed": [
+    "U13 不合格 (49.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "U9-tonemap",
+   "group": "g5",
+   "what": "色の圧縮を前の「なし」へ戻す",
+   "checks": [
+    "U9"
+   ],
+   "caught": true,
+   "failed": [
+    "U9 不合格 (55.3秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "V1-fog",
+   "group": "g5",
+   "what": "霞の距離を前へ戻す",
+   "checks": [
+    "V1"
+   ],
+   "caught": true,
+   "failed": [
+    "V1 不合格 (50.9秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "U2-grade",
+   "group": "g5",
+   "what": "水彩の仕上げを使わない形へ",
+   "checks": [
+    "U2"
+   ],
+   "caught": true,
+   "failed": [
+    "U2 不合格 (55.3秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "S31-fxaaOrder",
+   "group": "g5",
+   "what": "FXAA を色の変換の前（前の位置）へ戻す",
+   "checks": [
+    "S31"
+   ],
+   "caught": true,
+   "failed": [
+    "S31 不合格 (49.5秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "S32-collapse",
+   "group": "g5",
+   "what": "光っていない合成の層を畳まない形へ戻す",
+   "checks": [
+    "S32"
+   ],
+   "caught": true,
+   "failed": [
+    "S32 不合格 (49.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "V15-noonWin",
+   "group": "g5",
+   "what": "昼も窓の灯りを灯す形へ戻す",
+   "checks": [
+    "V15"
+   ],
+   "caught": true,
+   "failed": [
+    "V15 不合格 (109.0秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "V22-warmK",
+   "group": "g5",
+   "what": "昼の飛行でも空を暖色へ寄せる形へ戻す",
+   "checks": [
+    "V22"
+   ],
+   "caught": true,
+   "failed": [
+    "V22 不合格 (58.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "V3-glass",
+   "group": "g5",
+   "what": "夜と雨のガラスの筋を昼と同じ濃さへ戻す",
+   "checks": [
+    "V3"
+   ],
+   "caught": true,
+   "failed": [
+    "V3 不合格 (99.1秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e"
+  },
+  {
+   "name": "U2-paperThin",
+   "group": "g5",
+   "what": "描画の中の紙の粒を前の CSS と同じ強さ（3分の1にしない）へ戻す",
+   "checks": [
+    "U2"
+   ],
+   "caught": true,
+   "failed": [
+    "U2 不合格 (42.5秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T19:27:17.752Z",
+   "commit": "dff97b0"
+  },
+  {
+   "name": "S44-smoke",
+   "group": "g4",
+   "what": "外し回しの作業ツリー（dff97b0）の src/main.js だけで、情景の切り替えの口を「横長 1180×820 の時」「軽やかの時」に例外を出す形に包み、ビルドしてスモークを回した（前のスモークは横長と軽やかを開かないので、この例外を拾えない）",
+   "checks": [
+    "smoke"
+   ],
+   "caught": true,
+   "failed": [
+    "SMOKE FAIL: 9 件の異常（横長:3・軽やか:6）"
+   ],
+   "log": "docs/qa/2026-10-12_便2/gate/mutate-runs/S44-smoke/smoke-log.txt",
+   "byHand": true,
+   "run": "2026-10-12T19:35:28.089Z",
+   "commit": "dff97b0"
+  }
+ ]
+}

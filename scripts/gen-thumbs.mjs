@@ -10,9 +10,10 @@ const page = await browser.newPage({ viewport: { width: 900, height: 600 }, devi
 await page.goto(`http://localhost:${port}/seasons/?dev=1`, { waitUntil: 'networkidle' })
 await page.evaluate(() => document.fonts.ready)
 await page.locator('.gate').click().catch(() => {})
+await page.waitForSelector('.gate', { state: 'hidden', timeout: 8000 }).catch(() => {}) // 起動の案内が消えるのを待つ
 await page.waitForTimeout(400)
-// UIを隠してから撮る（サムネに操作UIを写さない）
-await page.addStyleTag({ content: '.ui{display:none !important}' })
+// UIを隠してから撮る（サムネに操作UIを写さない）。起動の案内が残っていても写さない（便2 で案内が重なって写った回があった）
+await page.addStyleTag({ content: '.ui, .gate{display:none !important}' })
 
 const ids = await page.evaluate(() => window.__sceneIds || [])
 console.log('情景:', ids.join(', '))
@@ -23,8 +24,10 @@ for (const id of ids) {
   if (await page.evaluate(() => !!document.querySelector('.town3d-stage')).catch(() => false)) {
     for (let k = 0; k < 80; k++) { const ok = await page.evaluate(() => !!(window.__town3dDraw && window.__town3dDraw())).catch(() => false); if (ok) break; await page.waitForTimeout(500) }
     // 窓辺の構図のままだと横長の枠では畳と猫が主になり、窓の外の街が上の端に小さく写る。窓をあけ、いちばん寄せ、視線を上げて外の景色を写す。
-    // 一覧のカードは画の真ん中を横長に切り出すので、真ん中に外の景色が来る高さ（0.45）にする。0.7 まで上げると谷戸は天井が写る（便2 V56）
-    await page.evaluate(() => { window.__town3dWindow && window.__town3dWindow(true); window.__town3dZoom && window.__town3dZoom(0.4); window.__town3dSetView && window.__town3dSetView(0, 0.45) })
+    // 一覧のカードは画の真ん中を横長に切り出すので、真ん中に外の景色が来る高さ（0.45）にする。0.7 まで上げると谷戸は天井が写る。
+    // 角部屋は正面だと右に二つの窓の間の柱の面（暗い）が写るので、少し左（−0.35）を向く（便2 V56）
+    const yaw = /corner-room/.test(id) ? -0.35 : 0
+    await page.evaluate((y) => { window.__town3dWindow && window.__town3dWindow(true); window.__town3dZoom && window.__town3dZoom(0.4); window.__town3dSetView && window.__town3dSetView(y, 0.45) }, yaw)
     await page.waitForTimeout(3500)
   }
   // 中央を切り出してサムネに（窓枠の外周を避け、景色の核を見せる）

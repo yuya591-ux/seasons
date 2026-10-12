@@ -82,37 +82,37 @@
   {
    "id": "autumn-dusk-corner-room",
    "exists": true,
-   "kb": 37,
+   "kb": 36,
    "changed": true
   },
   {
    "id": "autumn-rain-night-corner-room",
    "exists": true,
-   "kb": 40,
+   "kb": 39,
    "changed": true
   },
   {
    "id": "summer-morning-corner-room",
    "exists": true,
-   "kb": 37,
+   "kb": 39,
    "changed": true
   },
   {
    "id": "spring-dusk-corner-room",
    "exists": true,
-   "kb": 38,
+   "kb": 37,
    "changed": true
   },
   {
    "id": "spring-morning-corner-room",
    "exists": true,
-   "kb": 37,
+   "kb": 39,
    "changed": true
   },
   {
    "id": "winter-snow-dusk-corner-room",
    "exists": true,
-   "kb": 50,
+   "kb": 49,
    "changed": true
   },
   {
@@ -124,7 +124,7 @@
   {
    "id": "summer-rain-morning",
    "exists": true,
-   "kb": 72,
+   "kb": 73,
    "changed": true
   },
   {
@@ -142,7 +142,7 @@
   {
    "id": "summer-morning-mountains",
    "exists": true,
-   "kb": 20,
+   "kb": 21,
    "changed": true
   },
   {
@@ -154,8 +154,8 @@
  ],
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V56_iphone_後.png",
  "id": "V56",
- "ms": 36095,
- "at": "2026-10-12T19:25:35.359Z",
+ "ms": 33310,
+ "at": "2026-10-12T20:26:00.116Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "6d6365e"
+ "commit": "dff97b0"
 }

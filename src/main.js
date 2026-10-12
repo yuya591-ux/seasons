@@ -131,7 +131,7 @@ function start() {
   // 情景の適用。スプラット情景は3Dビューア、それ以外はシェーダー描画に振り分ける。
   // 連打切替に備え世代トークンで古い処理の状態書き換えを無効化、失敗時は通常情景へフォールバック。
   let sceneGen = 0
-  async function applyScene(next, animate = true) {
+  async function applyScene(next, animate = true, { rebuild = false } = {}) { // rebuild: 同じ情景を組み直すだけ（段を変えた時）＝通い帳に数えない
     const gen = ++sceneGen
     if (animate) {
       // 情景の空色へ一瞬沈める（暗転）。切替が見えてから景色を入れ替える
@@ -142,7 +142,7 @@ function start() {
       if (gen !== sceneGen) return // 連打されたら新しい切替に任せる
     }
     setScene(next.id)
-    recordVisit(next.id) // 通い帳: この窓辺に座った記録
+    if (!rebuild) recordVisit(next.id) // 通い帳: この窓辺に座った記録（段を変えた組み直しは数えない＝訪問数が増えない）
     audio.resetPlaces() // 前の町（高く飛んでいた等）が残した音の値を戻してから、新しい情景の音を立ち上げる（D7・S1）
     audio.setScene(next)
     events2d.setScene(next) // シェーダー2D情景の定期イベント（流れ星/蛍）。town3d/splatでは内部で無効化
@@ -365,7 +365,7 @@ function start() {
       }
       // 描き込みの段を変えたら、同じ情景を組み直す＝影の細かさ・ブルーム・解像度がその場で新しい段になる
       // （以前は解像度とブルームだけが変わり、影や物の数は次に情景を開くまで変わらなかった・S27）。軽やかでも町の配置は同じ（S25）
-      if (town3dMode && patch.quality !== undefined) applyScene(resolveScene(getState().sceneId), true)
+      if (town3dMode && patch.quality !== undefined) applyScene(resolveScene(getState().sceneId), true, { rebuild: true })
       if (patch.tilt !== undefined) {
         if (patch.tilt) {
           tilt.enable().then((ok) => {

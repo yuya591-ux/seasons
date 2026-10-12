@@ -8,7 +8,7 @@
   "pr": 1,
   "shadow": 2048,
   "bloom": false,
-  "p75": 0.0599,
+  "p75": 0.0334,
   "changes": 0,
   "failedCap": 0,
   "compiled": "async"
@@ -25,7 +25,7 @@
   "changes": 0,
   "failedCap": 0,
   "compiled": "async",
-  "rebuildMs": 29855
+  "rebuildMs": 11508
  },
  "light": {
   "q": "light",
@@ -39,7 +39,7 @@
   "changes": 0,
   "failedCap": 0,
   "compiled": "async",
-  "rebuildMs": 29370
+  "rebuildMs": 14374
  },
  "standard": {
   "q": "standard",
@@ -53,11 +53,13 @@
   "changes": 0,
   "failedCap": 0,
   "compiled": "async",
-  "rebuildMs": 23370
+  "rebuildMs": 11231
  },
+ "visitsBefore": 1,
+ "visitsAfter": 1,
  "id": "S27",
- "ms": 147862,
- "at": "2026-10-12T18:00:17.398Z",
+ "ms": 63917,
+ "at": "2026-10-12T20:12:19.276Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "e0e21fb"
+ "commit": "dff97b0"
 }

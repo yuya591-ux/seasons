@@ -1,0 +1,16 @@
+
+> seasons@0.0.0 smoke
+> node scripts/qa-smoke.mjs
+
+横長（1180×820）: 3 情景を開いた
+軽やか: 3 情景を開いた
+SMOKE FAIL: 9 件の異常（情景 31枚を走査）
+  [横長:kitaterao-window-3d] PE:外し回し: 横長だけの例外
+  [横長:summer-rain-dusk] PE:外し回し: 横長だけの例外
+  [横長:summer-dusk-seaside] PE:外し回し: 横長だけの例外
+  [軽やか:kitaterao-window-3d] PE:外し回し: 横長だけの例外
+  [軽やか:kitaterao-window-3d] PE:外し回し: 軽やかだけの例外
+  [軽やか:summer-rain-dusk] PE:外し回し: 横長だけの例外
+  [軽やか:summer-rain-dusk] PE:外し回し: 軽やかだけの例外
+  [軽やか:summer-dusk-seaside] PE:外し回し: 横長だけの例外
+  [軽やか:summer-dusk-seaside] PE:外し回し: 軽やかだけの例外

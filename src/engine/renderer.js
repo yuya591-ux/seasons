@@ -237,6 +237,7 @@ export function createRenderer(canvas) {
   let simMs = 0, simOnce = 0 // 検証用: 毎回足す重さ／1回だけの詰まり（S20）
   let frameEMA = 16.7
   let lastFrame = 0
+  let bigRun = 0 // 120ミリ秒以上の描画間隔が続いた数（S20）
   let lastRenderTime = 0 // 約30fpsへ間引くための前回描画時刻（GPU負荷と発熱を半減）
   let adaptCooldown = 60
   // 窓を開ける（0=閉じてガラス越し, 1=開いて素通し）。トグルでなめらかに開閉。
@@ -392,7 +393,9 @@ export function createRenderer(canvas) {
     // idle間引き中(意図的に~50ms間隔)は性能信号でないので計測も自動調整もしない＝idleで誤って解像度を落とさない（鮮明さ優先）。
     if (lastFrame > 0 && !idleStill) {
       const dt = now - lastFrame
-      if (dt > 0 && dt < 120) frameEMA = frameEMA * 0.9 + dt * 0.1 // 120ミリ秒以上の1回だけの詰まりは数えない（以前は 300 未満を数え、1回の詰まりで解像度が落ちたまま戻らなかった・S20）
+      // 120ミリ秒以上の1回だけの詰まりは数えない（以前は 300 未満を数え、1回の詰まりで解像度が落ちたまま戻らなかった・S20）。
+      // 2回続けば数える（毎回120ミリ秒を超えるほど重い端末でも、解像度を下げる安全網が働く）。1秒以上の間隔はタブの切り替えなどなので数えない
+      if (dt > 0 && dt < 120) { bigRun = 0; frameEMA = frameEMA * 0.9 + dt * 0.1 } else if (dt >= 120 && dt < 1000 && ++bigRun >= 2) frameEMA = frameEMA * 0.9 + Math.min(dt, 300) * 0.1
     }
     lastFrame = now
     if (idleStill) {

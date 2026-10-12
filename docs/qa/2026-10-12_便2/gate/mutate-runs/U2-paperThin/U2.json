@@ -1,0 +1,19 @@
+{
+ "pass": false,
+ "blendLayers": [],
+ "stageFilter": "none",
+ "brightBefore": 1.04,
+ "brightAfter": 1.248,
+ "grain": {
+  "sky": 1.62,
+  "wall": 1.65
+ },
+ "grainBefore": null,
+ "shot": null,
+ "errs": [],
+ "id": "U2",
+ "ms": 42495,
+ "at": "2026-10-12T19:27:16.933Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "dff97b0"
+}

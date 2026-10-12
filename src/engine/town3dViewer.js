@@ -3092,9 +3092,10 @@ export async function mountTown3d(parent, opts = {}) {
   const leafHiMats = leafHi.map(toon)
   const treesArr = []
   const trunkGeos = [] // 全ての幹を1メッシュへ統合（静止＝ドローコール大幅削減）
-  function tree(x, z, scale) {
+  // hidden: 軽やかで作ってから隠す木（乱数と着地の避け所は前と同じに回し、葉・幹・接地影・当たり判定は町へ足さない＝配置はふつうと同じ・重さは前の軽やかと同じ・S25）
+  function tree(x, z, scale, hidden = false) {
     const gy = heightAt(x, z)
-    if (Math.hypot(x, z) > 58) homeTreeShadows.push([x, gy, z, 1.5 + scale * 0.5]) // 静的影の外(遠い)木は足元に接地影を敷いて浮きを消す（範囲内の木は焼き影があるので不要）
+    if (!hidden && Math.hypot(x, z) > 58) homeTreeShadows.push([x, gy, z, 1.5 + scale * 0.5]) // 静的影の外(遠い)木は足元に接地影を敷いて浮きを消す（範囲内の木は焼き影があるので不要）
     const g = new THREE.Group()
     const r = 1.6 + R() * 1.4
     const ci = (R() * leafBaseMats.length) | 0
@@ -3110,7 +3111,7 @@ export async function mountTown3d(parent, opts = {}) {
     const tg = new THREE.CylinderGeometry(0.2, 0.36, trunkH, det > 1 ? 9 : 6)
     tg.applyMatrix4(new THREE.Matrix4().makeTranslation(0, trunkH / 2, 0))
     tg.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x, gy, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, tilt)), new THREE.Vector3(scale, scale, scale)))
-    trunkGeos.push(tg)
+    if (hidden) tg.dispose(); else trunkGeos.push(tg)
     // 葉: 主房＋房をローカルで作り1つへ統合（木ごとに1メッシュ。陰色で統一＝トゥーンの陰影で立体感）。
     const leafGeos = []
     const main = new THREE.IcosahedronGeometry(r, det)
@@ -3133,10 +3134,11 @@ export async function mountTown3d(parent, opts = {}) {
       for (let i = 0; i < mp.count; i++) { const v = 0.8 + (mp.getY(i) - minY) / span * 0.42; cols[i * 3] = v; cols[i * 3 + 1] = v; cols[i * 3 + 2] = v }
       merged.setAttribute('color', new THREE.BufferAttribute(cols, 3)) }
     const leafMesh = new THREE.Mesh(merged, leafBaseMats[ci]); leafMesh.castShadow = true; g.add(leafMesh)
-    g.position.set(x, gy, z); g.scale.setScalar(scale); g.rotation.z = tilt; town.add(g)
+    g.position.set(x, gy, z); g.scale.setScalar(scale); g.rotation.z = tilt; if (!hidden) town.add(g)
     g.userData = { ph: R() * 6.28, amp: 0.02 + R() * 0.02, tilt }
+    spawnAvoid.push({ x, z, r: scale * 1.7 + 0.5 })   // 着地: 樹冠に埋もれて降りない（隠す木も登録＝後の路傍の物の置き場がふつうと同じ）
+    if (hidden) { merged.dispose(); return }
     colliders.push({ x, z, r: scale * 0.35 + 0.3 })   // 歩行: 幹だけ避ける（樹冠の下はくぐれる）
-    spawnAvoid.push({ x, z, r: scale * 1.7 + 0.5 })   // 着地: 樹冠に埋もれて降りない
     treesArr.push(g)
   }
   if (kind === 'yato') {
@@ -3148,7 +3150,7 @@ export async function mountTown3d(parent, opts = {}) {
     }
     for (const c of [[-16, 19], [17, 20], [-21, 14], [21, 16]]) tree(c[0], c[1], 1.7 + R() * 0.5) // 手前の額装木立
   } else {
-    for (let i = 0; i < (LIGHT_GEN ? 150 : 232); i++) { // 非力端末は散在木を間引く。拡張した旗艦home全域に緑を行き渡らせる
+    for (let i = 0; i < 232; i++) { // 拡張した旗艦home全域に緑を行き渡らせる。軽やかは前と同じく151本目から見せない（作ってから隠す＝乱数の回る数と配置はふつうと同じ・S25）
       const x = -200 + R() * 335, z = -189 + R() * 223 // 拡張した西/北まで覆う
       if (Math.abs(x) < 4.5 && z > -2) continue          // 手前中央の道は空ける
       if (Math.hypot(x - DOWNTOWN.x, z - DOWNTOWN.z) < DOWNTOWN.r - 5) continue // 副都心は街路樹で別途
@@ -3169,7 +3171,7 @@ export async function mountTown3d(parent, opts = {}) {
       if (x > SEA.coast && heightAt(x, z) < SEA.level + 1.5) continue // 海・汀には木を生やさない
       if (Math.hypot(x - HARBOR.x, z - HARBOR.z) < HARBOR.r) continue // 工業地帯には木を生やさない
       if (Math.abs(z - RAIL.z) < 2.7 && x > RAIL.x0 - 1 && x < RAIL.x1 + 1) continue // 線路の通り道は空ける
-      tree(x, z, 0.7 + R() * 0.8)
+      tree(x, z, 0.7 + R() * 0.8, LIGHT && i >= 150)
     }
     // 手前の縁の大きな木立（窓の下辺を額装する近景＝奥行きの起点）
     for (const c of [[-12, 20], [13, 21], [-18, 16], [18, 18]]) tree(c[0], c[1], 1.7 + R() * 0.5)
@@ -5595,7 +5597,7 @@ export async function mountTown3d(parent, opts = {}) {
       gond.position.set(Math.cos(a) * (R0 + 0.9), Math.sin(a) * (R0 + 0.9), 0)
       const cab = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.4, 1.6), gondMats[i % gondMats.length]); gond.add(cab)
       const roof = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.3, 1.8), gondMats[(i + 2) % gondMats.length]); roof.position.y = 0.85; gond.add(roof)
-      if (!LIGHT_GEN && i % 2 === 0) { const rider = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.34, 3, 6), toon([0x5a78a0, 0xc06a6a, 0x6a8a5a][i % 3])); rider.position.set((R() - 0.5) * 0.4, -0.1, 0.3); gond.add(rider); const rh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 6), toon(0xf0c49c)); rh.position.set(rider.position.x, 0.32, 0.3); gond.add(rh) } // 乗客
+      if (i % 2 === 0) { const rx = (R() - 0.5) * 0.4; if (!LIGHT) { const rider = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.34, 3, 6), toon([0x5a78a0, 0xc06a6a, 0x6a8a5a][i % 3])); rider.position.set(rx, -0.1, 0.3); gond.add(rider); const rh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 6), toon(0xf0c49c)); rh.position.set(rx, 0.32, 0.3); gond.add(rh) } } // 乗客（軽やかは乗せない。乱数はふつうと同じに回す・S25）
       if (duskAmt > 0.25) { const lit = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.05), litMat); lit.position.z = 0.83; gond.add(lit) }
       wheel.add(gond); gondolas.push(gond)
     }
@@ -5656,7 +5658,7 @@ export async function mountTown3d(parent, opts = {}) {
   // 雲は高い空に置く（街を見渡す巡航高度の上）。低いと飛んで街を見渡す時に雲が邪魔になる（実機FB）。
   // 高くしても窓辺で見上げれば見え、ぐっと高く飛べば雲に分け入れる＝双方の良いとこ取り。light端末は控えめ。
   // 積雲を全世界(現代＋江戸/戦国/大正の空＋渡りの空)に散らす。地域でほのかに色を変える(戦国=冷/大正=暖)。
-  const cumN = LIGHT_GEN ? 16 : 26
+  const cumN = 26 // 軽やかも26群を作って乱数を回し、17群目からは空へ足さない（作ってから隠す・S25）
   for (let i = 0; i < cumN; i++) {
     const g = new THREE.Group()
     const n = 5 + ((R() * 4) | 0) // 5〜8房＝もこもこの積雲
@@ -5677,16 +5679,19 @@ export async function mountTown3d(parent, opts = {}) {
     g.position.set(cx, 66 + R() * 34, cz) // 積雲の基準高度を上げる(旧54→66)＝巡航帯(y30-60)の上に浮かせ「雲が地面/稜線に近く空が低い」を解消（低空滑空・歩行の空の抜けが一段広がる）。66-100で雲海(88)前後・巻雲(98+)の下に層をなす
     g.userData.x0 = cx - 150; g.userData.x1 = cx + 150 // 漂流の折返しは生まれた空の窓内。全雲一律(x>130→-130)だと江戸(x≈640)等の雲が初回フレームでhomeの空へ瞬間移動し吹き溜まる
     g.userData.fadeR0 = 20; g.userData.fadeR1 = 40; g.userData.fadeW = 1.8 // 近接フェードの半径（縦はfadeW倍で扁平）＝迫った雲は溶けて視界を塗りつぶさない
+    if (LIGHT && i >= 16) continue // 軽やかは前と同じ16群
     scene.add(g); clouds.push(g)
   }
   // 巻雲（cirrus）＝高い空の薄い刷毛のような筋雲（晴天/夕。雨雪では出さない）。平たく細長く淡い＝空に高さと多様さ。
   if (!SNOWY && weather !== 'rain') {
-    const ciN = LIGHT_GEN ? 6 : 11, ciMat = mkCloud(isNight ? 0x8088a0 : 0xf4f1ea)
+    const ciN = 11, ciMat = mkCloud(isNight ? 0x8088a0 : 0xf4f1ea) // 軽やかも11群を作って乱数を回し、7群目からは空へ足さない（S25）
     for (let i = 0; i < ciN; i++) {
       const g = new THREE.Group(), n = 4 + ((R() * 4) | 0), fm = ciMat.clone() // 材は群ごとに複製＝カメラ近接フェード用
       for (let j = 0; j < n; j++) { const s = 5 + R() * 9, wisp = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 1), fm); wisp.position.set((R() - 0.5) * 40, 0, (R() - 0.5) * 6); wisp.scale.set(1.7, 0.16, 0.5); g.add(wisp) }
       const ciX = (R() - 0.5) * 920 // R()の消費順はposition.setの引数評価順(x→y→z)と同一＝配置は不変
-      g.position.set(ciX, 98 + R() * 20, -120 - R() * 340); g.rotation.y = R() * 3; scene.add(g); clouds.push(g)
+      g.position.set(ciX, 98 + R() * 20, -120 - R() * 340); g.rotation.y = R() * 3
+      if (LIGHT && i >= 6) continue // 軽やかは前と同じ6群
+      scene.add(g); clouds.push(g)
       g.userData = { fadeMat: fm, x0: ciX - 170, x1: ciX + 170, fadeR0: 26, fadeR1: 52, fadeW: 3 } // 巻雲は薄く横長＝縦の重みを強く
     }
   }
@@ -7292,7 +7297,7 @@ export async function mountTown3d(parent, opts = {}) {
   const sRGBc = (c) => c.clone() // 前の CSS の層と同じ数値で渡す（rgbStr(sunCol) と同じ＝見え方をそろえる）
   const gradeShade = skyTop.clone().lerp(new THREE.Color(0x0e0b14), 0.62) // 隅の翳り＝空色を深く沈めた冷色（前の --t3d-shade と同じ）
   const gradeWashA = (isNight ? 0.10 : weather === 'snow' ? 0.07 : 0.20) * 0.45 // 前の --t3d-wash-a の 0.45 倍＝水彩を薄く
-  const PAPER_IN = 1 / 3 // 描画の中の紙の粒は、同じ強さでも前の CSS の紙目より粒が立つ（便2 で測ると空の細かいざらつきが約2.5倍）。3分の1にして前より薄く（#1 の答え＝水彩を薄く）
+  const PAPER_IN = 1 / 3 // 描画の中の紙の粒は、同じ強さでも前の CSS の紙目より粒が立つ（U2 の検査の iPhone の夕方の窓辺で、空の細かいざらつきが前の 0.99 に対し 1.62）。3分の1にして前より薄く（0.70・#1 の答え＝水彩を薄く）
   const GRADE_UNIFORMS = () => ({
     gOn: { value: 1 }, gGlow: { value: sRGBc(sunCol) }, gShade: { value: sRGBc(gradeShade) }, gWashA: { value: gradeWashA }, gPaperA: { value: 0.18 * PAPER_IN },
     gSat: { value: 0.88 }, gSepia: { value: 0.05 }, gBright: { value: 1.04 }, gContrast: { value: 0.985 }, gPx: { value: 1 },
@@ -8055,7 +8060,7 @@ export async function mountTown3d(parent, opts = {}) {
   }
   applyStageFilter() // 起動時のユーザ明るさを即反映
   active.setBrightness = (b) => { userBright = b || 1; applyStageFilter() }
-  active.setQuality = (q) => { // 描き込み変更で解像度＋灯りのブルームを即反映（影/密度は次の情景読み込みでフル反映）
+  active.setQuality = (q) => { // 描き込み変更で解像度＋灯りのブルームを即反映。影の細かさは、段を変えた時に main.js が同じ情景を組み直して反映する（S27）
     q = normQuality(q)
     plan = qualityPlan('3d', q, { dpr: window.devicePixelRatio || 1, cssW: stage.clientWidth || W, cssH: stage.clientHeight || H }) // 表は起動時と同じ1か所
     qCap = plan.cap; prFloor = plan.floor; prFly = false; curQual = q; failedCap = 0; ddtWin.length = 0
@@ -10726,7 +10731,7 @@ export async function mountTown3d(parent, opts = {}) {
       yaw: +active.flyYaw.toFixed(2), camYaw: +(active.walkCamYaw || 0).toFixed(2), pitch: +active.flyPitch.toFixed(2),
       vel: +Math.hypot(active.vel.x, active.vel.y, active.vel.z).toFixed(2), mvX: +active.moveX.toFixed(2), mvY: +active.moveY.toFixed(2), bank: +active.bankCur.toFixed(2),
     })
-    window.__town3dStats = () => { if (active !== me) return null; const r = renderer.info.render; let objs = 0; scene.traverse(() => objs++); return { calls: r.calls, tris: r.triangles, objs, pr: +curPR.toFixed(2), ddt: +lastDDT.toFixed(3), low: adQLow, ok: adQOk, frames: drawCount, composer: composerUsed } } // 検証用: 描画コール/三角形/オブジェクト数/自動品質状態。町を出た後は null（前の町の数を返さない・D9）
+    window.__town3dStats = () => { if (active !== me) return null; const r = renderer.info.render; let objs = 0; scene.traverse(() => objs++); return { calls: r.calls, tris: r.triangles, objs, pr: +curPR.toFixed(2), ddt: +lastDDT.toFixed(3), heavy: adHeavy, light: adLight, frames: drawCount, composer: composerUsed } } // 検証用: 描画コール/三角形/オブジェクト数/自動品質状態（重い・軽い判定の続いた数＝U1 の数え方）。町を出た後は null（前の町の数を返さない・D9）。以前の low/ok（adQLow・adQOk）は U1 で数え方ごと替えたので無い
     window.__town3dThrowFrames = (n) => { if (active) active.throwN = n || 1 } // 検証用: 描画ループの更新で n フレーム続けて例外を起こす（S38）
     window.__town3dQuality = () => (active === me ? { q: curQual, cap: qCap, floor: prFloor, fly: plan.fly, pr: +curPR.toFixed(3), shadow: sun.shadow.mapSize.x, bloom: !!(bloomPass && bloomPass.enabled), p75: +adP75.toFixed(4), changes: prChanges, failedCap, compiled: compiledBy } : null) // 検証用: 段の中身と自動調整の状態（D1・D2・U1・S27・U13）
     window.__town3dSimLoad = (fn) => { simLoad = typeof fn === 'function' ? fn : null } // 検証用: 毎フレームに重さ（ミリ秒）を足す。fn(今の倍率)（U1）

@@ -1,11 +1,22 @@
 {
  "pass": false,
- "kitaterao-window-3d": {},
+ "lightCallsBefore": null,
+ "lightCallsNow": 2677,
+ "kitaterao-window-3d": {
+  "standard": {
+   "calls": 2982,
+   "tris": 895329
+  },
+  "light": {
+   "calls": 2677,
+   "tris": 770663
+  }
+ },
  "shishigaya-window-3d": {},
  "kitaterao-window-3d-sunset": {},
  "id": "S25",
- "ms": 175100,
- "at": "2026-10-12T15:52:34.409Z",
+ "ms": 181427,
+ "at": "2026-10-12T19:52:55.409Z",
  "base": "http://localhost:4959/seasons/",
  "commit": "0676315"
 }

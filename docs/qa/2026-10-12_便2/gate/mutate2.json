@@ -1007,6 +1007,26 @@
      "restored": true
     }
    ]
+  },
+  {
+   "at": "2026-10-12T19:27:17.752Z",
+   "commit": "dff97b0",
+   "results": [
+    {
+     "name": "U2-paperThin",
+     "group": "g5",
+     "what": "描画の中の紙の粒を前の CSS と同じ強さ（3分の1にしない）へ戻す",
+     "checks": [
+      "U2"
+     ],
+     "caught": true,
+     "failed": [
+      "U2 不合格 (42.5秒)"
+     ],
+     "bad": null,
+     "restored": true
+    }
+   ]
   }
  ]
 }

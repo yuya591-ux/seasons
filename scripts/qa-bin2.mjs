@@ -5,6 +5,7 @@
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import http from 'node:http'
 import { execSync } from 'node:child_process'
 import { SCENES } from '../src/data/scenes/index.js'
@@ -65,7 +66,8 @@ async function shot(page, name, opts = {}) {
   if (!SHOT_TAG) return null
   const f = path.join(SHOT_DIR, `${name}_${SHOT_TAG}.png`)
   await page.screenshot({ path: f, ...opts })
-  return f.replace(/\\/g, '/')
+  // 記録にはリポジトリの中の相対の道で書く（PC のユーザー名入りの道を記録に残さない・便2 の外の目の見直し）
+  return path.relative(path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), f).replace(/\\/g, '/')
 }
 // 検査が意図して起こす例外（検査用）と、既知の無害な行は数えない
 const realErrs = (errs) => errs.filter((e) => !/検査用|favicon|manifest|preload/i.test(e))
@@ -745,15 +747,32 @@ def('g4', 'S25', async () => {
   const out = {}
   for (const scene of ['kitaterao-window-3d', 'shishigaya-window-3d', 'kitaterao-window-3d-sunset']) {
     out[scene] = {}
-    for (const q of ['standard', 'light']) { const { ctx, page } = await open('pc', { init: setQualityLS(q) }); await gateStart(page); await apply(page, scene, 8000); out[scene][q] = await ev(page, () => window.__town3dLayout && window.__town3dLayout()); await ctx.close() }
+    for (const q of ['standard', 'light']) {
+      const { ctx, page } = await open('pc', { init: setQualityLS(q) }); await gateStart(page); await apply(page, scene, 8000)
+      out[scene][q] = await ev(page, () => window.__town3dLayout && window.__town3dLayout())
+      if (scene === 'kitaterao-window-3d') { // 軽やかの重さ: 窓辺の描画の呼び出し（組み上がりを待ってから）
+        for (let k = 0; k < 60; k++) { if (await ev(page, () => !!(window.__town3dDraw && window.__town3dDraw()))) break; await wait(500) }
+        await wait(2500)
+        const d = await ev(page, () => window.__town3dDraw && window.__town3dDraw())
+        const at = await ev(page, () => { const a = window.__town3dAttribute && window.__town3dAttribute(); return a && { trees: a.trees, clouds: a.clouds, ferris: a.ferris, residents: a.residents } })
+        out[scene][q] = { ...(out[scene][q] || {}), calls: d && d.calls, tris: d && d.tris, attr: at }
+      }
+      await ctx.close()
+    }
   }
-  return { pass: Object.values(out).every((r) => r.standard && r.light && r.standard.rngEnd === r.light.rngEnd), ...out }
+  // 合否: 軽やかとふつうで町の乱数の回る数が同じ（配置が同じ）＋軽やかは作ってから隠す（窓辺で木の描画の寄与がふつうの0.85倍以下・雲がふつうより少ない）。
+  // 窓辺の描画の呼び出しの総数（calls）は記録だけ（霞を遠くへ〈V1〉した分、霧より遠い建物も描くようになり、ふつうも軽やかも増えたため）
+  const kn = out['kitaterao-window-3d']; const al = kn.light && kn.light.attr, as = kn.standard && kn.standard.attr
+  const hideOk = !!(al && as && al.trees <= as.trees * 0.85 && al.clouds < as.clouds)
+  return { pass: Object.values(out).every((r) => r.standard && r.light && r.standard.rngEnd === r.light.rngEnd) && hideOk, ...out }
 })
 def('g4', 'S27', async () => {
   // 段を変えると同じ情景を組み直す。町の3Dは組み直しにシェーダーの組み立て込みで数秒〜十数秒かかるので、新しい段の値が読めるまで最大30秒待つ
   const { page } = await open('pc')
   await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
   const q0 = await ev(page, () => window.__town3dQuality())
+  const visits = () => ev(page, () => { try { const st = JSON.parse(localStorage.getItem('seasons.state.v1') || '{}'); return (st.journal && st.journal.visits && st.journal.visits['kitaterao-window-3d']) || 0 } catch { return null } })
+  const v0 = await visits()
   await openSettings(page)
   const pick = async (label, id) => {
     const t0 = Date.now()
@@ -762,7 +781,8 @@ def('g4', 'S27', async () => {
     return null
   }
   const q1 = await pick('こまやか', 'soft'), q2 = await pick('軽やか', 'light'), q3 = await pick('ふつう', 'standard')
-  return { pass: !!(q0 && q1 && q2 && q3 && q1.shadow === 4096 && q2.shadow === 1024 && q3.shadow === 2048), standard0: q0, soft: q1, light: q2, standard: q3 }
+  const v1 = await visits() // 段を3回変えても通い帳の訪問数は増えない（組み直しは座り直しではない）
+  return { pass: !!(q0 && q1 && q2 && q3 && q1.shadow === 4096 && q2.shadow === 1024 && q3.shadow === 2048) && typeof v0 === 'number' && v0 >= 1 && v1 === v0, standard0: q0, soft: q1, light: q2, standard: q3, visitsBefore: v0, visitsAfter: v1 }
 })
 def('g4', 'S20', async () => {
   const { page } = await open('pc')
@@ -779,8 +799,12 @@ def('g4', 'S20', async () => {
   const s2 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
   await ev(page, () => window.__renderer.simLoad && window.__renderer.simLoad(0)); await wait(25000)
   const s3 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
+  // 毎回160ミリ秒かかるほど重い端末（120ミリ秒以上が続く）でも下げる（1回だけの詰まりと見分ける）
+  await ev(page, () => window.__renderer.simLoad && window.__renderer.simLoad(160)); await wait(10000)
+  const s4 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
+  await ev(page, () => window.__renderer.simLoad && window.__renderer.simLoad(0))
   clearInterval(keep)
-  return { pass: s0 === 1 && s1 === 1 && typeof s2 === 'number' && s2 < 1 && s3 === 1 && !!(a0 && a0.cooldown === 0), start: s0, adaptBeforeStall: a0, afterOneStall: s1, underLoad: s2, after25s: s3 }
+  return { pass: s0 === 1 && s1 === 1 && typeof s2 === 'number' && s2 < 1 && s3 === 1 && typeof s4 === 'number' && s4 < 1 && !!(a0 && a0.cooldown === 0), start: s0, adaptBeforeStall: a0, afterOneStall: s1, underLoad: s2, after25s: s3, veryHeavy: s4 }
 })
 def('g4', 'S43', async () => {
   const { page } = await open('pc')
@@ -796,7 +820,9 @@ def('g4', 'U13', async () => {
 })
 
 // 群5 色と空気（T3）────────────────────────────────────────────────────
-const beforeOf = (id) => { try { return JSON.parse(fs.readFileSync(path.join(path.dirname(OUT), 'gate-before', id + '.json'), 'utf8')) } catch { return null } }
+// 「前」の記録の置き場は台本の場所から決める（以前は出力先の隣を見ていたので、外し回しの出力先では前が読めず、外さなくても落ちる形になっていた）
+const BEFORE_DIR = process.env.QA_BEFORE || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'qa', '2026-10-12_便2', 'gate-before')
+const beforeOf = (id) => { try { return JSON.parse(fs.readFileSync(path.join(BEFORE_DIR, id + '.json'), 'utf8')) } catch { return null } }
 const look = (page) => ev(page, () => window.__town3dLook && window.__town3dLook())
 def('g5', 'U9', async () => {
   // 雨の夜の窓辺（PC）の窓の中の暗い側1%点の明るさ＝黒の締まり。前の値（gate-before）より下がり、色の圧縮が Neutral（7）であること
