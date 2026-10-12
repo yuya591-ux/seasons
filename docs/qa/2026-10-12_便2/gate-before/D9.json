@@ -1,0 +1,30 @@
+{
+ "pass": false,
+ "in3d": {
+  "calls": 1,
+  "tris": 1,
+  "objs": 12610,
+  "pr": 1.12,
+  "ddt": 0.067,
+  "low": 0,
+  "ok": 4
+ },
+ "after2d": {
+  "stats": {
+   "calls": 1,
+   "tris": 1,
+   "objs": 12610,
+   "pr": 1.12,
+   "ddt": 0.067,
+   "low": 0,
+   "ok": 4
+  },
+  "draw": null
+ },
+ "errs": [],
+ "id": "D9",
+ "ms": 62275,
+ "at": "2026-10-12T13:38:54.704Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

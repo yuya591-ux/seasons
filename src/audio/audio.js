@@ -25,7 +25,15 @@ export function createAudio(opts) {
   let muted = false
   let volume = 0.8
   let started = false
+  let wantStart = false // 一度でも start() を頼まれたか（起動に失敗しても次のタップでやり直す・S16）
   let gen = 0
+  let timersFired = 0 // 検証用: 発火したタイマーの数
+  // タイマーを予約し、発火したら配列から外す（1つの情景に長く居ても番号の配列が伸び続けない・S18）
+  function later(fn, ms) {
+    const id = setTimeout(() => { const k = timers.indexOf(id); if (k >= 0) timers.splice(k, 1); timersFired++; fn() }, ms)
+    timers.push(id)
+    return id
+  }
 
   const base = import.meta.env.BASE_URL || '/'
   const urlOf = (src) => base + src
@@ -85,6 +93,8 @@ export function createAudio(opts) {
     if (rearmBound) return
     rearmBound = true
     const rearm = () => {
+      // 起動（start）が resume の失敗で止まっていたら、このタップでやり直す（ゲートはもう消えているので入口がここしかない・S16）
+      if (!started && wantStart) { startAudio().catch(() => {}); return }
       // 'suspended' だけでなく iOS の 'interrupted'（電話/アラーム後）も起こし直す
       if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {})
       if (started) unlockMediaSession()
@@ -96,6 +106,7 @@ export function createAudio(opts) {
     window.addEventListener('pagehide', () => { if (ctx && ctx.state === 'running') ctx.suspend().catch(() => {}) })
     window.addEventListener('focus', rearm)
     document.addEventListener('touchend', rearm, { passive: true })
+    document.addEventListener('pointerdown', rearm, { passive: true }) // PC のクリックでも起動のやり直しが効くように
   }
 
   function ensureContext() {
@@ -133,6 +144,7 @@ export function createAudio(opts) {
     bindRearm()
   }
 
+  let prevSounds = [] // 直前の情景の音（解読した音の控えを、今と直前の分だけ残すのに使う・S4）
   const bufferCache = new Map() // src→デコード済みAudioBuffer。情景往復で同じ素材の decodeAudioData を再実行する無駄(モバイルのメインスレッドjank)を防ぐ（評価エンジニア）
   async function loadBuffer(src) {
     if (bufferCache.has(src)) return bufferCache.get(src)
@@ -219,8 +231,7 @@ export function createAudio(opts) {
       }
       nextStart = s + dur - xf // 次は重なり分だけ早く始める
       const delay = Math.max(60, (nextStart - now() - 1.6) * 1000) // 余裕を持って先に予約（間引き耐性）
-      const id = setTimeout(schedule, delay)
-      timers.push(id)
+      later(schedule, delay)
     }
     schedule()
   }
@@ -263,7 +274,7 @@ export function createAudio(opts) {
     const next = () => {
       if (myGen !== gen) return
       const delay = (min + Math.random() * (max - min)) * 1000
-      const id = setTimeout(() => {
+      later(() => {
         if (myGen !== gen) return
         // 高空（雲海の上）では単発音（遠雷・鳥）を鳴らさない＝雲を抜けたら下界の音は届かない開放感。altDuckVは高度で1へ（setAltitudeDuck）。
         if (started && ctx && altDuckV < 0.82) {
@@ -276,7 +287,6 @@ export function createAudio(opts) {
         }
         next()
       }, delay)
-      timers.push(id)
     }
     next()
   }
@@ -325,6 +335,8 @@ export function createAudio(opts) {
     const myGen = gen
     stopAllNodes()
     dayPhaseV = 0 // 新しい情景は「その瞬間」から始まる＝前の情景の夕暮れを持ち越さない（直後に onDayPhase で実態へ追従）
+    // 夕方の高い音のしぼり（最大-5dB）も戻す。2Dの情景は日の傾きを送らないので、ここで戻さないと前の町の夕方が残る（S14）
+    if (duskShelf) { try { duskShelf.gain.cancelScheduledValues(now()); duskShelf.gain.setValueAtTime(0, now()) } catch { /* 無視 */ } }
 
     const loops = (scene.sounds || []).filter((d) => d.loop !== false)
     let li = 0
@@ -350,6 +362,10 @@ export function createAudio(opts) {
         playCue(buffer, def)
       }
     }
+    // 解読した音の控えは、今の情景と直前の情景の分だけ残す（情景を回るたびに控えが伸び続け、町の3Dとメモリを取り合うのを防ぐ・S4）
+    const keepSrc = new Set([...(scene.sounds || []), ...prevSounds].map((d) => d.src))
+    for (const k of [...bufferCache.keys()]) if (!keepSrc.has(k)) bufferCache.delete(k)
+    prevSounds = scene.sounds || []
     // master を戻す（起動は長く、切替は短くフェードイン）
     fadeGain.gain.cancelScheduledValues(now())
     fadeGain.gain.setValueAtTime(Math.max(0.0001, fadeGain.gain.value), now())
@@ -730,29 +746,55 @@ export function createAudio(opts) {
     }
   }
 
+  // 起動の一声＝遠い風鈴のように澄んだ鈴を一つ。「丁寧に作られている」を最初の一拍で音にする第一印象（サウンド監督G26）。
+  // 以前は情景の音を全部読み終えた後に、防音（900Hz・0.4倍）と全体の立ち上がり（約16%）を通して鳴らしていたので、ほぼ聞こえなかった（S2）。
+  // ＝タップの直後に、防音と全体の立ち上がりの外（出口へ直に）で鳴らす。音量は設定の音量に合わせる。
+  let chimeDbg = null // 検証用: 起動の鈴をどこへ繋ぎ、いつ鳴らしたか
+  function playStartChime() {
+    if (muted || !ctx || !ctx.createOscillator) return
+    try {
+      const out = ctx.createGain(); out.gain.value = Math.max(0.0001, volume); out.connect(ctx.destination)
+      const t0 = now() + 0.15
+      for (const [mul, amp, dec] of [[1, 0.02, 2.6], [2.01, 0.007, 1.7]]) { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 880 * mul; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(amp, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dec); o.connect(g).connect(out); o.start(t0); o.stop(t0 + dec + 0.1) }
+      chimeDbg = { bus: out === master ? 'master' : 'direct', when: layers.length === 0 ? 'before-scene' : 'after-scene', gain: +out.gain.value.toFixed(3) }
+    } catch { /* 無音でも続行 */ }
+  }
+  // 最初のユーザー操作で呼ぶ。音脈を起こし、現在の情景の音を静かに立ち上げる。resume に失敗したら started を立てずに戻り、次のタップ（rearm）でやり直す（S16）。
+  async function startAudio() {
+    wantStart = true
+    ensureContext()
+    if (!ctx) return
+    unlockMediaSession() // ジェスチャ起点で無音タグを再生＝iOSの消音スイッチを回避
+    if (ctx.state === 'suspended') { try { await ctx.resume() } catch { return } }
+    if (started) return
+    started = true
+    playStartChime()
+    startWind() // 生成的な風をそっと立ち上げる（全情景でループ感を消す）
+    startWater() // 場所に応じた水の音（波/せせらぎ）の源を立ち上げる（音量0＝setAmbienceが近さで満ち引き）
+    startFestival() // 夏祭りの囃子の源を立ち上げる（音量0＝祭りに近づくと満ちる。離れている間は音符を作らない）
+    startStation() // 駅の音の源を立ち上げる（音量0＝駅に近づくと遠い電車の音がたまに。ベルは廃止）
+    // 生成BGMの下地(合成パッド)は実機で終始「ぶー」というドローンに聞こえ、ユーザーが繰り返し強く嫌う。
+    // 根本対策として下地そのものを起動しない＝oscillatorを生成せずドローン源を消す。自然音(風・鳥・虫・波)だけにする。
+    // （startMusicBed/setMusicBed は将来用に残すが呼ばない。bedNodesがnullのままなのでsetMusicBedは何もしない）
+    if (currentScene) await playScene(currentScene, false)
+  }
+
   return {
-    /** 検証用(dev): 現在の高度ダック量と、生きているループ音の実ゲイン。雲海の上で雨/虫が無音になるか確認する。 */
-    _dbg() { return { altDuck: +altDuckV.toFixed(3), loops: layers.filter((l) => !l.stopped).map((l) => +l.layerGain.gain.value.toFixed(4)) } },
+    /** 検証用(dev): 高度ダック量・生きているループ音の実ゲイン・夕方の高音しぼり・飛行の風・解読した音の控え・タイマーの数・起動の鈴。 */
+    _dbg() { return { altDuck: +altDuckV.toFixed(3), loops: layers.filter((l) => !l.stopped).map((l) => +l.layerGain.gain.value.toFixed(4)), duskShelf: duskShelf ? +duskShelf.gain.value.toFixed(2) : null, flyWind: flyWindV, cache: [...bufferCache.keys()], timers: timers.length, timersFired, chime: chimeDbg, started } },
     /** 最初のユーザー操作で呼ぶ。音脈を起こし、現在の情景の音を静かに立ち上げる。 */
-    async start() {
-      ensureContext()
+    start: startAudio,
+    /** 情景を替える時、前の情景（立体の街）が残した場所の音の値を戻す（高さのしぼり・飛行の風・水/祭り/駅のざわめき・猫）。
+     *  2Dの情景はこれらの値を送らないので、戻さないと飛んだまま雨の窓へ移った時に雨音が約1.5%で始まり、風と波が鳴り続ける（S1）。 */
+    resetPlaces() {
+      altDuckV = 0
+      flyWindV = 0
+      purrV = 0
       if (!ctx) return
-      unlockMediaSession() // ジェスチャ起点で無音タグを再生＝iOSの消音スイッチを回避
-      if (ctx.state === 'suspended') await ctx.resume()
-      started = true
-      startWind() // 生成的な風をそっと立ち上げる（全情景でループ感を消す）
-      startWater() // 場所に応じた水の音（波/せせらぎ）の源を立ち上げる（音量0＝setAmbienceが近さで満ち引き）
-      startFestival() // 夏祭りの囃子の源を立ち上げる（音量0＝祭りに近づくと満ちる。離れている間は音符を作らない）
-      startStation() // 駅の音の源を立ち上げる（音量0＝駅に近づくと遠い電車の音がたまに。ベルは廃止）
-      // 生成BGMの下地(合成パッド)は実機で終始「ぶー」というドローンに聞こえ、ユーザーが繰り返し強く嫌う。
-      // setMusicBedで基準音量を0にしても、bedGainに繋いだ呼吸LFO(±0.004)が乗って微かに鳴り続け、窓を開けた瞬間(防音解除)に目立つ。
-      // 根本対策として下地そのものを起動しない＝oscillatorを生成せずドローン源を消す。自然音(風・鳥・虫・波)だけにする。
-      // （startMusicBed/setMusicBed は将来用に残すが呼ばない。bedNodesがnullのままなのでsetMusicBedは何もしない）
-      if (currentScene) await playScene(currentScene, false)
-      // 起動の一声＝遠い風鈴のように澄んだ鈴を一つ。「丁寧に作られている」を最初の一拍で音にする第一印象（サウンド監督G26）。
-      if (!muted && ctx.createOscillator) { try { const t0 = now() + 0.4
-        for (const [mul, amp, dec] of [[1, 0.025, 2.6], [2.01, 0.009, 1.7]]) { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 880 * mul; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(amp, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dec); o.connect(g).connect(master); o.start(t0); o.stop(t0 + dec + 0.1) }
-      } catch { /* 無音でも続行 */ } }
+      for (const l of layers) applyLayerGain(l, 0.1)
+      if (windNode) { try { windNode.g.gain.setTargetAtTime(0, now(), 0.2) } catch { /* 無視 */ } }
+      setAmbience(0, 0, 0, 0, 0)
+      if (purrNode) { try { purrNode.pg.gain.setTargetAtTime(0, now(), 0.1) } catch { /* 無視 */ } }
     },
     /** 画面の現象に音を結ぶ（花火の遠い破裂・流れ星のきらめき）。無音の現象は鳴らさない。 */
     playEvent,

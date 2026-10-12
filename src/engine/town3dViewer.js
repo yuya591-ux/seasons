@@ -112,6 +112,13 @@ export function isTown3dActive() {
   return !!active
 }
 
+// 端末の傾き（-1..1）を窓辺の見回しに足す（設定「傾きで見回す」。以前は町の3Dに傾きを受け取る口が無く、隠れた2Dへ流れていた・S50）。
+export function applyTown3dTilt(nx, ny) {
+  if (!active) return
+  active.tiltX = Math.max(-1, Math.min(1, nx || 0))
+  active.tiltY = Math.max(-1, Math.min(1, ny || 0))
+}
+
 // 見回し（スワイプ）。nx,ny は累積の相対量。乗り出すと見回せる幅が広がる。
 export function applyTown3dLook(dx, dy) {
   if (!active) return
@@ -695,8 +702,11 @@ export async function mountTown3d(parent, opts = {}) {
     sunDisk = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(dcv), color: diskCol, transparent: true, opacity: weather === 'snow' ? 0.7 : 0.95, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }))
     const dS = (weather === 'snow' ? 15 : 19) + duskAmt * 17; sunDisk.scale.set(dS, dS, 1); scene.add(sunDisk)
   }
-  const rng = (seed) => { let s = seed * 9301 + 49297; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280 } }
-  const R = rng(7)
+  const rng = (seed) => { let s = seed * 9301 + 49297; const f = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }; f.state = () => s; return f }
+  let R = rng(7) // 町の乱数。消費の順番が町の配置を決める（家・木・人）。一時的な差し替えは下の withLocalR だけで行う
+  // 祭りのように「開催の日だけ作る物」は、専用の乱数に一時的に差し替えて作る＝町の乱数 R の消費が日によって変わらない
+  // （以前は開催の日だけ R を余分に回し、後ろの家・木・人の配置が日ごとに変わっていた・S26）。中で呼ぶ関数も差し替えた R を使う。
+  const withLocalR = (seed, fn) => { const saved = R; R = rng(seed); try { return fn() } finally { R = saved } }
 
   const town = new THREE.Group()
   scene.add(town)
@@ -1450,7 +1460,9 @@ export async function mountTown3d(parent, opts = {}) {
   // 日替わりで開催/非開催（実カレンダーの日付で決定＝同じ日は同じ・日が変わると変わる）。夏の夕夜のみ。
   const festDay = Math.floor(Date.now() / 864e5) // 今日(エポックからの日数)
   const FORCE_FEST = /[?&]fest=1/.test(location.search) // 検証/プレビュー用: 日替わりを無視して必ず開催
-  const festOn = (id) => season === 'summer' && weather !== 'rain' && weather !== 'snow' && (isNight || duskAmt > 0.2) && (FORCE_FEST || ((((festDay * 2654435761) ^ (id * 40503) ^ 0x5bd1e995) >>> 0) % 100) < 50) // 各会場50%で開催（夏の夕夜）。雨/雪は現実通り中止（実機FB）
+  const FORCE_FEST_OFF = /[?&]fest=0/.test(location.search) // 検証用: 日替わりを無視して開催しない（開催の有無で町の配置が変わらないかを比べる）
+  const festCan = season === 'summer' && weather !== 'rain' && weather !== 'snow' && (isNight || duskAmt > 0.2) // 祭りがありうる情景（夏の夕夜・雨雪でない）
+  const festOn = (id) => festCan && !FORCE_FEST_OFF && (FORCE_FEST || ((((festDay * 2654435761) ^ (id * 40503) ^ 0x5bd1e995) >>> 0) % 100) < 50) // 各会場50%で開催（夏の夕夜）。雨/雪は現実通り中止（実機FB）
   const festivalSpots = []  // 開催中の祭りの中心（音の距離計算用）＝遠くから囃子が聞こえ近づくと大きくなる
   const festDancers = []    // 盆踊りの踊り手（frameで腕を上げ下げ・体を揺らす）
   // 祭り・雲海の人物を「住人(makeResident)」と同じ高品質（顔・手足・小物・輪郭）で作る。makeResidentは別ブロック(時代住人の生成所)で後方定義のため、ここでは配置データだけ溜め、そのブロック内で実体化する（評価FB「全エリアの全キャラを添付画像級の品質へ」）。
@@ -1601,7 +1613,6 @@ export async function mountTown3d(parent, opts = {}) {
       const signTex2 = new THREE.CanvasTexture(scv); const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.7, 0.06), lit ? new THREE.MeshBasicMaterial({ map: signTex2, fog: true }) : new THREE.MeshToonMaterial({ map: signTex2, gradientMap: grad, fog: true })); sign.position.set(0, 1.55, 0.75); g.add(sign)
       const stallLan = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.34, 8), lit ? new THREE.MeshBasicMaterial({ color: 0xff9a4a, fog: true }) : redMat); stallLan.scale.y = 1.2; stallLan.position.set(-1.2, 1.8, 0.7); g.add(stallLan)
       if ((s === 0 || s === 3) && !LIGHT) for (let p = 0; p < 3; p++) { const puff = new THREE.Mesh(new THREE.SphereGeometry(0.32, 7, 6), new THREE.MeshBasicMaterial({ color: 0xf2f0ea, transparent: true, opacity: 0, depthWrite: false, fog: true })); puff.position.set(0.4, 1.4, 0.1); g.add(puff); steamPuffs.push({ mesh: puff, base: 1.4, ph: p * 0.8 + R() * 0.6 }) }
-      colliders.push({ x: sx, z: sz, r: 1.6 })
     }
     }
     // 盆踊りの輪（やぐらを囲む人。中心を向き、frameで腕を上げ下げ・体を揺らす）。広い会場を埋めるよう増員＋輪を広げる。
@@ -1619,8 +1630,18 @@ export async function mountTown3d(parent, opts = {}) {
       const wd = new THREE.Group(); wd.position.set(wx, fgy, wz); wd.rotation.y = Math.atan2(fx - wx, fz - wz); wd.scale.setScalar(0.92 + R() * 0.18); town.add(wd)
       folkSpecs.push({ d: wd, top: yukataCols[(i + 2) % yukataCols.length], ph: R() * 6.28, y0: fgy, amp: 0.14 }) // 見物客（その場で控えめに揺れる）
     }
-    colliders.push({ x: fx, z: fz, r: 2.6 }); spawnAvoid.push({ x: fx, z: fz, r: 7 })
-    festivalSpots.push({ x: fx, z: fz, r: 13 }) // 音: この祭りに近づくと囃子が満ちる
+    festivalSpots.push({ x: fx, z: fz, r: 13 }) // 音: この祭りに近づくと囃子が満ちる（当たり判定と物を置かない範囲は reserveFestival が開催の有無にかかわらず置く）
+  }
+  // 祭りの会場の予約（屋台・やぐら・ステージの当たり判定と、草株や人を置かない範囲）。祭りがありうる情景では、開催の有無にかかわらず
+  // 毎回同じだけ置く＝後ろの草株・人などの置き場所の判定と町の乱数の回る数が、開催の日で変わらない（以前は開催の日だけ置かれ、
+  // 置けない場所の飛ばしで乱数の回る数が変わって、後ろの家・木・人の配置が日ごとに変わっていた・S26）。開催しない日は会場が空いた地面になる。
+  const reserveFestival = (fx, fz, sc = 1, compact = false) => {
+    if (!compact) for (const [ox, oz] of [[-9, 4], [9, 2], [-4, 11], [6, 10]]) colliders.push({ x: fx + ox * sc, z: fz + oz * sc, r: 1.6 }) // 屋台×4
+    colliders.push({ x: fx, z: fz, r: 2.6 }); spawnAvoid.push({ x: fx, z: fz, r: 7 }) // やぐら
+  }
+  const reserveSummerFes = (fx, fz) => {
+    for (const [ox, oz] of [[-7, 2], [7, 1], [-4, 7]]) colliders.push({ x: fx + ox, z: fz + oz, r: 1.5 }) // 模擬店×3
+    colliders.push({ x: fx, z: fz - 4.5, r: 3.6 }); spawnAvoid.push({ x: fx, z: fz, r: 8 }) // ステージ
   }
   // ── やまゆりホームの「サマフェス」（前庭の広場で。ステージ＋模擬店＋見物の人＝盆踊りと別の地域の催し）。──
   const makeSummerFes = (fx, fz) => {
@@ -1656,14 +1677,13 @@ export async function mountTown3d(parent, opts = {}) {
       const scv = document.createElement('canvas'); scv.width = 64; scv.height = 24; const scx = scv.getContext('2d'); scx.fillStyle = '#f0ece0'; scx.fillRect(0, 0, 64, 24); scx.fillStyle = '#1f6e4a'; scx.font = 'bold 15px sans-serif'; scx.textAlign = 'center'; scx.textBaseline = 'middle'; scx.fillText(fesWords[s], 32, 12)
       const stex = new THREE.CanvasTexture(scv); const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.68, 0.06), lit ? new THREE.MeshBasicMaterial({ map: stex, fog: true }) : new THREE.MeshToonMaterial({ map: stex, gradientMap: grad, fog: true })); sign.position.set(0, 1.5, 0.72); g.add(sign)
       const lan = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.32, 8), lit ? new THREE.MeshBasicMaterial({ color: 0xff9a4a, fog: true }) : toon(0xc0392b)); lan.position.set(-1.2, 1.7, 0.66); g.add(lan)
-      colliders.push({ x: sx, z: sz, r: 1.5 }) }
+    }
     // 見物の人（ステージを向いて集まる）
     for (let i = 0; i < (LIGHT ? 6 : 9); i++) { const ang = (R() - 0.5) * 2.2, rad = 2.6 + R() * 4.2, cx2 = fx + Math.sin(ang) * rad, cz2 = fz + 1.5 + Math.cos(ang) * rad * 0.6, cgy = fgy
       const d = new THREE.Group(); d.position.set(cx2, cgy, cz2); d.rotation.y = Math.atan2(fx - cx2, stz - cz2); d.scale.setScalar(0.9 + R() * 0.2); town.add(d) // ステージを向く
       const yk = yukataCols[i % yukataCols.length], ph = R() * 6.28, dy = cgy
       folkSpecs.push({ d, top: yk, ph, y0: dy, amp: 0.16 }) } // 浴衣の見物客（makeResident品質。控えめに揺れて生気）
-    colliders.push({ x: fx, z: stz, r: 3.6 }); spawnAvoid.push({ x: fx, z: fz, r: 8 })
-    festivalSpots.push({ x: fx, z: fz, r: 13 }) // 音: サマフェスにも近づくと囃子が満ちる
+    festivalSpots.push({ x: fx, z: fz, r: 13 }) // 音: サマフェスにも近づくと囃子が満ちる（当たり判定と物を置かない範囲は reserveSummerFes が置く）
   }
 
   // ── 起伏する地面（谷へ下る坂の街の地面） ──
@@ -3370,7 +3390,7 @@ export async function mountTown3d(parent, opts = {}) {
       colliders.push({ x: px0, z: pz0, r: pondR * 0.85 }) // 歩行: 池には入らない
       spawnAvoid.push({ x: px0, z: pz0, r: pondR + 1.5 }) // 着地: 池に降りない
       // ── 夏祭り（公園の南の開けた所を会場に）。夏の夕夜・日替わりで開催。狭い公園に収まるようコンパクトに。id=0 ──
-      if (festOn(0)) makeFestival(px0, pz0 - 10, 0.62) // 池の南（屋台が池/木立に食い込まないよう縮小＋南へ）
+      if (festCan) reserveFestival(px0, pz0 - 10, 0.62); if (festOn(0)) withLocalR(1001, () => makeFestival(px0, pz0 - 10, 0.62)) // 池の南（屋台が池/木立に食い込まないよう縮小＋南へ）
     }
 
     // ── 展望塔（谷を見はるかす街の塔）。高く昇って並ぶ目印・飛んで上がる目的地。──
@@ -3578,7 +3598,7 @@ export async function mountTown3d(parent, opts = {}) {
       colliders.push({ x: cx, z: cz - 7, r: 8 }) // 校舎の塊
       spawnAvoid.push({ x: cx, z: cz - 7, r: 9 })
       // 夏の夜祭り（校庭の盆踊り）＝獅子ヶ谷小学校の核の記憶。夏の夕夜・日替わりで開催。id=1
-      if (festOn(1)) makeFestival(cx, cz + 6, 0.8) // 校庭の中央（校舎から前へ離す）に広めの会場＝本命の盆踊り
+      if (festCan) reserveFestival(cx, cz + 6, 0.8); if (festOn(1)) withLocalR(1002, () => makeFestival(cx, cz + 6, 0.8)) // 校庭の中央（校舎から前へ離す）に広めの会場＝本命の盆踊り
     }
 
     // ── やまゆりホーム（地域の福祉施設）。馴染みの場所。前庭の広場で夏は「サマフェス」（模擬店＋ステージ）。──
@@ -3616,7 +3636,7 @@ export async function mountTown3d(parent, opts = {}) {
       tree(hx - 7.2, hz + 1, 0.9); tree(hx + 7.2, hz + 1, 0.95)
       colliders.push({ x: hx, z: hz + bcz, r: 7 }); spawnAvoid.push({ x: hx, z: hz + bcz, r: 8 })
       // サマフェス（前庭の広場で。夏の夕夜・日替わりで開催。id=2）
-      if (festOn(2)) makeSummerFes(hx, hz + 6)
+      if (festCan) reserveSummerFes(hx, hz + 6); if (festOn(2)) withLocalR(1003, () => makeSummerFes(hx, hz + 6))
     }
 
     // ── 祭りの会場は「窓から遠い、開けた平らな場所」に限る（実機FB）。──
@@ -6986,11 +7006,12 @@ export async function mountTown3d(parent, opts = {}) {
   // ── 祭り・雲海の人物を住人と同じ高品質(makeResident)で実体化（評価FB「全エリアの全キャラを添付画像級へ」）。浴衣＝着物の身頃で。makeResident/pickCが在るこのブロック内で folkSpecs を処理する。──
   const FOLK_HAIR_STYLES = ['short', 'topknot', 'bob', 0, 1]
   const buildFolk = (top, scale) => { const r = makeResident({ outfit: 'kimono', skin: pickC(RES_SKIN), hair: pickC(RES_HAIR), iris: pickC(RES_IRIS), top, accent: pickC(FOLK_OBI), hairStyle: pickC(FOLK_HAIR_STYLES), scale }); r.traverse((o) => { if (o.isMesh) o.castShadow = false }); return r } // 祭り/雲海は密集＝影焼きを切り接地影プレーンで足元を締める
+  let festFolkN = 0 // 祭りの人（開催の日だけ居る）は専用の乱数で実体化する＝町の乱数の消費を開催の日で変えない（S26）
   for (const s of folkSpecs) {
     if (s.cloud) { const r = buildFolk(s.top, s.scale); r.position.set(s.x, s.y, s.z); r.rotation.y = s.ry
       r.traverse((o) => { if (o.isMesh) { o.receiveShadow = false; if (s.reveal) { if (Array.isArray(o.material)) o.material = o.material.map((m) => m.clone()); else if (o.material) o.material = o.material.clone() } } }) // 雲海の島はcloudRevealMatsで高度フェード＝共有材を汚さぬよう複製
       s.parent.add(r) }
-    else { const r = buildFolk(s.top, 0.84); s.d.add(r); festDancers.push({ d: s.d, arms: r.userData.arms, ph: s.ph, y0: s.y0, cx: s.cx, cz: s.cz, rad: s.rad, ang: s.ang, amp: s.amp }) } // 祭り＝frameでfestDancersを動かす
+    else { const r = withLocalR(2000 + (festFolkN++), () => buildFolk(s.top, 0.84)); s.d.add(r); festDancers.push({ d: s.d, arms: r.userData.arms, ph: s.ph, y0: s.y0, cx: s.cx, cz: s.cz, rad: s.rad, ang: s.ang, amp: s.amp }) } // 祭り＝frameでfestDancersを動かす
   }
   // ── 地被（草株＋小石）を開けた地面に広く散らして「むき出しの土」を埋める＝滞在したくなる豊かさ（実機FB: 空き地が殺風景）。
     // 頂点色で1メッシュへ統合＝描画コール+1。R()依存の街生成の後に置くのでRNGずれ無し。建物/道/水際/木は避ける。LOWで半減。
@@ -7725,11 +7746,15 @@ export async function mountTown3d(parent, opts = {}) {
     scene.add(winRoom)
   }
 
+  let drawCount = 0 // 描いた回数（検証用・S38）
+  let frameErrLogged = false // 描画ループの更新の例外は1回だけ知らせる
+  let composerFails = 0, composerRetryT = 0, composerUsed = false, composerThrowOnce = false // 後処理の失敗の数・次に試す時刻・このフレームで後処理を使えたか
   active = {
     renderer, scene, camera, stage, raf: 0,
     paused: false,                // おやすみの暗転後は true＝描画ループを止める（発熱・電池配慮。setTown3dPaused）
 
     yaw: 0, pitch: 0, yawTarget: 0, pitchTarget: 0,
+    tiltX: 0, tiltY: 0, tiltYaw: 0, tiltPitch: 0, // 端末の傾き（applyTown3dTilt）と、それをなめらかにした見回しの足し分
     winOpen: 0, winOpenTarget: 0, // 窓をあける（ガラスが横にすべって外気が澄む）。winOpen=ease済みの実値
     winOpenP: 0,                  // 窓あけの線形進行(0..1)。これに ease-in-out をかけて winOpen にする
     lean: 0, leanTarget: 0,        // 身を乗り出す（枠を越えて前へ＝視界が広がる）。lean=ease済みの実値
@@ -7957,6 +7982,7 @@ export async function mountTown3d(parent, opts = {}) {
   }
   stage.classList.toggle('town3d-stage--light', QUAL === 'light') // 起動時の品質を即反映（軽量端末は軽い合成で始める）
   active.setStay = (v) => { drift.stay = !!v } // 「時間をとどめる」：日の傾きのドリフトを今の時刻で凍結／解除
+  const me = active // この町の active（測りの口が、町を出た後や次の町で前の町の数を返さないように見る）
 
   // ════════════════════════════════════════════════════════════════════════
   // 「いつもと違う光景」定期イベント（ぼーっと眺めていると時々おきる小さな驚き）。
@@ -8909,6 +8935,10 @@ export async function mountTown3d(parent, opts = {}) {
     const drawDt = lastDraw < 0 ? 0.033 : t - lastDraw // 実際の描画間隔（カク付き検知）
     lastDraw = t
     const _js0 = performance.now() // 毎フレームのJS処理時間を測る（検証用・CPU負荷）
+    // 更新処理（約1,400行）をまとめて囲む: どれか1つの処理が例外を出しても、下の描画は必ず行う（以前は最後の描画だけを囲っていて、
+    // 毎フレーム例外が出ると絵が止まった＝音の NaN で実際に起きた・S38）。例外は1回だけ知らせる。
+    try {
+    if (active.throwN > 0) { active.throwN--; throw new Error('検査用の例外') }
     // ── 自動品質調整：能動飛行中、描画が30fpsに間に合わない状態が続いたら解像度を一段下げて「常に滑らか」を死守。
     //    安定が長く続けば鮮やかさ(qCap)へ少しずつ戻す。ヒステリシスで頻繁な切替を防ぐ。restIdle/タブ復帰の巨大gapは無視。
     lastDDT = drawDt
@@ -9498,9 +9528,12 @@ export async function mountTown3d(parent, opts = {}) {
     // 見回しを目標へ滑らかに追従（イージング＝指を離しても余韻があるヌルヌルの見回し）
     active.yaw += (active.yawTarget - active.yaw) * 0.16
     active.pitch += (active.pitchTarget - active.pitch) * 0.16
+    // 端末の傾きをなめらかに見回しへ足す（指の見回しの目標とは別に持つ＝指と傾きが取り合わない）
+    active.tiltYaw += ((active.tiltX || 0) * 0.35 - active.tiltYaw) * 0.12
+    active.tiltPitch += ((active.tiltY || 0) * 0.18 - active.tiltPitch) * 0.12
     // 見回し（息づかいの微揺れ付き。細い桟/畳がチカチカするので微揺れは控えめに）
-    const yaw = active.yaw + Math.sin(t * 0.2) * 0.004
-    const pitch = active.pitch
+    const yaw = active.yaw + active.tiltYaw + Math.sin(t * 0.2) * 0.004
+    const pitch = active.pitch + active.tiltPitch
     // 窓をあけると視界がふっと前へ開け(=控えめ)、乗り出すとさらに前へ・下へ寄って画角が広がる（枠を越えて街へ顔を出す）
     // 室内視差: 部屋の中（乗り出していない間）は、見回しに連れてカメラがわずかに平行移動する＝頭を動かして
     // 窓の外を覗き込む手応え（近い窓枠と遠い景色がずれて動く）。乗り出す(lean)と0になり、枠を越えて街へ顔を出す。
@@ -10342,8 +10375,24 @@ export async function mountTown3d(parent, opts = {}) {
     updateFx(dt)
     scheduleFx(dt)
     lastJsMs = lastJsMs * 0.9 + (performance.now() - _js0) * 0.1 // 毎フレームのJS処理時間（移動平均・検証用）
+    } catch (e) {
+      if (!frameErrLogged) { frameErrLogged = true; console.error('町の更新で例外が出ました（描画は続けます）:', e) }
+    }
     // 飛行中も解像度は最高(qCap=1.6)のまま保つ＝景色を一望する時こそ綺麗に。輪郭のギザギザはFXAAでなめらかに（発熱をほぼ増やさず）。
-    if (composer) { try { composer.render() } catch (e) { composer = null; renderer.render(scene, camera) } } else renderer.render(scene, camera)
+    // 後処理が例外を出したら、そのフレームは直描きにし、5秒後にもう一度後処理を試す。3回続けて失敗したら以後は直描き（一度の例外でFXAAとブルームを失ったままにしない・S38）。
+    drawCount++
+    composerUsed = false
+    if (composer && t >= composerRetryT) {
+      try {
+        if (composerThrowOnce) { composerThrowOnce = false; throw new Error('検査用の後処理の例外') }
+        composer.render(); composerFails = 0; composerUsed = true
+      } catch (e) {
+        composerFails++
+        if (composerFails >= 3) composer = null
+        else composerRetryT = t + 5
+        renderer.render(scene, camera)
+      }
+    } else renderer.render(scene, camera)
   }
   // 初回フレームでの「可視マテリアルの一斉シェーダーコンパイル」(progs多数=数百msのヒッチ)を、
   // 描画を始める前にまとめて済ませる＝マウント直後の最初のframe()が固まらない（暗転の裏で温める）。
@@ -10352,6 +10401,8 @@ export async function mountTown3d(parent, opts = {}) {
   // この一斉リコンパイルが、上昇ボタンの長押しを iOS に pointercancel させ「雲海突入直前で1回解除」させていた実機FBの主因。直後の compile で透明版を温める。
   // 低空では cloudObjs.visible=false なので、常時透明でも低空の描画コスト（オーバードロー）は増えない。
   if (cloudObjs && cloudObjs.length) { cloudRevealMats = []; for (const o of cloudObjs) o.traverse((c) => { if (c.isMesh) { const mm = Array.isArray(c.material) ? c.material : [c.material]; for (const m of mm) { if (m && m.__revBase === undefined) { m.__revBase = (m.opacity == null ? 1 : m.opacity); m.transparent = true; m.opacity = 0; cloudRevealMats.push(m) } } } }) }
+  // 町を組み終えた時の乱数の状態（同じなら、ここまでの町の乱数の消費が同じ＝家・木・人の配置が同じ）。祭りの有無・段の違いで比べる（S26・S25）
+  const layoutEnd = { rngEnd: R.state(), fest: festivalSpots.length }
   try { renderer.compile(scene, camera) } catch { /* コンパイル先行に失敗しても描画は継続 */ }
   renderer.shadowMap.needsUpdate = true // 影を最初の描画で一度だけ焼く（以降は静的）
   frame()
@@ -10556,7 +10607,11 @@ export async function mountTown3d(parent, opts = {}) {
       yaw: +active.flyYaw.toFixed(2), camYaw: +(active.walkCamYaw || 0).toFixed(2), pitch: +active.flyPitch.toFixed(2),
       vel: +Math.hypot(active.vel.x, active.vel.y, active.vel.z).toFixed(2), mvX: +active.moveX.toFixed(2), mvY: +active.moveY.toFixed(2), bank: +active.bankCur.toFixed(2),
     })
-    window.__town3dStats = () => { const r = renderer.info.render; let objs = 0; scene.traverse(() => objs++); return { calls: r.calls, tris: r.triangles, objs, pr: +curPR.toFixed(2), ddt: +lastDDT.toFixed(3), low: adQLow, ok: adQOk } } // 検証用: 描画コール/三角形/オブジェクト数/自動品質状態
+    window.__town3dStats = () => { if (active !== me) return null; const r = renderer.info.render; let objs = 0; scene.traverse(() => objs++); return { calls: r.calls, tris: r.triangles, objs, pr: +curPR.toFixed(2), ddt: +lastDDT.toFixed(3), low: adQLow, ok: adQOk, frames: drawCount, composer: composerUsed } } // 検証用: 描画コール/三角形/オブジェクト数/自動品質状態。町を出た後は null（前の町の数を返さない・D9）
+    window.__town3dThrowFrames = (n) => { if (active) active.throwN = n || 1 } // 検証用: 描画ループの更新で n フレーム続けて例外を起こす（S38）
+    window.__town3dComposerThrow = () => { composerThrowOnce = true } // 検証用: 後処理で1回だけ例外を起こす（S38）
+    window.__town3dTilt = () => (active ? { x: +active.tiltX.toFixed(3), y: +active.tiltY.toFixed(3), yaw: +active.tiltYaw.toFixed(3) } : null) // 検証用: 傾きの見回し（S50）
+    window.__town3dLayout = () => (active === me ? layoutEnd : null) // 検証用: 町を組み終えた時の乱数の状態と祭りの数（S26・S25）
     window.__town3dResInfo = () => residents.map((r) => ({ x: +r.position.x.toFixed(1), y: +r.position.y.toFixed(1), z: +r.position.z.toFixed(1), face: +r.rotation.y.toFixed(2) })) // 検証用: 住人の位置・向き
     window.__town3dPeepFront = (i, dist = 4, lift = 0.9) => { const p = peeps[i]; if (!p) return; const d = new THREE.Vector3(); camera.getWorldDirection(d); const t = camera.position.clone().addScaledVector(d, dist); const u = p.userData; u.loiter = true; u.hx = t.x; u.hz = t.z; u.rad = 0; u.sp = 0; u.face = Math.atan2(camera.position.x - t.x, camera.position.z - t.z); p.position.set(t.x, t.y - lift, t.z); p.rotation.y = u.face } // 検証用: 簡易peepをカメラ正面の視線上に立たせる（壺感の確認）
     window.__town3dPeepPin = (i, x, z, face = 0, yOver) => { const p = peeps[i]; if (!p) return; const u = p.userData; u.frozen = true; p.position.set(x, yOver !== undefined ? yOver : heightAt(x, z), z); p.rotation.y = face } // 検証用: 簡易peepを座標(任意y)に凍結（shotAtで接写）

@@ -1,0 +1,14 @@
+{
+ "pass": true,
+ "hooks": {
+  "events2d": "undefined",
+  "audio": "undefined",
+  "apply": "undefined"
+ },
+ "errs": [],
+ "id": "S41",
+ "ms": 20972,
+ "at": "2026-10-12T13:47:54.018Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "0676315"
+}

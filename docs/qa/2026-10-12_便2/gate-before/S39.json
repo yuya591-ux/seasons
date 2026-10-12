@@ -1,0 +1,12 @@
+{
+ "pass": false,
+ "version": "seasons-v5",
+ "cacheKeys": [
+  "seasons-v5-assets"
+ ],
+ "id": "S39",
+ "ms": 44182,
+ "at": "2026-10-12T13:39:52.451Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

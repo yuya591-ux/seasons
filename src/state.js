@@ -30,7 +30,7 @@ const DEFAULTS = {
   settings: {
     rain: 0.65, // 雨脚 0..1
     brightness: 1.0, // 画面の明るさ 0.7..1.3
-    quality: autoQuality(), // 'soft'(なめらか) | 'standard'(標準) | 'light'(軽量)
+    quality: autoQuality(), // 'soft'(こまやか) | 'standard'(ふつう) | 'light'(軽やか)＝設定の画面の言葉に合わせる
     tilt: false, // 端末の傾きで見回す
     timeStay: false, // 時間をとどめる（時間帯の移ろいを止めて今の時刻に静止）
     muted: false,

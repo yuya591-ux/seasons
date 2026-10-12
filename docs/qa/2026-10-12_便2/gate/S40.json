@@ -1,0 +1,11 @@
+{
+ "pass": true,
+ "controlled": true,
+ "assetFetchesOnSecondLoad": 0,
+ "sample": [],
+ "id": "S40",
+ "ms": 80393,
+ "at": "2026-10-12T13:55:42.812Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "0676315"
+}

@@ -177,12 +177,15 @@ export function createRenderer(canvas) {
     panoReady = 0
     panoDepthReady = 0
     if (!key) return
+    // 読み込みが終わった時に、今の情景の鍵と合うものだけ貼る（素早く切り替えると前の情景の画が後から届くため・S53）。合わない画は解放する
     loadTexture(BASE + s.pano, (tex) => {
+      if (key !== panoKey) { if (tex) gl.deleteTexture(tex); return }
       panoTex = tex
       panoReady = tex ? 1 : 0
     })
     if (s.panoDepth) {
       loadTexture(BASE + s.panoDepth, (tex) => {
+        if (key !== panoKey) { if (tex) gl.deleteTexture(tex); return }
         panoDepthTex = tex
         panoDepthReady = tex ? 1 : 0
       })
@@ -194,16 +197,21 @@ export function createRenderer(canvas) {
   let bgTex = null
   let bgReady = 0
   let bgKey = null
+  let bgTexKey = null // 今貼っている背景の画が、どの情景の鍵で読んだものか（検証用・S53）
   function loadBg(s) {
     const key = s && s.bg ? s.bg : null
     if (key === bgKey) return
     bgKey = key
     if (bgTex) gl.deleteTexture(bgTex) // 旧テクスチャを解放（GPUメモリの累積を防ぐ）
     bgTex = null
+    bgTexKey = null
     bgReady = 0
     if (!key) return
     loadTexture(BASE + s.bg, (tex) => {
+      // 前の情景の背景が後から届いたら貼らずに解放する（雨の窓どうしを素早く切り替えた時に、違う窓の外が貼られ解放もされない・S53）
+      if (key !== bgKey) { if (tex) gl.deleteTexture(tex); return }
       bgTex = tex
+      bgTexKey = tex ? key : null
       bgReady = tex ? 1 : 0
     })
   }
@@ -490,7 +498,12 @@ export function createRenderer(canvas) {
     // 次フレームは関数冒頭で予約済み（二重予約を避ける）
   }
 
+  // 止めている理由（'engine'＝町の3D・スプラットを表示中／'sleep'＝おやすみの暗転が終わった）。
+  // 画面の復帰（visibilitychange）や WebGL の復帰では、理由が1つも無い時だけ再開する（S34: おやすみの後に
+  // ロック→解除すると、真っ暗な幕の裏で2Dが描き続けていた／町の3Dの最中に cancelSleep が2Dを再開させていた）。
+  const holds = new Set()
   function play() {
+    if (holds.size) return
     if (!rafId) rafId = requestAnimationFrame(render)
   }
   function pause() {
@@ -556,13 +569,18 @@ export function createRenderer(canvas) {
 
   return {
     ok: true,
-    // スプラット情景に切り替わる間など、シェーダー描画を一時停止／再開する
-    pause() {
+    // スプラット・町の3Dに切り替わる間や、おやすみの暗転の後に、シェーダー描画を一時停止／再開する。
+    // reason ごとに止め、全部の理由が外れた時だけ再開する（画面の復帰で勝手に動き出さない）。
+    pause(reason = 'engine') {
+      holds.add(reason)
       pause()
     },
-    resume() {
+    resume(reason = 'engine') {
+      holds.delete(reason)
       play()
     },
+    isRunning() { return !!rafId }, // 検証用: 描画ループが回っているか
+    bgInfo() { return { key: bgKey, texKey: bgTexKey, ready: bgReady } }, // 検証用: 背景の鍵と、貼っている画の鍵
     // town3d/splat表示中は描画を止めるので、最大GPUメモリ(フルスクリーンFBOテクスチャ)を解放しメモリ圧を下げる
     // ＝iOSの「メモリ逼迫でWebGLコンテキストを失わせる」誘発を抑える（評価エンジニア: マルチコンテキスト枯渇の緩和）。
     // 通常情景へ戻ると描画ループの ensureFBO が同期で自動再作成するので安全。

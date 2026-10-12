@@ -289,6 +289,10 @@ export function buildUI(opts) {
   root.appendChild(panelCredits.el)
 
   // ── 設定パネル ──
+  // おやすみの選択はこの画面の中だけで持つ（設定に書くと、ほかの保存に乗って残り、開き直すと点いているのにタイマーが動いていなかった・D8）
+  let sleepSel = 0
+  let syncSleepChips = () => {}
+  let syncTiltChip = () => {}
   const panelSet = buildSettingsPanel()
   root.appendChild(panelSet.el)
   setBtn.addEventListener('click', () => {
@@ -693,6 +697,7 @@ export function buildUI(opts) {
     const tiltChips = h('div', 'axis__chips')
     const tiltBtn = h('button', 'chip', '傾きで見回す')
     tiltBtn.classList.toggle('chip--on', settings.tilt)
+    syncTiltChip = (on) => { settings.tilt = !!on; tiltBtn.classList.toggle('chip--on', !!on) }
     tiltBtn.addEventListener('click', () => {
       settings.tilt = !settings.tilt
       tiltBtn.classList.toggle('chip--on', settings.tilt)
@@ -738,16 +743,17 @@ export function buildUI(opts) {
     const sEls = []
     SLEEPS.forEach((s) => {
       const chip = h('button', 'chip', s.label)
-      chip.classList.toggle('chip--on', (settings.sleep || 0) === s.m)
+      chip.classList.toggle('chip--on', sleepSel === s.m)
       chip.addEventListener('click', () => {
-        settings.sleep = s.m
-        sEls.forEach((e) => e.chip.classList.toggle('chip--on', e.m === s.m))
+        sleepSel = s.m
+        syncSleepChips()
         onSleepTimer && onSleepTimer(s.m)
         poke()
       })
       sleepChips.appendChild(chip)
       sEls.push({ m: s.m, chip })
     })
+    syncSleepChips = () => sEls.forEach((e) => e.chip.classList.toggle('chip--on', e.m === sleepSel))
     sleepRow.appendChild(sleepChips)
     el.appendChild(sleepRow)
 
@@ -816,6 +822,15 @@ export function buildUI(opts) {
     setLocation(name) {
       currentLoc = name || ''
       updateWindowBtn()
+    },
+    // おやすみの点灯を外から合わせる（暗転が終わってタイマーを使い切ったら「なし」へ）。
+    setSleep(m) {
+      sleepSel = m || 0
+      syncSleepChips()
+    },
+    // 「傾きで見回す」の点灯を外から合わせる（許可が取れなかった時に消す）。
+    setTilt(on) {
+      syncTiltChip(on)
     },
     // 情景を替えたら窓は閉じた状態から（ボタン表示と描画のズレを防ぐ）。通知はしない。
     resetWindow() {

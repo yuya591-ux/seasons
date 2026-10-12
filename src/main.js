@@ -7,7 +7,7 @@ import { createEvents2d } from './engine/events2d.js'
 import { createAudio } from './audio/audio.js'
 import { buildUI } from './ui/ui.js'
 import { attachLookAround } from './ui/lookAround.js'
-import { createTilt } from './ui/tilt.js'
+import { createTilt, tiltAxes } from './ui/tilt.js'
 // 立体の街エンジン(town3dViewer)とスプラットビューア(splatViewer)はどちらも重い（8千行超の造形コードや Three.js を含む）。
 // 窓辺(2D)の起動時には読み込まず、その情景に入る瞬間だけ動的importで取り寄せる＝最初の表示を軽くする（評価エンジニア・初期チャンク削減）。
 // メイン描画は素のWebGL（renderer.js）なので、これらは3D/スプラット情景に入るまで一切ダウンロードされない。
@@ -94,18 +94,20 @@ function start() {
     isLive: () => !sleepFading && !document.hidden, // おやすみ中・非表示では出さない
     reduceMotion: !!(mqReduce && mqReduce.matches),
   })
-  if (location.search.includes('dev=1')) { window.__events2d = events2d; window.__audio = audio } // dev: 流れ星の手動発火・音の高度ダック確認(__audio._dbg())
+  if (/[?&]dev=1/.test(location.search)) { window.__events2d = events2d; window.__audio = audio } // dev: 流れ星の手動発火・音の高度ダック確認(__audio._dbg())
   let splatMode = false
   let town3dMode = false
   // 端末の傾き: スプラット情景は3Dの見回し、それ以外はシェーダーの視差に振り分ける
   const tilt = createTilt({
     onTilt: (nx, ny) => {
       if (splatMode) _splat?.applySplatTilt(nx, ny)
+      else if (town3dMode) _t3d?.applyTown3dTilt?.(nx, ny) // 町の3Dは窓辺の見回しに足す（以前は隠れた2Dへ流れて効かなかった・S50）
       else renderer.applyTilt(nx, ny)
     },
     onDisable: () => {
       if (splatMode) _splat?.resetSplatTilt()
-      else renderer.clearTilt()
+      _t3d?.applyTown3dTilt?.(0, 0)
+      renderer.clearTilt()
     },
   })
   audio.setMuted(settings.muted)
@@ -141,6 +143,7 @@ function start() {
     }
     setScene(next.id)
     recordVisit(next.id) // 通い帳: この窓辺に座った記録
+    audio.resetPlaces() // 前の町（高く飛んでいた等）が残した音の値を戻してから、新しい情景の音を立ち上げる（D7・S1）
     audio.setScene(next)
     events2d.setScene(next) // シェーダー2D情景の定期イベント（流れ星/蛍）。town3d/splatでは内部で無効化
 
@@ -274,19 +277,19 @@ function start() {
     if (sleepFading) {
       sleepFading = false
       sleepOverlay.classList.remove('sleep-overlay--on', 'sleep-overlay--done')
-      renderer.resume()
+      renderer.resume('sleep') // おやすみで止めた分だけ外す（町の3Dの最中なら 'engine' が残り、2Dは止まったまま・S34）
       if (town3dMode) _t3d?.setTown3dPaused?.(false) // 3Dの街も描画を再開（暗転から戻る）
       const st = getState().settings
       audio.setVolume(st.volume) // 音量を戻す
       audio.setMuted(st.muted)
     }
   }
-  function startSleepFade() {
+  function startSleepFade(durMs) {
     sleepFading = true
     sleepOverlay.classList.add('sleep-overlay--on') // CSSで約26秒かけて暗転
     const startVol = getState().settings.volume
     const t0 = performance.now()
-    const dur = 26000
+    const dur = durMs || 26000 // 検証用に短くできる（__sleepNow(ms)）
     function ramp() {
       if (!sleepFading) return
       const k = Math.min(1, (performance.now() - t0) / dur)
@@ -294,7 +297,8 @@ function start() {
       if (k < 1) requestAnimationFrame(ramp)
       else {
         sleepOverlay.classList.add('sleep-overlay--done')
-        renderer.pause() // 暗転しきったら休む（描画停止＝発熱/電池に配慮）
+        renderer.pause('sleep') // 暗転しきったら休む（描画停止＝発熱/電池に配慮）。理由つきで止め、画面の復帰で勝手に動き出さない（S34）
+        if (ui && ui.setSleep) ui.setSleep(0) // タイマーは使い切った＝設定の点灯を「なし」へ戻す（D8）
         if (town3dMode) _t3d?.setTown3dPaused?.(true) // 3Dの街も暗転の裏で止める（従来は真っ暗な裏で描き続けていた＝純損失）
         audio.setMuted(true)
       }
@@ -371,6 +375,10 @@ function start() {
     },
     onAudioStart() {
       maybeLookDemo() // 初回だけ、そっと一度見回して「動かせる」ことを伝える
+      // 保存された「傾きで見回す」は、このタップの中で有効にする（iOS は許可にタップが要る。以前は開き直すと点いているのに効かなかった・S50）
+      if (getState().settings.tilt) {
+        tilt.enable().then((ok) => { if (!ok) { updateSettings({ tilt: false }); if (ui && ui.setTilt) ui.setTilt(false) } })
+      }
       return audio.start()
     },
     onToggleMute(muted) {
@@ -417,7 +425,9 @@ function start() {
     window.__town3dLean = (b) => _t3d?.setTown3dLean(b) // 検証用: 3Dの街で身を乗り出す/もどる
     window.__town3dFlyToggle = (b) => _t3d?.setTown3dFly(b) // 検証用: 3Dの街で空へ飛び立つ/もどる
     window.__town3dLandToggle = (b) => _t3d?.setTown3dLand(b) // 検証用: 着地して歩く/また飛び立つ
-    window.__sleepNow = () => startSleepFade() // 検証用: おやすみの暗転を即時に起こす
+    window.__sleepNow = (ms) => startSleepFade(ms) // 検証用: おやすみの暗転を即時に起こす（ms を渡すと暗転を短く）
+    window.__tiltState = () => ({ enabled: tilt.isEnabled() }) // 検証用: 傾きの見回しが効いているか
+    window.__tiltAxes = tiltAxes // 検証用: 画面の向きに合わせた傾きの軸の入れ替え
     window.__lookDemo = () => maybeLookDemo() // 検証用: 初回の見回しデモを起こす（flagは呼び元で消す）
     window.__sleepState = () => ({ fading: sleepFading, on: sleepOverlay.classList.contains('sleep-overlay--on') })
   }

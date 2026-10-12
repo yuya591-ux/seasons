@@ -1,0 +1,12 @@
+{
+ "pass": true,
+ "version": "75f366a6e2a0",
+ "cacheKeys": [
+  "seasons-shell-75f366a6e2a0"
+ ],
+ "id": "S39",
+ "ms": 89546,
+ "at": "2026-10-12T13:54:22.250Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "0676315"
+}

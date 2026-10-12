@@ -1,0 +1,26 @@
+{
+ "pass": true,
+ "cache": [
+  "audio/shishigaya-morning-yato/uguisu.mp3",
+  "audio/shishigaya-morning-yato/stream.mp3",
+  "audio/winter-snow-night/wind.mp3",
+  "audio/summer-rain-dusk/rain.mp3",
+  "audio/autumn-dusk-corner-room/crickets.mp3",
+  "audio/summer-rain-dusk/thunder.mp3"
+ ],
+ "keep": [
+  "audio/summer-rain-dusk/rain.mp3",
+  "audio/autumn-dusk-corner-room/crickets.mp3",
+  "audio/summer-rain-dusk/thunder.mp3",
+  "audio/shishigaya-morning-yato/uguisu.mp3",
+  "audio/shishigaya-morning-yato/stream.mp3",
+  "audio/winter-snow-night/wind.mp3"
+ ],
+ "extra": [],
+ "errs": [],
+ "id": "S4",
+ "ms": 68724,
+ "at": "2026-10-12T13:41:42.791Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "0676315"
+}

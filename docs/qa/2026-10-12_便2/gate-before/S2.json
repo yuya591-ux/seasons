@@ -1,0 +1,10 @@
+{
+ "pass": false,
+ "chime": null,
+ "errs": [],
+ "id": "S2",
+ "ms": 16847,
+ "at": "2026-10-12T13:31:48.557Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

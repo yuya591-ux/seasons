@@ -1,4 +1,7 @@
 import { defineConfig } from 'vite'
+import { createHash } from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
 
 const BASE = '/seasons/'
 
@@ -6,9 +9,14 @@ const BASE = '/seasons/'
 // service worker が install 時にこれを読んでシェルを事前キャッシュ＝「一度も情景を開かずオフラインでも起動」
 // （外部API非依存・自分がいなくなっても動く原則）。音/背景画像は大きいので事前キャッシュせず再生時に取得。
 function precacheManifest() {
+  let outDir = 'dist'
+  let buildId = ''
   return {
     name: 'precache-manifest',
+    configResolved(c) { outDir = path.resolve(c.root, c.build.outDir) },
     generateBundle(_, bundle) {
+      // ビルドの指紋＝出力ファイル名（中身の指紋入り）の一覧から作る。sw.js の版に埋める（手で上げる版をやめる・S39）
+      buildId = createHash('sha256').update(Object.keys(bundle).sort().join("|")).digest('hex').slice(0, 12)
       const urls = [
         BASE + 'index.html',
         BASE + 'manifest.webmanifest',
@@ -25,6 +33,13 @@ function precacheManifest() {
         else if (/(^|\/)index-[\w-]+\.js$/.test(f)) urls.push(BASE + f) // 入口チャンクのみ（遅延チャンクは除外）
       }
       this.emitFile({ type: 'asset', fileName: 'precache-manifest.json', source: JSON.stringify(urls) })
+    },
+    // public から写された sw.js の版の札（__SEASONS_BUILD__）を、このビルドの指紋に置き換える（写しが済んだ後に行う）
+    closeBundle() {
+      const f = path.join(outDir, 'sw.js')
+      if (!buildId || !fs.existsSync(f)) return
+      const src = fs.readFileSync(f, 'utf8')
+      if (src.includes('__SEASONS_BUILD__')) fs.writeFileSync(f, src.replace(/__SEASONS_BUILD__/g, buildId))
     },
   }
 }

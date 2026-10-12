@@ -1,0 +1,22 @@
+{
+ "pass": false,
+ "first": {
+  "altDuck": 0,
+  "loops": []
+ },
+ "high": {
+  "altDuck": 0,
+  "loops": []
+ },
+ "after": {
+  "altDuck": 0,
+  "loops": []
+ },
+ "loopRatio": null,
+ "errs": [],
+ "id": "D7",
+ "ms": 79801,
+ "at": "2026-10-12T13:31:31.574Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

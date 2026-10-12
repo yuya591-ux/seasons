@@ -1,0 +1,9 @@
+{
+ "pass": false,
+ "line": "quality: autoQuality(), // 'soft'(なめらか) | 'standard'(標準) | 'light'(軽量)",
+ "id": "S52",
+ "ms": 1,
+ "at": "2026-10-12T13:39:08.163Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

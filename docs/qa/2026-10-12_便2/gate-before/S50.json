@@ -1,0 +1,9 @@
+{
+ "pass": false,
+ "errs": [],
+ "id": "S50",
+ "ms": 43276,
+ "at": "2026-10-12T13:35:48.206Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

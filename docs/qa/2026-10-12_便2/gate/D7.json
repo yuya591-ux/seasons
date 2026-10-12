@@ -1,0 +1,82 @@
+{
+ "pass": true,
+ "first": {
+  "altDuck": 0,
+  "loops": [
+   0.85,
+   0.45
+  ],
+  "duskShelf": 0,
+  "flyWind": 0,
+  "cache": [
+   "audio/summer-rain-dusk/rain.mp3",
+   "audio/summer-rain-dusk/thunder.mp3",
+   "audio/winter-snow-night/wind.mp3",
+   "audio/summer-rain-dusk/higurashi.mp3"
+  ],
+  "timers": 3,
+  "timersFired": 0,
+  "chime": {
+   "bus": "direct",
+   "when": "before-scene",
+   "gain": 0.8
+  },
+  "started": true
+ },
+ "high": {
+  "altDuck": 1,
+  "loops": [
+   0.0003,
+   0.0028,
+   0.001
+  ],
+  "duskShelf": -5,
+  "flyWind": 0.32269987661997873,
+  "cache": [
+   "audio/summer-rain-dusk/rain.mp3",
+   "audio/summer-rain-dusk/thunder.mp3",
+   "audio/winter-snow-night/wind.mp3",
+   "audio/summer-rain-dusk/higurashi.mp3",
+   "audio/kitaterao-window-3d-night/suzumushi.mp3"
+  ],
+  "timers": 3,
+  "timersFired": 1,
+  "chime": {
+   "bus": "direct",
+   "when": "before-scene",
+   "gain": 0.8
+  },
+  "started": true
+ },
+ "after": {
+  "altDuck": 0,
+  "loops": [
+   0.85,
+   0.45
+  ],
+  "duskShelf": 0,
+  "flyWind": 0,
+  "cache": [
+   "audio/summer-rain-dusk/rain.mp3",
+   "audio/summer-rain-dusk/thunder.mp3",
+   "audio/winter-snow-night/wind.mp3",
+   "audio/summer-rain-dusk/higurashi.mp3",
+   "audio/kitaterao-window-3d-night/suzumushi.mp3"
+  ],
+  "timers": 3,
+  "timersFired": 1,
+  "chime": {
+   "bus": "direct",
+   "when": "before-scene",
+   "gain": 0.8
+  },
+  "started": true
+ },
+ "loopRatio": 1,
+ "errs": [],
+ "id": "D7",
+ "ms": 71416,
+ "at": "2026-10-12T13:40:00.431Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "0676315"
+}

@@ -1,0 +1,19 @@
+{
+ "pass": false,
+ "cache": null,
+ "keep": [
+  "audio/summer-rain-dusk/rain.mp3",
+  "audio/autumn-dusk-corner-room/crickets.mp3",
+  "audio/summer-rain-dusk/thunder.mp3",
+  "audio/shishigaya-morning-yato/uguisu.mp3",
+  "audio/shishigaya-morning-yato/stream.mp3",
+  "audio/winter-snow-night/wind.mp3"
+ ],
+ "extra": null,
+ "errs": [],
+ "id": "S4",
+ "ms": 53894,
+ "at": "2026-10-12T13:32:43.076Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}
