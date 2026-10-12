@@ -129,6 +129,8 @@ export const MUTANTS = [
     edits: [{ file: 'src/engine/town3dViewer.js', find: '  const FOG_K = { near: 1.6, far: 1.9 }', to: '  const FOG_K = { near: 1, far: 1 }' }] },
   { group: 'g5', name: 'U2-grade', what: '水彩の仕上げを使わない形へ', checks: ['U2'],
     edits: [{ file: 'src/engine/town3dViewer.js', find: '    if (!FULLCSS) {\n      outPass = new OutputPass()', to: '    if (false) {\n      outPass = new OutputPass()' }] },
+  { group: 'g5', name: 'U2-paperThin', what: '描画の中の紙の粒を前の CSS と同じ強さ（3分の1にしない）へ戻す', checks: ['U2'],
+    edits: [{ file: 'src/engine/town3dViewer.js', find: '  const PAPER_IN = 1 / 3 //', to: '  const PAPER_IN = 1 //' }] },
   { group: 'g5', name: 'S31-fxaaOrder', what: 'FXAA を色の変換の前（前の位置）へ戻す', checks: ['S31'],
     edits: [{ file: 'src/engine/town3dViewer.js', find: '    composer.addPass(new RenderPass(scene, camera))\n', to: '    composer.addPass(new RenderPass(scene, camera))\n    fxaaPass = new ShaderPass(FXAAShader)\n    composer.addPass(fxaaPass)\n' },
       { file: 'src/engine/town3dViewer.js', find: '    fxaaPass = new ShaderPass(FXAAShader)\n    composer.addPass(fxaaPass)\n  } catch (e) { composer = null }', to: '  } catch (e) { composer = null }' }] },

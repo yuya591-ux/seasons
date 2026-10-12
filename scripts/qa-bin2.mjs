@@ -497,6 +497,37 @@ def('g3', 'D5', async () => {
   const heads = await ev(page, () => window.__town3dResHeads && window.__town3dResHeads())
   return { pass: Array.isArray(heads) && heads.length > 3 && heads.every((y) => y > 1.08 && y < 1.14), heads, errs: realErrs(errs) }
 })
+// V28 太陽が2つ（便1 の歩く眺め）。真因を特定できず直していない＝合否を付けない「記録」。便1 で写った眺めに近い所（坂の街の窓辺から飛んで降りた所・南向き）で、
+// 画面の上半分の白く光る円盤（明るさ245以上の画素がつながった塊・面積60画素以上）を数えて残す
+const BRIGHT_BLOBS = `
+  const seen = new Uint8Array(w * h); const sizes = []
+  const lit = (i) => { const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2]; return 0.2126 * r + 0.7152 * g + 0.0722 * b >= 245 }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (seen[i] || !lit(i)) continue
+    let n = 0; const st = [i]; seen[i] = 1
+    while (st.length) { const k = st.pop(); n++; const kx = k % w, ky = (k - kx) / w
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = kx + dx, ny = ky + dy; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue; const j = ny * w + nx; if (!seen[j] && lit(j)) { seen[j] = 1; st.push(j) } } }
+    if (n >= 60) sizes.push(n) }
+  return { blobs: sizes.length, sizes: sizes.sort((a, b) => b - a).slice(0, 6) }`
+def('g3', 'V28', async () => {
+  const out = {}
+  for (const id of ['kitaterao-window-3d', 'kitaterao-window-3d-sunset']) {
+    const { page, errs } = await open('pc')
+    await gateStart(page); await apply(page, id, 9000)
+    await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' })
+    await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+    await ev(page, () => window.__town3dFlyToggle(true)); await wait(3000)
+    await ev(page, () => window.__town3dFlyPose(2, 6, -18, Math.PI, -0.05)); await wait(800)
+    await ev(page, () => window.__town3dLandToggle && window.__town3dLandToggle(true)); await wait(3500)
+    const m = await measurePng(await page.screenshot({ clip: { x: 0, y: 0, width: 1920, height: 486 } }), BRIGHT_BLOBS)
+    out[id] = { ...m, errs: realErrs(errs) }
+    if (id === 'kitaterao-window-3d') out[id].shot = await shot(page, 'V28_pc')
+    await page.context().close().catch(() => {})
+  }
+  // 便2 の調べ: この眺めは復元地点のコードで再現した（白い塊3つ・2つめの点は太陽の右下）。候補は「地平の光の帯の板」（世界の (0,16,-190) に固定した加算の板＝窓辺から見る用。
+  // 歩くと太陽と別の所に写る）。隠すと点のそばの明るさが 253→241 に下がったが、着地の位置が毎回ずれて同じ眺めを3回取れず、確定できなかった
+  return { pass: null, kiroku: '真因未特定（候補は地平の光の帯の板・直していない）', views: out }
+})
+
 async function stripePng() {
   const b = await getBrowser(); const ctx = await b.newContext(); const p = await ctx.newPage()
   const b64 = await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 990; c.height = 594; const g = c.getContext('2d'); for (let i = 0; i < 20; i++) { g.fillStyle = i % 2 ? 'rgb(40,40,230)' : 'rgb(230,40,40)'; g.fillRect(i * 49.5, 0, 49.5, 594) } return c.toDataURL('image/png').split(',')[1] })
@@ -789,6 +820,12 @@ def('g5', 'V1', async () => {
   const b = beforeOf('V1'); const stdBefore = b && b.stats ? b.stats.std : null
   return { pass: !!(lk && Math.abs(lk.fogNear - 48) < 0.01 && Math.abs(lk.fogFar - 250.8) < 0.01 && stdBefore !== null && st.std > stdBefore), look: lk, stats: st, stdBefore, shot: sh, errs: realErrs(errs) }
 })
+// 細かいざらつき（紙の粒）: 明るさから 5×5 の平均を引いた残りの散らばり。平らな所（空・壁）で測る
+const GRAIN = `
+  const L = (i) => 0.2126 * data[i * 4] + 0.7152 * data[i * 4 + 1] + 0.0722 * data[i * 4 + 2]
+  let s = 0, s2 = 0, n = 0
+  for (let y = 2; y < h - 2; y++) for (let x = 2; x < w - 2; x++) { let m = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) m += L((y + dy) * w + x + dx); m /= 25; const v = L(y * w + x) - m; s += v; s2 += v * v; n++ }
+  return +Math.sqrt(s2 / n - (s / n) ** 2).toFixed(2)`
 def('g5', 'U2', async () => {
   const { page, errs } = await open('iphone')
   await gateStart(page); await apply(page, 'kitaterao-window-3d-sunset', 9000)
@@ -802,7 +839,12 @@ def('g5', 'U2', async () => {
   await page.keyboard.press('Escape').catch(() => {}); await page.mouse.click(5, 860); await wait(800)
   await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
   const sh = await shot(page, 'U2_iphone')
-  return { pass: Array.isArray(layers) && layers.length === 0 && filt === 'none' && !!(l0 && l0.grade && l1 && l1.gBright > l0.gBright), blendLayers: layers, stageFilter: filt, brightBefore: l0 && l0.gBright, brightAfter: l1 && l1.gBright, shot: sh, errs: realErrs(errs) }
+  // 水彩を「薄く」: 窓の中の空（夕焼け）と上の壁の細かいざらつきが、前（CSS の紙目）以下か（便2 で描画の中の粒が前の約2.5倍に出ていたのを見つけた）
+  const png = await page.screenshot()
+  const grain = { sky: await measurePng(png, GRAIN, [150, 350, 300, 150]), wall: await measurePng(png, GRAIN, [100, 60, 400, 150]) }
+  const gb = beforeOf('U2'); const gBefore = gb && gb.grain
+  const thin = !!(gBefore && grain.sky <= gBefore.sky && grain.wall <= gBefore.wall)
+  return { pass: Array.isArray(layers) && layers.length === 0 && filt === 'none' && !!(l0 && l0.grade && l1 && l1.gBright > l0.gBright) && thin, blendLayers: layers, stageFilter: filt, brightBefore: l0 && l0.gBright, brightAfter: l1 && l1.gBright, grain, grainBefore: gBefore || null, shot: sh, errs: realErrs(errs) }
 })
 def('g5', 'S31', async () => {
   const { page } = await open('pc')
@@ -889,13 +931,16 @@ for (const id of ids) {
   try { r.commit = execSync('git rev-parse --short HEAD').toString().trim() } catch { /* 無視 */ }
   fs.writeFileSync(path.join(OUT, `${id}.json`), JSON.stringify(r, null, 1))
   summary[id] = r.pass
-  if (!r.pass) fail++
-  console.log(`${id} ${r.pass ? '合格' : '不合格'} (${(r.ms / 1000).toFixed(1)}秒)`)
+  if (r.kiroku) { console.log(`${id} 記録（合否なし: ${r.kiroku}） (${(r.ms / 1000).toFixed(1)}秒)`) } else { // 記録だけの行は合否に数えない（V28）
+    if (!r.pass) fail++
+    console.log(`${id} ${r.pass ? '合格' : '不合格'} (${(r.ms / 1000).toFixed(1)}秒)`)
+  }
   // ページを開いたまま残さない（検査ごとに新しい文脈）
   if (browser) { for (const c of browser.contexts()) await c.close().catch(() => {}) }
 }
 if (browser) await browser.close()
 const passN = Object.values(summary).filter(Boolean).length
-console.log(`検査の終わり: ${passN}/${ids.length} 合格`)
-fs.writeFileSync(path.join(OUT, `_last-run.json`), JSON.stringify({ at: new Date().toISOString(), ids, summary, pass: passN, total: ids.length }, null, 1))
+const recN = ids.filter((i) => summary[i] === null).length
+console.log(`検査の終わり: ${passN}/${ids.length - recN} 合格${recN ? `（ほかに記録 ${recN}）` : ''}`)
+fs.writeFileSync(path.join(OUT, `_last-run.json`), JSON.stringify({ at: new Date().toISOString(), ids, summary, pass: passN, total: ids.length - recN, kiroku: recN }, null, 1))
 process.exit(fail ? 1 : 0)

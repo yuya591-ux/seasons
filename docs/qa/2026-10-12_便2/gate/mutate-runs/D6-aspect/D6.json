@@ -1,18 +1,18 @@
 {
- "pass": true,
+ "pass": false,
  "stripeTransitions": {
   "perRow": [
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3,
-   3
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7,
+   7
   ],
-  "median": 3
+  "median": 7
  },
  "bg": {
   "key": "bg/summer-rain-dusk-b.jpg",
@@ -22,8 +22,8 @@
  },
  "shot": null,
  "id": "D6",
- "ms": 67125,
- "at": "2026-10-12T16:50:53.286Z",
+ "ms": 52660,
+ "at": "2026-10-12T18:20:21.909Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "e0e21fb"
+ "commit": "6d6365e"
 }

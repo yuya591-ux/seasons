@@ -1,0 +1,23 @@
+{
+ "pass": false,
+ "windowSkyRgb": [
+  218,
+  222,
+  217
+ ],
+ "flySkyRgb": [
+  193,
+  185,
+  165
+ ],
+ "windowTint": -1,
+ "flyTint": -28,
+ "flyTintBefore": null,
+ "shot": null,
+ "errs": [],
+ "id": "V22",
+ "ms": 58654,
+ "at": "2026-10-12T18:30:09.504Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "6d6365e"
+}

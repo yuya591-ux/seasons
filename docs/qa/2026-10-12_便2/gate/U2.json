@@ -4,11 +4,19 @@
  "stageFilter": "none",
  "brightBefore": 1.04,
  "brightAfter": 1.248,
+ "grain": {
+  "sky": 0.7,
+  "wall": 0.73
+ },
+ "grainBefore": {
+  "sky": 0.99,
+  "wall": 1.03
+ },
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/U2_iphone_後.png",
  "errs": [],
  "id": "U2",
- "ms": 83354,
- "at": "2026-10-12T17:04:53.845Z",
+ "ms": 35997,
+ "at": "2026-10-12T18:42:20.121Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "e0e21fb"
+ "commit": "6d6365e"
 }

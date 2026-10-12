@@ -5,9 +5,10 @@
   "exposure": 1.15,
   "fogNear": 48,
   "fogFar": 250.8,
-  "litWinMats": 477,
-  "maxEmissive": 0.391,
+  "litWinMats": 0,
+  "maxEmissive": 0,
   "glassOpacity": 1,
+  "duskAmt": 0.146,
   "grade": true,
   "gBright": 1.04,
   "passes": [
@@ -18,22 +19,22 @@
   ]
  },
  "stats": {
-  "mean": 178.1,
-  "std": 43.1,
-  "p1": 51,
-  "p99": 239,
+  "mean": 188.2,
+  "std": 45.6,
+  "p1": 54,
+  "p99": 248,
   "rgb": [
-   177,
-   179,
-   174
+   187,
+   189,
+   184
   ]
  },
  "stdBefore": 30.3,
- "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V1_iphone_後.png",
+ "shot": null,
  "errs": [],
  "id": "V1",
- "ms": 72932,
- "at": "2026-10-12T17:03:29.609Z",
+ "ms": 51345,
+ "at": "2026-10-12T18:54:19.278Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "e0e21fb"
+ "commit": "6d6365e"
 }

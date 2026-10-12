@@ -1,0 +1,11 @@
+{
+ "pass": false,
+ "rainNightGlass": 1,
+ "noonGlass": 1,
+ "shot": null,
+ "id": "V3",
+ "ms": 99110,
+ "at": "2026-10-12T18:31:52.081Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "6d6365e"
+}

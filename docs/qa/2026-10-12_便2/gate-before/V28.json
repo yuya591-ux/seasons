@@ -1,0 +1,26 @@
+{
+ "pass": null,
+ "kiroku": "真因未特定（便1 の眺めを復元地点でも再現できなかった・直していない）",
+ "views": {
+  "kitaterao-window-3d": {
+   "blobs": 3,
+   "sizes": [
+    7042,
+    738,
+    170
+   ],
+   "errs": [],
+   "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/V28_pc_前.png"
+  },
+  "kitaterao-window-3d-sunset": {
+   "blobs": 0,
+   "sizes": [],
+   "errs": []
+  }
+ },
+ "id": "V28",
+ "ms": 88447,
+ "at": "2026-10-12T18:37:53.999Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

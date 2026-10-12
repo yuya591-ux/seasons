@@ -1,0 +1,40 @@
+{
+ "pass": false,
+ "stats": {
+  "mean": 60,
+  "std": 30.3,
+  "p1": 17,
+  "p99": 178,
+  "rgb": [
+   67,
+   59,
+   53
+  ]
+ },
+ "p1Before": null,
+ "look": {
+  "toneMapping": 0,
+  "exposure": 1.15,
+  "fogNear": 48,
+  "fogFar": 250.8,
+  "litWinMats": 477,
+  "maxEmissive": 1.25,
+  "glassOpacity": 0.4,
+  "duskAmt": 1,
+  "grade": true,
+  "gBright": 1.04,
+  "passes": [
+   "RenderPass",
+   "UnrealBloomPass",
+   "OutputPass+水彩",
+   "ShaderPass"
+  ]
+ },
+ "shot": null,
+ "errs": [],
+ "id": "U9",
+ "ms": 55343,
+ "at": "2026-10-12T18:23:30.812Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "6d6365e"
+}

@@ -7292,8 +7292,9 @@ export async function mountTown3d(parent, opts = {}) {
   const sRGBc = (c) => c.clone() // 前の CSS の層と同じ数値で渡す（rgbStr(sunCol) と同じ＝見え方をそろえる）
   const gradeShade = skyTop.clone().lerp(new THREE.Color(0x0e0b14), 0.62) // 隅の翳り＝空色を深く沈めた冷色（前の --t3d-shade と同じ）
   const gradeWashA = (isNight ? 0.10 : weather === 'snow' ? 0.07 : 0.20) * 0.45 // 前の --t3d-wash-a の 0.45 倍＝水彩を薄く
+  const PAPER_IN = 1 / 3 // 描画の中の紙の粒は、同じ強さでも前の CSS の紙目より粒が立つ（便2 で測ると空の細かいざらつきが約2.5倍）。3分の1にして前より薄く（#1 の答え＝水彩を薄く）
   const GRADE_UNIFORMS = () => ({
-    gOn: { value: 1 }, gGlow: { value: sRGBc(sunCol) }, gShade: { value: sRGBc(gradeShade) }, gWashA: { value: gradeWashA }, gPaperA: { value: 0.18 },
+    gOn: { value: 1 }, gGlow: { value: sRGBc(sunCol) }, gShade: { value: sRGBc(gradeShade) }, gWashA: { value: gradeWashA }, gPaperA: { value: 0.18 * PAPER_IN },
     gSat: { value: 0.88 }, gSepia: { value: 0.05 }, gBright: { value: 1.04 }, gContrast: { value: 0.985 }, gPx: { value: 1 },
   })
   const GRADE_PARS = `
@@ -10322,7 +10323,7 @@ export async function mountTown3d(parent, opts = {}) {
     if (Math.abs(roomDark - roomDarkCur) > 0.02) { roomDarkCur = roomDark; roomVig.style.opacity = roomDark.toFixed(2) }
     sill.style.opacity = '0'
     { const pa = 0.18 * (1 - lean * 0.6) // 紙目の強さ（乗り出すと薄れる）。水彩の仕上げでは描画の中の紙の粒へ渡す
-      if (outPass) outPass.uniforms.gPaperA.value = pa; else if (paperEl) paperEl.style.opacity = pa.toFixed(3) }
+      if (outPass) outPass.uniforms.gPaperA.value = pa * PAPER_IN; else if (paperEl) paperEl.style.opacity = pa.toFixed(3) }
     // ガラス越しのくすみを、あけ／乗り出しに応じて晴らす（外気が澄む）。変化時だけ書き換え。
     const clarity = Math.min(1, wo * 0.6 + lean * 0.7)
     if (Math.abs(clarity - clarityCur) > 0.004) {

@@ -847,6 +847,166 @@
      "restored": true
     }
    ]
+  },
+  {
+   "at": "2026-10-12T18:31:53.098Z",
+   "commit": "6d6365e",
+   "results": [
+    {
+     "name": "D6-aspect",
+     "group": "g3",
+     "what": "画像の縦横比を描画へ渡す行を外す",
+     "checks": [
+      "D6"
+     ],
+     "caught": true,
+     "failed": [
+      "D6 不合格 (52.7秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S20-stall",
+     "group": "g4",
+     "what": "1回だけの詰まりも数える形へ戻す",
+     "checks": [
+      "S20"
+     ],
+     "caught": true,
+     "failed": [
+      "S20 不合格 (67.1秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "U13-async",
+     "group": "g4",
+     "what": "シェーダーの温めを同期へ戻す",
+     "checks": [
+      "U13"
+     ],
+     "caught": true,
+     "failed": [
+      "U13 不合格 (49.0秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "U9-tonemap",
+     "group": "g5",
+     "what": "色の圧縮を前の「なし」へ戻す",
+     "checks": [
+      "U9"
+     ],
+     "caught": true,
+     "failed": [
+      "U9 不合格 (55.3秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V1-fog",
+     "group": "g5",
+     "what": "霞の距離を前へ戻す",
+     "checks": [
+      "V1"
+     ],
+     "caught": true,
+     "failed": [
+      "V1 不合格 (50.9秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "U2-grade",
+     "group": "g5",
+     "what": "水彩の仕上げを使わない形へ",
+     "checks": [
+      "U2"
+     ],
+     "caught": true,
+     "failed": [
+      "U2 不合格 (55.3秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S31-fxaaOrder",
+     "group": "g5",
+     "what": "FXAA を色の変換の前（前の位置）へ戻す",
+     "checks": [
+      "S31"
+     ],
+     "caught": true,
+     "failed": [
+      "S31 不合格 (49.5秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S32-collapse",
+     "group": "g5",
+     "what": "光っていない合成の層を畳まない形へ戻す",
+     "checks": [
+      "S32"
+     ],
+     "caught": true,
+     "failed": [
+      "S32 不合格 (49.1秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V15-noonWin",
+     "group": "g5",
+     "what": "昼も窓の灯りを灯す形へ戻す",
+     "checks": [
+      "V15"
+     ],
+     "caught": true,
+     "failed": [
+      "V15 不合格 (109.0秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V22-warmK",
+     "group": "g5",
+     "what": "昼の飛行でも空を暖色へ寄せる形へ戻す",
+     "checks": [
+      "V22"
+     ],
+     "caught": true,
+     "failed": [
+      "V22 不合格 (58.7秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V3-glass",
+     "group": "g5",
+     "what": "夜と雨のガラスの筋を昼と同じ濃さへ戻す",
+     "checks": [
+      "V3"
+     ],
+     "caught": true,
+     "failed": [
+      "V3 不合格 (99.1秒)"
+     ],
+     "bad": null,
+     "restored": true
+    }
+   ]
   }
  ]
 }

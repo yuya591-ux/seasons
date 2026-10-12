@@ -1,13 +1,13 @@
 {
  "pass": true,
  "stats": {
-  "mean": 44.8,
-  "std": 34.9,
-  "p1": 6,
-  "p99": 182,
+  "mean": 43.1,
+  "std": 31.4,
+  "p1": 2,
+  "p99": 158,
   "rgb": [
-   54,
-   43,
+   52,
+   41,
    38
   ]
  },
@@ -20,6 +20,7 @@
   "litWinMats": 477,
   "maxEmissive": 1.25,
   "glassOpacity": 0.4,
+  "duskAmt": 1,
   "grade": true,
   "gBright": 1.04,
   "passes": [
@@ -29,11 +30,11 @@
    "ShaderPass"
   ]
  },
- "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/U9_pc_後.png",
+ "shot": null,
  "errs": [],
  "id": "U9",
- "ms": 78475,
- "at": "2026-10-12T17:02:16.469Z",
+ "ms": 51856,
+ "at": "2026-10-12T18:53:27.695Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "e0e21fb"
+ "commit": "6d6365e"
 }

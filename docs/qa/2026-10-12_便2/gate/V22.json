@@ -1,23 +1,23 @@
 {
  "pass": true,
  "windowSkyRgb": [
-  218,
-  222,
-  217
+  230,
+  235,
+  230
  ],
  "flySkyRgb": [
-  192,
-  193,
-  182
+  203,
+  204,
+  192
  ],
- "windowTint": -1,
- "flyTint": -10,
+ "windowTint": 0,
+ "flyTint": -11,
  "flyTintBefore": -20,
- "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V22_pc_後.png",
+ "shot": null,
  "errs": [],
  "id": "V22",
- "ms": 71617,
- "at": "2026-10-12T17:36:06.380Z",
+ "ms": 71663,
+ "at": "2026-10-12T18:55:31.097Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "e0e21fb"
+ "commit": "6d6365e"
 }

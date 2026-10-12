@@ -1,0 +1,14 @@
+{
+ "pass": false,
+ "blendLayers": [],
+ "stageFilter": "saturate(0.88) sepia(0.05) brightness(1.04) contrast(0.985)",
+ "brightBefore": null,
+ "brightAfter": null,
+ "shot": null,
+ "errs": [],
+ "id": "U2",
+ "ms": 55272,
+ "at": "2026-10-12T18:25:25.584Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "6d6365e"
+}
