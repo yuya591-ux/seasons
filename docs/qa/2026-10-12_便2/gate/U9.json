@@ -1,0 +1,39 @@
+{
+ "pass": true,
+ "stats": {
+  "mean": 44.8,
+  "std": 34.9,
+  "p1": 6,
+  "p99": 182,
+  "rgb": [
+   54,
+   43,
+   38
+  ]
+ },
+ "p1Before": 16,
+ "look": {
+  "toneMapping": 7,
+  "exposure": 1.15,
+  "fogNear": 48,
+  "fogFar": 250.8,
+  "litWinMats": 477,
+  "maxEmissive": 1.25,
+  "glassOpacity": 0.4,
+  "grade": true,
+  "gBright": 1.04,
+  "passes": [
+   "RenderPass",
+   "UnrealBloomPass",
+   "OutputPass+水彩",
+   "ShaderPass"
+  ]
+ },
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/U9_pc_後.png",
+ "errs": [],
+ "id": "U9",
+ "ms": 78475,
+ "at": "2026-10-12T17:02:16.469Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

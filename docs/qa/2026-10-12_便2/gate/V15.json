@@ -1,0 +1,12 @@
+{
+ "pass": true,
+ "noonLit": 0,
+ "duskLit": 477,
+ "duskMax": 0.643,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V15_pc_後.png",
+ "id": "V15",
+ "ms": 131846,
+ "at": "2026-10-12T17:38:37.403Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

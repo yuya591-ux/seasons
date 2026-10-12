@@ -1,0 +1,14 @@
+{
+ "pass": true,
+ "blendLayers": [],
+ "stageFilter": "none",
+ "brightBefore": 1.04,
+ "brightAfter": 1.248,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/U2_iphone_後.png",
+ "errs": [],
+ "id": "U2",
+ "ms": 83354,
+ "at": "2026-10-12T17:04:53.845Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

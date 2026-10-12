@@ -396,9 +396,11 @@ export async function mountTown3d(parent, opts = {}) {
   // 雪は near を手前にし過ぎると街が真っ白に潰れる→少し奥へ（中景の階調を残す）。
   // 谷戸は谷筋が奥へ深く退く構図＝主役の棚田まで霞んで灰に沈むため、霞を一段奥へ送って手前〜中景の
   // 水鏡・青田の色を残す（遠い里山だけ空気に溶ける）。密集した街は従来どおり手前から霞ませて水彩の奥行きに。
+  // 霞を遠くへ（#1 の答え＝案2。案の画の near×1.6・far×1.9）。以前は中景（30m）から一様にかかり、窓を閉めると街全体が白っぽい影絵になった（V1）
+  const FOG_K = { near: 1.6, far: 1.9 }
   const FOG = kind === 'yato'
-    ? { near: weather === 'snow' ? 54 : 48, far: weather === 'snow' ? 176 : 168 }
-    : { near: weather === 'snow' ? 40 : 30, far: weather === 'snow' ? 146 : 132 } // 大気遠近を一段深め、中景から空気に溶け始める水彩の奥行きへ（手前は鮮明に保つ）
+    ? { near: (weather === 'snow' ? 54 : 48) * FOG_K.near, far: (weather === 'snow' ? 176 : 168) * FOG_K.far }
+    : { near: (weather === 'snow' ? 40 : 30) * FOG_K.near, far: (weather === 'snow' ? 146 : 132) * FOG_K.far } // 大気遠近（手前は鮮明・遠景は空気に溶ける）
   scene.fog = new THREE.Fog(fogCol, FOG.near, FOG.far)
 
   // 空ドーム（上=空色, 下=地平の暖色のグラデ）。飛行中は uniform を暖色へ寄せて懐かしい黄昏の空にする。
@@ -461,8 +463,10 @@ export async function mountTown3d(parent, opts = {}) {
   // フィルミックなトーンマッピング（ACES）＝写真的なハイライトのころび・階調。実写風へ寄せる核。
   // Lambert 拡散シェーディングと合わせ、トゥーンの平面感を脱して実物に近い光の乗りにする。
   // CG的な締まりを出さない線形トーン（NoToneMapping）＝フィルミックな圧縮を排し、平坦な手描き/セル調に。
-  renderer.toneMapping = THREE.NoToneMapping
-  renderer.toneMappingExposure = isNight ? 1.25 : 1.0
+  // 色の圧縮をフィルム風（Neutral）に＝黒が締まり、夕焼けや灯りに深みが出る（#1 の答え＝案2・案の画と同じ露出×1.15。U9・V2）。
+  // 以前は NoToneMapping で、ここの露出（夜 1.25）は効いていなかった＝夜を急に明るくしないよう露出は全情景で 1.15 にそろえる
+  renderer.toneMapping = THREE.NeutralToneMapping
+  renderer.toneMappingExposure = 1.15
   // 別世界感の演出の基準値＋時代ごとの空気の色（江戸=金茶／戦国=青墨）。飛行時に近さで混ぜる。
   const baseFogCol = scene.fog.color.clone(), baseExposure = renderer.toneMappingExposure
   const EDO_FOGC = new THREE.Color(isNight ? 0x5a4c34 : 0xc6a064), SEN_FOGC = new THREE.Color(isNight ? 0x2a323e : 0x707075), TAISHO_FOGC = new THREE.Color(isNight ? 0x4a3640 : 0xc69270), TMP_FOGC = new THREE.Color() // 江戸=金茶/戦国=昼は中立の霧灰(青みを抜き水っぽさ解消)・夜は青墨/大正=暖かなセピア(淡すぎると昼が乳白ピンクに白む＝一段落とす・評価3)
@@ -1222,7 +1226,7 @@ export async function mountTown3d(parent, opts = {}) {
     for (let i = 0; i <= 5; i++) { g.beginPath(); g.moveTo(wx, wy + wh * i / 5); g.lineTo(wx + ww, wy + wh * i / 5); g.stroke() }
     const t = new THREE.CanvasTexture(c); t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; machiyaGlowTex = t; return t }
   // 町家の壁材（夕夜は障子が行灯で灯る＝城下町の夜が生きる）。
-  const machiyaMat = (baseHex) => { const m = facadeMat('machiya', baseHex); if (duskAmt > 0.12) { m.emissiveMap = getMachiyaGlow(); m.emissive = new THREE.Color(isNight ? 0xffb45a : 0xffc684); m.emissiveIntensity = 0.22 + duskAmt * (isNight ? 0.6 : 0.34) } return m }
+  const machiyaMat = (baseHex) => { const m = facadeMat('machiya', baseHex); if (duskAmt > 0.25) { m.emissiveMap = getMachiyaGlow(); m.emissive = new THREE.Color(isNight ? 0xffb45a : 0xffc684); m.emissiveIntensity = 0.22 + duskAmt * (isNight ? 0.6 : 0.34) } return m }
   // 侍屋敷の連子窓の夜の灯り（格子の奥の行灯）。連子の面を暖色＋縦格子を影で抜く emissiveMap。R()不使用。
   let samaGlowTex = null
   const getSamaGlow = () => { if (samaGlowTex) return samaGlowTex
@@ -1232,7 +1236,7 @@ export async function mountTown3d(parent, opts = {}) {
     g.strokeStyle = 'rgba(40,26,10,0.7)'; g.lineWidth = 2.4
     for (let i = 0; i <= 8; i++) { g.beginPath(); g.moveTo(30 + 68 * i / 8, 28); g.lineTo(30 + 68 * i / 8, 68); g.stroke() } // 縦格子の影
     const t = new THREE.CanvasTexture(c); t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; samaGlowTex = t; return t }
-  const samaMat = (baseHex) => { const m = facadeMat('sama', baseHex); if (duskAmt > 0.12) { m.emissiveMap = getSamaGlow(); m.emissive = new THREE.Color(isNight ? 0xffac52 : 0xffc079); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.56 : 0.3) } return m }
+  const samaMat = (baseHex) => { const m = facadeMat('sama', baseHex); if (duskAmt > 0.25) { m.emissiveMap = getSamaGlow(); m.emissive = new THREE.Color(isNight ? 0xffac52 : 0xffc079); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.56 : 0.3) } return m }
   // 大正の洋風窓の夜の灯り（上げ下げ窓＋1階の店の硝子が灯る＝ハイカラな港町の夜景）。R()不使用。
   let yofuGlowTex = null
   const getYofuGlow = () => { if (yofuGlowTex) return yofuGlowTex
@@ -1915,7 +1919,7 @@ export async function mountTown3d(parent, opts = {}) {
     if (duskAmt > 0.12) { // 夕方は窓が灯る（昼と同じ窓割りの灯り＝wviで揃える）
       R() // 旧来ここで窓種をR()で選んでいた＝乱数列を保ち街の生成（建物分布/描画コール）を不変に保つ
       const e = winEmis[wvi].clone(); e.repeat.set(rep, repV); e.needsUpdate = true
-      wm.emissiveMap = e; wm.emissive = new THREE.Color(isNight ? 0xffbe82 : 0xffcaa0); wm.emissiveIntensity = 0.3 + duskAmt * (isNight ? 0.95 : 0.62) // 夜は窓灯りを強めて瞬かせる（夕は控えめで貼り絵感を防ぐ）
+      wm.emissiveMap = e; wm.emissive = new THREE.Color(isNight ? 0xffbe82 : 0xffcaa0); wm.emissiveIntensity = (isNight || duskAmt > 0.25) ? 0.3 + duskAmt * (isNight ? 0.95 : 0.62) : 0 // 昼は灯さない（はっきりした夕方と夜だけ。昼の情景の夕方の度合いは約0.15。以前は昼も 0.3 で、ビルも家も窓が全部だいだいに灯っていた・V15） // 夜は窓灯りを強めて瞬かせる（夕は控えめで貼り絵感を防ぐ）
     }
     // 近景の建物だけ角を面取りして「低ポリの箱」の鋭い角を脱す（奥は霞むので箱のまま＝軽量）。
     const near = z > -12
@@ -3065,7 +3069,7 @@ export async function mountTown3d(parent, opts = {}) {
     const nm = winMapBase.clone(); nm.repeat.set(rep, rep * 1.5); nm.needsUpdate = true; nwMat.map = nm
     if (duskAmt > 0.12) { // 夕/夜は隣室の窓も灯る（窓割りはwinMapBase=種類0に揃える）
       const ne = winEmis[0].clone(); ne.repeat.set(rep, rep * 1.5); ne.needsUpdate = true
-      nwMat.emissiveMap = ne; nwMat.emissive = new THREE.Color(0xffcaa0); nwMat.emissiveIntensity = 0.3 + duskAmt * 0.6
+      nwMat.emissiveMap = ne; nwMat.emissive = new THREE.Color(0xffcaa0); nwMat.emissiveIntensity = (isNight || duskAmt > 0.25) ? 0.3 + duskAmt * 0.6 : 0 // 昼は灯さない（V15）
     }
     const wall = new THREE.Mesh(new THREE.BoxGeometry(3.5, 58, 44), nwMat)
     wall.position.set(15.5, 18, 9); wall.castShadow = true; wall.receiveShadow = true; scene.add(wall)
@@ -4632,7 +4636,7 @@ export async function mountTown3d(parent, opts = {}) {
         // 港町の家々（看板建築＝和洋折衷。煉瓦/クリームの壁＋陸屋根/寄棟。格子の町割り。メッシュ統合で軽く）
         // 壁色のパレット（大正ハイカラ＝クリーム/淡い若草/淡い黄土/淡い青鼠）。建物ごとに振り分けて単調なクリーム一色を脱す。
         const tWallPal = season === 'winter' ? [0xd8d2c4, 0xd2d6cc, 0xdcd4c0, 0xcdd2d4] : [0xcfc3ab, 0xb9c0a6, 0xd6c49a, 0xb7c1c4]
-        const tWallMats = tWallPal.map((c) => { const m = facadeMat('yofu', c); m.vertexColors = true; if (duskAmt > 0.12) { m.emissiveMap = getYofuGlow(); m.emissive = new THREE.Color(isNight ? 0xffc878 : 0xffd49a); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.58 : 0.32) } return m }) // 接地AO（頂点色）＋夕夜は洋風窓が灯る
+        const tWallMats = tWallPal.map((c) => { const m = facadeMat('yofu', c); m.vertexColors = true; if (duskAmt > 0.25) { m.emissiveMap = getYofuGlow(); m.emissive = new THREE.Color(isNight ? 0xffc878 : 0xffd49a); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.58 : 0.32) } return m }) // 接地AO（頂点色）＋夕夜は洋風窓が灯る
         // 屋根色のパレット（瓦の赤茶/いぶし茶/スレート青鼠）。俯瞰で一色だった屋根に多様さを。
         const tRoofPal = isNight ? [0x4a3832, 0x423a32, 0x3e444a] : [0x9a5642, 0x6e5a48, 0x5d666e]
         const tRoofMats = tRoofPal.map((c, i) => i < 2 ? tileMat(c, 2, 2, true) : mottleMat(c, 150, 0.12, [1.8, 1.8])) // 瓦色(赤茶/いぶし)は瓦テクスチャ＝見上げで瓦の筋が出る／青鼠スレートは平滑なまま
@@ -7283,6 +7287,49 @@ export async function mountTown3d(parent, opts = {}) {
   const eye = kind === 'yato'
     ? new THREE.Vector3(0, 28, 27)  // 谷戸: 少し低く・谷へ寄る（棚田と茅葺屋敷が映える）
     : new THREE.Vector3(0, 31, 30)  // 街: 高台の上階から見下ろす
+  // ── 水彩の仕上げ（色の圧縮の後の1枚・sRGB）。強さは #1 の答え＝案2「水彩を薄く」: 暖色のウォッシュは前の 0.45 倍、紙の粒は控えめ ──
+  const FULLCSS = /[?&]fullcss=1/.test(location.search) // 検証用: 前の CSS の層（5層）と舞台の filter に戻す（水彩の仕上げは使わない）＝見比べ用（非破壊）
+  const sRGBc = (c) => c.clone() // 前の CSS の層と同じ数値で渡す（rgbStr(sunCol) と同じ＝見え方をそろえる）
+  const gradeShade = skyTop.clone().lerp(new THREE.Color(0x0e0b14), 0.62) // 隅の翳り＝空色を深く沈めた冷色（前の --t3d-shade と同じ）
+  const gradeWashA = (isNight ? 0.10 : weather === 'snow' ? 0.07 : 0.20) * 0.45 // 前の --t3d-wash-a の 0.45 倍＝水彩を薄く
+  const GRADE_UNIFORMS = () => ({
+    gOn: { value: 1 }, gGlow: { value: sRGBc(sunCol) }, gShade: { value: sRGBc(gradeShade) }, gWashA: { value: gradeWashA }, gPaperA: { value: 0.18 },
+    gSat: { value: 0.88 }, gSepia: { value: 0.05 }, gBright: { value: 1.04 }, gContrast: { value: 0.985 }, gPx: { value: 1 },
+  })
+  const GRADE_PARS = `
+    uniform float gOn, gWashA, gPaperA, gSat, gSepia, gBright, gContrast, gPx;
+    uniform vec3 gGlow, gShade;
+    float gH(vec2 p) { p = fract(p * vec2(234.34, 435.345)); p += dot(p, p + 34.23); return fract(p.x * p.y); }
+    float gN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(gH(i), gH(i + vec2(1.0, 0.0)), f.x), mix(gH(i + vec2(0.0, 1.0)), gH(i + vec2(1.0, 1.0)), f.x), f.y); }
+    vec3 gSoftLight(vec3 cb, vec3 cs) { vec3 d = mix(((16.0 * cb - 12.0) * cb + 4.0) * cb, sqrt(cb), step(0.25, cb)); return mix(cb - (1.0 - 2.0 * cs) * cb * (1.0 - cb), cb + (2.0 * cs - 1.0) * (d - cb), step(0.5, cs)); }
+  `
+  const GRADE_MAIN = `
+    if (gOn > 0.5) {
+      vec3 c = clamp(gl_FragColor.rgb, 0.0, 1.0);
+      vec2 uv = vec2(vUv.x, 1.0 - vUv.y); // CSS と同じ向き（上が 0）
+      // 大気: 周辺の翳り（中心やや上から外へ）→ 空のほのかな光のにじみ（上の中央）
+      float d2 = length((uv - vec2(0.5, 0.42)) / vec2(1.46, 1.30));
+      c = mix(c, gShade, 0.42 * clamp((d2 - 0.5) / 0.5, 0.0, 1.0));
+      float d1 = length((uv - vec2(0.5, 0.06)) / vec2(1.18, 0.72));
+      c = mix(c, gGlow, 0.17 * clamp(1.0 - d1 / 0.54, 0.0, 1.0));
+      // 情景の光で全体を一枚の空気にまとめる暖色のソフトライト（薄く）
+      c = mix(c, gSoftLight(c, gGlow), gWashA);
+      // 紙の粒（画面に固定・CSS の画素で約2px の粒）。乗算で控えめに
+      vec2 q = gl_FragCoord.xy / gPx;
+      float n = gN(q * 0.5) * 0.5 + gN(q * 1.0 + 17.0) * 0.3 + gN(q * 2.0 + 41.0) * 0.2;
+      c *= mix(1.0, n * 1.1, gPaperA);
+      // 彩度 → セピア → 明るさ → コントラスト（前の舞台の filter と同じ順・同じ式）
+      float s = gSat;
+      c = mat3(0.213 + 0.787 * s, 0.213 - 0.213 * s, 0.213 - 0.213 * s, 0.715 - 0.715 * s, 0.715 + 0.285 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s, 0.072 - 0.072 * s, 0.072 + 0.928 * s) * c;
+      float a = 1.0 - gSepia;
+      c = mat3(0.393 + 0.607 * a, 0.349 - 0.349 * a, 0.272 - 0.272 * a, 0.769 - 0.769 * a, 0.686 + 0.314 * a, 0.534 - 0.534 * a, 0.189 - 0.189 * a, 0.168 - 0.168 * a, 0.131 + 0.869 * a) * c;
+      c *= gBright;
+      c = (c - 0.5) * gContrast + 0.5;
+      gl_FragColor.rgb = clamp(c, 0.0, 1.0);
+    }
+  `
+  let outPass = null // 水彩の仕上げを書き足した OutputPass（明るさ・窓あけで uniform を動かす）
+
   // ── FXAA（輪郭のギザギザをなめらかに）。MSAA付きの中間ターゲット→FXAA→OutputPass(色空間を正しく)。失敗時はnullで通常描画へ。──
   try {
     const [{ EffectComposer }, { RenderPass }, { ShaderPass }, { OutputPass }, { FXAAShader }, bloomMod] = await Promise.all([
@@ -7297,8 +7344,6 @@ export async function mountTown3d(parent, opts = {}) {
     const crt = new THREE.WebGLRenderTarget(W, H, { samples: 0 }) // MSAAは切りFXAA一本化＝中間RTの多重サンプルバッファ(帯域/メモリ)を省く。輪郭はFXAAが担い実機で差はごく僅か（2026-07 発熱対策・AB検証済）
     composer = new EffectComposer(renderer, crt)
     composer.addPass(new RenderPass(scene, camera))
-    fxaaPass = new ShaderPass(FXAAShader)
-    composer.addPass(fxaaPass)
     // 夕夜の灯り（窓/街灯/提灯/自販機）がふわっと滲んで光るブルーム。ハーフ解像度＋高しきい値で「灯りだけ」を控えめに。昼/非力端末はstrength0で無効化＝負荷ゼロ。
     if (bloomMod && bloomMod.UnrealBloomPass) {
       // 夜=強め／はっきりした夕=ほのか／昼=ごく淡く「いちばん明るい所」だけ滲ませる（雲海のきらめき・クジラのリム光・水面・雲頂・窓灯り）。
@@ -7311,7 +7356,19 @@ export async function mountTown3d(parent, opts = {}) {
       bloomPass.enabled = bloomWanted && curQual !== 'light' // 軽やか品質では後処理ブルームを切る（発熱回避）
       composer.addPass(bloomPass)
     }
-    composer.addPass(new OutputPass())
+    // 色の圧縮と色空間の変換（OutputPass）の末尾に、水彩の仕上げを書き足して1枚にまとめる（#1 の答え＝案2「水彩を薄くして描画の中の1枚に」・U2・V52）。
+    // 以前は画面全体に重ねる CSS の層（大気のにじみ・暖色のソフトライト・紙目の乗算）と舞台の filter で、端末の実解像度の合成を毎フレーム重ねていた（iPhone の発熱の最大の項）。
+    if (!FULLCSS) {
+      outPass = new OutputPass()
+      Object.assign(outPass.uniforms, GRADE_UNIFORMS())
+      outPass.material.fragmentShader = outPass.material.fragmentShader
+        .replace('#include <colorspace_pars_fragment>', '#include <colorspace_pars_fragment>\n' + GRADE_PARS)
+        .replace(/\}\s*$/, GRADE_MAIN + '\n}')
+      composer.addPass(outPass)
+    } else composer.addPass(new OutputPass())
+    // FXAA は色の変換（と水彩の仕上げ）の後に置く＝sRGB の明るさで輪郭を見る（three の作例どおり。以前は線形の色にかかっていた・S31）
+    fxaaPass = new ShaderPass(FXAAShader)
+    composer.addPass(fxaaPass)
   } catch (e) { composer = null }
 
   // ── 室内の窓枠（3Dの壁＋窓の開口）。部屋の中から窓越しに外を覗く“本物”の手応え＝近い窓枠と遠い景色が
@@ -7320,6 +7377,7 @@ export async function mountTown3d(parent, opts = {}) {
   const winRoom = new THREE.Group()
   const winRoomMats = []
   let winSashR = null, winSashX0 = 0, winSashX1 = 0 // 引き違いの可動ガラス障子（窓をあけると横へすべる）
+  let winGlassMat = null // 窓ガラスの材（斜めの筋の強さ・検証用）
   const winCurtains = [] // 窓辺のカーテン（窓をあけると外気でそっとそよぐ）
   let windChime = null // 夏の窓辺の風鈴（窓をあけると外気でちりんと揺れる）
   const teaSteam = [] // 急須から立ちのぼる湯気
@@ -7436,7 +7494,8 @@ export async function mountTown3d(parent, opts = {}) {
     // 引き違いのガラス障子（2枚）。閉=開口を覆う／窓をあけると右の障子が左へすべって右半分が開く（実際の窓の開閉）。
     // ガラスは“ごく淡い映り込み”だけ（景色を曇らせない）。斜めの細い光の筋を1本＋極薄の地色。端はパネルを枠の内側に隠す。
     const glassTex = cv(64, 64, (x) => { x.fillStyle = 'rgba(210,222,234,0.02)'; x.fillRect(0, 0, 64, 64); x.strokeStyle = 'rgba(255,255,255,0.12)'; x.lineWidth = 3.5; x.beginPath(); x.moveTo(12, 64); x.lineTo(46, 0); x.stroke(); x.strokeStyle = 'rgba(255,255,255,0.06)'; x.lineWidth = 2; x.beginPath(); x.moveTo(40, 64); x.lineTo(56, 0); x.stroke() })
-    const glassMat = new THREE.MeshBasicMaterial({ map: glassTex, transparent: true, opacity: 1, depthWrite: false, fog: false }); winRoomMats.push(glassMat)
+    const glassMat = new THREE.MeshBasicMaterial({ map: glassTex, transparent: true, opacity: (isNight || weather === 'rain') ? 0.4 : 1, depthWrite: false, fog: false }); winRoomMats.push(glassMat) // 夜と雨は筋を弱める（暗い外に白い斜線が光の柱に見えた・V3）
+    winGlassMat = glassMat
     const lpane = new THREE.Mesh(new THREE.PlaneGeometry(owW / 2 - 0.1, owH - 0.12), glassMat); lpane.position.set(-owW / 4, WINCY, 0.18); lpane.renderOrder = 4; winRoom.add(lpane) // 左の障子（固定・壁より手前/桟より奥）
     const rpane = new THREE.Mesh(new THREE.PlaneGeometry(owW / 2 - 0.1, owH - 0.12), glassMat); rpane.position.set(owW / 4, WINCY, 0.20); rpane.renderOrder = 4; winRoom.add(rpane) // 右の障子（あけると左へ）
     winSashR = rpane; winSashX0 = owW / 4; winSashX1 = -owW / 4
@@ -7841,6 +7900,7 @@ export async function mountTown3d(parent, opts = {}) {
     lastStageW = w; lastStageH = h
     renderer.setPixelRatio(curPR); renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix()
     if (composer) { composer.setPixelRatio(curPR); composer.setSize(w, h); if (fxaaPass) fxaaPass.material.uniforms.resolution.value.set(1 / (w * curPR), 1 / (h * curPR)) }
+    if (outPass) outPass.uniforms.gPx.value = curPR // 紙の粒を CSS の画素の大きさにそろえる
   }
   function resize() { applySize() }
   window.addEventListener('resize', resize)
@@ -7934,21 +7994,12 @@ export async function mountTown3d(parent, opts = {}) {
   // ── 窓枠のHTMLオーバーレイ（最前景のサッシ＋横桟＋窓台＋ガラスの映り込み＋紙目）──
   // frame() から参照するので先に生成する。あける／乗り出すで毎フレーム動かす。
   // 大気のトーン（空のほのかな光のにじみ＋周辺減光）＝シネマ調の奥行きで低ポリを格上げ。
-  const atmo = document.createElement('div')
-  atmo.className = 'town3d-atmo'
-  stage.appendChild(atmo)
-  // 情景の光で全体を一枚の空気に統一する淡いウォッシュ（局所色＝緑の木/灰の道/赤い看板を一つの光へまとめる）
-  const wash = document.createElement('div')
-  wash.className = 'town3d-wash'
-  stage.appendChild(wash)
-  const paper = document.createElement('div')
-  paper.className = 'town3d-paper'
-  stage.appendChild(paper)
-  // 画面全体に重ねる層は、端末の実解像度ぶんの塗り仕事が層の数だけ増える（iPhoneの発熱の最大項）。
-  // 効きの小さい「紙目2層め」と「縁のにじみ」は既定で作らない＝5層→3層。?fullcss=1 で従来の5層に完全復元できる（非破壊）。
-  const FULLCSS = /[?&]fullcss=1/.test(location.search)
-  let paper2 = null, bleed = null
+  // 画面全体に重ねる CSS の層（大気・ウォッシュ・紙目）は、水彩の仕上げ（描画の中の1枚）に置き換えた（#1=2・U2）。?fullcss=1 の時だけ前の5層を作る（見比べ用・非破壊）
+  let paper2 = null, bleed = null, paperEl = null
   if (FULLCSS) {
+    const atmo = document.createElement('div'); atmo.className = 'town3d-atmo'; stage.appendChild(atmo)
+    const wash = document.createElement('div'); wash.className = 'town3d-wash'; stage.appendChild(wash)
+    const paper = document.createElement('div'); paper.className = 'town3d-paper'; stage.appendChild(paper); paperEl = paper
     paper2 = document.createElement('div'); paper2.className = 'town3d-paper2'; stage.appendChild(paper2) // 紙目2層め（粗いにじみ）
     bleed = document.createElement('div'); bleed.className = 'town3d-bleed'; stage.appendChild(bleed) // 縁のにじみ（一枚の絵として縁取る）
   }
@@ -7993,6 +8044,11 @@ export async function mountTown3d(parent, opts = {}) {
     // 水彩グレードはここ一本に統一（canvas側の二つ目のfilterは廃止）。二重がけ時より sepia/brightness を控えめにし、
     // 澄んだ青空が黄ばむのを解消（評価アート指摘）。canvasの暖色/明度のひと匙ぶんだけ僅かに足して水彩味は保つ。
     const b = (lerp(1.04, 1.07, c) * userBright).toFixed(3)
+    if (outPass) { // 水彩の仕上げ（描画の中）へ渡す。舞台の filter は使わない（画面全体の合成をもう1枚増やさない）
+      const u = outPass.uniforms; u.gSat.value = lerp(0.88, 0.99, c); u.gSepia.value = lerp(0.05, 0.025, c); u.gBright.value = +b; u.gPx.value = curPR
+      stage.style.filter = 'none'
+      return
+    }
     stage.style.filter =
       `saturate(${lerp(0.88, 0.99, c).toFixed(3)}) sepia(${lerp(0.05, 0.025, c).toFixed(3)}) brightness(${b}) contrast(0.985)`
   }
@@ -8651,9 +8707,9 @@ export async function mountTown3d(parent, opts = {}) {
   const rainbowVeil = document.createElement('div'); rainbowVeil.className = 'town3d-rainbow'; stage.appendChild(rainbowVeil)
   let rbVeilCur = -1
   // 遠雷の稲光（雨/雪の夜などで cue:'thunder' に同期して空がほのかに白む）。frameで flashV を減衰し不透明度に。
-  const flashEl = document.createElement('div'); flashEl.className = 'town3d-flash'; stage.appendChild(flashEl); let flashCur = -1
+  const flashEl = document.createElement('div'); flashEl.className = 'town3d-flash'; flashEl.style.display = 'none'; stage.appendChild(flashEl); let flashCur = -1 // 光るまで畳んでおく（S32）
   // 部屋から空へ踏み出す瞬間、光がふわっと開ける（薄暗い室内→明るい外気）
-  const openFlash = document.createElement('div'); openFlash.className = 'town3d-open'; stage.appendChild(openFlash)
+  const openFlash = document.createElement('div'); openFlash.className = 'town3d-open'; openFlash.style.display = 'none'; stage.appendChild(openFlash) // 光るまで畳んでおく（S32）
   let openCur = -1
   // 高く昇るほど空気が冷たく淡くなる（高度の実感）。淡い寒色をうっすら被せる。
   const altTint = document.createElement('div'); altTint.className = 'town3d-alt'; stage.appendChild(altTint)
@@ -9416,7 +9472,7 @@ export async function mountTown3d(parent, opts = {}) {
     const flyAmt = easeInOut(active.flyP) // 0=窓 / 1=空（カメラ位置・視線・画角をこの量で混ぜる）
     // 踏み出す閾: 窓を越える序盤(flyP 0→0.45)だけ立ち上がる山型。部屋から夢の空へ身を乗り出して踏み出す一瞬の身体性。
     const thr = (active.flyTarget > 0.5 && active.flyP > 0.001 && active.flyP < 0.5) ? Math.sin(Math.min(1, active.flyP / 0.45) * Math.PI) : 0
-    { const openOp = thr * 0.34; if (Math.abs(openOp - openCur) > 0.015) { openCur = openOp; openFlash.style.opacity = openOp.toFixed(2) } } // 光がふわっと開ける
+    { const openOp = thr * 0.34; if (Math.abs(openOp - openCur) > 0.015) { openCur = openOp; openFlash.style.opacity = openOp.toFixed(2); openFlash.style.display = openOp > 0.001 ? '' : 'none' } } // 光がふわっと開ける（光っていない間は畳む・S32）
     // 日の傾き（ドリフト）：原色→金色を dd(0..1) で補間し直し、空(skyTop0/skyHor0)・霧(baseFogCol)・方向光の base を
     // 一括で動かす＝窓辺/飛行/歩行が同じ時刻で連動する。累積しない（毎フレーム原色から）。
     if (drift.on && !drift.stay) drift.t = Math.min(DRIFT_SECS, drift.t + dt)
@@ -9444,7 +9500,8 @@ export async function mountTown3d(parent, opts = {}) {
       // 霧の「始まり(near)」を大きく奥へ押し出す＝今飛んでいる近距離はくっきり見える（実機FB「飛行中に近くの海面まで白い」）。near<far を保証。
       scene.fog.near = FOG.near * (1 + clear * 3.6 + homeClarity * 1.7); scene.fog.far = Math.max(scene.fog.near + 20, FOG.far * (1 + clear) + homeClarity * 110)
       TMP_FOGC.copy(baseFogCol)
-      TMP_FOGC.lerp(FLIGHT_WARM, flyAmt * 0.4) // 渡りの霧を冷たい白から懐かしい琥珀色へ＝エモい/ノスタルジックに
+      const flightWarmK = isNight ? 1 : Math.max(0, Math.min(1, (duskAmt - 0.15) / 0.35)) // 暖色寄せの強さ。昼（夕方の度合い 0.15 未満）は 0＝窓辺の淡い青空のまま（以前は昼も黄土色に寄った・V22）
+      TMP_FOGC.lerp(FLIGHT_WARM, flyAmt * 0.4 * flightWarmK) // 渡りの霧を冷たい白から懐かしい琥珀色へ（夕方と夜だけ）
       if (edoP > 0.001) TMP_FOGC.lerp(EDO_FOGC, edoP * 0.56) // 近づく霞を時代の色(金茶)へ＝白い空虚でなく空気のある遠景
       if (senP > 0.001) TMP_FOGC.lerp(SEN_FOGC, senP * (isNight ? 0.72 : 0.58)) // 戦国は別世界の空気へ（昼は控えめにして washy を防ぐ・夜は冷たく薄暗く）
       if (taiP > 0.001) TMP_FOGC.lerp(TAISHO_FOGC, taiP * (isNight ? 0.58 : 0.46)) // 大正は暖かなセピアの港町の空気へ（昼は弱め＝白い乳白ピンクに溶けるのを防ぎ運河/建物のコントラストを残す）
@@ -9452,7 +9509,7 @@ export async function mountTown3d(parent, opts = {}) {
       renderer.toneMappingExposure = baseExposure * (1 - edoP * 0.03 - senP * (isNight ? 0.14 : 0.07) + taiP * 0.03) // 戦国=夜は暗い山城/昼は控えめに翳らす(washy回避)・江戸=明るい城下/大正=ほの明るい港町
       // 空ドームも飛行中は黄昏の暖色へ寄せる＝世界全体が懐かしい色になり、白いモヤの孤独感でなく心地よい郷愁に。
       // 時代に着いたらその色が勝つよう、純粋な「渡りの空」は近接していない時(街色 prox が低い時)ほど強く効かせる。
-      const skyWarm = flyAmt * 0.5 * (1 - 0.6 * Math.max(edoP, senP, taiP))
+      const skyWarm = flyAmt * 0.5 * flightWarmK * (1 - 0.6 * Math.max(edoP, senP, taiP)) // 夕方と夜だけ暖色へ（V22）
       skyUniTop.value.copy(skyTop0).lerp(SKY_WARM_TOP, skyWarm)
       skyUniBot.value.copy(skyHor0).lerp(SKY_WARM_BOT, skyWarm)
       // 天上界の光: 雲海（高度SEA_Y付近〜）に出ると、情景の時刻によらず常に幻想的な金桃の magic hour の空気へ寄せる＝下界の街とは明確に別世界（差別化の核）。時代に近い時は控える（時代の空気を優先）。
@@ -9871,7 +9928,7 @@ export async function mountTown3d(parent, opts = {}) {
       // 立ち上がりは鋭く（>0.6は素早く落ち）、余韻はゆっくり＝稲光の閃光らしさ。わずかな揺らぎで二度光りの気配。
       if (flashV > 0.001) flashV = Math.max(0, flashV - dt * (flashV > 0.6 ? 4.2 : 1.7))
       const fop = flashV * 0.42 * (0.85 + 0.15 * Math.sin(t * 47))
-      if (Math.abs(fop - flashCur) > 0.004) { flashCur = fop; flashEl.style.opacity = fop.toFixed(3) }
+      if (Math.abs(fop - flashCur) > 0.004) { flashCur = fop; flashEl.style.opacity = fop.toFixed(3); flashEl.style.display = fop > 0.001 ? '' : 'none' } // 光っていない間は畳む（S32）
       // ブロッケンの虹輪＝雲海の上を晴れた日に飛ぶと、自分の真下の雲に円い虹が映って追従する
       if (glory) {
         const ab = isWalk ? 0 : Math.max(0, Math.min(1, (active.flyPos.y - (SEA_Y + 8)) / 16)) // 雲海の上に出ているほど
@@ -10264,7 +10321,8 @@ export async function mountTown3d(parent, opts = {}) {
     const roomDark = roomAmtF * (1 - wo * 0.4)
     if (Math.abs(roomDark - roomDarkCur) > 0.02) { roomDarkCur = roomDark; roomVig.style.opacity = roomDark.toFixed(2) }
     sill.style.opacity = '0'
-    paper.style.opacity = (0.18 * (1 - lean * 0.6)).toFixed(3) // 紙目をやや強め水彩の手触りに（乗り出すと薄れる）
+    { const pa = 0.18 * (1 - lean * 0.6) // 紙目の強さ（乗り出すと薄れる）。水彩の仕上げでは描画の中の紙の粒へ渡す
+      if (outPass) outPass.uniforms.gPaperA.value = pa; else if (paperEl) paperEl.style.opacity = pa.toFixed(3) }
     // ガラス越しのくすみを、あけ／乗り出しに応じて晴らす（外気が澄む）。変化時だけ書き換え。
     const clarity = Math.min(1, wo * 0.6 + lean * 0.7)
     if (Math.abs(clarity - clarityCur) > 0.004) {
@@ -10444,16 +10502,23 @@ export async function mountTown3d(parent, opts = {}) {
   const layoutEnd = { rngEnd: R.state(), fest: festivalSpots.length }
   let compiledBy = 'none'
   try {
-    if (renderer.compileAsync) {
-      // 並列のシェーダーの組み立て（対応端末）＝起動の詰まりを短く（U13）。描画が1枚も流れない間は完了の知らせが進まない端末があるので、
-      // 待つ間も GL の命令を流し（flush）、2秒で打ち切る（打ち切っても最初の描画で組み立てる＝前と同じ動き）。段を変えた組み直しで、待ち続けて町が出来上がらなかった
-      let done = false
-      renderer.compileAsync(scene, camera).then(() => { done = true }, () => { done = true })
-      const gl0 = renderer.getContext(), t0c = performance.now()
-      while (!done && performance.now() - t0c < 2000) { try { gl0.flush() } catch { /* 無視 */ } await new Promise((r) => setTimeout(r, 30)) }
-      compiledBy = done ? 'async' : 'async-timeout'
-    } else { renderer.compile(scene, camera); compiledBy = 'sync' }
-  } catch { try { renderer.compile(scene, camera); compiledBy = 'sync' } catch { /* コンパイル先行に失敗しても描画は継続 */ } }
+    // シェーダーの組み立てを始め（KHR_parallel_shader_compile 対応端末では裏で進む）、出来上がるまで最大2秒、主スレッドを止めずに待つ（U13）。
+    // three の compileAsync は使わない: 待っている間に情景を替えると、片付けた後の材を見に行って例外を出し（スモークで見つけた）、
+    // 描画が1枚も流れない間は完了の知らせが進まない端末もあった（段を変えた組み直しで町が出来上がらなかった）。
+    // ＝自分で待つ。毎回、町が替わっていないかを先に見て、待つ間も GL の命令を流す（flush）。2秒で打ち切っても最初の描画で組み立てる＝前と同じ動き
+    renderer.compile(scene, camera)
+    const progs = (renderer.info.programs || []).slice()
+    const gl0 = renderer.getContext(), t0c = performance.now()
+    let ready = false
+    while (performance.now() - t0c < 2000) {
+      if (my !== token) return // 待っている間に別の情景へ切り替わった（片付けた後の物を見に行かない）
+      ready = progs.every((p) => { try { return !p.isReady || p.isReady() } catch { return true } })
+      if (ready) break
+      try { gl0.flush() } catch { /* 無視 */ }
+      await new Promise((r) => setTimeout(r, 30))
+    }
+    compiledBy = ready ? 'async' : 'async-timeout'
+  } catch { compiledBy = 'sync' }
   if (my !== token) return // 温めている間に別の情景へ切り替わった
   renderer.shadowMap.needsUpdate = true // 影を最初の描画で一度だけ焼く（以降は静的）
   frame()
@@ -10664,6 +10729,8 @@ export async function mountTown3d(parent, opts = {}) {
     window.__town3dThrowFrames = (n) => { if (active) active.throwN = n || 1 } // 検証用: 描画ループの更新で n フレーム続けて例外を起こす（S38）
     window.__town3dQuality = () => (active === me ? { q: curQual, cap: qCap, floor: prFloor, fly: plan.fly, pr: +curPR.toFixed(3), shadow: sun.shadow.mapSize.x, bloom: !!(bloomPass && bloomPass.enabled), p75: +adP75.toFixed(4), changes: prChanges, failedCap, compiled: compiledBy } : null) // 検証用: 段の中身と自動調整の状態（D1・D2・U1・S27・U13）
     window.__town3dSimLoad = (fn) => { simLoad = typeof fn === 'function' ? fn : null } // 検証用: 毎フレームに重さ（ミリ秒）を足す。fn(今の倍率)（U1）
+    window.__town3dLook = () => { if (active !== me) return null; let lit = 0, maxI = 0; scene.traverse((o) => { const ms = o.isMesh ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) if (m && m.emissiveMap && m.emissive && m.emissiveIntensity * Math.max(m.emissive.r, m.emissive.g, m.emissive.b) > 0.001) { lit++; maxI = Math.max(maxI, m.emissiveIntensity) } }) // 実際に光る窓の材（光の色が黒の材は数えない）
+      return { toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure, fogNear: +FOG.near.toFixed(1), fogFar: +FOG.far.toFixed(1), litWinMats: lit, maxEmissive: +maxI.toFixed(3), glassOpacity: winGlassMat ? winGlassMat.opacity : null, duskAmt: +duskAmt.toFixed(3), grade: !!outPass, gBright: outPass ? +outPass.uniforms.gBright.value.toFixed(3) : null, passes: composer ? composer.passes.map((p) => p.constructor.name + (p === outPass ? '+水彩' : '')) : [] } } // 検証用: 色と空気の状態（群5）
     window.__town3dComposerThrow = () => { composerThrowOnce = true } // 検証用: 後処理で1回だけ例外を起こす（S38）
     window.__town3dTilt = () => (active ? { x: +active.tiltX.toFixed(3), y: +active.tiltY.toFixed(3), yaw: +active.tiltYaw.toFixed(3) } : null) // 検証用: 傾きの見回し（S50）
     window.__town3dLayout = () => (active === me ? layoutEnd : null) // 検証用: 町を組み終えた時の乱数の状態と祭りの数（S26・S25）

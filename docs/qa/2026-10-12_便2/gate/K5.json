@@ -1,0 +1,50 @@
+{
+ "pass": true,
+ "before": {
+  "window": {
+   "calls": 1837,
+   "px": 898914
+  },
+  "sunset": {
+   "calls": 2551,
+   "px": 898914
+  },
+  "fly": {
+   "calls": 1681,
+   "px": 505618
+  },
+  "walk": {
+   "calls": 714,
+   "px": 898914
+  }
+ },
+ "after": {
+  "window": {
+   "calls": 1898,
+   "px": 768042,
+   "passes": 3
+  },
+  "sunset": {
+   "calls": 2613,
+   "px": 898914,
+   "passes": 4
+  },
+  "fly": {
+   "calls": 1449,
+   "px": 505136,
+   "passes": 3
+  },
+  "walk": {
+   "calls": 723,
+   "px": 409262,
+   "passes": 3
+  }
+ },
+ "blendLayers": 0,
+ "errs": [],
+ "id": "K5",
+ "ms": 158459,
+ "at": "2026-10-12T17:23:00.822Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

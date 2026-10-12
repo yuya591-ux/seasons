@@ -1,0 +1,12 @@
+{
+ "pass": false,
+ "start": 1,
+ "afterOneStall": 1,
+ "underLoad": 0.9,
+ "after25s": 0.8,
+ "id": "S20",
+ "ms": 80370,
+ "at": "2026-10-12T17:34:29.681Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

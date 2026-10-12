@@ -1,0 +1,128 @@
+{
+ "pass": false,
+ "pcHeavy": {
+  "before": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 1,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.11,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 0.96,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.1467,
+   "changes": 1,
+   "failedCap": 1,
+   "compiled": "async"
+  },
+  "minPr": 0.96,
+  "maxPr": 1
+ },
+ "pcLight": {
+  "before": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 1,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 0.96,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.119,
+   "changes": 1,
+   "failedCap": 1,
+   "compiled": "async"
+  },
+  "minPr": 0.96,
+  "maxPr": 1
+ },
+ "lapLight": {
+  "before": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 1.13,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0614,
+   "changes": 1,
+   "failedCap": 1.25,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 0.96,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0629,
+   "changes": 3,
+   "failedCap": 1.0099999999999998,
+   "compiled": "async"
+  },
+  "minPr": 0.96,
+  "maxPr": 1.13
+ },
+ "lapHeavy": {
+  "before": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 1.25,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0958,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 0.96,
+   "fly": 0.96,
+   "pr": 1.01,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.1461,
+   "changes": 2,
+   "failedCap": 1.13,
+   "compiled": "async"
+  },
+  "minPr": 1.01,
+  "maxPr": 1.13
+ },
+ "id": "D2",
+ "ms": 304547,
+ "at": "2026-10-12T17:10:57.193Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

@@ -1,0 +1,38 @@
+{
+ "pass": false,
+ "kitaterao-window-3d": {
+  "standard": {
+   "rngEnd": 180856,
+   "fest": 0
+  },
+  "light": {
+   "rngEnd": 91876,
+   "fest": 0
+  }
+ },
+ "shishigaya-window-3d": {
+  "standard": {
+   "rngEnd": 148280,
+   "fest": 0
+  },
+  "light": {
+   "rngEnd": 91419,
+   "fest": 0
+  }
+ },
+ "kitaterao-window-3d-sunset": {
+  "standard": {
+   "rngEnd": 89630,
+   "fest": 2
+  },
+  "light": {
+   "rngEnd": 22419,
+   "fest": 2
+  }
+ },
+ "id": "S25",
+ "ms": 288430,
+ "at": "2026-10-12T17:30:44.756Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

@@ -1,0 +1,14 @@
+{
+ "pass": false,
+ "ridge": {
+  "maxJump": 32,
+  "steps6": 3,
+  "missing": 0
+ },
+ "shot": null,
+ "id": "V36",
+ "ms": 46451,
+ "at": "2026-10-12T16:56:58.623Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

@@ -1,0 +1,22 @@
+{
+ "pass": false,
+ "stats": {
+  "mean": 213.6,
+  "std": 30.3,
+  "p1": 102,
+  "p99": 253,
+  "rgb": [
+   211,
+   215,
+   212
+  ]
+ },
+ "stdBefore": null,
+ "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/V1_iphone_前.png",
+ "errs": [],
+ "id": "V1",
+ "ms": 67031,
+ "at": "2026-10-12T16:49:43.749Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

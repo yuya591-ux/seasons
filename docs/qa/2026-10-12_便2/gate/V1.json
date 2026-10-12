@@ -1,0 +1,39 @@
+{
+ "pass": true,
+ "look": {
+  "toneMapping": 7,
+  "exposure": 1.15,
+  "fogNear": 48,
+  "fogFar": 250.8,
+  "litWinMats": 477,
+  "maxEmissive": 0.391,
+  "glassOpacity": 1,
+  "grade": true,
+  "gBright": 1.04,
+  "passes": [
+   "RenderPass",
+   "UnrealBloomPass",
+   "OutputPass+水彩",
+   "ShaderPass"
+  ]
+ },
+ "stats": {
+  "mean": 178.1,
+  "std": 43.1,
+  "p1": 51,
+  "p99": 239,
+  "rgb": [
+   177,
+   179,
+   174
+  ]
+ },
+ "stdBefore": 30.3,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V1_iphone_後.png",
+ "errs": [],
+ "id": "V1",
+ "ms": 72932,
+ "at": "2026-10-12T17:03:29.609Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

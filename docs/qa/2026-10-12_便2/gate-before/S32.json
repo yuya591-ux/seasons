@@ -1,0 +1,20 @@
+{
+ "pass": false,
+ "layers": [
+  {
+   "s": ".town3d-flash",
+   "display": "block",
+   "op": "0"
+  },
+  {
+   "s": ".town3d-open",
+   "display": "block",
+   "op": "0"
+  }
+ ],
+ "id": "S32",
+ "ms": 50697,
+ "at": "2026-10-12T16:52:47.522Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

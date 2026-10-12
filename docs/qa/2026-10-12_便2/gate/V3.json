@@ -1,0 +1,11 @@
+{
+ "pass": true,
+ "rainNightGlass": 0.4,
+ "noonGlass": 1,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V3_pc_後.png",
+ "id": "V3",
+ "ms": 132365,
+ "at": "2026-10-12T17:12:05.705Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

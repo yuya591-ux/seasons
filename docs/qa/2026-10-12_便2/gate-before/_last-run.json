@@ -1,21 +1,11 @@
 {
- "at": "2026-10-12T15:53:47.867Z",
+ "at": "2026-10-12T17:25:29.184Z",
  "ids": [
-  "S24",
-  "D1",
-  "S23",
-  "S25",
-  "S43",
-  "U13"
+  "V22"
  ],
  "summary": {
-  "S24": false,
-  "D1": false,
-  "S23": false,
-  "S25": false,
-  "S43": false,
-  "U13": false
+  "V22": false
  },
  "pass": 0,
- "total": 6
+ "total": 1
 }

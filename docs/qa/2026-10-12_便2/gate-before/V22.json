@@ -1,0 +1,22 @@
+{
+ "pass": false,
+ "windowSkyRgb": [
+  229,
+  232,
+  226
+ ],
+ "flySkyRgb": [
+  171,
+  166,
+  151
+ ],
+ "windowTint": -3,
+ "flyTint": -20,
+ "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/V22_pc_前.png",
+ "errs": [],
+ "id": "V22",
+ "ms": 88861,
+ "at": "2026-10-12T17:25:28.406Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

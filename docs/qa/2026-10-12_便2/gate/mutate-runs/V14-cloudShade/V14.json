@@ -1,0 +1,14 @@
+{
+ "pass": false,
+ "brown": {
+  "frac": 0.1045,
+  "counted": 448560
+ },
+ "shot": null,
+ "errs": [],
+ "id": "V14",
+ "ms": 60820,
+ "at": "2026-10-12T16:53:36.956Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

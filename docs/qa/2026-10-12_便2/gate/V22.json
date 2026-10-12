@@ -1,0 +1,23 @@
+{
+ "pass": true,
+ "windowSkyRgb": [
+  218,
+  222,
+  217
+ ],
+ "flySkyRgb": [
+  192,
+  193,
+  182
+ ],
+ "windowTint": -1,
+ "flyTint": -10,
+ "flyTintBefore": -20,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V22_pc_後.png",
+ "errs": [],
+ "id": "V22",
+ "ms": 71617,
+ "at": "2026-10-12T17:36:06.380Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

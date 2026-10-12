@@ -2,22 +2,22 @@
  "pass": false,
  "stripeTransitions": {
   "perRow": [
-   9,
-   9,
-   9,
-   9,
-   9,
-   9,
-   9,
-   9,
-   9
+   17,
+   17,
+   17,
+   17,
+   17,
+   17,
+   17,
+   17,
+   17
   ],
-  "median": 9
+  "median": 17
  },
  "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/D6_iphone_前.png",
  "id": "D6",
- "ms": 48794,
- "at": "2026-10-12T15:15:45.401Z",
+ "ms": 78339,
+ "at": "2026-10-12T17:11:31.657Z",
  "base": "http://localhost:4959/seasons/",
  "commit": "0676315"
 }

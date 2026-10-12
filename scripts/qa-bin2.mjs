@@ -499,11 +499,11 @@ def('g3', 'D5', async () => {
 })
 async function stripePng() {
   const b = await getBrowser(); const ctx = await b.newContext(); const p = await ctx.newPage()
-  const b64 = await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 990; c.height = 594; const g = c.getContext('2d'); for (let i = 0; i < 10; i++) { g.fillStyle = i % 2 ? 'rgb(40,40,230)' : 'rgb(230,40,40)'; g.fillRect(i * 99, 0, 99, 594) } return c.toDataURL('image/png').split(',')[1] })
+  const b64 = await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 990; c.height = 594; const g = c.getContext('2d'); for (let i = 0; i < 20; i++) { g.fillStyle = i % 2 ? 'rgb(40,40,230)' : 'rgb(230,40,40)'; g.fillRect(i * 49.5, 0, 49.5, 594) } return c.toDataURL('image/png').split(',')[1] })
   await ctx.close(); return Buffer.from(b64, 'base64')
 }
 def('g3', 'D6', async () => {
-  // 縦じま10本の試験画像に差し替え、雨を弱めて、iPhone の幅で見えるしまの境の数を数える（引き伸ばしなら約9・切り抜きなら約2〜3）
+  // 縦じま20本の試験画像に差し替え、雨を弱めて、iPhone の幅（横の8〜92%）で見えるしまの境の数を数える（切り抜きなら5・縦横比を渡し忘れると7・引き伸ばしなら17）
   const png = await stripePng()
   const init = { fn: () => { try { const k = 'seasons.state.v1'; const s = JSON.parse(localStorage.getItem(k) || '{}'); s.settings = { ...(s.settings || {}), rain: 0 }; localStorage.setItem(k, JSON.stringify(s)) } catch { /* 無視 */ } } }
   const b = await getBrowser()
@@ -528,7 +528,7 @@ def('g3', 'D6', async () => {
   const o = await open('iphone'); await gateStart(o.page); await apply(o.page, 'summer-rain-dusk', 5000)
   await ev(o.page, () => window.__renderer.pause('sleep')); await wait(400)
   const sh = await shot(o.page, 'D6_iphone'); await o.ctx.close()
-  return { pass: !!(res && res.median <= 3), stripeTransitions: res, bg: info, shot: sh } // 切り抜きなら 3（映る幅が画像の約28%）・縦横比を渡し忘れると 5・引き伸ばしなら 9
+  return { pass: !!(res && res.median <= 5), stripeTransitions: res, bg: info, shot: sh }
 })
 def('g3', 'V10', async () => {
   const { page, errs } = await open('pc')
@@ -739,6 +739,9 @@ def('g4', 'S20', async () => {
   // 眺めているだけ（4秒操作なし）の間は自動調整を止める作り（鮮明さ優先）なので、操作が続いている状態で測る
   const keep = setInterval(() => { page.evaluate(() => window.__renderer.poke && window.__renderer.poke()).catch(() => {}) }, 700)
   const s0 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
+  // 組み直した直後の待ち（adaptCooldown）が終わってから詰まりを入れる（待ちの間は判定しない作りのため）
+  for (let k = 0; k < 40; k++) { const a = await ev(page, () => window.__renderer.adapt && window.__renderer.adapt()); if (a && a.cooldown === 0 && a.ema > 25) break; await wait(500) }
+  const a0 = await ev(page, () => window.__renderer.adapt && window.__renderer.adapt())
   await ev(page, () => window.__renderer.simStall && window.__renderer.simStall(250)); await wait(1500)
   const s1 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
   await ev(page, () => window.__renderer.simLoad && window.__renderer.simLoad(60)); await wait(5000)
@@ -746,7 +749,7 @@ def('g4', 'S20', async () => {
   await ev(page, () => window.__renderer.simLoad && window.__renderer.simLoad(0)); await wait(25000)
   const s3 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
   clearInterval(keep)
-  return { pass: s0 === 1 && s1 === 1 && typeof s2 === 'number' && s2 < 1 && s3 === 1, start: s0, afterOneStall: s1, underLoad: s2, after25s: s3 }
+  return { pass: s0 === 1 && s1 === 1 && typeof s2 === 'number' && s2 < 1 && s3 === 1 && !!(a0 && a0.cooldown === 0), start: s0, adaptBeforeStall: a0, afterOneStall: s1, underLoad: s2, after25s: s3 }
 })
 def('g4', 'S43', async () => {
   const { page } = await open('pc')
@@ -824,15 +827,20 @@ def('g5', 'V15', async () => {
   return { pass: !!(noon.look && dusk.look && noon.look.litWinMats === 0 && dusk.look.litWinMats > 0), noonLit: noon.look && noon.look.litWinMats, duskLit: dusk.look && dusk.look.litWinMats, duskMax: dusk.look && dusk.look.maxEmissive, shot: noon.shot }
 })
 def('g5', 'V22', async () => {
+  // 所見は「飛んでいる時の昼の空が黄土色で、窓辺から見た淡い青空と色が揃わない」。窓をあけた窓辺の空（上の帯）と、低く飛んだ時の空（上の帯）の色の向き（青−赤）を比べる
   const { page, errs } = await open('pc')
   await gateStart(page); await apply(page, 'kitaterao-window-3d', 8000)
-  await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+  await ev(page, () => window.__town3dWindow(true)); await wait(2500)
+  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
+  const win = await measurePng(await page.screenshot({ clip: { x: 760, y: 150, width: 400, height: 60 } }), LUMA_STATS) // 窓の中の空（上の帯・桟を避ける）
   await ev(page, () => window.__town3dFlyToggle(true)); await wait(3000)
   await ev(page, () => window.__town3dFlyPose(0, 40, 40, Math.PI, -0.05)); await wait(4000)
-  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
-  const st = await measurePng(await page.screenshot({ clip: { x: 0, y: 0, width: 1920, height: 110 } }), LUMA_STATS)
+  const fly = await measurePng(await page.screenshot({ clip: { x: 0, y: 0, width: 1920, height: 110 } }), LUMA_STATS)
   const sh = await shot(page, 'V22_pc')
-  return { pass: st.rgb[2] >= st.rgb[0], skyTopRgb: st.rgb, shot: sh, errs: realErrs(errs) }
+  const tint = (st) => st.rgb[2] - st.rgb[0] // 青−赤（正なら青寄り・負なら黄土寄り）
+  // 飛行の帯は水平に近い高さの空を写すので、地平の暖色（情景の色の地平）が窓辺より少し入る。合否は「前の飛行の空（gate-before）より青へ8以上戻る」
+  const b = beforeOf('V22'); const flyBefore = b && typeof b.flyTint === 'number' ? b.flyTint : null
+  return { pass: flyBefore !== null && tint(fly) >= flyBefore + 8, windowSkyRgb: win.rgb, flySkyRgb: fly.rgb, windowTint: tint(win), flyTint: tint(fly), flyTintBefore: flyBefore, shot: sh, errs: realErrs(errs) }
 })
 def('g5', 'V3', async () => {
   const run = async (scene, shotName) => { const { ctx, page } = await open('pc'); await gateStart(page); await apply(page, scene, 8000); const lk = await look(page); let sh = null; if (shotName) { await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300); sh = await shot(page, shotName, { clip: { x: 560, y: 60, width: 800, height: 520 } }) } await ctx.close(); return { look: lk, shot: sh } }

@@ -1,0 +1,14 @@
+{
+ "pass": true,
+ "passes": [
+  "RenderPass",
+  "UnrealBloomPass",
+  "OutputPass+水彩",
+  "ShaderPass"
+ ],
+ "id": "S31",
+ "ms": 70989,
+ "at": "2026-10-12T17:15:56.223Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "e0e21fb"
+}

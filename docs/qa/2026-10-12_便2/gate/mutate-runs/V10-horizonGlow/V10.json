@@ -1,0 +1,22 @@
+{
+ "pass": true,
+ "boundaryVisibleCols": 1,
+ "stats": {
+  "mean": 223.4,
+  "std": 20.3,
+  "p1": 177,
+  "p99": 253,
+  "rgb": [
+   225,
+   224,
+   218
+  ]
+ },
+ "shot": null,
+ "errs": [],
+ "id": "V10",
+ "ms": 46376,
+ "at": "2026-10-12T16:51:43.148Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

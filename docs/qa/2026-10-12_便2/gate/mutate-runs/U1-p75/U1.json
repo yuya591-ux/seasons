@@ -1,0 +1,58 @@
+{
+ "pass": false,
+ "once": {
+  "minPr": 1.12,
+  "after": {
+   "q": "standard",
+   "cap": 1.6,
+   "floor": 0.96,
+   "fly": 1.2,
+   "pr": 1.12,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0862,
+   "changes": 4,
+   "failedCap": 1.2399999999999998,
+   "compiled": "async"
+  }
+ },
+ "heavy": {
+  "minPr": 1.24,
+  "after": {
+   "q": "standard",
+   "cap": 1.6,
+   "floor": 0.96,
+   "fly": 1.2,
+   "pr": 1.12,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.1277,
+   "changes": 4,
+   "failedCap": 1.2399999999999998,
+   "compiled": "async"
+  }
+ },
+ "oscillation": {
+  "changes": 6,
+  "minPr": 0.96,
+  "maxPr": 1.48,
+  "after": {
+   "q": "standard",
+   "cap": 1.6,
+   "floor": 0.96,
+   "fly": 1.2,
+   "pr": 0.96,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0734,
+   "changes": 6,
+   "failedCap": 0.9999999999999997,
+   "compiled": "async"
+  }
+ },
+ "id": "U1",
+ "ms": 277508,
+ "at": "2026-10-12T17:15:39.792Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

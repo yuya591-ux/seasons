@@ -1,0 +1,20 @@
+{
+ "pass": false,
+ "iphone": {
+  "px": 898914,
+  "calls": 1846
+ },
+ "ipad": {
+  "px": 2477056,
+  "calls": 2219
+ },
+ "ipad13": {
+  "px": 3108972,
+  "calls": 2290
+ },
+ "id": "S23",
+ "ms": 196298,
+ "at": "2026-10-12T17:25:51.895Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

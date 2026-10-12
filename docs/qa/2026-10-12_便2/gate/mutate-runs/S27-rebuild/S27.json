@@ -1,0 +1,37 @@
+{
+ "pass": false,
+ "standard0": {
+  "q": "standard",
+  "cap": 1,
+  "floor": 1,
+  "fly": 1,
+  "pr": 1,
+  "shadow": 2048,
+  "bloom": false,
+  "p75": 0.0949,
+  "changes": 0,
+  "failedCap": 0,
+  "compiled": "async"
+ },
+ "soft": null,
+ "light": null,
+ "standard": {
+  "q": "standard",
+  "cap": 1,
+  "floor": 1,
+  "fly": 1,
+  "pr": 1,
+  "shadow": 2048,
+  "bloom": false,
+  "p75": 0.0702,
+  "changes": 0,
+  "failedCap": 0,
+  "compiled": "async",
+  "rebuildMs": 1488
+ },
+ "id": "S27",
+ "ms": 135700,
+ "at": "2026-10-12T17:33:04.666Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

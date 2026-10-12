@@ -1,0 +1,28 @@
+{
+ "pass": false,
+ "pc": {
+  "sun": {
+   "n": 128,
+   "cy": 530
+  },
+  "barY": 518,
+  "need": 62,
+  "gap": 12
+ },
+ "pc_shot": null,
+ "iphone": {
+  "sun": {
+   "n": 0,
+   "cy": null
+  },
+  "barY": 1259,
+  "need": 149,
+  "gap": null
+ },
+ "iphone_shot": null,
+ "id": "V33",
+ "ms": 74951,
+ "at": "2026-10-12T16:56:06.846Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "e0e21fb"
+}

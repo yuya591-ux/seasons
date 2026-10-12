@@ -591,6 +591,7 @@ export function createRenderer(canvas) {
     },
     isRunning() { return !!rafId }, // 検証用: 描画ループが回っているか
     scale() { return +renderScale.toFixed(3) }, // 検証用: 自動調整の倍率（S20）
+    adapt() { return { scale: +renderScale.toFixed(3), ema: +frameEMA.toFixed(1), cooldown: adaptCooldown } }, // 検証用: 自動調整の倍率・描画間隔の平均・次に判定するまでの待ち（S20）
     simStall(ms) { simOnce = ms || 0; markInput() }, // 検証用: 1回だけの詰まり
     simLoad(ms) { simMs = ms || 0; markInput() }, // 検証用: 毎回足す重さ
     poke() { markInput() }, // 検証用: 操作があったことにする（眺めているだけの間は自動調整を止める作りのため）
