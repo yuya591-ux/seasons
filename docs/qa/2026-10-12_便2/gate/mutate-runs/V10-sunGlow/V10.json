@@ -2,21 +2,21 @@
  "pass": true,
  "boundaryVisibleCols": 1,
  "stats": {
-  "mean": 217.8,
-  "std": 20.7,
-  "p1": 181,
-  "p99": 253,
+  "mean": 204.7,
+  "std": 18.5,
+  "p1": 167,
+  "p99": 234,
   "rgb": [
-   219,
-   218,
-   214
+   206,
+   205,
+   202
   ]
  },
  "shot": null,
  "errs": [],
  "id": "V10",
- "ms": 44870,
- "at": "2026-10-12T16:52:32.700Z",
+ "ms": 26736,
+ "at": "2026-10-12T21:40:33.838Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "e0e21fb"
+ "commit": "10a8972"
 }

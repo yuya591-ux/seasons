@@ -2,8 +2,9 @@
  "pass": false,
  "pc": {
   "sun": {
-   "n": 128,
-   "cy": 530
+   "n": 139,
+   "cy": 533,
+   "top": 530
   },
   "barY": 518,
   "need": 62,
@@ -12,17 +13,18 @@
  "pc_shot": null,
  "iphone": {
   "sun": {
-   "n": 0,
-   "cy": null
+   "n": 55,
+   "cy": 1289,
+   "top": 1289
   },
   "barY": 1259,
   "need": 149,
-  "gap": null
+  "gap": 30
  },
  "iphone_shot": null,
  "id": "V33",
- "ms": 74951,
- "at": "2026-10-12T16:56:06.846Z",
+ "ms": 27926,
+ "at": "2026-10-12T21:41:05.167Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "e0e21fb"
+ "commit": "10a8972"
 }

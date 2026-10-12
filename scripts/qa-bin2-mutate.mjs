@@ -46,7 +46,7 @@ for (const m of list) {
   let caught = null, failed = [], out = ''
   if (!bad) {
     if (m.build) spawnSync('npx', ['vite', 'build'], { cwd: WT, shell: true, stdio: 'ignore' })
-    await new Promise((r) => setTimeout(r, 1500)) // 開発サーバーが書き換えを拾う間
+    await new Promise((r) => setTimeout(r, 4000)) // 開発サーバーが書き換えを拾う間（1.5秒では拾う前に読み込む回があり、外した色が効かないまま測った・便2）
     const r = spawnSync('node', [path.join(MAIN, 'scripts/qa-bin2.mjs'), ...m.checks], { cwd: WT, shell: false, env: { ...process.env, QA_BASE: `http://localhost:${PORT}/seasons/`, QA_OUT: path.join(OUT, 'mutate-runs', m.name) }, encoding: 'utf8', timeout: 900000 })
     out = (r.stdout || '') + (r.stderr || '')
     failed = out.split('\n').filter((l) => / 不合格/.test(l)).map((l) => l.trim())

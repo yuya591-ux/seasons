@@ -1273,6 +1273,74 @@
      "restored": true
     }
    ]
+  },
+  {
+   "at": "2026-10-12T21:41:41.930Z",
+   "commit": "10a8972",
+   "results": [
+    {
+     "name": "V54-stageBg",
+     "group": "g2",
+     "what": "主ボタンの地を前の淡い茶へ戻す",
+     "checks": [
+      "V54"
+     ],
+     "caught": false,
+     "failed": [],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V10-horizonGlow",
+     "group": "g3",
+     "what": "雪の日の地平のにじみを晴れの日と同じ濃さへ戻す",
+     "checks": [
+      "V10"
+     ],
+     "caught": false,
+     "failed": [],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V10-sunGlow",
+     "group": "g3",
+     "what": "雪の日の太陽の光輪と円盤を前の濃さへ戻す",
+     "checks": [
+      "V10"
+     ],
+     "caught": false,
+     "failed": [],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V33-horizon",
+     "group": "g3",
+     "what": "海辺の地平を窓の横桟と同じ 0.52 へ戻す",
+     "checks": [
+      "V33"
+     ],
+     "caught": true,
+     "failed": [
+      "V33 不合格 (27.9秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V10-snowExposure",
+     "group": "g3",
+     "what": "雪の日の露出を 1.15（ほかの情景と同じ）へ戻す",
+     "checks": [
+      "V10"
+     ],
+     "caught": false,
+     "failed": [],
+     "bad": null,
+     "restored": true
+    }
+   ]
   }
  ]
 }
