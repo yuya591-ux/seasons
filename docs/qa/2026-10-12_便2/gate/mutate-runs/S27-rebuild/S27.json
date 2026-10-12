@@ -8,7 +8,7 @@
   "pr": 1,
   "shadow": 2048,
   "bloom": false,
-  "p75": 0.0949,
+  "p75": 0.0578,
   "changes": 0,
   "failedCap": 0,
   "compiled": "async"
@@ -23,15 +23,17 @@
   "pr": 1,
   "shadow": 2048,
   "bloom": false,
-  "p75": 0.0702,
+  "p75": 0.0338,
   "changes": 0,
   "failedCap": 0,
   "compiled": "async",
-  "rebuildMs": 1488
+  "rebuildMs": 524
  },
+ "visitsBefore": 1,
+ "visitsAfter": 1,
  "id": "S27",
- "ms": 135700,
- "at": "2026-10-12T17:33:04.666Z",
+ "ms": 94281,
+ "at": "2026-10-12T20:33:21.117Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "e0e21fb"
+ "commit": "222fe0a"
 }

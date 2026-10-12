@@ -1,0 +1,16 @@
+{
+ "pass": false,
+ "in3d": {
+  "__err": "Error: page.evaluate: ReferenceError: adQLow is not defined\n    at window.__town3dStats (http://localhost:4958/seasons/src/engine/town3dViewer.js?t=1791837877496:10734:248)\n    at eval (eval at evalua"
+ },
+ "after2d": {
+  "stats": null,
+  "draw": null
+ },
+ "errs": [],
+ "id": "D9",
+ "ms": 27476,
+ "at": "2026-10-12T20:45:06.815Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "222fe0a"
+}

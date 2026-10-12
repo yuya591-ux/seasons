@@ -3,11 +3,27 @@
  "kitaterao-window-3d": {
   "standard": {
    "rngEnd": 180856,
-   "fest": 0
+   "fest": 0,
+   "calls": 3118,
+   "tris": 900141,
+   "attr": {
+    "trees": 148,
+    "clouds": 42,
+    "ferris": 116,
+    "residents": 250
+   }
   },
   "light": {
-   "rngEnd": 91876,
-   "fest": 0
+   "rngEnd": 129779,
+   "fest": 0,
+   "calls": 2830,
+   "tris": 786353,
+   "attr": {
+    "trees": 110,
+    "clouds": 26,
+    "ferris": 92,
+    "residents": 255
+   }
   }
  },
  "shishigaya-window-3d": {
@@ -16,7 +32,7 @@
    "fest": 0
   },
   "light": {
-   "rngEnd": 91419,
+   "rngEnd": 214924,
    "fest": 0
   }
  },
@@ -26,13 +42,13 @@
    "fest": 2
   },
   "light": {
-   "rngEnd": 22419,
+   "rngEnd": 125757,
    "fest": 2
   }
  },
  "id": "S25",
- "ms": 288430,
- "at": "2026-10-12T17:30:44.756Z",
+ "ms": 137441,
+ "at": "2026-10-12T20:31:44.157Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "e0e21fb"
+ "commit": "222fe0a"
 }

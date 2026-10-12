@@ -1,23 +1,23 @@
 {
  "pass": false,
  "windowSkyRgb": [
-  218,
-  222,
-  217
+  230,
+  235,
+  230
  ],
  "flySkyRgb": [
-  193,
-  185,
-  165
+  216,
+  206,
+  187
  ],
- "windowTint": -1,
- "flyTint": -28,
- "flyTintBefore": null,
+ "windowTint": 0,
+ "flyTint": -29,
+ "flyTintBefore": -20,
  "shot": null,
  "errs": [],
  "id": "V22",
- "ms": 58654,
- "at": "2026-10-12T18:30:09.504Z",
+ "ms": 36506,
+ "at": "2026-10-12T20:38:12.720Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "6d6365e"
+ "commit": "222fe0a"
 }

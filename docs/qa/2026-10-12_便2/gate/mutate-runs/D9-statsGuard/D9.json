@@ -5,10 +5,10 @@
   "tris": 1,
   "objs": 12610,
   "pr": 1,
-  "ddt": 0.067,
-  "low": 1,
-  "ok": 0,
-  "frames": 152,
+  "ddt": 0.13,
+  "heavy": 0,
+  "light": 0,
+  "frames": 93,
   "composer": true
  },
  "after2d": {
@@ -17,18 +17,18 @@
    "tris": 1,
    "objs": 12610,
    "pr": 1,
-   "ddt": 0.067,
-   "low": 1,
-   "ok": 0,
-   "frames": 152,
+   "ddt": 0.169,
+   "heavy": 0,
+   "light": 0,
+   "frames": 94,
    "composer": true
   },
   "draw": null
  },
  "errs": [],
  "id": "D9",
- "ms": 39424,
- "at": "2026-10-12T14:20:38.109Z",
+ "ms": 48755,
+ "at": "2026-10-12T20:29:23.137Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "23813f6"
+ "commit": "222fe0a"
 }

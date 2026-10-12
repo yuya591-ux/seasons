@@ -1027,6 +1027,252 @@
      "restored": true
     }
    ]
+  },
+  {
+   "at": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a",
+   "results": [
+    {
+     "name": "S38-frameTry",
+     "group": "g1",
+     "what": "描画ループの更新の囲いを外す",
+     "checks": [
+      "S38"
+     ],
+     "caught": true,
+     "failed": [
+      "S38 不合格 (46.3秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S38-composerRetry",
+     "group": "g1",
+     "what": "後処理の例外の後に後処理を試し直す形を、捨てる形へ戻す",
+     "checks": [
+      "S38"
+     ],
+     "caught": true,
+     "failed": [
+      "S38 不合格 (51.0秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "D9-statsGuard",
+     "group": "g1",
+     "what": "測りの口が今の町だけを見る判定を外す",
+     "checks": [
+      "D9"
+     ],
+     "caught": true,
+     "failed": [
+      "D9 不合格 (48.8秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S25-genCounts",
+     "group": "g4",
+     "what": "町の乱数を回す物の数を軽やかで減らす形へ戻す",
+     "checks": [
+      "S25"
+     ],
+     "caught": true,
+     "failed": [
+      "S25 不合格 (137.4秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S27-rebuild",
+     "group": "g4",
+     "what": "段を変えても組み直さない形へ戻す",
+     "checks": [
+      "S27"
+     ],
+     "caught": true,
+     "failed": [
+      "S27 不合格 (94.3秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S20-recover",
+     "group": "g4",
+     "what": "2D の戻す判定を前の 26 ミリ秒へ戻す",
+     "checks": [
+      "S20"
+     ],
+     "caught": true,
+     "failed": [
+      "S20 不合格 (54.3秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S20-stall",
+     "group": "g4",
+     "what": "1回だけの詰まりも数える形へ戻す",
+     "checks": [
+      "S20"
+     ],
+     "caught": true,
+     "failed": [
+      "S20 不合格 (57.8秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "U9-tonemap",
+     "group": "g5",
+     "what": "色の圧縮を前の「なし」へ戻す",
+     "checks": [
+      "U9"
+     ],
+     "caught": true,
+     "failed": [
+      "U9 不合格 (30.0秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V1-fog",
+     "group": "g5",
+     "what": "霞の距離を前へ戻す",
+     "checks": [
+      "V1"
+     ],
+     "caught": true,
+     "failed": [
+      "V1 不合格 (29.9秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "U2-grade",
+     "group": "g5",
+     "what": "水彩の仕上げを使わない形へ",
+     "checks": [
+      "U2"
+     ],
+     "caught": true,
+     "failed": [
+      "U2 不合格 (31.5秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "U2-paperThin",
+     "group": "g5",
+     "what": "描画の中の紙の粒を前の CSS と同じ強さ（3分の1にしない）へ戻す",
+     "checks": [
+      "U2"
+     ],
+     "caught": true,
+     "failed": [
+      "U2 不合格 (33.3秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V22-warmK",
+     "group": "g5",
+     "what": "昼の飛行でも空を暖色へ寄せる形へ戻す",
+     "checks": [
+      "V22"
+     ],
+     "caught": true,
+     "failed": [
+      "V22 不合格 (36.5秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S20-veryHeavy",
+     "group": "g4",
+     "what": "120ミリ秒以上の描画間隔が続いても数えない形へ戻す（外の目の見直しで見つけた）",
+     "checks": [
+      "S20"
+     ],
+     "caught": true,
+     "failed": [
+      "S20 不合格 (53.7秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S25-treeHide",
+     "group": "g4",
+     "what": "軽やかで151本目からの木を隠さない形へ戻す",
+     "checks": [
+      "S25"
+     ],
+     "caught": true,
+     "failed": [
+      "S25 不合格 (132.2秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S25-cloudHide",
+     "group": "g4",
+     "what": "軽やかで積雲と巻雲を隠さない形へ戻す",
+     "checks": [
+      "S25"
+     ],
+     "caught": true,
+     "failed": [
+      "S25 不合格 (128.6秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S27-visits",
+     "group": "g4",
+     "what": "段を変えた組み直しでも通い帳に数える形へ戻す",
+     "checks": [
+      "S27"
+     ],
+     "caught": true,
+     "failed": [
+      "S27 不合格 (59.4秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "D9-statsVars",
+     "group": "g1",
+     "what": "測りの口が群4 で消した変数（adQLow・adQOk）を読む形へ戻す",
+     "checks": [
+      "D9",
+      "S38"
+     ],
+     "caught": true,
+     "failed": [
+      "D9 不合格 (27.5秒)",
+      "S38 不合格 (32.5秒)"
+     ],
+     "bad": null,
+     "restored": true
+    }
+   ]
   }
  ]
 }

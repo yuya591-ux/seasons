@@ -1,0 +1,18 @@
+{
+ "pass": false,
+ "start": 1,
+ "adaptBeforeStall": {
+  "scale": 1,
+  "ema": 33.3,
+  "cooldown": 0
+ },
+ "afterOneStall": 1,
+ "underLoad": 0.8,
+ "after25s": 1,
+ "veryHeavy": 1,
+ "id": "S20",
+ "ms": 53684,
+ "at": "2026-10-12T20:39:08.872Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "222fe0a"
+}

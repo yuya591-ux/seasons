@@ -1,8 +1,8 @@
 {
- "note": "外し回しの記録 mutate2.json（回ごと）から、名前ごとに最新の回を1件ずつ取り出した物。作り直す時は同じ手順で上書きする。S44-smoke は外し回しの台本の外で手で回した（台本はスモークを回せないため）",
- "at": "2026-10-12T19:27:57.678Z",
- "total": 67,
- "caught": 65,
+ "note": "外し回しの記録 mutate2.json（回ごと）から、名前ごとに最新の回を1件ずつ取り出した物。S44-smoke は外し回しの台本の外で手で回した（台本はスモークを回せないため）",
+ "at": "2026-10-12T20:45:51.334Z",
+ "total": 72,
+ "caught": 70,
  "notCaught": [
   "V10-horizonGlow",
   "V10-sunGlow"
@@ -257,12 +257,12 @@
    ],
    "caught": true,
    "failed": [
-    "S38 不合格 (41.1秒)"
+    "S38 不合格 (46.3秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T14:31:16.018Z",
-   "commit": "23813f6"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S38-composerRetry",
@@ -273,12 +273,12 @@
    ],
    "caught": true,
    "failed": [
-    "S38 不合格 (43.4秒)"
+    "S38 不合格 (51.0秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T14:31:16.018Z",
-   "commit": "23813f6"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "D9-statsGuard",
@@ -289,12 +289,12 @@
    ],
    "caught": true,
    "failed": [
-    "D9 不合格 (39.4秒)"
+    "D9 不合格 (48.8秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T14:31:16.018Z",
-   "commit": "23813f6"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S41-regex",
@@ -833,12 +833,12 @@
    ],
    "caught": true,
    "failed": [
-    "S25 不合格 (288.4秒)"
+    "S25 不合格 (137.4秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T17:37:52.646Z",
-   "commit": "e0e21fb"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S27-rebuild",
@@ -849,12 +849,12 @@
    ],
    "caught": true,
    "failed": [
-    "S27 不合格 (135.7秒)"
+    "S27 不合格 (94.3秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T17:37:52.646Z",
-   "commit": "e0e21fb"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S20-recover",
@@ -865,12 +865,12 @@
    ],
    "caught": true,
    "failed": [
-    "S20 不合格 (80.4秒)"
+    "S20 不合格 (54.3秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T17:37:52.646Z",
-   "commit": "e0e21fb"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S20-stall",
@@ -881,12 +881,12 @@
    ],
    "caught": true,
    "failed": [
-    "S20 不合格 (67.1秒)"
+    "S20 不合格 (57.8秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T18:31:53.098Z",
-   "commit": "6d6365e"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S43-passes",
@@ -929,12 +929,12 @@
    ],
    "caught": true,
    "failed": [
-    "U9 不合格 (55.3秒)"
+    "U9 不合格 (30.0秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T18:31:53.098Z",
-   "commit": "6d6365e"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "V1-fog",
@@ -945,12 +945,12 @@
    ],
    "caught": true,
    "failed": [
-    "V1 不合格 (50.9秒)"
+    "V1 不合格 (29.9秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T18:31:53.098Z",
-   "commit": "6d6365e"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "U2-grade",
@@ -961,12 +961,12 @@
    ],
    "caught": true,
    "failed": [
-    "U2 不合格 (55.3秒)"
+    "U2 不合格 (31.5秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T18:31:53.098Z",
-   "commit": "6d6365e"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S31-fxaaOrder",
@@ -1025,12 +1025,12 @@
    ],
    "caught": true,
    "failed": [
-    "V22 不合格 (58.7秒)"
+    "V22 不合格 (36.5秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T18:31:53.098Z",
-   "commit": "6d6365e"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "V3-glass",
@@ -1057,12 +1057,94 @@
    ],
    "caught": true,
    "failed": [
-    "U2 不合格 (42.5秒)"
+    "U2 不合格 (33.3秒)"
    ],
    "bad": null,
    "restored": true,
-   "run": "2026-10-12T19:27:17.752Z",
-   "commit": "dff97b0"
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
+  },
+  {
+   "name": "S20-veryHeavy",
+   "group": "g4",
+   "what": "120ミリ秒以上の描画間隔が続いても数えない形へ戻す（外の目の見直しで見つけた）",
+   "checks": [
+    "S20"
+   ],
+   "caught": true,
+   "failed": [
+    "S20 不合格 (53.7秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
+  },
+  {
+   "name": "S25-treeHide",
+   "group": "g4",
+   "what": "軽やかで151本目からの木を隠さない形へ戻す",
+   "checks": [
+    "S25"
+   ],
+   "caught": true,
+   "failed": [
+    "S25 不合格 (132.2秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
+  },
+  {
+   "name": "S25-cloudHide",
+   "group": "g4",
+   "what": "軽やかで積雲と巻雲を隠さない形へ戻す",
+   "checks": [
+    "S25"
+   ],
+   "caught": true,
+   "failed": [
+    "S25 不合格 (128.6秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
+  },
+  {
+   "name": "S27-visits",
+   "group": "g4",
+   "what": "段を変えた組み直しでも通い帳に数える形へ戻す",
+   "checks": [
+    "S27"
+   ],
+   "caught": true,
+   "failed": [
+    "S27 不合格 (59.4秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
+  },
+  {
+   "name": "D9-statsVars",
+   "group": "g1",
+   "what": "測りの口が群4 で消した変数（adQLow・adQOk）を読む形へ戻す",
+   "checks": [
+    "D9",
+    "S38"
+   ],
+   "caught": true,
+   "failed": [
+    "D9 不合格 (27.5秒)",
+    "S38 不合格 (32.5秒)"
+   ],
+   "bad": null,
+   "restored": true,
+   "run": "2026-10-12T20:45:39.988Z",
+   "commit": "222fe0a"
   },
   {
    "name": "S44-smoke",

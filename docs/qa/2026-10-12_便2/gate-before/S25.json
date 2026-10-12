@@ -1,22 +1,32 @@
 {
  "pass": false,
- "lightCallsBefore": null,
- "lightCallsNow": 2677,
  "kitaterao-window-3d": {
   "standard": {
-   "calls": 2982,
-   "tris": 895329
+   "calls": 2980,
+   "tris": 895237,
+   "attr": {
+    "trees": 148,
+    "clouds": 42,
+    "ferris": 116,
+    "residents": 250
+   }
   },
   "light": {
-   "calls": 2677,
-   "tris": 770663
+   "calls": 2671,
+   "tris": 770447,
+   "attr": {
+    "trees": 111,
+    "clouds": 31,
+    "ferris": 92,
+    "residents": 218
+   }
   }
  },
  "shishigaya-window-3d": {},
  "kitaterao-window-3d-sunset": {},
  "id": "S25",
- "ms": 181427,
- "at": "2026-10-12T19:52:55.409Z",
+ "ms": 118940,
+ "at": "2026-10-12T20:48:23.960Z",
  "base": "http://localhost:4959/seasons/",
  "commit": "0676315"
 }

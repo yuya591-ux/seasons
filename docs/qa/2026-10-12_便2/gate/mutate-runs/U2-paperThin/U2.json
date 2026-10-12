@@ -8,12 +8,15 @@
   "sky": 1.62,
   "wall": 1.65
  },
- "grainBefore": null,
+ "grainBefore": {
+  "sky": 0.99,
+  "wall": 1.03
+ },
  "shot": null,
  "errs": [],
  "id": "U2",
- "ms": 42495,
- "at": "2026-10-12T19:27:16.933Z",
+ "ms": 33322,
+ "at": "2026-10-12T20:37:33.422Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "dff97b0"
+ "commit": "222fe0a"
 }
