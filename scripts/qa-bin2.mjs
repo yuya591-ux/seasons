@@ -569,7 +569,8 @@ def('g3', 'D6', async () => {
   return { pass: !!(res && res.median <= 5), stripeTransitions: res, bg: info, shot: sh }
 })
 def('g3', 'V10', async () => {
-  const { page, errs } = await open('pc', { init: pinStart('kitaterao-window-3d-snow') })
+  // 起動は北寺尾の窓辺に固定し、雪の窓へ切り替えて測る（使う人は一覧から切り替える。雪の窓そのものを起動すると前のコードでも白飛びしない）
+  const { page, errs } = await open('pc', { init: pinStart('kitaterao-window-3d') })
   await gateStart(page); await apply(page, 'kitaterao-window-3d-snow', 9000); await poke(page)
   // 所見は「空と雪の街の境目が無くなる」。窓の中（x720〜1200・y140〜290）の列ごとに、上から下へ8画素あけた明るさの差の最大（空→雪の丘の段）を取り、
   // 段がはっきり見える列（差12以上）の割合を出す。地平に白い光の塊がかかると、空も丘も白く塗られて段が消える

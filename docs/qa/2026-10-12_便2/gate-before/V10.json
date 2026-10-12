@@ -1,22 +1,22 @@
 {
- "pass": true,
- "boundaryVisibleCols": 1,
+ "pass": false,
+ "boundaryVisibleCols": 0.749,
  "stats": {
-  "mean": 223.4,
-  "std": 20.1,
-  "p1": 177,
+  "mean": 235.5,
+  "std": 17.6,
+  "p1": 194,
   "p99": 253,
   "rgb": [
-   225,
-   223,
-   218
+   237,
+   236,
+   230
   ]
  },
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V10_pc_前.png",
  "errs": [],
  "id": "V10",
- "ms": 31938,
- "at": "2026-10-12T21:36:22.298Z",
+ "ms": 24700,
+ "at": "2026-10-12T21:46:35.211Z",
  "base": "http://localhost:4959/seasons/",
  "commit": "0676315"
 }

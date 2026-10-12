@@ -1,22 +1,22 @@
 {
- "pass": true,
- "boundaryVisibleCols": 0.996,
+ "pass": false,
+ "boundaryVisibleCols": 0.441,
  "stats": {
-  "mean": 214.5,
-  "std": 18.9,
-  "p1": 167,
-  "p99": 242,
+  "mean": 225.4,
+  "std": 14.9,
+  "p1": 187,
+  "p99": 243,
   "rgb": [
-   216,
-   214,
-   209
+   228,
+   225,
+   219
   ]
  },
  "shot": null,
  "errs": [],
  "id": "V10",
- "ms": 28488,
- "at": "2026-10-12T21:40:03.482Z",
+ "ms": 22241,
+ "at": "2026-10-12T21:43:51.824Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "10a8972"
+ "commit": "e6f0bcd"
 }
