@@ -1,0 +1,15 @@
+{
+ "pass": true,
+ "has": true,
+ "reads": true,
+ "strays": {
+  "t3": 0,
+  "r2": 0
+ },
+ "unknownTier": "standard",
+ "id": "S24",
+ "ms": 7,
+ "at": "2026-10-12T15:45:08.972Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "1b8cc49"
+}

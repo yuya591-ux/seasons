@@ -1,0 +1,128 @@
+{
+ "pass": true,
+ "pcHeavy": {
+  "before": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 1,
+   "fly": 1,
+   "pr": 1,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.037,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 1,
+   "fly": 1,
+   "pr": 1,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0929,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "minPr": 1,
+  "maxPr": 1
+ },
+ "pcLight": {
+  "before": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 1,
+   "fly": 1,
+   "pr": 1,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0346,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1,
+   "floor": 1,
+   "fly": 1,
+   "pr": 1,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0352,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "minPr": 1,
+  "maxPr": 1
+ },
+ "lapLight": {
+  "before": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 1.25,
+   "fly": 1.25,
+   "pr": 1.25,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0334,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 1.25,
+   "fly": 1.25,
+   "pr": 1.25,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0353,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "minPr": 1.25,
+  "maxPr": 1.25
+ },
+ "lapHeavy": {
+  "before": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 1.25,
+   "fly": 1.25,
+   "pr": 1.25,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0379,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "after": {
+   "q": "standard",
+   "cap": 1.25,
+   "floor": 1.25,
+   "fly": 1.25,
+   "pr": 1.25,
+   "shadow": 2048,
+   "bloom": false,
+   "p75": 0.0928,
+   "changes": 0,
+   "failedCap": 0,
+   "compiled": "async"
+  },
+  "minPr": 1.25,
+  "maxPr": 1.25
+ },
+ "id": "D2",
+ "ms": 190274,
+ "at": "2026-10-12T16:18:52.019Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "1b8cc49"
+}

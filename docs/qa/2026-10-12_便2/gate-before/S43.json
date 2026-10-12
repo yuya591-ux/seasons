@@ -1,0 +1,15 @@
+{
+ "pass": false,
+ "draw": {
+  "calls": 4024,
+  "tris": 1082805,
+  "progs": 100,
+  "texMem": 159,
+  "geoMem": 4008
+ },
+ "id": "S43",
+ "ms": 36309,
+ "at": "2026-10-12T15:53:10.784Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

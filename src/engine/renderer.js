@@ -3,13 +3,15 @@
 // 情景の render 種別が変わったらシェーダー（プログラム）を組み直す。
 
 import { getShader } from '../shaders/index.js'
+import { qualityPlan, normQuality } from '../data/quality.js'
 import { hexToRgb, mixRgb } from '../util/color.js'
 
 const BASE = import.meta.env.BASE_URL || '/'
 
-// 解像度（端末のピクセル密度の上限）。レイマーチは画素数で重さが決まるため控えめに。
+// 解像度（端末のピクセル密度の上限）は段の表（src/data/quality.js の '2d'）で決める。レイマーチは画素数で重さが決まるため控えめに。
 // 荒さは FXAA＋アンシャープで補う。重い端末は下の自動調整でさらに落とす。
-const DPR_BY_QUALITY = { soft: 2.25, standard: 1.75, light: 1.4 }
+// 自動調整の目安: 描画は約30ミリ秒に間引くので、ふつうの描画間隔は約33ミリ秒。戻す判定はこの目標の1.1倍未満（S20）
+const TARGET_MS = 33.4
 
 // ── 後処理アンチエイリアス（FXAA）──
 // 情景はフルスクリーン三角形に手続き的に描かれるため、輪郭（step境界）がジャギる。
@@ -232,6 +234,7 @@ export function createRenderer(canvas) {
   const startTime = performance.now()
   // 描画解像度の自動調整（重い端末ではフレーム時間を見て解像度を落とし、滑らかさを保つ）
   let renderScale = 1.0
+  let simMs = 0, simOnce = 0 // 検証用: 毎回足す重さ／1回だけの詰まり（S20）
   let frameEMA = 16.7
   let lastFrame = 0
   let lastRenderTime = 0 // 約30fpsへ間引くための前回描画時刻（GPU負荷と発熱を半減）
@@ -316,14 +319,16 @@ export function createRenderer(canvas) {
       uSunGlow: gl.getUniformLocation(program, 'uSunGlow'),
       uDropTint: gl.getUniformLocation(program, 'uDropTint'),
     }
-    quality = q
+    quality = normQuality(q)
     shaderType = type
+    adaptCooldown = 60 // 組み直した直後の詰まりで解像度を落とさない（S20）
     aaEnabled = q !== 'light' && !!fxaaProgram // 低品質端末では後処理を省いて軽く保つ
     return true
   }
 
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, DPR_BY_QUALITY[quality] || 1.5) * renderScale
+    const plan = qualityPlan('2d', quality, { dpr: window.devicePixelRatio || 1, cssW: canvas.clientWidth || 1, cssH: canvas.clientHeight || 1 })
+    const dpr = plan.cap * renderScale
     // 非表示中(town3d/splat表示中はcanvasがdisplay:none＝clientWidth 0)に0サイズのFBO/ビューポートを作ると
     // INVALID_FRAMEBUFFER_OPERATION(zero size)で1フレーム黒くなる。最低1pxへクランプして回避（評価 技術-重要1）。
     const w = Math.max(1, Math.floor(canvas.clientWidth * dpr))
@@ -379,6 +384,7 @@ export function createRenderer(canvas) {
     // シェーダ情景はゆっくりした動きなので20fpsでも体感は変わらない）。操作（見回し/窓/傾き/情景切替）で即33fpsへ復帰。
     const idleStill = (now - lastInputT) > 4000
     if (now - lastRenderTime < (idleStill ? 50 : 30)) return // 描画をスキップしてGPUを休ませる
+    if (simMs > 0 || simOnce > 0) { const until = performance.now() + simMs + simOnce; simOnce = 0; while (performance.now() < until) { /* 検証用の重さ */ } }
     if (flashLevel > 0.001) lastInputT = now // 遠雷の発光中はフル描画を保ちたいので idle にしない
     lastRenderTime = now
     if (canvas.clientWidth < 1 || canvas.clientHeight < 1) return // 非表示中(town3d/splat表示中など)はサイズ0描画を避ける（FBO不完全エラー回避・評価 技術-重要1）
@@ -386,7 +392,7 @@ export function createRenderer(canvas) {
     // idle間引き中(意図的に~50ms間隔)は性能信号でないので計測も自動調整もしない＝idleで誤って解像度を落とさない（鮮明さ優先）。
     if (lastFrame > 0 && !idleStill) {
       const dt = now - lastFrame
-      if (dt > 0 && dt < 300) frameEMA = frameEMA * 0.9 + dt * 0.1
+      if (dt > 0 && dt < 120) frameEMA = frameEMA * 0.9 + dt * 0.1 // 120ミリ秒以上の1回だけの詰まりは数えない（以前は 300 未満を数え、1回の詰まりで解像度が落ちたまま戻らなかった・S20）
     }
     lastFrame = now
     if (idleStill) {
@@ -398,7 +404,7 @@ export function createRenderer(canvas) {
       // 滑らかさを優先（下限0.5）。余裕のある端末(frameEMA<42)はこの分岐に入らず常時フル解像度＝高品質は不変。
       renderScale = Math.max(0.5, renderScale - (frameEMA > 70 ? 0.15 : 0.1))
       adaptCooldown = 60
-    } else if (frameEMA < 26 && renderScale < 1.0) {
+    } else if (frameEMA < TARGET_MS * 1.1 && renderScale < 1.0) { // 間引いた目標の間隔（約33ミリ秒）の1.1倍未満なら戻す（以前の 26 には間引きのせいで届かず、戻らなかった・S20）
       renderScale = Math.min(1.0, renderScale + 0.06) // 余裕があればゆっくり戻す
       adaptCooldown = 120
     }
@@ -584,6 +590,10 @@ export function createRenderer(canvas) {
       play()
     },
     isRunning() { return !!rafId }, // 検証用: 描画ループが回っているか
+    scale() { return +renderScale.toFixed(3) }, // 検証用: 自動調整の倍率（S20）
+    simStall(ms) { simOnce = ms || 0; markInput() }, // 検証用: 1回だけの詰まり
+    simLoad(ms) { simMs = ms || 0; markInput() }, // 検証用: 毎回足す重さ
+    poke() { markInput() }, // 検証用: 操作があったことにする（眺めているだけの間は自動調整を止める作りのため）
     bgInfo() { return { key: bgKey, texKey: bgTexKey, ready: bgReady, aspect: +bgAspect.toFixed(3) } }, // 検証用: 背景の鍵と、貼っている画の鍵
     // town3d/splat表示中は描画を止めるので、最大GPUメモリ(フルスクリーンFBOテクスチャ)を解放しメモリ圧を下げる
     // ＝iOSの「メモリ逼迫でWebGLコンテキストを失わせる」誘発を抑える（評価エンジニア: マルチコンテキスト枯渇の緩和）。

@@ -1,0 +1,9 @@
+{
+ "pass": true,
+ "compiled": "async",
+ "id": "U13",
+ "ms": 27935,
+ "at": "2026-10-12T16:24:09.150Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "1b8cc49"
+}

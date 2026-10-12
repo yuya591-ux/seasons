@@ -719,22 +719,25 @@ def('g4', 'S25', async () => {
   return { pass: Object.values(out).every((r) => r.standard && r.light && r.standard.rngEnd === r.light.rngEnd), ...out }
 })
 def('g4', 'S27', async () => {
+  // 段を変えると同じ情景を組み直す。町の3Dは組み直しにシェーダーの組み立て込みで数秒〜十数秒かかるので、新しい段の値が読めるまで最大30秒待つ
   const { page } = await open('pc')
   await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
   const q0 = await ev(page, () => window.__town3dQuality())
   await openSettings(page)
-  await page.locator('.chip', { hasText: 'こまやか' }).first().click({ force: true }).catch(() => {}); await wait(9000)
-  const q1 = await ev(page, () => window.__town3dQuality())
-  await page.locator('.chip', { hasText: '軽やか' }).first().click({ force: true }).catch(() => {}); await wait(9000)
-  const q2 = await ev(page, () => window.__town3dQuality())
-  await page.locator('.chip', { hasText: 'ふつう' }).first().click({ force: true }).catch(() => {}); await wait(9000)
-  const q3 = await ev(page, () => window.__town3dQuality())
-  return { pass: !!(q0 && q1 && q2 && q3 && q1.shadow === 4096 && q2.shadow === 1024 && q3.shadow === 2048 && q1.q === 'soft'), standard0: q0, soft: q1, light: q2, standard: q3 }
+  const pick = async (label, id) => {
+    const t0 = Date.now()
+    await page.locator('.chip', { hasText: label }).first().click({ force: true }).catch(() => {})
+    for (let k = 0; k < 60; k++) { await wait(500); const q = await ev(page, () => window.__town3dQuality && window.__town3dQuality()); if (q && q.q === id) return { ...q, rebuildMs: Date.now() - t0 } }
+    return null
+  }
+  const q1 = await pick('こまやか', 'soft'), q2 = await pick('軽やか', 'light'), q3 = await pick('ふつう', 'standard')
+  return { pass: !!(q0 && q1 && q2 && q3 && q1.shadow === 4096 && q2.shadow === 1024 && q3.shadow === 2048), standard0: q0, soft: q1, light: q2, standard: q3 }
 })
 def('g4', 'S20', async () => {
   const { page } = await open('pc')
   await gateStart(page); await apply(page, 'summer-morning-mountains', 4000)
-  const keep = setInterval(() => { page.mouse.move(400 + Math.random() * 50, 400).catch(() => {}) }, 700)
+  // 眺めているだけ（4秒操作なし）の間は自動調整を止める作り（鮮明さ優先）なので、操作が続いている状態で測る
+  const keep = setInterval(() => { page.evaluate(() => window.__renderer.poke && window.__renderer.poke()).catch(() => {}) }, 700)
   const s0 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
   await ev(page, () => window.__renderer.simStall && window.__renderer.simStall(250)); await wait(1500)
   const s1 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
@@ -756,6 +759,108 @@ def('g4', 'U13', async () => {
   await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
   const q = await ev(page, () => window.__town3dQuality && window.__town3dQuality())
   return { pass: !!(q && q.compiled === 'async'), compiled: q && q.compiled }
+})
+
+// 群5 色と空気（T3）────────────────────────────────────────────────────
+const beforeOf = (id) => { try { return JSON.parse(fs.readFileSync(path.join(path.dirname(OUT), 'gate-before', id + '.json'), 'utf8')) } catch { return null } }
+const look = (page) => ev(page, () => window.__town3dLook && window.__town3dLook())
+def('g5', 'U9', async () => {
+  // 雨の夜の窓辺（PC）の窓の中の暗い側1%点の明るさ＝黒の締まり。前の値（gate-before）より下がり、色の圧縮が Neutral（7）であること
+  const { page, errs } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d-rain-night', 9000); await poke(page)
+  const buf = await page.screenshot({ clip: { x: 0, y: 0, width: 1920, height: 1080 } })
+  const st = await measurePng(buf, LUMA_STATS)
+  const lk = await look(page)
+  const sh = await shot(page, 'U9_pc')
+  const b = beforeOf('U9')
+  const p1Before = b && b.stats ? b.stats.p1 : null
+  return { pass: !!(lk && lk.toneMapping === 7 && p1Before !== null && st.p1 <= p1Before - 3), stats: st, p1Before, look: lk, shot: sh, errs: realErrs(errs) }
+})
+def('g5', 'V1', async () => {
+  const { page, errs } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 9000)
+  const lk = await look(page)
+  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
+  const st = await measurePng(await page.screenshot({ clip: { x: 0, y: 110, width: 402, height: 290 } }), LUMA_STATS) // 窓の中（閉めたまま）
+  const sh = await shot(page, 'V1_iphone')
+  const b = beforeOf('V1'); const stdBefore = b && b.stats ? b.stats.std : null
+  return { pass: !!(lk && Math.abs(lk.fogNear - 48) < 0.01 && Math.abs(lk.fogFar - 250.8) < 0.01 && stdBefore !== null && st.std > stdBefore), look: lk, stats: st, stdBefore, shot: sh, errs: realErrs(errs) }
+})
+def('g5', 'U2', async () => {
+  const { page, errs } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d-sunset', 9000)
+  const layers = await ev(page, () => [...document.querySelectorAll('.town3d-stage *')].filter((e) => { const s = getComputedStyle(e); return s.mixBlendMode !== 'normal' && s.display !== 'none' && s.visibility !== 'hidden' }).map((e) => (e.className || e.tagName) + ':' + getComputedStyle(e).mixBlendMode))
+  const filt = await ev(page, () => getComputedStyle(document.querySelector('.town3d-stage')).filter)
+  const l0 = await look(page)
+  await openSettings(page)
+  await ev(page, () => { const r = [...document.querySelectorAll('.setrow')].find((x) => /明るさ/.test(x.textContent)); const i = r && r.querySelector('input'); if (i) { i.value = '1.2'; i.dispatchEvent(new Event('input', { bubbles: true })) } }); await wait(800)
+  const l1 = await look(page)
+  await ev(page, () => { const r = [...document.querySelectorAll('.setrow')].find((x) => /明るさ/.test(x.textContent)); const i = r && r.querySelector('input'); if (i) { i.value = '1'; i.dispatchEvent(new Event('input', { bubbles: true })) } })
+  await page.keyboard.press('Escape').catch(() => {}); await page.mouse.click(5, 860); await wait(800)
+  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
+  const sh = await shot(page, 'U2_iphone')
+  return { pass: Array.isArray(layers) && layers.length === 0 && filt === 'none' && !!(l0 && l0.grade && l1 && l1.gBright > l0.gBright), blendLayers: layers, stageFilter: filt, brightBefore: l0 && l0.gBright, brightAfter: l1 && l1.gBright, shot: sh, errs: realErrs(errs) }
+})
+def('g5', 'S31', async () => {
+  const { page } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d-sunset', 7000)
+  const lk = await look(page)
+  const ps = (lk && lk.passes) || []
+  const iOut = ps.findIndex((p) => /^OutputPass/.test(p)), iFx = ps.lastIndexOf('ShaderPass')
+  return { pass: iOut >= 0 && iFx > iOut, passes: ps }
+})
+def('g5', 'S32', async () => {
+  const { page } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 7000)
+  const r = await ev(page, () => ['.town3d-flash', '.town3d-open'].map((s) => { const e = document.querySelector(s); return e ? { s, display: getComputedStyle(e).display, op: getComputedStyle(e).opacity } : { s, missing: true } }))
+  return { pass: Array.isArray(r) && r.every((x) => x.display === 'none'), layers: r }
+})
+def('g5', 'V15', async () => {
+  const run = async (scene, shotName) => { const { ctx, page } = await open('pc'); await gateStart(page); await apply(page, scene, 8000); const lk = await look(page)
+    let sh = null
+    if (shotName) { await ev(page, () => window.__town3dWindow(true)); await wait(2200); await ev(page, () => window.__town3dFlyToggle(true)); await wait(3000); await ev(page, () => window.__town3dFlyPose(0, 40, 40, Math.PI, -0.2)); await wait(3000); await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300); sh = await shot(page, shotName) }
+    await ctx.close(); return { look: lk, shot: sh } }
+  const noon = await run('kitaterao-window-3d', 'V15_pc'), dusk = await run('kitaterao-window-3d-sunset')
+  return { pass: !!(noon.look && dusk.look && noon.look.litWinMats === 0 && dusk.look.litWinMats > 0), noonLit: noon.look && noon.look.litWinMats, duskLit: dusk.look && dusk.look.litWinMats, duskMax: dusk.look && dusk.look.maxEmissive, shot: noon.shot }
+})
+def('g5', 'V22', async () => {
+  const { page, errs } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 8000)
+  await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+  await ev(page, () => window.__town3dFlyToggle(true)); await wait(3000)
+  await ev(page, () => window.__town3dFlyPose(0, 40, 40, Math.PI, -0.05)); await wait(4000)
+  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
+  const st = await measurePng(await page.screenshot({ clip: { x: 0, y: 0, width: 1920, height: 110 } }), LUMA_STATS)
+  const sh = await shot(page, 'V22_pc')
+  return { pass: st.rgb[2] >= st.rgb[0], skyTopRgb: st.rgb, shot: sh, errs: realErrs(errs) }
+})
+def('g5', 'V3', async () => {
+  const run = async (scene, shotName) => { const { ctx, page } = await open('pc'); await gateStart(page); await apply(page, scene, 8000); const lk = await look(page); let sh = null; if (shotName) { await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300); sh = await shot(page, shotName, { clip: { x: 560, y: 60, width: 800, height: 520 } }) } await ctx.close(); return { look: lk, shot: sh } }
+  const night = await run('kitaterao-window-3d-rain-night', 'V3_pc'), noon = await run('kitaterao-window-3d')
+  const on = night.look && night.look.glassOpacity, od = noon.look && noon.look.glassOpacity
+  return { pass: typeof on === 'number' && typeof od === 'number' && on <= od * 0.5, rainNightGlass: on, noonGlass: od, shot: night.shot }
+})
+def('g5', 'K5', async () => {
+  // iPhone の重さ: 窓辺・夕・飛行・歩行の描画の呼び出しと描く画素数を、便1 の撮影の値（capture-iphone.json）と比べる。
+  // 歩く時の画素数は、決めたこと（D3: 歩行は窓辺より軽いので天井を下げない）に合わせ、窓辺の画素数を上限にする
+  const cap = JSON.parse(fs.readFileSync('docs/qa/2026-10-12_seasons/capture-iphone.json', 'utf8')).iphone
+  const pxOf = (c) => c ? c.w * c.h : null
+  const before = { window: { calls: cap.window.draw.calls, px: pxOf(cap.window.canvas) }, sunset: { calls: cap.scenes['kitaterao-window-3d-sunset'].draw.calls, px: pxOf(cap.window.canvas) }, fly: { calls: cap.flyLow.draw.calls, px: Math.round(402 * cap.flyLow.stats.pr) * Math.round(874 * cap.flyLow.stats.pr) }, walk: { calls: cap.walk.draw.calls, px: pxOf(cap.window.canvas) } }
+  const { page, errs } = await open('iphone')
+  await gateStart(page)
+  const draw = () => ev(page, () => window.__town3dDraw && window.__town3dDraw())
+  await apply(page, 'kitaterao-window-3d', 8000); const win = await draw()
+  const layers = await ev(page, () => [...document.querySelectorAll('.town3d-stage *')].filter((e) => { const s = getComputedStyle(e); return s.mixBlendMode !== 'normal' && s.display !== 'none' }).length)
+  await apply(page, 'kitaterao-window-3d-sunset', 8000); const sun = await draw()
+  await apply(page, 'kitaterao-window-3d', 8000)
+  await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+  await ev(page, () => window.__town3dFlyToggle(true)); await wait(3000)
+  await ev(page, () => window.__town3dFlyPose(0, 40, 40, Math.PI, -0.2)); await wait(3000); const fly = await draw()
+  await ev(page, () => window.__town3dFlyPose(2, 6, -18, Math.PI, -0.05)); await wait(800)
+  await ev(page, () => window.__town3dLandToggle(true)); await wait(3500); const walk = await draw()
+  const after = { window: win, sunset: sun, fly, walk }
+  const ok = (k) => after[k] && after[k].calls <= before[k].calls * 1.05 && after[k].px <= before[k].px * 1.05
+  return { pass: ['window', 'sunset', 'fly', 'walk'].every(ok) && layers === 0, before, after: Object.fromEntries(Object.entries(after).map(([k, v]) => [k, v && { calls: v.calls, px: v.px, passes: v.passes }])), blendLayers: layers, errs: realErrs(errs) }
 })
 
 // ── 実行 ─────────────────────────────────────────────────────────────

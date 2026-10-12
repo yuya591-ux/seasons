@@ -360,9 +360,12 @@ function start() {
       updateSettings(patch)
       renderer.setSettings(getState().settings)
       // 3Dの街モードでは明るさ・描き込みをtown3dへ反映（シェーダーは一時停止中なので renderer.setSettings は効かない）
-      if (town3dMode && (patch.brightness !== undefined || patch.quality !== undefined || patch.timeStay !== undefined)) {
-        _t3d?.setTown3dSettings({ brightness: patch.brightness, quality: patch.quality, timeStay: patch.timeStay })
+      if (town3dMode && (patch.brightness !== undefined || patch.timeStay !== undefined)) {
+        _t3d?.setTown3dSettings({ brightness: patch.brightness, timeStay: patch.timeStay })
       }
+      // 描き込みの段を変えたら、同じ情景を組み直す＝影の細かさ・ブルーム・解像度がその場で新しい段になる
+      // （以前は解像度とブルームだけが変わり、影や物の数は次に情景を開くまで変わらなかった・S27）。軽やかでも町の配置は同じ（S25）
+      if (town3dMode && patch.quality !== undefined) applyScene(resolveScene(getState().sceneId), true)
       if (patch.tilt !== undefined) {
         if (patch.tilt) {
           tilt.enable().then((ok) => {

@@ -1,0 +1,22 @@
+{
+ "pass": true,
+ "pc": {
+  "window": 1,
+  "fly": 1,
+  "walk": 1,
+  "flyCap": 1,
+  "walkCalls": 1460
+ },
+ "iphone": {
+  "window": 1.6,
+  "fly": 1.2,
+  "walk": 1.6,
+  "flyCap": 1.2,
+  "walkCalls": 554
+ },
+ "id": "D3",
+ "ms": 81017,
+ "at": "2026-10-12T16:13:46.127Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "1b8cc49"
+}

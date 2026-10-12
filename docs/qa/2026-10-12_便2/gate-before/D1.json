@@ -1,0 +1,48 @@
+{
+ "pass": false,
+ "pc": {
+  "soft": {
+   "canvas": [
+    2150,
+    1209
+   ]
+  },
+  "standard": {
+   "canvas": [
+    2150,
+    1209
+   ]
+  },
+  "light": {
+   "canvas": [
+    2150,
+    1209
+   ]
+  }
+ },
+ "laptop": {
+  "soft": {
+   "canvas": [
+    1920,
+    1080
+   ]
+  },
+  "standard": {
+   "canvas": [
+    1920,
+    1080
+   ]
+  },
+  "light": {
+   "canvas": [
+    1843,
+    1036
+   ]
+  }
+ },
+ "id": "D1",
+ "ms": 177994,
+ "at": "2026-10-12T15:47:49.769Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

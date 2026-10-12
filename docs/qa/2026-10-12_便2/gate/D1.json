@@ -1,0 +1,126 @@
+{
+ "pass": true,
+ "pc": {
+  "soft": {
+   "quality": {
+    "q": "soft",
+    "cap": 2,
+    "floor": 1,
+    "fly": 1.5,
+    "pr": 2,
+    "shadow": 4096,
+    "bloom": false,
+    "p75": 0.0378,
+    "changes": 0,
+    "failedCap": 0,
+    "compiled": "async"
+   },
+   "canvas": [
+    3840,
+    2160
+   ]
+  },
+  "standard": {
+   "quality": {
+    "q": "standard",
+    "cap": 1,
+    "floor": 1,
+    "fly": 1,
+    "pr": 1,
+    "shadow": 2048,
+    "bloom": false,
+    "p75": 0.0346,
+    "changes": 0,
+    "failedCap": 0,
+    "compiled": "async"
+   },
+   "canvas": [
+    1920,
+    1080
+   ]
+  },
+  "light": {
+   "quality": {
+    "q": "light",
+    "cap": 0.822,
+    "floor": 0.8,
+    "fly": 0.8,
+    "pr": 0.822,
+    "shadow": 1024,
+    "bloom": false,
+    "p75": 0.0335,
+    "changes": 0,
+    "failedCap": 0,
+    "compiled": "async"
+   },
+   "canvas": [
+    1578,
+    887
+   ]
+  }
+ },
+ "laptop": {
+  "soft": {
+   "quality": {
+    "q": "soft",
+    "cap": 2,
+    "floor": 1.25,
+    "fly": 1.5,
+    "pr": 2,
+    "shadow": 4096,
+    "bloom": false,
+    "p75": 0.0396,
+    "changes": 0,
+    "failedCap": 0,
+    "compiled": "async"
+   },
+   "canvas": [
+    3072,
+    1728
+   ]
+  },
+  "standard": {
+   "quality": {
+    "q": "standard",
+    "cap": 1.25,
+    "floor": 1.25,
+    "fly": 1.25,
+    "pr": 1.25,
+    "shadow": 2048,
+    "bloom": false,
+    "p75": 0.0359,
+    "changes": 0,
+    "failedCap": 0,
+    "compiled": "async"
+   },
+   "canvas": [
+    1920,
+    1080
+   ]
+  },
+  "light": {
+   "quality": {
+    "q": "light",
+    "cap": 1.027,
+    "floor": 0.8,
+    "fly": 0.8,
+    "pr": 1.027,
+    "shadow": 1024,
+    "bloom": false,
+    "p75": 0.0334,
+    "changes": 0,
+    "failedCap": 0,
+    "compiled": "async"
+   },
+   "canvas": [
+    1577,
+    887
+   ]
+  }
+ },
+ "id": "D1",
+ "ms": 180828,
+ "at": "2026-10-12T15:51:15.992Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "1b8cc49"
+}

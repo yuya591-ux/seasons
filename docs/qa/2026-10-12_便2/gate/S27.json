@@ -1,0 +1,63 @@
+{
+ "pass": true,
+ "standard0": {
+  "q": "standard",
+  "cap": 1,
+  "floor": 1,
+  "fly": 1,
+  "pr": 1,
+  "shadow": 2048,
+  "bloom": false,
+  "p75": 0.0334,
+  "changes": 0,
+  "failedCap": 0,
+  "compiled": "async"
+ },
+ "soft": {
+  "q": "soft",
+  "cap": 2,
+  "floor": 1,
+  "fly": 1.5,
+  "pr": 2,
+  "shadow": 4096,
+  "bloom": false,
+  "p75": 0,
+  "changes": 0,
+  "failedCap": 0,
+  "compiled": "async",
+  "rebuildMs": 10676
+ },
+ "light": {
+  "q": "light",
+  "cap": 0.822,
+  "floor": 0.8,
+  "fly": 0.8,
+  "pr": 0.822,
+  "shadow": 1024,
+  "bloom": false,
+  "p75": 0,
+  "changes": 0,
+  "failedCap": 0,
+  "compiled": "async",
+  "rebuildMs": 10660
+ },
+ "standard": {
+  "q": "standard",
+  "cap": 1,
+  "floor": 1,
+  "fly": 1,
+  "pr": 1,
+  "shadow": 2048,
+  "bloom": false,
+  "p75": 0,
+  "changes": 0,
+  "failedCap": 0,
+  "compiled": "async",
+  "rebuildMs": 10976
+ },
+ "id": "S27",
+ "ms": 63793,
+ "at": "2026-10-12T16:35:33.439Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "1b8cc49"
+}

@@ -40,6 +40,13 @@ await page.waitForTimeout(1200)
 const hasHook = await page.evaluate(() => typeof window.__applyScene === 'function')
 if (!hasHook) { console.error('SMOKE: __applyScene hook missing (app init failed?)'); await browser.close(); cleanup(); process.exit(1) }
 
+// 町の3Dは組み立てに時間がかかる（CI は GPU なし）。組み終わる（__town3dDraw が値を返す）まで最大8秒待つ＝遅れて出たエラーを次の情景の名前で記録しない（S45）
+async function settle(id) {
+  const scene = SCENES.find((s) => s.id === id)
+  if (scene && scene.render === 'town3d') {
+    for (let k = 0; k < 16; k++) { const ok = await page.evaluate(() => !!(window.__town3dDraw && window.__town3dDraw())).catch(() => false); if (ok) break; await page.waitForTimeout(500) }
+  }
+}
 let scanned = 0
 for (const id of ids) {
   curId = id
@@ -47,8 +54,23 @@ for (const id of ids) {
   await page.waitForTimeout(700)
   await page.evaluate((i) => window.__applyScene(i), id) // 二度当て＝確実に切替（verify-sceneと同方式）
   await page.waitForTimeout(1500)
+  await settle(id)
   scanned++
 }
+// 横長の画面（iPad 横の大きさ）と「軽やか」の段でも、代表の情景を開いてエラーが無いか（以前は縦長・既定の段だけだった・S44）
+const REP = ['kitaterao-window-3d', 'summer-rain-dusk', 'summer-dusk-seaside']
+await page.setViewportSize({ width: 1180, height: 820 })
+for (const id of REP) { curId = '横長:' + id; await page.evaluate((i) => window.__applyScene(i), id); await page.waitForTimeout(1500); await settle(id); scanned++ }
+console.log('横長（1180×820）: ' + REP.length + ' 情景を開いた')
+await page.evaluate(() => { const k = 'seasons.state.v1'; const st = JSON.parse(localStorage.getItem(k) || '{}'); st.settings = { ...(st.settings || {}), quality: 'light' }; localStorage.setItem(k, JSON.stringify(st)) })
+curId = '軽やか:(開き直し)'
+await page.reload({ waitUntil: 'domcontentloaded' })
+await page.locator('.gate').click().catch(() => {})
+await page.waitForTimeout(1200)
+for (const id of REP) { curId = '軽やか:' + id; await page.evaluate((i) => window.__applyScene(i), id); await page.waitForTimeout(1500); await settle(id); scanned++ }
+console.log('軽やか: ' + REP.length + ' 情景を開いた')
+curId = '(終わりの待ち)'
+await page.waitForTimeout(3000) // 最後の情景の遅れて出るエラーも拾う（以前は1.5秒で閉じていた・S45）
 await browser.close()
 cleanup()
 
