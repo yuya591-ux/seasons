@@ -1,0 +1,18 @@
+{
+ "pass": false,
+ "hint": {
+  "y": 595.078125,
+  "bottom": 670,
+  "h": 74.921875,
+  "bgAlpha": 0
+ },
+ "padTop": 686,
+ "gap": 16,
+ "shot": null,
+ "errs": [],
+ "id": "V61",
+ "ms": 43849,
+ "at": "2026-10-12T15:20:01.616Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "c33a11e"
+}

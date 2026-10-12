@@ -1,0 +1,19 @@
+{
+ "pass": false,
+ "iphone": {
+  "h": 36,
+  "lineH": 20.4,
+  "fs": "13.6px"
+ },
+ "shot": null,
+ "ipad": {
+  "h": 36,
+  "lineH": 20.4,
+  "fs": "13.6px"
+ },
+ "id": "V46",
+ "ms": 41009,
+ "at": "2026-10-12T15:15:15.595Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "c33a11e"
+}

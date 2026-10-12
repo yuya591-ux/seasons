@@ -1,0 +1,14 @@
+{
+ "pass": false,
+ "brown": {
+  "frac": 0.1162,
+  "counted": 345600
+ },
+ "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/V27_pc_前.png",
+ "errs": [],
+ "id": "V27",
+ "ms": 48206,
+ "at": "2026-10-12T15:27:17.036Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

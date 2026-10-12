@@ -540,7 +540,7 @@ export async function mountTown3d(parent, opts = {}) {
     sgr.addColorStop(0.47, 'rgba(176,198,255,0.10)'); sgr.addColorStop(0.53, 'rgba(188,236,200,0.11)') // 彩雲リング（青→緑）
     sgr.addColorStop(0.59, 'rgba(255,226,168,0.12)'); sgr.addColorStop(0.65, 'rgba(255,184,172,0.10)') // 黄→赤
     sgr.addColorStop(0.76, 'rgba(255,184,172,0)'); sgx.fillStyle = sgr; sgx.fillRect(0, 0, 128, 128)
-    sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(scv), transparent: true, opacity: weather === 'snow' ? 0.58 : 0.92, depthWrite: false, fog: false })) // 雪は窓ごしに白飛びしやすい＝光輪を弱め小さく（暖かいにじみは残す）
+    sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(scv), transparent: true, opacity: weather === 'snow' ? 0.2 : 0.92, depthWrite: false, fog: false })) // 雪は窓ごしに白飛びしやすい＝光輪を弱め小さく（暖かいにじみは残す）
     { const sgS = weather === 'snow' ? 124 : 155; sunGlow.scale.set(sgS, sgS, 1); scene.add(sunGlow) }
     // 太陽の本体（円盤）は duskAmt 定義後（L667付近）でまとめて作る＝TDZ回避。下の「太陽の本体」ブロック参照。
     // 一番星のスプライト（昼ドリフトが深まると上空にひとつ灯る）。夜情景では既存の星空があるので作らない。
@@ -563,7 +563,7 @@ export async function mountTown3d(parent, opts = {}) {
     const glowTex = new THREE.CanvasTexture(gc)
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({
       map: glowTex, color: isNight ? new THREE.Color(0xffb273) : sunCol.clone().lerp(new THREE.Color(0xffffff), 0.35),
-      blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: isNight ? 0.4 : (season === 'autumn' ? 0.42 : 0.55), // 秋は逆光グローを弱め上空の白飛びを抑える
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: isNight ? 0.4 : weather === 'snow' ? 0.12 : (season === 'autumn' ? 0.42 : 0.55), // 秋は逆光グローを弱め上空の白飛びを抑える。雪の日は曇り空＝地平のにじみをごく淡く（白い雪の丘に重なって窓の上半分が白く飛んでいた・V10）
     }))
     glow.position.set(0, 16, -190) // 遠い地平。手前の街に隠れて“街の向こうのにじみ”になる
     glow.scale.set(220, 120, 1)    // 横長＝地平の光の帯
@@ -699,7 +699,7 @@ export async function mountTown3d(parent, opts = {}) {
     const ddx = dcv.getContext('2d'); const ddg = ddx.createRadialGradient(32, 32, 0, 32, 32, 32)
     ddg.addColorStop(0.0, 'rgba(255,253,245,1)'); ddg.addColorStop(0.55, 'rgba(255,248,230,0.97)'); ddg.addColorStop(0.74, 'rgba(255,233,193,0.82)'); ddg.addColorStop(0.93, 'rgba(255,214,150,0)'); ddx.fillStyle = ddg; ddx.fillRect(0, 0, 64, 64)
     const diskCol = new THREE.Color(0xfffaf0).lerp(new THREE.Color(0xffaa55), duskAmt) // 夕は橙金へ
-    sunDisk = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(dcv), color: diskCol, transparent: true, opacity: weather === 'snow' ? 0.7 : 0.95, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }))
+    sunDisk = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(dcv), color: diskCol, transparent: true, opacity: weather === 'snow' ? 0.28 : 0.95, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })) // 雪の日は雲の奥の淡い円盤（白飛びさせない・V10）
     const dS = (weather === 'snow' ? 15 : 19) + duskAmt * 17; sunDisk.scale.set(dS, dS, 1); scene.add(sunDisk)
   }
   const rng = (seed) => { let s = seed * 9301 + 49297; const f = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }; f.state = () => s; return f }
@@ -5626,7 +5626,10 @@ export async function mountTown3d(parent, opts = {}) {
   // 雪は一面の明るい空＝トゥーンの陰影で雲底が暗く落ちると「重い灰の天井」に見える。雪天だけ陰影を持たない
   // フラット材(MeshBasic)にし、淡い白〜冷灰のやわらかな曇り空に溶かす（積雲の翳りは晴天/夜のみ）。
   const SNOWY = weather === 'snow'
-  const mkCloud = (col) => SNOWY ? new THREE.MeshBasicMaterial({ color: col, fog: false }) : new THREE.MeshToonMaterial({ color: col, gradientMap: grad, fog: false })
+  // トゥーンの陰の段は半球光の地面側（茶 0x9a8a6e）だけで照らされ、雲の陰が茶色い帯に・下から見上げるとベージュの塊に見えた（V14・V27）。
+  // 雲にだけ空の色寄りの自発光を少し足し、陰を青みの灰へ寄せる（陽の当たる面はほぼ白のまま）。
+  const cloudShade = isNight ? new THREE.Color(0x2a3048) : skyTop.clone().lerp(new THREE.Color(0xc8d4e4), 0.55)
+  const mkCloud = (col) => SNOWY ? new THREE.MeshBasicMaterial({ color: col, fog: false }) : new THREE.MeshToonMaterial({ color: col, gradientMap: grad, fog: false, emissive: cloudShade, emissiveIntensity: isNight ? 0.25 : 0.42 })
   // 雲の色を時間帯に追従させる（昼=白／夕=暖色に染まる／夜=暗い月明かりの雲＝白い天井を脱す）。色は頂点色に焼くがシーンは時間帯ごとに別ビルドなのでビルド時にisNight/duskAmtで決めれば足りる。
   // 夜は「月明かりに浮かぶ柔らかな雲」へ。以前(0x4a5168/0x363b50)は暗すぎ＋トゥーンの陰面が更に沈み、入道雲が真っ黒の不気味な塊に見えた（実機FB）。明度を上げ淡い青灰の月夜の雲に。
   const cloudTopHex = isNight ? 0x7a82a0 : (SNOWY ? 0xf6f4f0 : new THREE.Color(0xfbfaf6).lerp(new THREE.Color(0xf3ca9c), duskAmt * 0.55).getHex()) // 夕は白→淡い夕焼け色／夜は月光の淡い青灰
@@ -6894,7 +6897,7 @@ export async function mountTown3d(parent, opts = {}) {
     // 接地影（足元の柔らかな影＝人形の浮きを消して地に立たせる）
     const shadow = new THREE.Mesh(resShadowGeo, resShadowMat); shadow.rotation.x = -Math.PI / 2; shadow.position.set(0, 0.03, 0.02); shadow.scale.set(0.42, 0.66, 1); shadow.renderOrder = 1; g.add(shadow)
     g.scale.setScalar((cfg.scale || 1) * (0.98 + R() * 0.12))
-    g.userData = { arms, legs, headG }
+    g.userData = { arms, legs, headG, headY0: headG.position.y } // headY0＝作った時の頭の高さ（うなずきはここを基準に）
     return g
   }
   // ── home（現代）の住人を要所に ──
@@ -9128,7 +9131,7 @@ export async function mountTown3d(parent, opts = {}) {
           if (u.chat > 0) u.chat -= dt
         }
         const chatting = u.chat > 0
-        if (u.headG) { u.headG.rotation.y = Math.sin(t * (chatting ? 1.1 : 0.22) + u.ph) * (chatting ? 0.16 : 0.5); u.headG.position.y = 1.6 + Math.sin(t * (chatting ? 2.4 : 1.5) + u.ph) * (chatting ? 0.01 : 0.004) } // 会話中は相手へ頭を落ち着け、相槌のように小さく速くうなずく
+        if (u.headG) { u.headG.rotation.y = Math.sin(t * (chatting ? 1.1 : 0.22) + u.ph) * (chatting ? 0.16 : 0.5); u.headG.position.y = (u.headY0 ?? 1.6) + Math.sin(t * (chatting ? 2.4 : 1.5) + u.ph) * (chatting ? 0.01 : 0.004) } // 作った時の頭の高さを基準に（以前は 1.6 固定で、体の比率を直した 1.11 の頭が肩から浮いた・D5） // 会話中は相手へ頭を落ち着け、相槌のように小さく速くうなずく
         if (u.pauseT <= 0) { const a = R() * 6.28, rr = 1.5 + R() * u.rad, nx = u.ax + Math.cos(a) * rr, nz = u.az + Math.sin(a) * rr
           if (heightAt(nx, nz) > SEA.level + 0.6) { u.tx = nx; u.tz = nz; u.moving = true } else u.pauseT = 1 + R() * 2 }
       }
@@ -10621,6 +10624,7 @@ export async function mountTown3d(parent, opts = {}) {
     window.__town3dComposerThrow = () => { composerThrowOnce = true } // 検証用: 後処理で1回だけ例外を起こす（S38）
     window.__town3dTilt = () => (active ? { x: +active.tiltX.toFixed(3), y: +active.tiltY.toFixed(3), yaw: +active.tiltYaw.toFixed(3) } : null) // 検証用: 傾きの見回し（S50）
     window.__town3dLayout = () => (active === me ? layoutEnd : null) // 検証用: 町を組み終えた時の乱数の状態と祭りの数（S26・S25）
+    window.__town3dResHeads = () => residents.slice(0, 12).map((r) => +((r.userData.headG && r.userData.headG.position.y) || 0).toFixed(3)) // 検証用: 住人の頭の高さ（D5）
     window.__town3dResInfo = () => residents.map((r) => ({ x: +r.position.x.toFixed(1), y: +r.position.y.toFixed(1), z: +r.position.z.toFixed(1), face: +r.rotation.y.toFixed(2) })) // 検証用: 住人の位置・向き
     window.__town3dPeepFront = (i, dist = 4, lift = 0.9) => { const p = peeps[i]; if (!p) return; const d = new THREE.Vector3(); camera.getWorldDirection(d); const t = camera.position.clone().addScaledVector(d, dist); const u = p.userData; u.loiter = true; u.hx = t.x; u.hz = t.z; u.rad = 0; u.sp = 0; u.face = Math.atan2(camera.position.x - t.x, camera.position.z - t.z); p.position.set(t.x, t.y - lift, t.z); p.rotation.y = u.face } // 検証用: 簡易peepをカメラ正面の視線上に立たせる（壺感の確認）
     window.__town3dPeepPin = (i, x, z, face = 0, yOver) => { const p = peeps[i]; if (!p) return; const u = p.userData; u.frozen = true; p.position.set(x, yOver !== undefined ? yOver : heightAt(x, z), z); p.rotation.y = face } // 検証用: 簡易peepを座標(任意y)に凍結（shotAtで接写）

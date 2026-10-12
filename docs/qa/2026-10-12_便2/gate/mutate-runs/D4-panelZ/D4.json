@@ -1,0 +1,40 @@
+{
+ "pass": false,
+ "iphone_shot": null,
+ "iphone": {
+  "情景": {
+   "dots": true,
+   "dotsOpacity": 1,
+   "panelOverDots": true,
+   "diffPx": 1729
+  },
+  "設定": {
+   "dots": true,
+   "dotsOpacity": 1,
+   "panelOverDots": false,
+   "diffPx": 1569
+  }
+ },
+ "iphone_errs": [],
+ "ipadL_shot": null,
+ "ipadL": {
+  "情景": {
+   "dots": true,
+   "dotsOpacity": 1,
+   "panelOverDots": true,
+   "diffPx": 859
+  },
+  "設定": {
+   "dots": true,
+   "dotsOpacity": 1,
+   "panelOverDots": false,
+   "diffPx": 679
+  }
+ },
+ "ipadL_errs": [],
+ "id": "D4",
+ "ms": 213060,
+ "at": "2026-10-12T15:14:31.755Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "c33a11e"
+}

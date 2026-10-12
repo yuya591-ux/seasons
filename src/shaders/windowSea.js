@@ -37,10 +37,14 @@ const FRAGMENT_BODY = /* glsl */ `
 
   float h11(float n) { return fract(sin(n) * 43758.5453123); }
   float h21(vec2 p) { p = fract(p * vec2(123.34, 345.45)); p += dot(p, p + 34.345); return fract(p.x * p.y); }
+  // 雑音の格子点の値。289 で割った余りの並べ替えで、途中の値がすべて誤差のない整数（2^24 未満）＝隣り合う区画で同じ格子点が必ず同じ値になる。
+  // 以前の小数のハッシュは、同じ格子点でも計算の順（定数のまとめ方）が区画ごとに違うと別の値になり、区画の境で稜線が縦に途切れ・空に四角い継ぎ目が出た（V36・V38）。
+  float permL(float x) { return mod((x * 34.0 + 1.0) * x, 289.0); }
+  float hL(vec2 i) { i = mod(i, 289.0); return permL(permL(i.x) + i.y) / 289.0; }
   float vnoise(vec2 p) {
     vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
-    float a = h21(i); float b = h21(i + vec2(1.0, 0.0));
-    float c = h21(i + vec2(0.0, 1.0)); float d = h21(i + vec2(1.0, 1.0));
+    float a = hL(i); float b = hL(i + vec2(1.0, 0.0));
+    float c = hL(i + vec2(0.0, 1.0)); float d = hL(i + vec2(1.0, 1.0));
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
   }
   float fbm(vec2 p) {
@@ -61,7 +65,7 @@ const FRAGMENT_BODY = /* glsl */ `
     float curve = -0.08 * ax * ax;
     vec2 vp = vec2(p.x, p.y - pitch + curve);
 
-    float horizon = 0.52;
+    float horizon = 0.60; // 窓の横桟（0.52）より上＝夕日の円盤が桟の裏に隠れない（以前は 0.52 で桟と重なっていた・V33）
     float sunAz = -0.05;                  // 世界に固定した夕陽の方位
     float sunScreenX = sunAz - yaw * 0.55; // 見回すと夕陽も視界の中を移動する
 

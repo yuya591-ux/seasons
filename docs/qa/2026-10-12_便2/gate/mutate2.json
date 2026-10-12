@@ -363,6 +363,180 @@
      "restored": true
     }
    ]
+  },
+  {
+   "at": "2026-10-12T15:22:25.129Z",
+   "commit": "c33a11e",
+   "results": [
+    {
+     "name": "S2-chimeBus",
+     "group": "g1",
+     "what": "起動の鈴を防音の経路（master）へ戻す",
+     "checks": [
+      "S2"
+     ],
+     "caught": true,
+     "failed": [
+      "S2 不合格 (30.7秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "D8-uiPersist",
+     "group": "g1",
+     "what": "おやすみの選択を設定へ書き、点灯を設定から読む形へ戻す",
+     "checks": [
+      "D8"
+     ],
+     "caught": true,
+     "failed": [
+      "D8 不合格 (42.6秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "S50-tiltYaw",
+     "group": "g1",
+     "what": "町の3Dで傾きを見回しへ足す更新を外す",
+     "checks": [
+      "S50"
+     ],
+     "caught": true,
+     "failed": [
+      "S50 不合格 (36.7秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "D4-panelZ",
+     "group": "g2",
+     "what": "パネルの重なり順の指定を外す",
+     "checks": [
+      "D4"
+     ],
+     "caught": true,
+     "failed": [
+      "D4 不合格 (213.1秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V46-label",
+     "group": "g2",
+     "what": "設定の見出しの幅を前の 3.2rem へ戻す",
+     "checks": [
+      "V46"
+     ],
+     "caught": true,
+     "failed": [
+      "V46 不合格 (41.0秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V47-restAbovePad",
+     "group": "g2",
+     "what": "スティックの常駐位置をトレイより上に置く計算を外す",
+     "checks": [
+      "V47"
+     ],
+     "caught": true,
+     "failed": [
+      "V47 不合格 (50.2秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V48-hintNearStick",
+     "group": "g2",
+     "what": "歩く案内を前の固定位置（左8%・下22%）へ戻す",
+     "checks": [
+      "V48"
+     ],
+     "caught": true,
+     "failed": [
+      "V48 不合格 (99.0秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V54-stageBg",
+     "group": "g2",
+     "what": "主ボタンの地を前の淡い茶へ戻す",
+     "checks": [
+      "V54"
+     ],
+     "caught": true,
+     "failed": [
+      "V54 不合格 (40.8秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V55-countLine",
+     "group": "g2",
+     "what": "眺めの数を説明の末尾へ戻す",
+     "checks": [
+      "V55"
+     ],
+     "caught": true,
+     "failed": [
+      "V55 不合格 (38.1秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V61-band",
+     "group": "g2",
+     "what": "飛行の案内の帯を外す",
+     "checks": [
+      "V61"
+     ],
+     "caught": true,
+     "failed": [
+      "V61 不合格 (43.8秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V61-abovePad",
+     "group": "g2",
+     "what": "飛行の案内をトレイの上端より上に出す計算を外す",
+     "checks": [
+      "V61"
+     ],
+     "caught": true,
+     "failed": [
+      "V61 不合格 (46.4秒)"
+     ],
+     "bad": null,
+     "restored": true
+    },
+    {
+     "name": "V49-rootPx",
+     "group": "g2",
+     "what": "広い画面の文字の基準を 16px へ戻す",
+     "checks": [
+      "V49"
+     ],
+     "caught": true,
+     "failed": [
+      "V49 不合格 (90.7秒)"
+     ],
+     "bad": null,
+     "restored": true
+    }
+   ]
   }
  ]
 }

@@ -1,5 +1,5 @@
 {
- "pass": true,
+ "pass": false,
  "tilt": {
   "enabled": true
  },
@@ -24,8 +24,8 @@
  ],
  "errs": [],
  "id": "S50",
- "ms": 35619,
- "at": "2026-10-12T14:16:20.599Z",
+ "ms": 36736,
+ "at": "2026-10-12T15:10:55.675Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "23813f6"
+ "commit": "c33a11e"
 }

@@ -1,14 +1,14 @@
 {
- "pass": true,
+ "pass": false,
  "chime": {
-  "bus": "direct",
+  "bus": "master",
   "when": "before-scene",
   "gain": 0.8
  },
  "errs": [],
  "id": "S2",
- "ms": 26403,
- "at": "2026-10-12T14:08:55.120Z",
+ "ms": 30668,
+ "at": "2026-10-12T15:09:27.024Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "23813f6"
+ "commit": "c33a11e"
 }

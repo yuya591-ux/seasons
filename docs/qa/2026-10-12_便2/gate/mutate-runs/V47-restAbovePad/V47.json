@@ -1,0 +1,34 @@
+{
+ "pass": false,
+ "stick": {
+  "x": 18.390625,
+  "y": 584.75,
+  "w": 124,
+  "h": 124
+ },
+ "buttons": [
+  {
+   "t": "＋",
+   "x": 16,
+   "y": 686,
+   "w": 48,
+   "h": 48
+  },
+  {
+   "t": "−",
+   "x": 72,
+   "y": 686,
+   "w": 48,
+   "h": 48
+  }
+ ],
+ "overlapPx2": 2130,
+ "stickClass": "town3d-stick stick--on stick--rest",
+ "shot": null,
+ "errs": [],
+ "id": "V47",
+ "ms": 50155,
+ "at": "2026-10-12T15:16:08.708Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "c33a11e"
+}

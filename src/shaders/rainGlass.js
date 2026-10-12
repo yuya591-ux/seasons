@@ -30,6 +30,7 @@ const FRAGMENT_BODY = /* glsl */ `
   uniform float uFlash;      // 遠雷フラッシュ 0..1
   uniform sampler2D uBg;     // 窓の外の風景（Flux生成画像。任意）
   uniform float uHasBg;      // 背景画像があるか 0/1
+  uniform float uBgAspect;   // 背景画像の縦横比（横/縦）。画面を覆うように切り抜くのに使う
 
   float hash21(vec2 p) {
     p = fract(p * vec2(123.34, 345.45));
@@ -99,7 +100,13 @@ const FRAGMENT_BODY = /* glsl */ `
     if (uHasBg < 0.5) return skyBase(uv); // 画像なしの情景は従来どおり（非破壊）
     // 画像は上端＝空（FLIP_Y無効で読み込み）。画面の上を空に合わせ、下端3%は窓の桟に隠れる帯として切る
     // （構図上もともと隠れる位置＝匿名生成の透かし対策も兼ねる）。
-    vec2 tuv = vec2(clamp(uv.x, 0.0, 1.0), clamp((1.0 - uv.y) * 0.97, 0.0, 1.0));
+    // 画像の縦横比を保ったまま画面を覆う（はみ出す方を切り抜く）。以前は画面の 0〜1 をそのまま画像の 0〜1 に当てていて、
+    // iPhone の縦画面（402×874）では横長の画（991×594）が縦に約3.6倍伸び、提灯が縦長の楕円になった（D6）。縦画面用の画は後の便（P8）。
+    float sAsp = uResolution.x / uResolution.y;
+    float bAsp = max(uBgAspect, 0.01);
+    vec2 cover = vec2(min(1.0, sAsp / bAsp), min(1.0, bAsp / sAsp)); // 画像のうち画面に映す割合（横・縦）
+    vec2 cuv = 0.5 + (clamp(uv, 0.0, 1.0) - 0.5) * cover;
+    vec2 tuv = vec2(cuv.x, clamp((1.0 - cuv.y) * 0.97, 0.0, 1.0));
     vec3 t = texture2D(uBg, tuv).rgb;
     // 時間帯の移ろい（夕→暮れ）を画像にもそっと乗せる。画像の質感は壊さず色みだけ寄せる。
     float y = clamp(uv.y, 0.0, 1.0);

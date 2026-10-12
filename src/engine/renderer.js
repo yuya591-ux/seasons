@@ -160,7 +160,7 @@ export function createRenderer(canvas) {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-      onReady(tex)
+      onReady(tex, img)
     }
     img.onerror = () => onReady(null)
     img.src = url
@@ -198,6 +198,7 @@ export function createRenderer(canvas) {
   let bgReady = 0
   let bgKey = null
   let bgTexKey = null // 今貼っている背景の画が、どの情景の鍵で読んだものか（検証用・S53）
+  let bgAspect = 1 // 背景の画の縦横比（横/縦）。シェーダーが画面を覆うように切り抜くのに使う（D6）
   function loadBg(s) {
     const key = s && s.bg ? s.bg : null
     if (key === bgKey) return
@@ -207,11 +208,12 @@ export function createRenderer(canvas) {
     bgTexKey = null
     bgReady = 0
     if (!key) return
-    loadTexture(BASE + s.bg, (tex) => {
+    loadTexture(BASE + s.bg, (tex, img) => {
       // 前の情景の背景が後から届いたら貼らずに解放する（雨の窓どうしを素早く切り替えた時に、違う窓の外が貼られ解放もされない・S53）
       if (key !== bgKey) { if (tex) gl.deleteTexture(tex); return }
       bgTex = tex
       bgTexKey = tex ? key : null
+      if (img && img.naturalHeight) bgAspect = img.naturalWidth / img.naturalHeight
       bgReady = tex ? 1 : 0
     })
   }
@@ -303,6 +305,7 @@ export function createRenderer(canvas) {
       uHasPano: gl.getUniformLocation(program, 'uHasPano'),
       uBg: gl.getUniformLocation(program, 'uBg'),
       uHasBg: gl.getUniformLocation(program, 'uHasBg'),
+      uBgAspect: gl.getUniformLocation(program, 'uBgAspect'),
       uDepth: gl.getUniformLocation(program, 'uDepth'),
       uHasDepth: gl.getUniformLocation(program, 'uHasDepth'),
       uIntensity: gl.getUniformLocation(program, 'uIntensity'),
@@ -470,6 +473,7 @@ export function createRenderer(canvas) {
       gl.bindTexture(gl.TEXTURE_2D, bgTex)
       gl.uniform1i(loc.uBg, 2)
       gl.uniform1f(loc.uHasBg, bgReady)
+      if (loc.uBgAspect) gl.uniform1f(loc.uBgAspect, bgAspect)
     }
     gl.uniform1f(loc.uBright, settings.brightness)
     if (scene) {
@@ -580,7 +584,7 @@ export function createRenderer(canvas) {
       play()
     },
     isRunning() { return !!rafId }, // 検証用: 描画ループが回っているか
-    bgInfo() { return { key: bgKey, texKey: bgTexKey, ready: bgReady } }, // 検証用: 背景の鍵と、貼っている画の鍵
+    bgInfo() { return { key: bgKey, texKey: bgTexKey, ready: bgReady, aspect: +bgAspect.toFixed(3) } }, // 検証用: 背景の鍵と、貼っている画の鍵
     // town3d/splat表示中は描画を止めるので、最大GPUメモリ(フルスクリーンFBOテクスチャ)を解放しメモリ圧を下げる
     // ＝iOSの「メモリ逼迫でWebGLコンテキストを失わせる」誘発を抑える（評価エンジニア: マルチコンテキスト枯渇の緩和）。
     // 通常情景へ戻ると描画ループの ensureFBO が同期で自動再作成するので安全。

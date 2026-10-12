@@ -1,0 +1,14 @@
+{
+ "pass": false,
+ "ridge": {
+  "maxJump": 32,
+  "steps6": 3,
+  "missing": 0
+ },
+ "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/V36_pc_前.png",
+ "id": "V36",
+ "ms": 30918,
+ "at": "2026-10-12T15:22:43.985Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

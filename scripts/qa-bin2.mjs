@@ -485,6 +485,279 @@ def('g2', 'V56', async () => {
   return { pass: rows.every((r) => r.exists && r.changed), scenes: rows, shot: sh }
 })
 
+// 群3 絵の不具合 ──────────────────────────────────────────────────────
+// 茶色の画素の割合（雲の陰が茶色い帯・下から見たベージュの塊。赤が青より18以上強い、陰の明るさ＝90以上200未満。太陽の光輪や明るい空は数えない）
+const BROWN_FRAC = `
+  let n = 0, br = 0
+  for (let i = 0; i < data.length; i += 4) { const r = data[i], g = data[i + 1], b = data[i + 2]; const L = 0.2126 * r + 0.7152 * g + 0.0722 * b; if (L < 90) continue; n++; if (L < 200 && r - b > 18 && r > 110 && r - g > 4) br++ }
+  return { frac: n ? +(br / n).toFixed(4) : 0, counted: n }`
+def('g3', 'D5', async () => {
+  const { page, errs } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 9000)
+  const heads = await ev(page, () => window.__town3dResHeads && window.__town3dResHeads())
+  return { pass: Array.isArray(heads) && heads.length > 3 && heads.every((y) => y > 1.08 && y < 1.14), heads, errs: realErrs(errs) }
+})
+async function stripePng() {
+  const b = await getBrowser(); const ctx = await b.newContext(); const p = await ctx.newPage()
+  const b64 = await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 990; c.height = 594; const g = c.getContext('2d'); for (let i = 0; i < 10; i++) { g.fillStyle = i % 2 ? 'rgb(40,40,230)' : 'rgb(230,40,40)'; g.fillRect(i * 99, 0, 99, 594) } return c.toDataURL('image/png').split(',')[1] })
+  await ctx.close(); return Buffer.from(b64, 'base64')
+}
+def('g3', 'D6', async () => {
+  // 縦じま10本の試験画像に差し替え、雨を弱めて、iPhone の幅で見えるしまの境の数を数える（引き伸ばしなら約9・切り抜きなら約2〜3）
+  const png = await stripePng()
+  const init = { fn: () => { try { const k = 'seasons.state.v1'; const s = JSON.parse(localStorage.getItem(k) || '{}'); s.settings = { ...(s.settings || {}), rain: 0 }; localStorage.setItem(k, JSON.stringify(s)) } catch { /* 無視 */ } } }
+  const b = await getBrowser()
+  const ctx = await b.newContext(DEVICES.iphone); await ctx.addInitScript(init.fn)
+  await ctx.route('**/bg/summer-rain-dusk-b.jpg', (route) => route.fulfill({ status: 200, contentType: 'image/png', body: png }))
+  const page = await ctx.newPage()
+  await page.goto(BASE + '?dev=1', { waitUntil: 'domcontentloaded' }); await wait(2500)
+  await gateStart(page); await apply(page, 'summer-rain-dusk', 5000)
+  await ev(page, () => window.__renderer.pause('sleep')); await wait(400)
+  const buf = await page.screenshot()
+  const info = await ev(page, () => window.__renderer.bgInfo && window.__renderer.bgInfo())
+  await ctx.close()
+  const res = await measurePng(buf, `
+    const rows = []; const out = []
+    for (let k = 0; k < 9; k++) rows.push(Math.floor(h * (0.30 + k * 0.035)))
+    for (const y of rows) { let last = null, run = 0, tr = 0
+      for (let x = Math.floor(w * 0.08); x < Math.floor(w * 0.92); x++) { const i = (y * w + x) * 4; const r = data[i], b = data[i + 2]; const c = r > b + 30 ? 'R' : b > r + 30 ? 'B' : null; if (!c) continue
+        if (c === last) run++; else { if (last && run >= 6) tr++; last = c; run = 1 } }
+      out.push(tr) }
+    out.sort((a, b) => a - b); return { perRow: out, median: out[Math.floor(out.length / 2)] }`)
+  // 本物の画で前後の画を撮る（切り抜きの見え方）
+  const o = await open('iphone'); await gateStart(o.page); await apply(o.page, 'summer-rain-dusk', 5000)
+  await ev(o.page, () => window.__renderer.pause('sleep')); await wait(400)
+  const sh = await shot(o.page, 'D6_iphone'); await o.ctx.close()
+  return { pass: !!(res && res.median <= 3), stripeTransitions: res, bg: info, shot: sh } // 切り抜きなら 3（映る幅が画像の約28%）・縦横比を渡し忘れると 5・引き伸ばしなら 9
+})
+def('g3', 'V10', async () => {
+  const { page, errs } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d-snow', 9000); await poke(page)
+  // 所見は「空と雪の街の境目が無くなる」。窓の中（x720〜1200・y140〜290）の列ごとに、上から下へ8画素あけた明るさの差の最大（空→雪の丘の段）を取り、
+  // 段がはっきり見える列（差12以上）の割合を出す。地平に白い光の塊がかかると、空も丘も白く塗られて段が消える
+  const buf = await page.screenshot({ clip: { x: 720, y: 140, width: 480, height: 150 } })
+  const st = await measurePng(buf, LUMA_STATS)
+  const edge = await measurePng(buf, `let vis = 0, cols = 0; const L = (x, y) => { const i = (y * w + x) * 4; return 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2] }
+    for (let x = 0; x < w; x += 2) { if (Math.abs(x - 240) < 14) continue; cols++; let m = 0; for (let y = 0; y + 8 < h; y++) { const d = L(x, y + 8) - L(x, y); if (d > m) m = d } if (m >= 12) vis++ }
+    return +(vis / cols).toFixed(3)`)
+  const sh = await shot(page, 'V10_pc', { clip: { x: 560, y: 60, width: 800, height: 500 } })
+  return { pass: edge >= 0.9, boundaryVisibleCols: edge, stats: st, shot: sh, errs: realErrs(errs) }
+})
+def('g3', 'V14', async () => {
+  const { page, errs } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 8000)
+  await ev(page, () => window.__town3dWindow(true)); await wait(3000)
+  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
+  // 窓の中央の柱（ベージュ・x 180〜218）を外し、左右の空だけを測る
+  const bl = await measurePng(await page.screenshot({ clip: { x: 0, y: 0, width: 176, height: 140 } }), BROWN_FRAC)
+  const brr = await measurePng(await page.screenshot({ clip: { x: 222, y: 0, width: 180, height: 140 } }), BROWN_FRAC)
+  const br = { frac: +(((bl.frac * bl.counted) + (brr.frac * brr.counted)) / Math.max(1, bl.counted + brr.counted)).toFixed(4), counted: bl.counted + brr.counted }
+  const sh = await shot(page, 'V14_iphone', { clip: { x: 0, y: 0, width: 402, height: 300 } })
+  return { pass: br.frac < 0.01, brown: br, shot: sh, errs: realErrs(errs) }
+})
+def('g3', 'V27', async () => {
+  // 低く飛んで空を見上げ、雲の下面がベージュの塊に見えないか（茶色の画素の割合）
+  const { page, errs } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 8000)
+  await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+  await ev(page, () => window.__town3dFlyToggle(true)); await wait(3000)
+  await ev(page, () => window.__town3dCruise && window.__town3dCruise(false))
+  await ev(page, () => window.__town3dFlyPose(0, 40, 40, Math.PI, 0.55)); await wait(3500)
+  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' }); await wait(300)
+  const buf = await page.screenshot({ clip: { x: 0, y: 0, width: 1920, height: 180 } }) // 空の上の方（町と気球が入らない）
+  const br = await measurePng(buf, BROWN_FRAC)
+  const sh = await shot(page, 'V27_pc', { clip: { x: 0, y: 0, width: 1920, height: 540 } })
+  return { pass: br.frac < 0.01 && br.counted > 100000, brown: br, shot: sh, errs: realErrs(errs) }
+})
+def('g3', 'V33', async () => {
+  const out = {}
+  for (const dev of ['pc', 'iphone']) {
+    const { ctx, page } = await open(dev)
+    await gateStart(page)
+    await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' })
+    await apply(page, 'summer-dusk-seaside', 5000)
+    await ev(page, () => window.__renderer.pause('sleep')); await wait(400)
+    const buf = await page.screenshot()
+    const W = DEVICES[dev].viewport.width * (DEVICES[dev].deviceScaleFactor || 1), H = DEVICES[dev].viewport.height * (DEVICES[dev].deviceScaleFactor || 1)
+    // 夕日の円盤＝明るさ 240 以上の画素の重心（夕日の方角 sunScreenX=-0.05 のまわり、横 ±15% だけを見る）
+    const asp = W / H, sx = Math.round((0.5 - 0.05 / asp) * W)
+    const sun = await measurePng(buf, `let n = 0, sy = 0; const x0 = Math.max(0, ${sx} - Math.round(w * 0.15)), x1 = Math.min(w, ${sx} + Math.round(w * 0.15))
+      for (let y = 0; y < h; y++) for (let x = x0; x < x1; x++) { const i = (y * w + x) * 4; if (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2] >= 240) { n++; sy += y } }
+      return { n, cy: n ? Math.round(sy / n) : null }`)
+    const barY = Math.round((1 - 0.52) * H), need = Math.round((0.046 + 0.011) * H)
+    out[dev] = { sun, barY, need, gap: sun.cy === null ? null : Math.abs(sun.cy - barY) }
+    out[dev + '_shot'] = await shot(page, `V33_${dev}`)
+    await ctx.close()
+  }
+  return { pass: ['pc', 'iphone'].every((d) => out[d].sun.n > 30 && out[d].gap !== null && out[d].gap >= out[d].need), ...out }
+})
+def('g3', 'V36', async () => {
+  const { page } = await open('pc')
+  await gateStart(page)
+  await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' })
+  await apply(page, 'summer-morning-mountains', 5000)
+  await ev(page, () => window.__renderer.pause('sleep')); await wait(400)
+  const buf = await page.screenshot({ clip: { x: 150, y: 250, width: 760, height: 600 } })
+  // 列ごとに、上から見て空（青みが緑より強い明るい灰）から山（緑が青より強い）へ変わる高さ＝いちばん奥の稜線
+  const r = await measurePng(buf, `const ys = []
+    for (let x = 0; x < w; x++) { let found = null; for (let y = 290; y < h; y++) { const i = (y * w + x) * 4; const r = data[i], g = data[i + 1], b = data[i + 2]; const L = 0.2126 * r + 0.7152 * g + 0.0722 * b; if (g - b > 6 && L < 200) { found = y; break } } ys.push(found) } // 窓の横桟（y 255〜275）より下から探す
+    let maxJump = 0, cnt = 0; for (let x = 1; x < ys.length; x++) { if (ys[x] === null || ys[x - 1] === null) continue; const j = Math.abs(ys[x] - ys[x - 1]); if (j > maxJump) maxJump = j; if (j >= 6) cnt++ }
+    return { maxJump, steps6: cnt, missing: ys.filter((y) => y === null).length }`)
+  const sh = await shot(page, 'V36_pc', { clip: { x: 150, y: 250, width: 760, height: 600 } })
+  return { pass: r.missing < 40 && r.steps6 <= 1, ridge: r, shot: sh }
+})
+def('g3', 'V38', async () => {
+  const out = {}
+  // 便1 の所見の座標（海辺 x1380〜1500・y60〜130／山あい x1550〜1700・y400〜500）を含む範囲を測る
+  const CLIP = { 'summer-dusk-seaside': { x: 1100, y: 58, width: 700, height: 160 }, 'summer-morning-mountains': { x: 1300, y: 340, width: 500, height: 150 } }
+  for (const id of ['summer-dusk-seaside', 'summer-morning-mountains']) {
+    const { ctx, page } = await open('pc')
+    await gateStart(page)
+    await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' })
+    await apply(page, id, 5000)
+    await ev(page, () => window.__renderer.pause('sleep')); await wait(400)
+    const buf = await page.screenshot({ clip: CLIP[id] })
+    // 列ごとに、横の隣との差（行をまたいで平均）。区画の継ぎ目は同じ向きの段が縦にそろう
+    // 20行ずつの帯ごとに、列の横の差を平均する（継ぎ目は帯の中で同じ向きの段が縦にそろう。画素ごとの粒は平均で消える）
+    out[id] = await measurePng(buf, `const B = 20; const seamCols = new Set(); let maxAbs = 0
+      for (let y0 = 0; y0 + B <= h; y0 += B) { for (let x = 0; x < w - 1; x++) { let m = 0; for (let y = y0; y < y0 + B; y++) { const i = (y * w + x) * 4, j = i + 4; m += ((data[j] + data[j + 1] + data[j + 2]) - (data[i] + data[i + 1] + data[i + 2])) / 3 } const v = Math.abs(m / B); if (v > maxAbs) maxAbs = v; if (v >= 1.5) seamCols.add(x) } }
+      return { seams: seamCols.size, maxAbs: +maxAbs.toFixed(2) }`)
+    await ctx.close()
+  }
+  return { pass: Object.values(out).every((r) => r.maxAbs < 2.0), ...out } // 合否は空の帯の段差の最大（継ぎ目の列の数は参考。斜めの稜線の縁も数に入るため）
+})
+
+// 群4 端末ごとの画質の段（T2）──────────────────────────────────────────
+const setQualityLS = (q) => ({ fn: (qq) => { try { const k = 'seasons.state.v1'; const s = JSON.parse(localStorage.getItem(k) || '{}'); s.settings = { ...(s.settings || {}), quality: qq }; localStorage.setItem(k, JSON.stringify(s)) } catch { /* 無視 */ } }, arg: q })
+def('g4', 'S24', async () => {
+  const has = fs.existsSync('src/data/quality.js')
+  const t3 = fs.readFileSync('src/engine/town3dViewer.js', 'utf8'), r2 = fs.readFileSync('src/engine/renderer.js', 'utf8')
+  const reads = /from '\.\.\/data\/quality\.js'/.test(t3) && /from '\.\.\/data\/quality\.js'/.test(r2)
+  const strays = { t3: (t3.match(/q === 'soft' \? 2 : 1\.6|LIGHT \? 1\.2 : QUAL/g) || []).length, r2: (r2.match(/DPR_BY_QUALITY\s*=/g) || []).length }
+  // 知らない段の名前を渡しても、表の「ふつう」へそろう
+  const m = has ? await import(path.resolve('src/data/quality.js').replace(/\\/g, '/').replace(/^([A-Za-z]):/, 'file:///$1:')) : null
+  const odd = m ? m.qualityPlan('3d', 'ultra', { dpr: 3, cssW: 402, cssH: 874 }).q : null
+  return { pass: has && reads && strays.t3 === 0 && strays.r2 === 0 && odd === 'standard', has, reads, strays, unknownTier: odd }
+})
+async function tierRun(dev, q, scene = 'kitaterao-window-3d') {
+  const { ctx, page } = await open(dev, { init: setQualityLS(q) })
+  await gateStart(page); await apply(page, scene, 3500)
+  const r = await ev(page, () => ({ quality: window.__town3dQuality && window.__town3dQuality(), canvas: (() => { const c = document.querySelector('.town3d-stage canvas'); return c ? [c.width, c.height] : null })() }))
+  await ctx.close(); return r
+}
+def('g4', 'D1', async () => {
+  const out = {}
+  for (const dev of ['pc', 'laptop']) { out[dev] = {}; for (const q of ['soft', 'standard', 'light']) out[dev][q] = await tierRun(dev, q) }
+  const cap = (d, q) => out[d][q] && out[d][q].quality ? out[d][q].quality.cap : null
+  const pcOk = cap('pc', 'soft') > cap('pc', 'standard') && cap('pc', 'standard') >= 1 && cap('pc', 'standard') > cap('pc', 'light')
+  const lapOk = cap('laptop', 'soft') > cap('laptop', 'standard') && cap('laptop', 'standard') > cap('laptop', 'light')
+  const shadow = out.pc.soft && out.pc.soft.quality ? out.pc.soft.quality.shadow : null
+  const pxOk = out.pc.soft.canvas && out.pc.standard.canvas && out.pc.soft.canvas[0] > out.pc.standard.canvas[0] && out.pc.standard.canvas[0] > out.pc.light.canvas[0]
+  return { pass: !!(pcOk && lapOk && shadow === 4096 && pxOk), ...out }
+})
+async function loadRun(dev, fn, ms) {
+  const { ctx, page } = await open(dev)
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
+  const before = await ev(page, () => window.__town3dQuality())
+  await page.evaluate((src) => { window.__town3dSimLoad(new Function('pr', src)) }, fn)
+  const t0 = Date.now(); let minPr = 9, maxPr = 0
+  while (Date.now() - t0 < ms) { await wait(1000); const q = await ev(page, () => window.__town3dQuality()); if (q && typeof q.pr === 'number') { minPr = Math.min(minPr, q.pr); maxPr = Math.max(maxPr, q.pr) } }
+  const after = await ev(page, () => window.__town3dQuality())
+  await ev(page, () => window.__town3dSimLoad(null))
+  await ctx.close(); return { before, after, minPr, maxPr }
+}
+def('g4', 'D2', async () => {
+  // 重い状態（毎フレーム60ミリ秒足す）と軽い状態で、倍率が段の上限と画面の素の細かさの間に留まるか
+  const pcHeavy = await loadRun('pc', 'return 60', 12000)
+  const pcLight = await loadRun('pc', 'return 0', 12000)
+  const lapLight = await loadRun('laptop', 'return 0', 12000)
+  const lapHeavy = await loadRun('laptop', 'return 60', 12000)
+  return { pass: pcHeavy.minPr >= 1 && pcLight.maxPr <= 1 && lapLight.maxPr <= 1.25 && lapHeavy.minPr >= 1.25, pcHeavy, pcLight, lapLight, lapHeavy }
+})
+def('g4', 'U1', async () => {
+  // (a) 1回だけ 300ミリ秒の詰まり → 下げない／(b) 重さが続く → 下げる／(c) 上げると重く・下げると軽い重さを60秒 → 上げ下げ ≤ 2回
+  const once = await loadRun('iphone', 'if (!window.__stalled) { window.__stalled = 1; return 300 } return 0', 8000)
+  const heavy = await loadRun('iphone', 'return 45', 10000)
+  const osc = await loadRun('iphone', 'return pr > 1.5 ? 40 : 0', 60000)
+  return { pass: once.minPr >= 1.6 && heavy.minPr < 1.6 && osc.after && osc.after.changes <= 2, once: { minPr: once.minPr, after: once.after }, heavy: { minPr: heavy.minPr, after: heavy.after }, oscillation: { changes: osc.after && osc.after.changes, minPr: osc.minPr, maxPr: osc.maxPr, after: osc.after } }
+})
+def('g4', 'D3', async () => {
+  const out = {}
+  for (const dev of ['pc', 'iphone']) {
+    const { ctx, page } = await open(dev)
+    await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
+    const win = await ev(page, () => window.__town3dQuality())
+    await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+    await ev(page, () => window.__town3dFlyToggle(true)); await wait(3500)
+    const fly = await ev(page, () => window.__town3dQuality())
+    await ev(page, () => window.__town3dFlyPose(2, 6, -18, Math.PI, -0.05)); await wait(800)
+    await ev(page, () => window.__town3dLandToggle(true)); await wait(3500)
+    const walk = await ev(page, () => window.__town3dQuality())
+    const walkDraw = await ev(page, () => window.__town3dDraw && window.__town3dDraw())
+    out[dev] = { window: win && win.pr, fly: fly && fly.pr, walk: walk && walk.pr, flyCap: fly && fly.fly, walkCalls: walkDraw && walkDraw.calls }
+    await ctx.close()
+  }
+  return { pass: out.pc.walk === out.pc.window && out.iphone.walk === 1.6 && out.iphone.fly <= out.iphone.flyCap + 0.001, ...out }
+})
+def('g4', 'S23', async () => {
+  const out = {}
+  for (const dev of ['iphone', 'ipad', 'ipad13']) {
+    const { ctx, page } = await open(dev)
+    await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
+    const d = await ev(page, () => window.__town3dDraw && window.__town3dDraw())
+    out[dev] = { px: d && d.px, calls: d && d.calls }
+    await ctx.close()
+  }
+  return { pass: Object.values(out).every((r) => r.px && r.px <= 2.4e6 * 1.05) && out.ipad13.px <= out.iphone.px * 3, ...out }
+})
+def('g4', 'S25', async () => {
+  const out = {}
+  for (const scene of ['kitaterao-window-3d', 'shishigaya-window-3d', 'kitaterao-window-3d-sunset']) {
+    out[scene] = {}
+    for (const q of ['standard', 'light']) { const { ctx, page } = await open('pc', { init: setQualityLS(q) }); await gateStart(page); await apply(page, scene, 8000); out[scene][q] = await ev(page, () => window.__town3dLayout && window.__town3dLayout()); await ctx.close() }
+  }
+  return { pass: Object.values(out).every((r) => r.standard && r.light && r.standard.rngEnd === r.light.rngEnd), ...out }
+})
+def('g4', 'S27', async () => {
+  const { page } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
+  const q0 = await ev(page, () => window.__town3dQuality())
+  await openSettings(page)
+  await page.locator('.chip', { hasText: 'こまやか' }).first().click({ force: true }).catch(() => {}); await wait(9000)
+  const q1 = await ev(page, () => window.__town3dQuality())
+  await page.locator('.chip', { hasText: '軽やか' }).first().click({ force: true }).catch(() => {}); await wait(9000)
+  const q2 = await ev(page, () => window.__town3dQuality())
+  await page.locator('.chip', { hasText: 'ふつう' }).first().click({ force: true }).catch(() => {}); await wait(9000)
+  const q3 = await ev(page, () => window.__town3dQuality())
+  return { pass: !!(q0 && q1 && q2 && q3 && q1.shadow === 4096 && q2.shadow === 1024 && q3.shadow === 2048 && q1.q === 'soft'), standard0: q0, soft: q1, light: q2, standard: q3 }
+})
+def('g4', 'S20', async () => {
+  const { page } = await open('pc')
+  await gateStart(page); await apply(page, 'summer-morning-mountains', 4000)
+  const keep = setInterval(() => { page.mouse.move(400 + Math.random() * 50, 400).catch(() => {}) }, 700)
+  const s0 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
+  await ev(page, () => window.__renderer.simStall && window.__renderer.simStall(250)); await wait(1500)
+  const s1 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
+  await ev(page, () => window.__renderer.simLoad && window.__renderer.simLoad(60)); await wait(5000)
+  const s2 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
+  await ev(page, () => window.__renderer.simLoad && window.__renderer.simLoad(0)); await wait(25000)
+  const s3 = await ev(page, () => window.__renderer.scale && window.__renderer.scale())
+  clearInterval(keep)
+  return { pass: s0 === 1 && s1 === 1 && typeof s2 === 'number' && s2 < 1 && s3 === 1, start: s0, afterOneStall: s1, underLoad: s2, after25s: s3 }
+})
+def('g4', 'S43', async () => {
+  const { page } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d-sunset', 7000)
+  const d = await ev(page, () => window.__town3dDraw && window.__town3dDraw())
+  return { pass: !!(d && typeof d.passes === 'number' && d.passes >= 2 && typeof d.px === 'number' && d.px > 1e5), draw: d }
+})
+def('g4', 'U13', async () => {
+  const { page } = await open('pc')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 6000)
+  const q = await ev(page, () => window.__town3dQuality && window.__town3dQuality())
+  return { pass: !!(q && q.compiled === 'async'), compiled: q && q.compiled }
+})
+
 // ── 実行 ─────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2)
 let ids = []

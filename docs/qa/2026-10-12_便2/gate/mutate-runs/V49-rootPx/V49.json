@@ -1,0 +1,19 @@
+{
+ "pass": false,
+ "pc": {
+  "panelW": 480,
+  "descPx": 10.88,
+  "rootPx": 16
+ },
+ "shot": null,
+ "iphone": {
+  "panelW": 370,
+  "descPx": 10.88,
+  "rootPx": 16
+ },
+ "id": "V49",
+ "ms": 90711,
+ "at": "2026-10-12T15:22:24.319Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "c33a11e"
+}

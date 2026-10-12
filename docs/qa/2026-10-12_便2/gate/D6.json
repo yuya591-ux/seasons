@@ -1,0 +1,30 @@
+{
+ "pass": true,
+ "stripeTransitions": {
+  "perRow": [
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "median": 3
+ },
+ "bg": {
+  "key": "bg/summer-rain-dusk-b.jpg",
+  "texKey": "bg/summer-rain-dusk-b.jpg",
+  "ready": 1,
+  "aspect": 1.667
+ },
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/D6_iphone_後.png",
+ "id": "D6",
+ "ms": 50192,
+ "at": "2026-10-12T15:21:30.619Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "c33a11e",
+ "note": "合否の線を 3 に締めて当て直した（測った値は同じ）"
+}

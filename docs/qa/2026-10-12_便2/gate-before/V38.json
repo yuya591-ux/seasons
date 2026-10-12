@@ -1,0 +1,16 @@
+{
+ "pass": false,
+ "summer-dusk-seaside": {
+  "seams": 0,
+  "maxAbs": 0.8
+ },
+ "summer-morning-mountains": {
+  "seams": 2,
+  "maxAbs": 3.67
+ },
+ "id": "V38",
+ "ms": 45483,
+ "at": "2026-10-12T15:30:04.251Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}
