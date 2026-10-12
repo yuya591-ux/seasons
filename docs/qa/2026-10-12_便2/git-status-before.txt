@@ -1,0 +1,24 @@
+ M CLAUDE.md
+?? docs/qa/2026-10-12_seasons/
+?? docs/qa/2026-10-12_seasons_shindan.md
+?? "docs/qa/2026-10-12_\344\276\2771/"
+?? "docs/qa/2026-10-12_\344\276\2772/"
+?? "docs/qa/seasons_\346\226\275\344\270\273\343\201\256\346\260\227\343\201\245\343\201\215.md"
+?? "docs/qa/\350\243\201\345\256\232\350\250\230\351\214\262.md"
+?? "docs/\347\242\272\350\252\215\347\224\250\343\202\271\343\202\257\343\202\267\343\203\247/"
+?? scripts/_shindan-1012-capture.mjs
+?? scripts/_shindan-1012-frame.mjs
+?? scripts/_shindan-1012-grade.mjs
+?? scripts/_shindan-1012-mock.mjs
+?? scripts/_shindan-crop.mjs
+?? scripts/_shindan-dispo.mjs
+?? scripts/_shindan-fest.mjs
+?? scripts/_shindan-gpu.mjs
+?? scripts/_shindan-height.mjs
+?? scripts/_shindan-reach.mjs
+?? scripts/_shindan-ref.mjs
+?? scripts/_shindan-ref2.mjs
+?? scripts/_shindan-repro.mjs
+?? scripts/_shindan-sheet.mjs
+?? scripts/_shindan-stack.mjs
+?? scripts/_shindan-vite.config.mjs

@@ -1,0 +1,37 @@
+// 使い捨て（shindan 2026-10-12）: 第1部の再現。①飛行中に2Dへ移ると音の値が残るか ②おやすみの点灯が開き直しで残るか ③2Dの描画の大きさ
+import { chromium } from 'playwright'
+const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] })
+const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })
+const p = await ctx.newPage()
+await p.goto('http://localhost:4951/seasons/?dev=1', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2500)
+await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(1500)
+// ① 音
+await p.evaluate(() => window.__applyScene('summer-rain-dusk')); await p.waitForTimeout(6000)
+const before = await p.evaluate(() => ({ dbg: window.__audio._dbg(), dbg2: window.__audio.getDebug() }))
+await p.evaluate(() => window.__applyScene('kitaterao-window-3d')); await p.waitForTimeout(6000)
+await p.evaluate(() => window.__town3dWindow(true)); await p.waitForTimeout(1500)
+await p.evaluate(() => window.__town3dFlyToggle(true)); await p.waitForTimeout(2500)
+await p.evaluate(() => window.__town3dFlyPose(0, 120, 60, Math.PI, -0.2)); await p.waitForTimeout(5000)
+const aloft = await p.evaluate(() => ({ dbg: window.__audio._dbg(), dbg2: window.__audio.getDebug() }))
+await p.evaluate(() => window.__applyScene('summer-rain-dusk')); await p.waitForTimeout(8000)
+const after = await p.evaluate(() => ({ dbg: window.__audio._dbg(), dbg2: window.__audio.getDebug() }))
+console.log('①雨の窓（最初）', JSON.stringify(before))
+console.log('①町で高く飛ぶ', JSON.stringify(aloft))
+console.log('①飛行中に雨の窓へ', JSON.stringify(after))
+// ③ 2D の描画の大きさ（画面の倍率2・ふつう＝1.75 の上限で 2 未満）
+const cv = await p.evaluate(() => { const c = document.querySelector('#scene') || document.querySelector('canvas'); return { w: c.width, h: c.height, cssW: c.clientWidth, cssH: c.clientHeight } })
+console.log('③雨の窓の canvas', JSON.stringify(cv))
+// ② おやすみ: 30分を押して開き直す
+await p.locator('.topbar .iconbtn', { hasText: '設定' }).click({ force: true }); await p.waitForTimeout(800)
+await p.locator('.chip', { hasText: '30分' }).first().click({ force: true }); await p.waitForTimeout(500)
+await p.evaluate(() => window.dispatchEvent(new Event('pagehide')))
+await p.waitForTimeout(21000) // 20秒ごとの保存を待つ
+const saved = await p.evaluate(() => { try { return JSON.parse(localStorage.getItem('seasons.state.v1')).settings.sleep } catch { return 'err' } })
+await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2500)
+await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(1500)
+await p.locator('.topbar .iconbtn', { hasText: '設定' }).click({ force: true }); await p.waitForTimeout(800)
+const chipOn = await p.evaluate(() => [...document.querySelectorAll('.chip.chip--on')].map((e) => e.textContent))
+const sleepState = await p.evaluate(() => window.__sleepState ? window.__sleepState() : null)
+console.log('②保存された sleep =', saved, '／開き直した後に点いている札 =', JSON.stringify(chipOn), '／おやすみの状態 =', JSON.stringify(sleepState))
+await p.screenshot({ path: 'docs/qa/2026-10-12_seasons/repro-sleep.png' })
+await b.close()

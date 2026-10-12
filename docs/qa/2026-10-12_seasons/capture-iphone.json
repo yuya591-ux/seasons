@@ -1,0 +1,305 @@
+{
+ "iphone": {
+  "device": {
+   "viewport": {
+    "width": 402,
+    "height": 874
+   },
+   "deviceScaleFactor": 3,
+   "isMobile": true,
+   "hasTouch": true,
+   "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1"
+  },
+  "errors": [],
+  "stageBtn": {
+   "found": true,
+   "text": "窓をあける",
+   "rect": [
+    68,
+    16,
+    107,
+    44
+   ],
+   "topIs": "BUTTON.iconbtn iconbtn--stage",
+   "reachable": true
+  },
+  "topbarRow": [
+   {
+    "t": "窓をあける",
+    "x": 68,
+    "y": 16,
+    "w": 107,
+    "h": 44
+   },
+   {
+    "t": "情景",
+    "x": 183,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "設定",
+    "x": 253,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "写真",
+    "x": 324,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   }
+  ],
+  "window": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.6,
+    "ddt": 0.767,
+    "low": 0,
+    "ok": 103
+   },
+   "draw": {
+    "calls": 1837,
+    "tris": 718897,
+    "progs": 86,
+    "texMem": 102,
+    "geoMem": 2190
+   },
+   "load": {
+    "jsMs": 1.27,
+    "residents": 66,
+    "critters": 28,
+    "cityWalkers": 25,
+    "birds": 5,
+    "skyDrifters": 33,
+    "balloons": 2,
+    "townSmoke": 1,
+    "senMist": 6,
+    "clouds": 37,
+    "trees": 200,
+    "adBalloons": 2
+   },
+   "canvas": {
+    "w": 643,
+    "h": 1398,
+    "cssW": 402,
+    "cssH": 874
+   },
+   "layers": [
+    "town3d-wash:soft-light",
+    "town3d-paper:multiply",
+    "town3d-flash:screen",
+    "town3d-open:screen"
+   ],
+   "dpr": 3,
+   "quality": "standard"
+  },
+  "qualitySteps": {
+   "こまやか": {
+    "pr": 2,
+    "canvasW": 804,
+    "canvasH": 1748,
+    "layersLight": 0
+   },
+   "ふつう": {
+    "pr": 1.6,
+    "canvasW": 643,
+    "canvasH": 1398,
+    "layersLight": 0
+   },
+   "軽やか": {
+    "pr": 1.2,
+    "canvasW": 482,
+    "canvasH": 1048,
+    "layersLight": 1
+   }
+  },
+  "scenes": {
+   "kitaterao-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12610,
+     "pr": 1.6,
+     "ddt": 0.634,
+     "low": 0,
+     "ok": 103
+    },
+    "draw": {
+     "calls": 1843,
+     "tris": 719795,
+     "progs": 86,
+     "texMem": 102,
+     "geoMem": 2190
+    }
+   },
+   "kitaterao-window-3d-sunset": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 13932,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "low": 0,
+     "ok": 102
+    },
+    "draw": {
+     "calls": 2551,
+     "tris": 851477,
+     "progs": 97,
+     "texMem": 128,
+     "geoMem": 2911
+    }
+   },
+   "kitaterao-window-3d-rain-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12496,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "low": 0,
+     "ok": 103
+    },
+    "draw": {
+     "calls": 1926,
+     "tris": 729911,
+     "progs": 100,
+     "texMem": 109,
+     "geoMem": 2221
+    }
+   },
+   "kitaterao-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12515,
+     "pr": 1.6,
+     "ddt": 0.634,
+     "low": 0,
+     "ok": 97
+    },
+    "draw": {
+     "calls": 1806,
+     "tris": 632548,
+     "progs": 100,
+     "texMem": 111,
+     "geoMem": 2121
+    }
+   },
+   "shishigaya-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1283,
+     "pr": 1.6,
+     "ddt": 0.7,
+     "low": 0,
+     "ok": 104
+    },
+    "draw": {
+     "calls": 652,
+     "tris": 116198,
+     "progs": 62,
+     "texMem": 42,
+     "geoMem": 629
+    }
+   },
+   "autumn-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10450,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "low": 0,
+     "ok": 103
+    },
+    "draw": {
+     "calls": 1897,
+     "tris": 721920,
+     "progs": 90,
+     "texMem": 107,
+     "geoMem": 2182
+    }
+   },
+   "summer-rain-dusk": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10450,
+     "pr": 1.6,
+     "ddt": 0.556,
+     "low": 0,
+     "ok": 103
+    },
+    "draw": null
+   },
+   "summer-dusk-seaside": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10450,
+     "pr": 1.6,
+     "ddt": 0.556,
+     "low": 0,
+     "ok": 103
+    },
+    "draw": null
+   },
+   "summer-morning-mountains": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10450,
+     "pr": 1.6,
+     "ddt": 0.556,
+     "low": 0,
+     "ok": 103
+    },
+    "draw": null
+   }
+  },
+  "flyLow": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.2,
+    "ddt": 0.733,
+    "low": 0,
+    "ok": 44
+   },
+   "draw": {
+    "calls": 1681,
+    "tris": 679820,
+    "progs": 87,
+    "texMem": 119,
+    "geoMem": 2647
+   }
+  },
+  "walk": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12614,
+    "pr": 1.2,
+    "ddt": 0.533,
+    "low": 0,
+    "ok": 103
+   },
+   "draw": {
+    "calls": 714,
+    "tris": 565979,
+    "progs": 92,
+    "texMem": 123,
+    "geoMem": 2728
+   }
+  }
+ }
+}

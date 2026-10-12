@@ -42,3 +42,7 @@
 ## 表記
 - UI文言・コードコメント・ドキュメントはすべて日本語
 - 画面の文言は静かで上質な言葉づかい。システム用語を露出させない
+
+## 便の回し方（2026-10-12 追加）
+- 便の回し方は `~/.claude/skills/_shared/bin-kata.md`。裁定記録は `docs/qa/裁定記録.md`、診断と検収の設定は `.claude/shindan/config.md`
+- push は裕也さんが `! git push origin main` の1行で打つ（Claude Code は push しない）。main への push で GitHub Pages へ自動で出る
