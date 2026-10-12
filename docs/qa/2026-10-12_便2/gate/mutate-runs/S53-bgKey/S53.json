@@ -1,0 +1,14 @@
+{
+ "pass": false,
+ "info": {
+  "key": "bg/autumn-rain-dusk.jpg",
+  "texKey": "bg/summer-rain-dusk-b.jpg",
+  "ready": 1
+ },
+ "errs": [],
+ "id": "S53",
+ "ms": 22721,
+ "at": "2026-10-12T14:18:25.917Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

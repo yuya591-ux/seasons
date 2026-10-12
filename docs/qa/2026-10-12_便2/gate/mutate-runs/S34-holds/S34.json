@@ -1,0 +1,13 @@
+{
+ "pass": false,
+ "pausedAfterSleep": false,
+ "afterVisibility": true,
+ "after2dTouch": true,
+ "rendererIn3dAfterTouch": true,
+ "errs": [],
+ "id": "S34",
+ "ms": 46470,
+ "at": "2026-10-12T14:17:09.552Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

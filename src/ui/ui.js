@@ -527,7 +527,7 @@ export function buildUI(opts) {
     let cards = []          // いま描画中のカード（フィルタ/現在地表示の対象）
     let level = 'places'    // 'places'=場所一覧 / 'scenes'=ある場所の中
     // カードの見た目（サムネ＋見出し＋説明）。場所カードも情景カードも同じ体裁。
-    function cardEl(scene, label, desc) {
+    function cardEl(scene, label, desc, count) {
       const card = h('button', 'scene-card')
       const sw = h('span', 'scene-card__swatch')
       const pal = scene.palette.early
@@ -535,6 +535,7 @@ export function buildUI(opts) {
       sw.style.backgroundImage = `url("${BASE}thumbs/${scene.id}.jpg"), ${grad}` // 実描画サムネ→無ければパレット
       const body = h('span', 'scene-card__body')
       body.appendChild(h('span', 'scene-card__label', label))
+      if (count) body.appendChild(h('span', 'scene-card__count', count)) // 場所のカードの眺めの数（説明の切り詰めで消えないよう別の行に・V55）
       body.appendChild(h('span', 'scene-card__desc', desc || ''))
       card.appendChild(sw); card.appendChild(body)
       return card
@@ -544,7 +545,7 @@ export function buildUI(opts) {
       level = 'places'; gallery.textContent = ''; cards = []
       for (const p of placeList) {
         const flag = p.scenes.find((s) => s.id === p.flagship) || p.scenes[0]
-        const card = cardEl(flag, p.label, `${p.desc}　・${p.scenes.length}つの眺め`)
+        const card = cardEl(flag, p.label, p.desc, `${p.scenes.length}つの眺め`)
         card.addEventListener('click', () => { renderScenes(p); poke() })
         gallery.appendChild(card)
         cards.push({ id: 'place:' + p.key, card, season: '', sceneIds: p.scenes.map((s) => s.id) })

@@ -753,10 +753,11 @@ export function createAudio(opts) {
   function playStartChime() {
     if (muted || !ctx || !ctx.createOscillator) return
     try {
-      const out = ctx.createGain(); out.gain.value = Math.max(0.0001, volume); out.connect(ctx.destination)
+      const dest = ctx.destination // 出口へ直に（防音の master を通さない）
+      const out = ctx.createGain(); out.gain.value = Math.max(0.0001, volume); out.connect(dest)
       const t0 = now() + 0.15
       for (const [mul, amp, dec] of [[1, 0.02, 2.6], [2.01, 0.007, 1.7]]) { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 880 * mul; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(amp, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dec); o.connect(g).connect(out); o.start(t0); o.stop(t0 + dec + 0.1) }
-      chimeDbg = { bus: out === master ? 'master' : 'direct', when: layers.length === 0 ? 'before-scene' : 'after-scene', gain: +out.gain.value.toFixed(3) }
+      chimeDbg = { bus: dest === ctx.destination ? 'direct' : 'master', when: layers.length === 0 ? 'before-scene' : 'after-scene', gain: +out.gain.value.toFixed(3) }
     } catch { /* 無音でも続行 */ }
   }
   // 最初のユーザー操作で呼ぶ。音脈を起こし、現在の情景の音を静かに立ち上げる。resume に失敗したら started を立てずに戻り、次のタップ（rearm）でやり直す（S16）。

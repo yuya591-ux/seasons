@@ -1,0 +1,16 @@
+{
+ "pass": false,
+ "festOn": {
+  "rngEnd": 89630,
+  "fest": 3
+ },
+ "festOff": {
+  "rngEnd": 91609,
+  "fest": 0
+ },
+ "id": "S26",
+ "ms": 154288,
+ "at": "2026-10-12T14:28:43.949Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

@@ -7,7 +7,7 @@ export const MUTANTS = [
   { group: 'g1', name: 'S14-duskShelf', what: '新しい情景で夕方の高音しぼりを戻す行を外す', checks: ['D7'],
     edits: [{ file: 'src/audio/audio.js', find: `    if (duskShelf) { try { duskShelf.gain.cancelScheduledValues(now()); duskShelf.gain.setValueAtTime(0, now()) } catch { /* 無視 */ } }\n`, to: '' }] },
   { group: 'g1', name: 'S2-chimeBus', what: '起動の鈴を防音の経路（master）へ戻す', checks: ['S2'],
-    edits: [{ file: 'src/audio/audio.js', find: `out.connect(ctx.destination)`, to: `out.connect(master)` }] },
+    edits: [{ file: 'src/audio/audio.js', find: `      const dest = ctx.destination // 出口へ直に`, to: `      const dest = master // 出口へ直に` }] },
   { group: 'g1', name: 'S4-cacheTrim', what: '解読した音の控えの掃除を外す', checks: ['S4'],
     edits: [{ file: 'src/audio/audio.js', find: `    for (const k of [...bufferCache.keys()]) if (!keepSrc.has(k)) bufferCache.delete(k)\n`, to: '' }] },
   { group: 'g1', name: 'S16-retry', what: '起動に失敗した後のタップでのやり直しを外す', checks: ['S16'],

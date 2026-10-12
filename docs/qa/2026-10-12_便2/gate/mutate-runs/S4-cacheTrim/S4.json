@@ -1,0 +1,33 @@
+{
+ "pass": false,
+ "cache": [
+  "audio/summer-rain-dusk/rain.mp3",
+  "audio/summer-rain-dusk/thunder.mp3",
+  "audio/summer-rain-dusk/higurashi.mp3",
+  "audio/summer-dusk-seaside/waves.mp3",
+  "audio/summer-dusk-seaside/gulls.mp3",
+  "audio/shishigaya-morning-yato/uguisu.mp3",
+  "audio/shishigaya-morning-yato/stream.mp3",
+  "audio/winter-snow-night/wind.mp3",
+  "audio/autumn-dusk-corner-room/crickets.mp3"
+ ],
+ "keep": [
+  "audio/summer-rain-dusk/rain.mp3",
+  "audio/autumn-dusk-corner-room/crickets.mp3",
+  "audio/summer-rain-dusk/thunder.mp3",
+  "audio/shishigaya-morning-yato/uguisu.mp3",
+  "audio/shishigaya-morning-yato/stream.mp3",
+  "audio/winter-snow-night/wind.mp3"
+ ],
+ "extra": [
+  "audio/summer-rain-dusk/higurashi.mp3",
+  "audio/summer-dusk-seaside/waves.mp3",
+  "audio/summer-dusk-seaside/gulls.mp3"
+ ],
+ "errs": [],
+ "id": "S4",
+ "ms": 66008,
+ "at": "2026-10-12T14:10:06.061Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

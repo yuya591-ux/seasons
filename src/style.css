@@ -895,12 +895,14 @@ body.idle .topbar button {
 /* （旧 .iconbtn--window/--lean/--fly は撤去＝段階ボタン .iconbtn--stage/--back に集約済みで未使用だった） */
 /* 主ボタン（次の一歩）。暖色のアクセントで「ここから始まる」を示す。空/地上では空色へ。 */
 .iconbtn--stage {
-  background: rgba(122, 86, 42, 0.46);
-  border-color: rgba(255, 222, 176, 0.4);
-  color: rgba(255, 244, 230, 0.98);
+  /* 地を濃い茶に（以前は不透明度0.46で、天井のクリーム色に淡い字が溶けて4つのボタンで一番読みにくかった・V54） */
+  background: rgba(76, 50, 22, 0.9);
+  border-color: rgba(255, 222, 176, 0.45);
+  color: rgba(255, 246, 234, 1);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 .iconbtn--stage:hover {
-  background: rgba(150, 104, 50, 0.6);
+  background: rgba(98, 66, 30, 0.92);
 }
 .iconbtn--stage.is-aloft {
   background: rgba(72, 116, 158, 0.5);
@@ -1042,6 +1044,8 @@ body.pre-start .stagedots {
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+  /* 段の点（.stagedots・重なり順4）より上に出す＝情景の一覧・設定を開いた時に点が「いま」の字に食い込まない（D4） */
+  z-index: 6;
 }
 .panel--open {
   opacity: 1;
@@ -1091,7 +1095,9 @@ body.pre-start .stagedots {
 }
 .axis__label,
 .setrow__label {
-  flex: 0 0 3.2rem;
+  /* 「描き込み」「おやすみ」が2行に割れないよう、4文字が収まる幅で1行に（V46） */
+  flex: 0 0 4.4rem;
+  white-space: nowrap;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.6);
 }
@@ -1364,6 +1370,14 @@ body.pre-start .stagedots {
   font-size: 0.84rem;
   color: rgba(255, 255, 255, 0.92);
 }
+/* 場所のカードの「いくつの眺めがあるか」。説明文の末尾に付けると2行の切り詰めで消えていたので、別の1行にする（V55） */
+.scene-card__count {
+  font-size: 0.66rem;
+  color: rgba(255, 232, 200, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .scene-card__desc {
   font-size: 0.68rem;
   color: rgba(255, 255, 255, 0.55);
@@ -1479,6 +1493,14 @@ body.pre-start .stagedots {
   }
   .stagedots {
     top: max(5.2rem, calc(env(safe-area-inset-top) + 4.9rem));
+  }
+}
+
+/* 広い画面（横1440px以上＝PC・ノート）では文字の基準を一段上げる。パネルの幅（30rem）と説明の字（0.68rem）が一緒に大きくなり、
+   1080p のモニタを離れて見ても読める（以前はパネル幅480px＝画面の4分の1・説明の字約11px・V49）。iPhone・iPad の見え方は変えない */
+@media (min-width: 1440px) {
+  html {
+    font-size: 19.2px;
   }
 }
 

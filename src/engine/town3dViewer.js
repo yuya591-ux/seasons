@@ -7949,7 +7949,16 @@ export async function mountTown3d(parent, opts = {}) {
     `<div style="position:absolute;right:8%;bottom:22%;${HINT_CSS}">⟲<br><span style="font-weight:500">右で見まわす</span></div>`
   const HINT_FLY = `<div style="position:absolute;left:0;right:0;bottom:21%;${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">高く昇れば雲海へ　海の向こうには、遠い季節の街が</span></div>`
   let ctrlHintT = 0
-  const showCtrlHint = (kind) => { ctrlHint.innerHTML = kind === 'fly' ? HINT_FLY : HINT_WALK; ctrlHint.style.opacity = '1'; ctrlHintT = 5 } // 5秒後にそっと消える
+  // 歩く案内は、常駐のスティックの輪のすぐ上に出す（以前は左8%・下22%で、PC・横長では輪から200px前後離れていた・V48）。
+  // 飛ぶ案内は、左下の操作トレイの上端より上に淡い帯を敷いて出す（以前は帯が無く街の上で読みにくく、iPhone では＋−に接した・V61）。
+  const walkHintHtml = () => { const c = (typeof stickRestCenter === 'function') ? stickRestCenter() : null; if (!c) return HINT_WALK; const top = Math.round(c.y - FLY.stickRadius - 10); const x = Math.round(c.x)
+    return `<div style="position:absolute;left:${x}px;top:${top}px;transform:translate(-50%,-100%);${HINT_CSS}">◉<br><span style="font-weight:500">左で歩く</span></div>` +
+      `<div style="position:absolute;right:${x}px;top:${top}px;transform:translate(50%,-100%);${HINT_CSS}">⟲<br><span style="font-weight:500">右で見まわす</span></div>` }
+  const flyHintHtml = () => { const sr = stage.getBoundingClientRect(); let bottom = Math.round(sr.height * 0.21)
+    const pr = pad.getBoundingClientRect() // トレイの枠の上端（透明なボタンも場所を取る）より上に出す
+    if (pr.height > 0) bottom = Math.max(bottom, Math.round(sr.bottom - pr.top + 16))
+    return `<div style="position:absolute;left:50%;bottom:${bottom}px;transform:translateX(-50%);width:max-content;max-width:92%;padding:8px 14px;border-radius:12px;background:rgba(18,14,22,0.42);${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">高く昇れば雲海へ　海の向こうには、遠い季節の街が</span></div>` }
+  const showCtrlHint = (kind) => { ctrlHint.innerHTML = kind === 'fly' ? flyHintHtml() : walkHintHtml(); ctrlHint.style.opacity = '1'; ctrlHintT = 5 } // 5秒後にそっと消える
   const hideCtrlHint = () => { if (ctrlHintT > 0) { ctrlHintT = 0; ctrlHint.style.opacity = '0' } } // 触れたら即消える
   // 室内の薄暗がり（周辺減光）。巨大box-shadowブラーは毎フレームの合成が重い→静的なradial-gradientの
   // 不透明度だけを動かす（合成が軽い＝端末が重くならない）。部屋の中ほど濃く、窓を開け/乗り出すと晴れる。
@@ -10823,7 +10832,17 @@ export async function mountTown3d(parent, opts = {}) {
     stickWrap.classList.add('stick--on'); stickWrap.classList.remove('stick--rest'); stickKnob.style.transform = 'translate(0,0)' // 触れた点へ濃く出す
   }
   // 常駐スティック: 歩行で触れていない間も既定位置(左下)に淡く出す＝スティックの在りかが分かる。触れた瞬間そこへ移って濃くなる（puniコン）。
-  const restStick = () => { stickBase.style.left = '20%'; stickBase.style.top = '74%'; stickWrap.classList.add('stick--on', 'stick--rest'); stickKnob.style.transform = 'translate(0,0)' }
+  // 常駐（触れていない歩行時）のスティックの中心。左下の操作トレイ（＋−など）の見えているボタンより上に置く
+  // （以前は 左20%・上74% 固定で、iPhone では輪が＋−に重なり、指が両方に触れた・V47）。歩く案内もここから位置を決める（V48）。
+  const stickRestCenter = () => {
+    const sr = stage.getBoundingClientRect(), R = FLY.stickRadius
+    let y = sr.height * 0.74
+    // トレイは透明なボタンも場所を取る並び（＋−がいちばん上）。透明かどうか（何もしない間の非表示・札の付け替えの途中）に左右されないよう、トレイの枠の上端で決める
+    const pr = pad.getBoundingClientRect()
+    if (pr.height > 0) y = Math.min(y, pr.top - sr.top - R - 14)
+    return { x: sr.width * 0.2, y: Math.max(R + 8, y) }
+  }
+  const restStick = () => { const c = stickRestCenter(); stickBase.style.left = c.x + 'px'; stickBase.style.top = c.y + 'px'; stickWrap.classList.add('stick--on', 'stick--rest'); stickKnob.style.transform = 'translate(0,0)' }
   const hideStick = () => { if (active) { active.moveX = 0; active.moveY = 0 } if (active && active.mode === 'walk' && active.flyP > 0.5) restStick(); else stickWrap.classList.remove('stick--on', 'stick--rest') }
   const pointers = new Map() // 全ポインタ id->{x,y}（ピンチ＝2本指ズームの判定用）
   let pinchD0 = 0, pinchZoom0 = 1

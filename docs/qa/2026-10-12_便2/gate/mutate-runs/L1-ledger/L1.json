@@ -1,0 +1,9 @@
+{
+ "pass": false,
+ "row": "| 1 | `.topbar` に `z-index` を与えて3Dの面より前に出す | C | 未対応（`style.css` 860〜872行に指定なし） | 最大 | 1行 | 小 | — | 1行消す |\r",
+ "id": "L1",
+ "ms": 3,
+ "at": "2026-10-12T14:31:15.364Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

@@ -1,0 +1,12 @@
+{
+ "pass": false,
+ "version": "__SEASONS_BUILD__",
+ "cacheKeys": [
+  "seasons-shell-__SEASONS_BUILD__"
+ ],
+ "id": "S39",
+ "ms": 85097,
+ "at": "2026-10-12T14:24:02.229Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

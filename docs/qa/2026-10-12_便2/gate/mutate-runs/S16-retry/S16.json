@@ -1,0 +1,11 @@
+{
+ "pass": false,
+ "startedAfterGate": false,
+ "startedAfterTap": false,
+ "errs": [],
+ "id": "S16",
+ "ms": 21779,
+ "at": "2026-10-12T14:10:40.527Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

@@ -1,0 +1,31 @@
+{
+ "pass": false,
+ "tilt": {
+  "enabled": false
+ },
+ "town3d": {
+  "x": 0,
+  "y": 0,
+  "yaw": 0
+ },
+ "axes": [
+  [
+   10,
+   30
+  ],
+  [
+   30,
+   -10
+  ],
+  [
+   -30,
+   10
+  ]
+ ],
+ "errs": [],
+ "id": "S50",
+ "ms": 42469,
+ "at": "2026-10-12T14:14:29.989Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

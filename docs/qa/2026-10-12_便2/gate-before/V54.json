@@ -1,0 +1,27 @@
+{
+ "pass": false,
+ "contrast": {
+  "text": 0.8849,
+  "bg": 0.3157,
+  "ratio": 2.56
+ },
+ "rect": {
+  "x": 67.921875,
+  "y": 16,
+  "w": 107.1875,
+  "h": 44
+ },
+ "dpr": 3,
+ "style": {
+  "bg": "rgba(122, 86, 42, 0.46)",
+  "color": "rgba(255, 244, 230, 0.98)",
+  "shadow": "rgba(0, 0, 0, 0.55) 0px 1px 2px"
+ },
+ "shot": null,
+ "errs": [],
+ "id": "V54",
+ "ms": 77315,
+ "at": "2026-10-12T14:50:17.490Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

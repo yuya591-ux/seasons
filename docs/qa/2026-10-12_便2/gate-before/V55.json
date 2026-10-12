@@ -1,0 +1,31 @@
+{
+ "pass": false,
+ "cards": [
+  {
+   "count": null,
+   "label": "北寺尾の坂の街"
+  },
+  {
+   "count": null,
+   "label": "獅子ヶ谷の谷戸"
+  },
+  {
+   "count": null,
+   "label": "高台の角部屋"
+  },
+  {
+   "count": null,
+   "label": "雨の窓"
+  },
+  {
+   "count": null,
+   "label": "海辺と山あい"
+  }
+ ],
+ "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/V55_iphone_前.png",
+ "id": "V55",
+ "ms": 33701,
+ "at": "2026-10-12T14:15:46.694Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

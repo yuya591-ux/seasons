@@ -1,0 +1,161 @@
+{
+ "pass": false,
+ "scenes": [
+  {
+   "id": "kitaterao-window-3d",
+   "exists": true,
+   "kb": 41,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-sunset",
+   "exists": true,
+   "kb": 41,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-rain",
+   "exists": true,
+   "kb": 41,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-rain-night",
+   "exists": true,
+   "kb": 32,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-night",
+   "exists": true,
+   "kb": 38,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-spring",
+   "exists": true,
+   "kb": 41,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-autumn",
+   "exists": true,
+   "kb": 42,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-snow",
+   "exists": true,
+   "kb": 57,
+   "changed": false
+  },
+  {
+   "id": "kitaterao-window-3d-snow-night",
+   "exists": true,
+   "kb": 37,
+   "changed": false
+  },
+  {
+   "id": "shishigaya-window-3d",
+   "exists": true,
+   "kb": 32,
+   "changed": false
+  },
+  {
+   "id": "shishigaya-window-3d-spring",
+   "exists": true,
+   "kb": 33,
+   "changed": false
+  },
+  {
+   "id": "shishigaya-window-3d-autumn",
+   "exists": true,
+   "kb": 32,
+   "changed": false
+  },
+  {
+   "id": "shishigaya-window-3d-snow",
+   "exists": true,
+   "kb": 42,
+   "changed": false
+  },
+  {
+   "id": "autumn-dusk-corner-room",
+   "exists": true,
+   "kb": 44,
+   "changed": false
+  },
+  {
+   "id": "autumn-rain-night-corner-room",
+   "exists": true,
+   "kb": 45,
+   "changed": false
+  },
+  {
+   "id": "summer-morning-corner-room",
+   "exists": true,
+   "kb": 50,
+   "changed": false
+  },
+  {
+   "id": "spring-dusk-corner-room",
+   "exists": true,
+   "kb": 46,
+   "changed": false
+  },
+  {
+   "id": "spring-morning-corner-room",
+   "exists": true,
+   "kb": 47,
+   "changed": false
+  },
+  {
+   "id": "winter-snow-dusk-corner-room",
+   "exists": true,
+   "kb": 42,
+   "changed": false
+  },
+  {
+   "id": "summer-rain-dusk",
+   "exists": true,
+   "kb": 34,
+   "changed": false
+  },
+  {
+   "id": "summer-rain-morning",
+   "exists": true,
+   "kb": 91,
+   "changed": false
+  },
+  {
+   "id": "summer-rain-night",
+   "exists": true,
+   "kb": 37,
+   "changed": false
+  },
+  {
+   "id": "autumn-rain-dusk",
+   "exists": true,
+   "kb": 52,
+   "changed": false
+  },
+  {
+   "id": "summer-morning-mountains",
+   "exists": true,
+   "kb": 18,
+   "changed": false
+  },
+  {
+   "id": "summer-dusk-seaside",
+   "exists": true,
+   "kb": 25,
+   "changed": false
+  }
+ ],
+ "shot": "C:/Users/yuya.satake/ClaudeCode/seasons/docs/確認用スクショ/seasons/2026-10-12_便2/V56_iphone_前.png",
+ "id": "V56",
+ "ms": 61588,
+ "at": "2026-10-12T14:26:29.350Z",
+ "base": "http://localhost:4959/seasons/",
+ "commit": "0676315"
+}

@@ -1,0 +1,41 @@
+{
+ "pass": true,
+ "cards": [
+  {
+   "label": "北寺尾の坂の街",
+   "count": "9つの眺め",
+   "cut": false,
+   "h": 16
+  },
+  {
+   "label": "獅子ヶ谷の谷戸",
+   "count": "4つの眺め",
+   "cut": false,
+   "h": 16
+  },
+  {
+   "label": "高台の角部屋",
+   "count": "6つの眺め",
+   "cut": false,
+   "h": 16
+  },
+  {
+   "label": "雨の窓",
+   "count": "4つの眺め",
+   "cut": false,
+   "h": 16
+  },
+  {
+   "label": "海辺と山あい",
+   "count": "2つの眺め",
+   "cut": false,
+   "h": 16
+  }
+ ],
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V55_iphone_後.png",
+ "id": "V55",
+ "ms": 46530,
+ "at": "2026-10-12T14:37:32.452Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "23813f6"
+}

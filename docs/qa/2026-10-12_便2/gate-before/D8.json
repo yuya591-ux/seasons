@@ -1,13 +1,13 @@
 {
  "pass": false,
- "picked": "なし",
- "afterReload": "なし",
- "savedSleep": null,
+ "picked": "30分",
+ "afterReload": "30分",
+ "savedSleep": 30,
  "afterSleep": "15分",
  "errs": [],
  "id": "D8",
- "ms": 58370,
- "at": "2026-10-12T13:35:04.848Z",
+ "ms": 62156,
+ "at": "2026-10-12T14:28:31.205Z",
  "base": "http://localhost:4959/seasons/",
  "commit": "0676315"
 }

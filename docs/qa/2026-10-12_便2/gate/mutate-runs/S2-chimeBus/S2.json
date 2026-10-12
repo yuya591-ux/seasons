@@ -1,0 +1,14 @@
+{
+ "pass": true,
+ "chime": {
+  "bus": "direct",
+  "when": "before-scene",
+  "gain": 0.8
+ },
+ "errs": [],
+ "id": "S2",
+ "ms": 26403,
+ "at": "2026-10-12T14:08:55.120Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

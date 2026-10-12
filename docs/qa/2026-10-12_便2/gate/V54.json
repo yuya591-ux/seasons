@@ -1,0 +1,27 @@
+{
+ "pass": true,
+ "contrast": {
+  "text": 0.931,
+  "bg": 0.0592,
+  "ratio": 8.99
+ },
+ "rect": {
+  "x": 67.921875,
+  "y": 16,
+  "w": 107.1875,
+  "h": 44
+ },
+ "dpr": 3,
+ "style": {
+  "bg": "rgba(76, 50, 22, 0.9)",
+  "color": "rgb(255, 246, 234)",
+  "shadow": "rgba(0, 0, 0, 0.7) 0px 1px 3px"
+ },
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V54_iphone_後.png",
+ "errs": [],
+ "id": "V54",
+ "ms": 76986,
+ "at": "2026-10-12T14:50:16.540Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "23813f6"
+}

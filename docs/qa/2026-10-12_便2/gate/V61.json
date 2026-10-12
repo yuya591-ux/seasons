@@ -1,0 +1,18 @@
+{
+ "pass": true,
+ "hint": {
+  "y": 595.078125,
+  "bottom": 670,
+  "h": 74.921875,
+  "bgAlpha": 0.42
+ },
+ "padTop": 686,
+ "gap": 16,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V61_iphone_後.png",
+ "errs": [],
+ "id": "V61",
+ "ms": 61501,
+ "at": "2026-10-12T14:48:26.103Z",
+ "base": "http://localhost:4960/seasons/",
+ "commit": "23813f6"
+}

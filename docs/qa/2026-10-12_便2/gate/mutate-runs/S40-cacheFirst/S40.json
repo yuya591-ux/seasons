@@ -1,0 +1,18 @@
+{
+ "pass": false,
+ "controlled": true,
+ "assetFetchesOnSecondLoad": 8,
+ "sample": [
+  "/seasons/assets/EffectComposer-6g1mEiFA.js",
+  "/seasons/assets/Pass-DlKbm51C.js",
+  "/seasons/assets/ShaderPass-8qNslxiQ.js",
+  "/seasons/assets/CopyShader-CHGAmNbz.js",
+  "/seasons/assets/RenderPass-uqzBWsvI.js",
+  "/seasons/assets/OutputPass-CBMekD6S.js"
+ ],
+ "id": "S40",
+ "ms": 105861,
+ "at": "2026-10-12T14:26:01.613Z",
+ "base": "http://localhost:4958/seasons/",
+ "commit": "23813f6"
+}

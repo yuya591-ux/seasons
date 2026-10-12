@@ -150,6 +150,9 @@ def('g1', 'D8', async () => {
   await openSet()
   await page.locator('.chip', { hasText: '30分' }).first().click({ force: true }).catch(() => {}); await wait(600)
   const picked = await chipOn()
+  // 症状の道: 選んだ後に、ほかの保存（情景を替えた記録など）が走ってから開き直す
+  await page.keyboard.press('Escape').catch(() => {}); await page.mouse.click(5, 1075); await wait(300)
+  await apply(page, 'summer-rain-dusk', 1500)
   // 20秒ごとの保存と同じ道（眺めた時間の保存）に乗せてから開き直す
   await ev(page, () => { const s = JSON.parse(localStorage.getItem('seasons.state.v1') || '{}'); return s.settings && s.settings.sleep })
   await page.reload({ waitUntil: 'domcontentloaded' }); await wait(2500)
@@ -178,7 +181,7 @@ def('g1', 'S50', async () => {
   const t3 = await ev(page, () => window.__town3dTilt && window.__town3dTilt())
   const ax = await ev(page, () => window.__tiltAxes && [window.__tiltAxes(10, 30, 0), window.__tiltAxes(10, 30, 90), window.__tiltAxes(10, 30, 270)])
   const axOk = Array.isArray(ax) && ax[0][0] === 10 && ax[0][1] === 30 && ax[1][0] === 30 && ax[1][1] === -10 && ax[2][0] === -30 && ax[2][1] === 10
-  return { pass: !!(st && st.enabled === true && t3 && Math.abs(t3.x - 0.4) < 0.05 && axOk), tilt: st, town3d: t3, axes: ax, errs: realErrs(errs) }
+  return { pass: !!(st && st.enabled === true && t3 && Math.abs(t3.x - 0.4) < 0.05 && t3.yaw > 0.03 && axOk), tilt: st, town3d: t3, axes: ax, errs: realErrs(errs) }
 })
 def('g1', 'S34', async () => {
   const { page, errs } = await open('pc')
@@ -303,6 +306,183 @@ def('g1', 'L1', async () => {
   const s = fs.readFileSync('docs/qa/2026-07-31_残タスク台帳.md', 'utf8')
   const row = s.split('\n').find((l) => /^\| 1 \|/.test(l)) || ''
   return { pass: /再現せず（2026-10-12/.test(row), row }
+})
+
+// ── 画の測り（撮った PNG を別の空ページの canvas で読み、範囲の画素を数える）────────────────
+// fn はページの中で (data: Uint8ClampedArray, w, h) を受け取って数を返す（文字列で渡す）
+async function measurePng(buf, fnSrc, rect = null) {
+  const b = await getBrowser()
+  const ctx = await b.newContext()
+  const p = await ctx.newPage()
+  const r = await p.evaluate(async ({ b64, fnSrc, rect }) => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode()
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0)
+    const R = rect || [0, 0, img.width, img.height]
+    const d = x.getImageData(R[0], R[1], R[2], R[3])
+    // eslint-disable-next-line no-new-func
+    const fn = new Function('data', 'w', 'h', fnSrc)
+    return fn(d.data, R[2], R[3])
+  }, { b64: buf.toString('base64'), fnSrc, rect })
+  await ctx.close()
+  return r
+}
+// 明るさの分布（平均・散らばり・暗い側1%点・明るい側1%点・平均の色）
+const LUMA_STATS = `
+  const n = w * h; let s = 0, s2 = 0, r = 0, g = 0, b = 0; const hist = new Array(256).fill(0)
+  for (let i = 0; i < data.length; i += 4) { const L = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]; s += L; s2 += L * L; r += data[i]; g += data[i + 1]; b += data[i + 2]; hist[Math.min(255, Math.round(L))]++ }
+  const pct = (q) => { let acc = 0; for (let k = 0; k < 256; k++) { acc += hist[k]; if (acc >= q * n) return k } return 255 }
+  const mean = s / n
+  return { mean: +mean.toFixed(1), std: +Math.sqrt(Math.max(0, s2 / n - mean * mean)).toFixed(1), p1: pct(0.01), p99: pct(0.99), rgb: [Math.round(r / n), Math.round(g / n), Math.round(b / n)] }`
+// 字と地のコントラスト比（範囲の中で明るい側5%を字、暗い側30%点を地とみなす。WCAG の相対輝度で比を出す）
+const TEXT_CONTRAST = `
+  const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4) }
+  const Ls = []
+  for (let i = 0; i < data.length; i += 4) Ls.push(0.2126 * lin(data[i]) + 0.7152 * lin(data[i + 1]) + 0.0722 * lin(data[i + 2]))
+  Ls.sort((a, b) => a - b)
+  const hi = Ls.slice(Math.floor(Ls.length * 0.95)); const tL = hi.reduce((a, b) => a + b, 0) / hi.length
+  const bg = Ls[Math.floor(Ls.length * 0.3)]
+  return { text: +tL.toFixed(4), bg: +bg.toFixed(4), ratio: +((Math.max(tL, bg) + 0.05) / (Math.min(tL, bg) + 0.05)).toFixed(2) }`
+const rectOf = (page, sel) => ev(page, (s) => { const e = typeof s === 'string' ? document.querySelector(s) : null; if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height } }, sel)
+const inter = (a, b) => { if (!a || !b) return 0; const x = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)), y = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)); return Math.round(x * y) }
+async function poke(page) { await page.mouse.move(120, 300); await page.mouse.move(124, 304); await wait(500) }
+async function openGallery(page) { await page.locator('.topbar .iconbtn', { hasText: '情景' }).click({ force: true }).catch(() => {}); await wait(1300) }
+async function openSettings(page) { await page.locator('.topbar .iconbtn', { hasText: '設定' }).click({ force: true }).catch(() => {}); await wait(1100) }
+// 窓辺 → 窓をあける → 空へ → 地上へ（歩く）。撮影の台本と同じ手順
+async function goWalk(page) {
+  await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+  await ev(page, () => window.__town3dFlyToggle(true)); await wait(3000)
+  await ev(page, () => window.__town3dFlyPose(2, 6, -18, Math.PI, -0.05)); await wait(800)
+  await ev(page, () => window.__town3dLandToggle(true)); await wait(1800)
+}
+
+// 群2 画面の部品 ──────────────────────────────────────────────────────
+def('g2', 'D4', async () => {
+  const out = {}
+  for (const dev of ['iphone', 'ipadL']) {
+    const { ctx, page, errs } = await open(dev)
+    await gateStart(page); await apply(page, 'kitaterao-window-3d', 6500)
+    const res = {}
+    // 段の点は指を受けない（pointer-events: none）ので「いちばん上の要素」では測れない。3Dを止めた静止画で、
+    // 点を消す前と後の画を撮り、点の場所の画素の差を数える（パネルが点を覆っていれば差は0）
+    await ev(page, () => window.__town3dPaused && window.__town3dPaused(true)); await wait(400)
+    for (const which of ['情景', '設定']) {
+      if (which === '情景') await openGallery(page); else await openSettings(page)
+      await wait(500)
+      const dr = await ev(page, () => { const d = document.querySelector('.stagedots'); if (!d) return null; const r = d.getBoundingClientRect(); const p = document.querySelector('.panel--open'); const pr = p ? p.getBoundingClientRect() : null; return { x: r.left, y: r.top, w: r.width, h: r.height, op: +getComputedStyle(d).opacity, panelOver: !!(pr && pr.top < r.bottom && pr.bottom > r.top && pr.left < r.right && pr.right > r.left) } })
+      if (!dr) { res[which] = { dots: false }; continue }
+      const clip = { x: Math.max(0, dr.x - 8), y: Math.max(0, dr.y - 8), width: dr.w + 16, height: dr.h + 16 }
+      const a = await page.screenshot({ clip })
+      await ev(page, () => { document.querySelector('.stagedots').style.visibility = 'hidden' }); await wait(150)
+      const b = await page.screenshot({ clip })
+      await ev(page, () => { document.querySelector('.stagedots').style.visibility = '' })
+      const pa = await measurePng(a, 'return Array.from(data)'), pb = await measurePng(b, 'return Array.from(data)')
+      let diff = 0; for (let i = 0; i < pa.length; i += 4) if (Math.abs(pa[i] - pb[i]) + Math.abs(pa[i + 1] - pb[i + 1]) + Math.abs(pa[i + 2] - pb[i + 2]) > 24) diff++
+      res[which] = { dots: true, dotsOpacity: dr.op, panelOverDots: dr.panelOver, diffPx: diff }
+      if (which === '情景') out[dev + '_shot'] = await shot(page, `D4_${dev}`, { clip: { x: 0, y: 0, width: DEVICES[dev].viewport.width, height: Math.round(DEVICES[dev].viewport.height * 0.45) } })
+      await page.keyboard.press('Escape').catch(() => {}); await page.locator('.panel--open .iconbtn', { hasText: '×' }).first().click({ force: true }).catch(() => {}); await wait(700)
+    }
+    out[dev] = res; out[dev + '_errs'] = realErrs(errs)
+    await ctx.close()
+  }
+  // 点がパネルの範囲にある時、点が見えていたら（画素の差が出たら）不合格
+  const ok = (r) => r && r.dots && (!r.panelOverDots || r.diffPx <= 4)
+  const covered = ['iphone', 'ipadL'].some((d) => out[d]['情景'] && out[d]['情景'].panelOverDots)
+  return { pass: covered && ['iphone', 'ipadL'].every((d) => ok(out[d]['情景']) && ok(out[d]['設定'])), ...out }
+})
+def('g2', 'V46', async () => {
+  const out = {}
+  for (const dev of ['iphone', 'ipad']) {
+    const { ctx, page } = await open(dev)
+    await gateStart(page); await openSettings(page)
+    out[dev] = await ev(page, () => { const l = [...document.querySelectorAll('.setrow__label')].find((e) => e.textContent === '描き込み'); if (!l) return null; const st = getComputedStyle(l); const lh = parseFloat(st.lineHeight) || parseFloat(st.fontSize) * 1.5; return { h: +l.getBoundingClientRect().height.toFixed(1), lineH: +lh.toFixed(1), fs: st.fontSize } })
+    if (dev === 'iphone') out.shot = await shot(page, 'V46_iphone')
+    await ctx.close()
+  }
+  return { pass: ['iphone', 'ipad'].every((d) => out[d] && out[d].h <= out[d].lineH * 1.3), ...out }
+})
+def('g2', 'V47', async () => {
+  const { page, errs } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 6500)
+  await goWalk(page); await wait(1500); await poke(page)
+  const stick = await rectOf(page, '.town3d-stick__base')
+  const btns = await ev(page, () => [...document.querySelectorAll('.town3d-pad button, .town3d-pad [class*="__btn"]')].filter((e) => { const s = getComputedStyle(e); const r = e.getBoundingClientRect(); let o = 1; for (let p = e; p; p = p.parentElement) o *= +getComputedStyle(p).opacity; return r.width > 0 && s.visibility !== 'hidden' && s.display !== 'none' && o > 0.05 }).map((e) => { const r = e.getBoundingClientRect(); return { t: e.textContent, x: r.left, y: r.top, w: r.width, h: r.height } }))
+  const restOn = await ev(page, () => { const w = document.querySelector('.town3d-stick'); return w ? w.className : null })
+  const overlap = Array.isArray(btns) ? btns.reduce((s, b) => s + inter(stick, b), 0) : null
+  const sh = await shot(page, 'V47_iphone')
+  return { pass: !!(stick && /stick--rest/.test(restOn || '') && overlap === 0 && btns.length > 0), stick, buttons: btns, overlapPx2: overlap, stickClass: restOn, shot: sh, errs: realErrs(errs) }
+})
+def('g2', 'V48', async () => {
+  const out = {}
+  for (const dev of ['pc', 'ipadL']) {
+    const { ctx, page } = await open(dev)
+    await gateStart(page); await apply(page, 'kitaterao-window-3d', 6500)
+    await goWalk(page); await wait(600)
+    const stick = await rectOf(page, '.town3d-stick__base')
+    const hint = await ev(page, () => { const el = [...document.querySelectorAll('.town3d-stage div')].find((e) => /左で歩く/.test(e.textContent) && e.children.length <= 3 && e.getBoundingClientRect().width < 400); if (!el) return null; const r = el.getBoundingClientRect(); let o = 1; for (let p = el; p; p = p.parentElement) o *= +getComputedStyle(p).opacity; return { x: r.left, y: r.top, w: r.width, h: r.height, op: +o.toFixed(2) } })
+    const d = stick && hint ? Math.hypot((hint.x + hint.w / 2) - (stick.x + stick.w / 2), (hint.y + hint.h / 2) - (stick.y + stick.h / 2)) : null
+    out[dev] = { stick, hint, dist: d === null ? null : Math.round(d) }
+    await ctx.close()
+  }
+  return { pass: ['pc', 'ipadL'].every((k) => out[k].dist !== null && out[k].dist <= 124 && out[k].hint.op > 0.3), ...out }
+})
+def('g2', 'V54', async () => {
+  const { page, errs } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 7000)
+  await ev(page, () => { const h = document.querySelector('.lookhint'); if (h) h.remove() })
+  await page.mouse.move(200, 500); await wait(400)
+  const r = await rectOf(page, '.iconbtn--stage')
+  if (!r) return { pass: false, why: '主ボタンが無い' }
+  const dpr = DEVICES.iphone.deviceScaleFactor
+  // ボタンの丸い端と上下の縁（後ろの天井が透ける所）を外し、字のある内側だけを測る
+  const buf = await page.screenshot({ clip: { x: r.x + r.h / 2, y: r.y + 6, width: Math.max(4, r.w - r.h), height: Math.max(4, r.h - 12) } })
+  const c = await measurePng(buf, TEXT_CONTRAST)
+  const sh = await shot(page, 'V54_iphone', { clip: { x: 0, y: 0, width: 402, height: 140 } })
+  const style = await ev(page, () => { const s = getComputedStyle(document.querySelector('.iconbtn--stage')); return { bg: s.backgroundColor, color: s.color, shadow: s.textShadow } })
+  return { pass: !!(c && c.ratio >= 4.5), contrast: c, rect: r, dpr, style, shot: sh, errs: realErrs(errs) }
+})
+def('g2', 'V55', async () => {
+  const { page } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 5000)
+  await openGallery(page)
+  const cards = await ev(page, () => [...document.querySelectorAll('.gallery .scene-card')].map((c) => { const n = c.querySelector('.scene-card__count'); if (!n) return { count: null, label: c.querySelector('.scene-card__label')?.textContent }; const r = n.getBoundingClientRect(); return { label: c.querySelector('.scene-card__label')?.textContent, count: n.textContent, cut: n.scrollWidth > n.clientWidth + 1 || r.height < 4, h: Math.round(r.height) } }))
+  const sh = await shot(page, 'V55_iphone')
+  return { pass: Array.isArray(cards) && cards.length >= 4 && cards.every((c) => c.count && /\d+つの眺め/.test(c.count) && !c.cut), cards, shot: sh }
+})
+def('g2', 'V61', async () => {
+  const { page, errs } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 6500)
+  await ev(page, () => window.__town3dWindow(true)); await wait(2200)
+  await ev(page, () => window.__town3dFlyToggle(true)); await wait(1800); await poke(page)
+  // 案内の文を持つ要素のうち、いちばん内側（面積の小さい物）を取る
+  const hint = await ev(page, () => { const els = [...document.querySelectorAll('.town3d-stage div')].filter((e) => /空をすすむ/.test(e.textContent)).sort((a, b) => { const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return ra.width * ra.height - rb.width * rb.height }); const el = els[0]; if (!el) return null; const r = el.getBoundingClientRect(); const bg = getComputedStyle(el).backgroundColor; const m = bg.match(/rgba?\(([^)]+)\)/); const a = m ? (m[1].split(',')[3] !== undefined ? +m[1].split(',')[3] : 1) : 0; return { y: r.top, bottom: r.bottom, h: r.height, bgAlpha: bg === 'rgba(0, 0, 0, 0)' ? 0 : a } })
+  const padTop = await ev(page, () => { const bs = [...document.querySelectorAll('.town3d-pad button')].filter((e) => { let o = 1; for (let p = e; p; p = p.parentElement) o *= +getComputedStyle(p).opacity; return o > 0.05 && e.getBoundingClientRect().width > 0 }); return bs.length ? Math.min(...bs.map((b) => b.getBoundingClientRect().top)) : null })
+  const gap = hint && padTop !== null ? Math.round(padTop - hint.bottom) : null
+  const sh = await shot(page, 'V61_iphone')
+  return { pass: !!(hint && hint.bgAlpha > 0 && gap !== null && gap >= 12), hint, padTop, gap, shot: sh, errs: realErrs(errs) }
+})
+def('g2', 'V49', async () => {
+  const out = {}
+  for (const dev of ['pc', 'iphone']) {
+    const { ctx, page } = await open(dev)
+    await gateStart(page); await apply(page, 'kitaterao-window-3d', 5000)
+    await openGallery(page)
+    out[dev] = await ev(page, () => { const p = document.querySelector('.panel--open'); const d = document.querySelector('.gallery .scene-card__desc'); return { panelW: p ? Math.round(p.getBoundingClientRect().width) : null, descPx: d ? parseFloat(getComputedStyle(d).fontSize) : null, rootPx: parseFloat(getComputedStyle(document.documentElement).fontSize) } })
+    if (dev === 'pc') out.shot = await shot(page, 'V49_pc')
+    await ctx.close()
+  }
+  // iPhone は前の値（パネル幅 370px・説明 10.88px・基準 16px）から変えない
+  return { pass: !!(out.pc.panelW > 480 && out.pc.descPx >= 13 && out.iphone.panelW === 370 && Math.abs(out.iphone.descPx - 10.88) < 0.05 && out.iphone.rootPx === 16), ...out }
+})
+def('g2', 'V56', async () => {
+  const pub = SCENES.filter((s) => s.status === 'ready' && s.public !== false).map((s) => s.id)
+  const blobAt = (rev, p) => { try { return execSync(`git rev-parse ${rev}:${p}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() } catch { return null } }
+  const rows = pub.map((id) => { const f = `public/thumbs/${id}.jpg`; if (!fs.existsSync(f)) return { id, exists: false }; const now = execSync(`git hash-object "${f}"`).toString().trim(); const old = blobAt('0676315', f); return { id, exists: true, kb: Math.round(fs.statSync(f).size / 1024), changed: now !== old } })
+  const { page } = await open('iphone')
+  await gateStart(page); await apply(page, 'kitaterao-window-3d', 5000)
+  await openGallery(page)
+  const sh = await shot(page, 'V56_iphone')
+  return { pass: rows.every((r) => r.exists && r.changed), scenes: rows, shot: sh }
 })
 
 // ── 実行 ─────────────────────────────────────────────────────────────
