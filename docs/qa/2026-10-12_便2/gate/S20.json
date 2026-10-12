@@ -3,7 +3,7 @@
  "start": 1,
  "adaptBeforeStall": {
   "scale": 1,
-  "ema": 33.4,
+  "ema": 33.3,
   "cooldown": 0
  },
  "afterOneStall": 1,
@@ -11,8 +11,8 @@
  "after25s": 1,
  "veryHeavy": 0.9,
  "id": "S20",
- "ms": 51059,
- "at": "2026-10-12T21:19:47.434Z",
+ "ms": 50829,
+ "at": "2026-10-12T22:16:57.695Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

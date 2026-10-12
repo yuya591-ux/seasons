@@ -6,8 +6,8 @@
  "afterSleep": "なし",
  "errs": [],
  "id": "D8",
- "ms": 19301,
- "at": "2026-10-12T20:52:26.804Z",
+ "ms": 19210,
+ "at": "2026-10-12T21:50:49.501Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

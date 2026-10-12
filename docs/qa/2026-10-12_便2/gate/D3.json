@@ -5,18 +5,18 @@
   "fly": 1,
   "walk": 1,
   "flyCap": 1,
-  "walkCalls": 1991
+  "walkCalls": 1990
  },
  "iphone": {
   "window": 1.6,
   "fly": 1.2,
   "walk": 1.6,
   "flyCap": 1.2,
-  "walkCalls": 558
+  "walkCalls": 578
  },
  "id": "D3",
- "ms": 60272,
- "at": "2026-10-12T21:14:58.430Z",
+ "ms": 58753,
+ "at": "2026-10-12T22:12:27.844Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

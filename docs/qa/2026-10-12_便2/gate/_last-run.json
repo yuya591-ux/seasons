@@ -1,5 +1,5 @@
 {
- "at": "2026-10-12T21:25:59.511Z",
+ "at": "2026-10-12T22:22:42.248Z",
  "ids": [
   "D7",
   "S2",
@@ -87,10 +87,10 @@
   "D5": true,
   "V28": null,
   "D6": true,
-  "V10": false,
+  "V10": true,
   "V14": true,
   "V27": true,
-  "V33": false,
+  "V33": true,
   "V36": true,
   "V38": true,
   "S24": true,
@@ -114,7 +114,7 @@
   "V3": true,
   "K5": true
  },
- "pass": 51,
+ "pass": 53,
  "total": 54,
  "kiroku": 1
 }

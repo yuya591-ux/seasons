@@ -438,6 +438,9 @@ def('g2', 'V54', async () => {
   await page.mouse.move(200, 500); await wait(400)
   // 主ボタンは画面の側が町の3Dの情景を受け取ってから出る。読み込みが遅い時は7秒では出ていないので、見えるまで最大30秒待つ（便2 の全テストで、出る前に測って比 1.1 になった回があった）
   await page.waitForSelector('.iconbtn--stage', { state: 'visible', timeout: 30000 }).catch(() => {})
+  // 上の帯は無操作で消え、触ると1.2秒かけて現れる。現れきる（不透明度1）まで待ってから測る（便2 の全テストで、現れる途中の半透明のボタンを測って比 3.51 になった）
+  await page.mouse.move(210, 520)
+  await page.waitForFunction(() => { const t = document.querySelector('.topbar'); return !document.body.classList.contains('idle') && (!t || getComputedStyle(t).opacity === '1') }, null, { timeout: 8000 }).catch(() => {})
   const r = await rectOf(page, '.iconbtn--stage')
   if (!r || !r.w) return { pass: false, why: '主ボタンが見えない', rect: r }
   const dpr = DEVICES.iphone.deviceScaleFactor

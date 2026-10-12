@@ -1,28 +1,30 @@
 {
- "pass": false,
+ "pass": true,
  "pc": {
   "sun": {
-   "n": 183,
-   "cy": 483
+   "n": 186,
+   "cy": 483,
+   "top": 436
   },
   "barY": 518,
   "need": 62,
-  "gap": 35
+  "gap": 82
  },
  "pc_shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V33_pc_後.png",
  "iphone": {
   "sun": {
-   "n": 151,
-   "cy": 1160
+   "n": 136,
+   "cy": 1174,
+   "top": 1033
   },
   "barY": 1259,
   "need": 149,
-  "gap": 99
+  "gap": 226
  },
  "iphone_shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V33_iphone_後.png",
  "id": "V33",
- "ms": 24053,
- "at": "2026-10-12T21:06:55.770Z",
+ "ms": 23480,
+ "at": "2026-10-12T22:04:34.651Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

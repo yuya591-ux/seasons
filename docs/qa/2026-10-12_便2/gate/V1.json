@@ -33,8 +33,8 @@
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V1_iphone_後.png",
  "errs": [],
  "id": "V1",
- "ms": 25774,
- "at": "2026-10-12T21:21:21.464Z",
+ "ms": 23140,
+ "at": "2026-10-12T22:18:23.314Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

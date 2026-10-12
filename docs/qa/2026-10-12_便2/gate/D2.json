@@ -9,7 +9,7 @@
    "pr": 1,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0335,
+   "p75": 0.0334,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -22,7 +22,7 @@
    "pr": 1,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0954,
+   "p75": 0.084,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -39,7 +39,7 @@
    "pr": 1,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0389,
+   "p75": 0.0334,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -52,7 +52,7 @@
    "pr": 1,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0351,
+   "p75": 0.0334,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -69,7 +69,7 @@
    "pr": 1.25,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0335,
+   "p75": 0.0334,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -82,7 +82,7 @@
    "pr": 1.25,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0335,
+   "p75": 0.0334,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -99,7 +99,7 @@
    "pr": 1.25,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0335,
+   "p75": 0.0334,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -112,7 +112,7 @@
    "pr": 1.25,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0936,
+   "p75": 0.0829,
    "changes": 0,
    "failedCap": 0,
    "compiled": "async"
@@ -121,8 +121,8 @@
   "maxPr": 1.25
  },
  "id": "D2",
- "ms": 133537,
- "at": "2026-10-12T21:11:37.212Z",
+ "ms": 125420,
+ "at": "2026-10-12T22:09:12.796Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

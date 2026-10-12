@@ -8,7 +8,7 @@
   "ddt": 0.067,
   "heavy": 0,
   "light": 1,
-  "frames": 153,
+  "frames": 158,
   "composer": true
  },
  "after2d": {
@@ -17,8 +17,8 @@
  },
  "errs": [],
  "id": "D9",
- "ms": 24512,
- "at": "2026-10-12T20:54:26.802Z",
+ "ms": 22743,
+ "at": "2026-10-12T21:52:41.821Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

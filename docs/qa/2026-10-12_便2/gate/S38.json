@@ -1,12 +1,12 @@
 {
  "pass": true,
- "framesDuringThrow": 23,
+ "framesDuringThrow": 22,
  "composerJustAfter": false,
  "composerAfter7s": true,
  "errs": [],
  "id": "S38",
- "ms": 31507,
- "at": "2026-10-12T20:54:02.193Z",
+ "ms": 29611,
+ "at": "2026-10-12T21:52:19.032Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

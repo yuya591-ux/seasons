@@ -5,28 +5,21 @@
   "kitaterao-window-3d": {
    "blobs": 2,
    "sizes": [
-    4049,
-    756
+    4074,
+    751
    ],
    "errs": [],
    "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V28_pc_後.png"
   },
   "kitaterao-window-3d-sunset": {
-   "blobs": 6,
-   "sizes": [
-    169,
-    119,
-    113,
-    92,
-    76,
-    63
-   ],
+   "blobs": 0,
+   "sizes": [],
    "errs": []
   }
  },
  "id": "V28",
- "ms": 69552,
- "at": "2026-10-12T21:04:47.406Z",
+ "ms": 64125,
+ "at": "2026-10-12T22:02:30.582Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }

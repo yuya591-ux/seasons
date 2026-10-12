@@ -1,14 +1,14 @@
 {
  "pass": true,
  "brown": {
-  "frac": 0.0014,
+  "frac": 0.002,
   "counted": 345600
  },
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V27_pc_後.png",
  "errs": [],
  "id": "V27",
- "ms": 34591,
- "at": "2026-10-12T21:06:31.579Z",
+ "ms": 30593,
+ "at": "2026-10-12T22:04:11.068Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c2935c9"
+ "commit": "0929255"
 }
