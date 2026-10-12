@@ -51,6 +51,9 @@ async function open(dev = 'pc', { query = '?dev=1', init = null, base = BASE, ct
   return { ctx, page, errs }
 }
 // 入口の画面を押して始める。Playwright の click は入口がふわっと現れる間に時間切れになることがあるので、要素へ直に click を送り、消えるまで待つ
+// 起動の情景を、その検査の情景に固定する（「さっきの続き」として保存しておく）。起動の情景は時刻で替わる「いま」の情景なので、
+// 開発の口で情景を当てる検査は、朝と夜で結果が変わることがあった（主ボタンは画面の側が起動の情景で出し入れする・2D は前の情景から色が移る途中を測る）。便2 の全テストで V54・V33・V10 が朝だけ落ちた
+const pinStart = (id) => ({ fn: (sid) => { try { const k = 'seasons.state.v1'; const st = JSON.parse(localStorage.getItem(k) || '{}'); st.sceneId = sid; st.sceneAt = Date.now(); localStorage.setItem(k, JSON.stringify(st)) } catch { /* 無視 */ } }, arg: id })
 async function gateStart(page) {
   await page.waitForSelector('.gate', { timeout: 15000 }).catch(() => {})
   await page.evaluate(() => { const g = document.querySelector('.gate'); if (g) g.click() }).catch(() => {})
@@ -429,12 +432,14 @@ def('g2', 'V48', async () => {
   return { pass: ['pc', 'ipadL'].every((k) => out[k].dist !== null && out[k].dist <= 124 && out[k].hint.op > 0.3), ...out }
 })
 def('g2', 'V54', async () => {
-  const { page, errs } = await open('iphone')
+  const { page, errs } = await open('iphone', { init: pinStart('kitaterao-window-3d') })
   await gateStart(page); await apply(page, 'kitaterao-window-3d', 7000)
   await ev(page, () => { const h = document.querySelector('.lookhint'); if (h) h.remove() })
   await page.mouse.move(200, 500); await wait(400)
+  // 主ボタンは画面の側が町の3Dの情景を受け取ってから出る。読み込みが遅い時は7秒では出ていないので、見えるまで最大30秒待つ（便2 の全テストで、出る前に測って比 1.1 になった回があった）
+  await page.waitForSelector('.iconbtn--stage', { state: 'visible', timeout: 30000 }).catch(() => {})
   const r = await rectOf(page, '.iconbtn--stage')
-  if (!r) return { pass: false, why: '主ボタンが無い' }
+  if (!r || !r.w) return { pass: false, why: '主ボタンが見えない', rect: r }
   const dpr = DEVICES.iphone.deviceScaleFactor
   // ボタンの丸い端と上下の縁（後ろの天井が透ける所）を外し、字のある内側だけを測る
   const buf = await page.screenshot({ clip: { x: r.x + r.h / 2, y: r.y + 6, width: Math.max(4, r.w - r.h), height: Math.max(4, r.h - 12) } })
@@ -564,7 +569,7 @@ def('g3', 'D6', async () => {
   return { pass: !!(res && res.median <= 5), stripeTransitions: res, bg: info, shot: sh }
 })
 def('g3', 'V10', async () => {
-  const { page, errs } = await open('pc')
+  const { page, errs } = await open('pc', { init: pinStart('kitaterao-window-3d-snow') })
   await gateStart(page); await apply(page, 'kitaterao-window-3d-snow', 9000); await poke(page)
   // 所見は「空と雪の街の境目が無くなる」。窓の中（x720〜1200・y140〜290）の列ごとに、上から下へ8画素あけた明るさの差の最大（空→雪の丘の段）を取り、
   // 段がはっきり見える列（差12以上）の割合を出す。地平に白い光の塊がかかると、空も丘も白く塗られて段が消える
@@ -605,20 +610,21 @@ def('g3', 'V27', async () => {
 def('g3', 'V33', async () => {
   const out = {}
   for (const dev of ['pc', 'iphone']) {
-    const { ctx, page } = await open(dev)
+    const { ctx, page } = await open(dev, { init: pinStart('summer-dusk-seaside') })
     await gateStart(page)
     await page.addStyleTag({ content: '.ui, .topbar, .hud, .lookhint, .toast, .stagedots{display:none !important}' })
     await apply(page, 'summer-dusk-seaside', 5000)
     await ev(page, () => window.__renderer.pause('sleep')); await wait(400)
     const buf = await page.screenshot()
     const W = DEVICES[dev].viewport.width * (DEVICES[dev].deviceScaleFactor || 1), H = DEVICES[dev].viewport.height * (DEVICES[dev].deviceScaleFactor || 1)
-    // 夕日の円盤＝明るさ 240 以上の画素の重心（夕日の方角 sunScreenX=-0.05 のまわり、横 ±15% だけを見る）
+    // 夕日の円盤＝明るさ 240 以上の画素（夕日の方角 sunScreenX=-0.05 のまわり、横 ±15% だけを見る）。高さは上側20%点（top）で見る。
+    // 重心（cy）は止めた瞬間の海のきらめきで下へ引っぱられ、同じコードで 453〜494 とぶれた（便2 の全テスト）
     const asp = W / H, sx = Math.round((0.5 - 0.05 / asp) * W)
-    const sun = await measurePng(buf, `let n = 0, sy = 0; const x0 = Math.max(0, ${sx} - Math.round(w * 0.15)), x1 = Math.min(w, ${sx} + Math.round(w * 0.15))
-      for (let y = 0; y < h; y++) for (let x = x0; x < x1; x++) { const i = (y * w + x) * 4; if (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2] >= 240) { n++; sy += y } }
-      return { n, cy: n ? Math.round(sy / n) : null }`)
+    const sun = await measurePng(buf, `let n = 0, sy = 0; const ys = []; const x0 = Math.max(0, ${sx} - Math.round(w * 0.15)), x1 = Math.min(w, ${sx} + Math.round(w * 0.15))
+      for (let y = 0; y < h; y++) for (let x = x0; x < x1; x++) { const i = (y * w + x) * 4; if (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2] >= 240) { n++; sy += y; ys.push(y) } }
+      return { n, cy: n ? Math.round(sy / n) : null, top: n ? ys[Math.floor(n * 0.2)] : null }`)
     const barY = Math.round((1 - 0.52) * H), need = Math.round((0.046 + 0.011) * H)
-    out[dev] = { sun, barY, need, gap: sun.cy === null ? null : Math.abs(sun.cy - barY) }
+    out[dev] = { sun, barY, need, gap: sun.top === null || sun.top === undefined ? null : Math.abs(sun.top - barY) }
     out[dev + '_shot'] = await shot(page, `V33_${dev}`)
     await ctx.close()
   }

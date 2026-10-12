@@ -1,23 +1,22 @@
 {
- "pass": true,
- "boundaryVisibleCols": 1,
+ "pass": false,
+ "boundaryVisibleCols": 0.872,
  "stats": {
-  "mean": 218.2,
-  "std": 21,
-  "p1": 181,
-  "p99": 253,
+  "mean": 218.3,
+  "std": 16.9,
+  "p1": 182,
+  "p99": 245,
   "rgb": [
    219,
    218,
-   214
+   215
   ]
  },
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V10_pc_後.png",
  "errs": [],
  "id": "V10",
- "ms": 30295,
- "at": "2026-10-12T15:37:30.813Z",
+ "ms": 18154,
+ "at": "2026-10-12T21:05:28.322Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c33a11e",
- "note": "合否の線を 0.9 に直して当て直した（測った値は同じ）"
+ "commit": "c2935c9"
 }

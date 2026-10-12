@@ -26,33 +26,33 @@
    "pr": 1.24,
    "shadow": 2048,
    "bloom": false,
-   "p75": 0.0666,
+   "p75": 0.0701,
    "changes": 3,
    "failedCap": 1.3599999999999999,
    "compiled": "async"
   }
  },
  "oscillation": {
-  "changes": 2,
-  "minPr": 1.36,
+  "changes": 1,
+  "minPr": 1.48,
   "maxPr": 1.6,
   "after": {
    "q": "standard",
    "cap": 1.6,
    "floor": 0.96,
    "fly": 1.2,
-   "pr": 1.36,
+   "pr": 1.48,
    "shadow": 2048,
    "bloom": false,
    "p75": 0.0334,
-   "changes": 2,
-   "failedCap": 1.48,
+   "changes": 1,
+   "failedCap": 1.6,
    "compiled": "async"
   }
  },
  "id": "U1",
- "ms": 178110,
- "at": "2026-10-12T16:21:50.201Z",
+ "ms": 140851,
+ "at": "2026-10-12T21:13:58.108Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "1b8cc49"
+ "commit": "c2935c9"
 }

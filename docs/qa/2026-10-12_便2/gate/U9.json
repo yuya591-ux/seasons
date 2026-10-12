@@ -1,14 +1,14 @@
 {
  "pass": true,
  "stats": {
-  "mean": 43.1,
-  "std": 31.4,
-  "p1": 2,
-  "p99": 158,
+  "mean": 47.3,
+  "std": 36.7,
+  "p1": 6,
+  "p99": 191,
   "rgb": [
-   52,
-   41,
-   38
+   57,
+   45,
+   40
   ]
  },
  "p1Before": 16,
@@ -30,11 +30,11 @@
    "ShaderPass"
   ]
  },
- "shot": null,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/U9_pc_後.png",
  "errs": [],
  "id": "U9",
- "ms": 51856,
- "at": "2026-10-12T18:53:27.695Z",
+ "ms": 25784,
+ "at": "2026-10-12T21:20:55.617Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "6d6365e"
+ "commit": "c2935c9"
 }

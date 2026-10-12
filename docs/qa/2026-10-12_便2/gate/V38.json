@@ -2,15 +2,15 @@
  "pass": true,
  "summer-dusk-seaside": {
   "seams": 0,
-  "maxAbs": 0.97
+  "maxAbs": 0.7
  },
  "summer-morning-mountains": {
-  "seams": 1,
-  "maxAbs": 1.53
+  "seams": 0,
+  "maxAbs": 1.45
  },
  "id": "V38",
- "ms": 41499,
- "at": "2026-10-12T15:33:13.383Z",
+ "ms": 21153,
+ "at": "2026-10-12T21:07:27.881Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "c33a11e"
+ "commit": "c2935c9"
 }

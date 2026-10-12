@@ -27,8 +27,8 @@
  "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V47_iphone_後.png",
  "errs": [],
  "id": "V47",
- "ms": 78249,
- "at": "2026-10-12T14:46:28.088Z",
+ "ms": 30462,
+ "at": "2026-10-12T20:59:54.350Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "23813f6"
+ "commit": "c2935c9"
 }

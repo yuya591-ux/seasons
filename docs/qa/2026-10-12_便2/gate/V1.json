@@ -30,11 +30,11 @@
   ]
  },
  "stdBefore": 30.3,
- "shot": null,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V1_iphone_後.png",
  "errs": [],
  "id": "V1",
- "ms": 51345,
- "at": "2026-10-12T18:54:19.278Z",
+ "ms": 25774,
+ "at": "2026-10-12T21:21:21.464Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "6d6365e"
+ "commit": "c2935c9"
 }

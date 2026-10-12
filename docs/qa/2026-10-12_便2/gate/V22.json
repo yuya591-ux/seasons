@@ -6,18 +6,18 @@
   230
  ],
  "flySkyRgb": [
-  203,
-  204,
-  192
+  213,
+  215,
+  205
  ],
  "windowTint": 0,
- "flyTint": -11,
+ "flyTint": -8,
  "flyTintBefore": -20,
- "shot": null,
+ "shot": "docs/確認用スクショ/seasons/2026-10-12_便2/V22_pc_後.png",
  "errs": [],
  "id": "V22",
- "ms": 71663,
- "at": "2026-10-12T18:55:31.097Z",
+ "ms": 33665,
+ "at": "2026-10-12T21:24:01.631Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "6d6365e"
+ "commit": "c2935c9"
 }

@@ -3,12 +3,13 @@
  "info": {
   "key": "bg/autumn-rain-dusk.jpg",
   "texKey": "bg/autumn-rain-dusk.jpg",
-  "ready": 1
+  "ready": 1,
+  "aspect": 0.571
  },
  "errs": [],
  "id": "S53",
- "ms": 17737,
- "at": "2026-10-12T13:45:51.181Z",
+ "ms": 10222,
+ "at": "2026-10-12T20:53:30.598Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0676315"
+ "commit": "c2935c9"
 }

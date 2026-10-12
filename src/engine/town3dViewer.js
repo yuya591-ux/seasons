@@ -466,7 +466,7 @@ export async function mountTown3d(parent, opts = {}) {
   // 色の圧縮をフィルム風（Neutral）に＝黒が締まり、夕焼けや灯りに深みが出る（#1 の答え＝案2・案の画と同じ露出×1.15。U9・V2）。
   // 以前は NoToneMapping で、ここの露出（夜 1.25）は効いていなかった＝夜を急に明るくしないよう露出は全情景で 1.15 にそろえる
   renderer.toneMapping = THREE.NeutralToneMapping
-  renderer.toneMappingExposure = 1.15
+  renderer.toneMappingExposure = weather === 'snow' ? 1.0 : 1.15 // 雪の日は 1.0＝白い空と雪の丘が同じ白に寄って境が消えるのを防ぐ（V10・全テストで境の見え方が 0.87 に下がった）
   // 別世界感の演出の基準値＋時代ごとの空気の色（江戸=金茶／戦国=青墨）。飛行時に近さで混ぜる。
   const baseFogCol = scene.fog.color.clone(), baseExposure = renderer.toneMappingExposure
   const EDO_FOGC = new THREE.Color(isNight ? 0x5a4c34 : 0xc6a064), SEN_FOGC = new THREE.Color(isNight ? 0x2a323e : 0x707075), TAISHO_FOGC = new THREE.Color(isNight ? 0x4a3640 : 0xc69270), TMP_FOGC = new THREE.Color() // 江戸=金茶/戦国=昼は中立の霧灰(青みを抜き水っぽさ解消)・夜は青墨/大正=暖かなセピア(淡すぎると昼が乳白ピンクに白む＝一段落とす・評価3)

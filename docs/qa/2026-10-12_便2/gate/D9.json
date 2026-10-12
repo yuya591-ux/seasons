@@ -5,10 +5,10 @@
   "tris": 1,
   "objs": 12610,
   "pr": 1,
-  "ddt": 0.066,
+  "ddt": 0.067,
   "heavy": 0,
-  "light": 3,
-  "frames": 151,
+  "light": 1,
+  "frames": 153,
   "composer": true
  },
  "after2d": {
@@ -17,8 +17,8 @@
  },
  "errs": [],
  "id": "D9",
- "ms": 30998,
- "at": "2026-10-12T19:44:13.813Z",
+ "ms": 24512,
+ "at": "2026-10-12T20:54:26.802Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "dff97b0"
+ "commit": "c2935c9"
 }

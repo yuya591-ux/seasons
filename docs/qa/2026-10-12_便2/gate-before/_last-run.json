@@ -1,14 +1,16 @@
 {
- "at": "2026-10-12T20:48:24.399Z",
+ "at": "2026-10-12T21:37:25.967Z",
  "ids": [
-  "V54",
-  "S25"
+  "V33",
+  "V10",
+  "V54"
  ],
  "summary": {
-  "V54": false,
-  "S25": false
+  "V33": false,
+  "V10": true,
+  "V54": false
  },
- "pass": 0,
- "total": 2,
+ "pass": 1,
+ "total": 3,
  "kiroku": 0
 }

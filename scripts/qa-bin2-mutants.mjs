@@ -153,4 +153,6 @@ export const MUTANTS = [
     edits: [{ file: 'src/main.js', find: '    if (!rebuild) recordVisit(next.id)', to: '    recordVisit(next.id)' }] },
   { group: 'g1', name: 'D9-statsVars', what: '測りの口が群4 で消した変数（adQLow・adQOk）を読む形へ戻す', checks: ['D9', 'S38'],
     edits: [{ file: 'src/engine/town3dViewer.js', find: 'heavy: adHeavy, light: adLight, frames: drawCount', to: 'low: adQLow, ok: adQOk, frames: drawCount' }] },
+  { group: 'g3', name: 'V10-snowExposure', what: '雪の日の露出を 1.15（ほかの情景と同じ）へ戻す', checks: ['V10'],
+    edits: [{ file: 'src/engine/town3dViewer.js', find: "  renderer.toneMappingExposure = weather === 'snow' ? 1.0 : 1.15", to: '  renderer.toneMappingExposure = 1.15' }] },
 ]

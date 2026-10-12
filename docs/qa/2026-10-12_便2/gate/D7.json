@@ -10,9 +10,10 @@
   "flyWind": 0,
   "cache": [
    "audio/summer-rain-dusk/rain.mp3",
-   "audio/summer-rain-dusk/thunder.mp3",
-   "audio/winter-snow-night/wind.mp3",
-   "audio/summer-rain-dusk/higurashi.mp3"
+   "audio/spring-dusk-corner-room/frogs.mp3",
+   "audio/shishigaya-morning-yato/uguisu.mp3",
+   "audio/summer-rain-dusk/higurashi.mp3",
+   "audio/summer-rain-dusk/thunder.mp3"
   ],
   "timers": 3,
   "timersFired": 0,
@@ -28,16 +29,16 @@
   "loops": [
    0.0003,
    0.0028,
-   0.001
+   0.0011
   ],
   "duskShelf": -5,
-  "flyWind": 0.32269987661997873,
+  "flyWind": 0.5462488370885652,
   "cache": [
    "audio/summer-rain-dusk/rain.mp3",
-   "audio/summer-rain-dusk/thunder.mp3",
-   "audio/winter-snow-night/wind.mp3",
    "audio/summer-rain-dusk/higurashi.mp3",
-   "audio/kitaterao-window-3d-night/suzumushi.mp3"
+   "audio/summer-rain-dusk/thunder.mp3",
+   "audio/kitaterao-window-3d-night/suzumushi.mp3",
+   "audio/winter-snow-night/wind.mp3"
   ],
   "timers": 3,
   "timersFired": 1,
@@ -58,10 +59,10 @@
   "flyWind": 0,
   "cache": [
    "audio/summer-rain-dusk/rain.mp3",
-   "audio/summer-rain-dusk/thunder.mp3",
-   "audio/winter-snow-night/wind.mp3",
    "audio/summer-rain-dusk/higurashi.mp3",
-   "audio/kitaterao-window-3d-night/suzumushi.mp3"
+   "audio/summer-rain-dusk/thunder.mp3",
+   "audio/kitaterao-window-3d-night/suzumushi.mp3",
+   "audio/winter-snow-night/wind.mp3"
   ],
   "timers": 3,
   "timersFired": 1,
@@ -75,8 +76,8 @@
  "loopRatio": 1,
  "errs": [],
  "id": "D7",
- "ms": 71416,
- "at": "2026-10-12T13:40:00.431Z",
+ "ms": 47158,
+ "at": "2026-10-12T20:50:46.867Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "0676315"
+ "commit": "c2935c9"
 }

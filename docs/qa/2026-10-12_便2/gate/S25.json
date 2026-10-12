@@ -4,8 +4,8 @@
   "standard": {
    "rngEnd": 180856,
    "fest": 0,
-   "calls": 3116,
-   "tris": 900133,
+   "calls": 3114,
+   "tris": 900041,
    "attr": {
     "trees": 148,
     "clouds": 42,
@@ -47,8 +47,8 @@
   }
  },
  "id": "S25",
- "ms": 143205,
- "at": "2026-10-12T20:09:08.462Z",
+ "ms": 124971,
+ "at": "2026-10-12T21:18:04.122Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "dff97b0"
+ "commit": "c2935c9"
 }

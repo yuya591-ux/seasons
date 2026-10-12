@@ -20,31 +20,31 @@
  },
  "after": {
   "window": {
-   "calls": 1898,
-   "px": 768042,
+   "calls": 1889,
+   "px": 898914,
    "passes": 3
   },
   "sunset": {
-   "calls": 2613,
+   "calls": 2606,
    "px": 898914,
    "passes": 4
   },
   "fly": {
-   "calls": 1449,
+   "calls": 1645,
    "px": 505136,
    "passes": 3
   },
   "walk": {
-   "calls": 723,
-   "px": 409262,
+   "calls": 721,
+   "px": 898914,
    "passes": 3
   }
  },
  "blendLayers": 0,
  "errs": [],
  "id": "K5",
- "ms": 158459,
- "at": "2026-10-12T17:23:00.822Z",
+ "ms": 71440,
+ "at": "2026-10-12T21:25:58.570Z",
  "base": "http://localhost:4960/seasons/",
- "commit": "e0e21fb"
+ "commit": "c2935c9"
 }
