@@ -1,9 +1,9 @@
 {
  "pass": false,
  "contrast": {
-  "text": 0.7921,
-  "bg": 0.3825,
-  "ratio": 1.95
+  "text": 0.931,
+  "bg": 0.293,
+  "ratio": 2.86
  },
  "rect": {
   "x": 67.921875,
@@ -20,8 +20,8 @@
  "shot": null,
  "errs": [],
  "id": "V54",
- "ms": 39103,
- "at": "2026-10-12T21:43:24.447Z",
+ "ms": 27032,
+ "at": "2026-10-12T22:25:16.514Z",
  "base": "http://localhost:4958/seasons/",
- "commit": "e6f0bcd"
+ "commit": "bdb715f"
 }

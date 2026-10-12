@@ -1447,6 +1447,26 @@
      "restored": true
     }
    ]
+  },
+  {
+   "at": "2026-10-12T22:25:16.980Z",
+   "commit": "bdb715f",
+   "results": [
+    {
+     "name": "V54-stageBg",
+     "group": "g2",
+     "what": "主ボタンの地を前の淡い茶へ戻す",
+     "checks": [
+      "V54"
+     ],
+     "caught": true,
+     "failed": [
+      "V54 不合格 (27.0秒)"
+     ],
+     "bad": null,
+     "restored": true
+    }
+   ]
   }
  ]
 }
