@@ -10,20 +10,21 @@
    200,
    250
   ],
-  "detail": 1.319,
-  "nd": 1.123,
-  "bd": 3.071,
-  "detailBefore": 1.225,
-  "ndBefore": 0.952,
-  "bdBefore": 2.427,
+  "pr": 1,
+  "detail": 1.304,
+  "nd": 1.111,
+  "bd": 3.057,
+  "detailBefore": 1.228,
+  "ndBefore": 0.955,
+  "bdBefore": 2.391,
   "diffBefore": {
-   "mean": 15.22,
-   "over8": 0.322
+   "mean": 15.13,
+   "over8": 0.324
   }
  },
  "errs": [],
  "id": "T3",
- "ms": 97826,
- "at": "2026-10-13T19:07:41.027Z",
- "commit": "b53f691"
+ "ms": 102674,
+ "at": "2026-10-13T21:08:36.813Z",
+ "commit": "8f2b39d"
 }

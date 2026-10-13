@@ -12,15 +12,16 @@
    900,
    360
   ],
-  "detail": 1.114,
-  "nd": 1.386,
-  "bd": 1.874,
-  "detailBefore": 0.889,
-  "ndBefore": 1.267,
-  "bdBefore": 1.289,
+  "pr": 1,
+  "detail": 1.106,
+  "nd": 1.288,
+  "bd": 2.072,
+  "detailBefore": 1.011,
+  "ndBefore": 1.498,
+  "bdBefore": 1.811,
   "diffBefore": {
-   "mean": 17.98,
-   "over8": 0.286
+   "mean": 26.2,
+   "over8": 0.43
   }
  },
  "near": {
@@ -30,22 +31,23 @@
    370,
    230
   ],
-  "detail": 2.35,
-  "nd": 2.599,
-  "bd": 5.108,
-  "detailBefore": 1.752,
-  "ndBefore": 1.883,
-  "bdBefore": 3.876,
+  "pr": 1,
+  "detail": 2.283,
+  "nd": 2.555,
+  "bd": 5.034,
+  "detailBefore": 1.81,
+  "ndBefore": 1.939,
+  "bdBefore": 3.911,
   "diffBefore": {
-   "mean": 13.58,
-   "over8": 0.49
+   "mean": 19.92,
+   "over8": 0.684
   }
  },
  "matOk": true,
  "imgOk": true,
  "errs": [],
  "id": "T2",
- "ms": 184369,
- "at": "2026-10-13T19:06:03.145Z",
- "commit": "b53f691"
+ "ms": 182578,
+ "at": "2026-10-13T21:15:42.362Z",
+ "commit": "8f2b39d"
 }

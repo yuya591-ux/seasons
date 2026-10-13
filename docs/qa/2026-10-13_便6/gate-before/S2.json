@@ -1,20 +1,25 @@
 {
  "pass": false,
  "crop": [
-  160,
-  860,
-  200,
-  140
+  400,
+  820,
+  140,
+  120
  ],
- "detail": 1.281,
- "detailBefore": 1.281,
+ "pr": 1,
+ "detail": 1.978,
+ "nd": 4.672,
+ "bd": 10.374,
+ "detailBefore": 1.978,
+ "ndBefore": 4.672,
+ "bdBefore": 10.374,
  "diffBefore": {
   "mean": 0,
   "over8": 0
  },
  "errs": [],
  "id": "S2",
- "ms": 1422,
- "at": "2026-10-13T14:18:20.591Z",
- "commit": "638da84"
+ "ms": 2937,
+ "at": "2026-10-13T20:56:20.142Z",
+ "commit": "8f2b39d"
 }

@@ -6,19 +6,20 @@
   150,
   45
  ],
- "detail": 1.251,
- "nd": 1.343,
- "bd": 1.999,
- "detailBefore": 0.939,
- "ndBefore": 0.92,
- "bdBefore": 1.301,
+ "pr": 1,
+ "detail": 1.261,
+ "nd": 1.36,
+ "bd": 2.025,
+ "detailBefore": 0.989,
+ "ndBefore": 1.065,
+ "bdBefore": 1.51,
  "diffBefore": {
-  "mean": 11.55,
-  "over8": 0.321
+  "mean": 2.86,
+  "over8": 0.036
  },
  "errs": [],
  "id": "S3",
- "ms": 164543,
- "at": "2026-10-13T19:10:32.690Z",
- "commit": "b53f691"
+ "ms": 193631,
+ "at": "2026-10-13T21:11:59.625Z",
+ "commit": "8f2b39d"
 }

@@ -10,8 +10,13 @@
    200,
    250
   ],
-  "detail": 1.225,
-  "detailBefore": 1.225,
+  "pr": 1,
+  "detail": 1.228,
+  "nd": 0.955,
+  "bd": 2.391,
+  "detailBefore": 1.228,
+  "ndBefore": 0.955,
+  "bdBefore": 2.391,
   "diffBefore": {
    "mean": 0,
    "over8": 0
@@ -19,7 +24,7 @@
  },
  "errs": [],
  "id": "T3",
- "ms": 89338,
- "at": "2026-10-13T14:18:17.580Z",
- "commit": "638da84"
+ "ms": 93989,
+ "at": "2026-10-13T20:56:13.793Z",
+ "commit": "8f2b39d"
 }

@@ -2,6 +2,7 @@
  "pass": false,
  "mapN": 0,
  "alphaN": 0,
+ "nearN": 63,
  "cardTris": 0,
  "n": 200,
  "walkTree": {
@@ -11,8 +12,13 @@
    900,
    360
   ],
-  "detail": 0.821,
-  "detailBefore": 0.821,
+  "pr": 1,
+  "detail": 1.011,
+  "nd": 1.498,
+  "bd": 1.811,
+  "detailBefore": 1.011,
+  "ndBefore": 1.498,
+  "bdBefore": 1.811,
   "diffBefore": {
    "mean": 0,
    "over8": 0
@@ -25,8 +31,13 @@
    370,
    230
   ],
-  "detail": 1.768,
-  "detailBefore": 1.768,
+  "pr": 1,
+  "detail": 1.81,
+  "nd": 1.939,
+  "bd": 3.911,
+  "detailBefore": 1.81,
+  "ndBefore": 1.939,
+  "bdBefore": 3.911,
   "diffBefore": {
    "mean": 0,
    "over8": 0
@@ -36,7 +47,7 @@
  "imgOk": false,
  "errs": [],
  "id": "T2",
- "ms": 181830,
- "at": "2026-10-13T14:54:30.614Z",
- "commit": "638da84"
+ "ms": 200253,
+ "at": "2026-10-13T20:54:39.729Z",
+ "commit": "8f2b39d"
 }

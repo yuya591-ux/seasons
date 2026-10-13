@@ -6,15 +6,20 @@
   460,
   380
  ],
- "detail": 1.365,
- "detailBefore": 1.365,
+ "pr": 1,
+ "detail": 1.401,
+ "nd": 1.837,
+ "bd": 2.572,
+ "detailBefore": 1.401,
+ "ndBefore": 1.837,
+ "bdBefore": 2.572,
  "diffBefore": {
   "mean": 0,
   "over8": 0
  },
  "errs": [],
  "id": "S1",
- "ms": 1271,
- "at": "2026-10-13T14:18:18.965Z",
- "commit": "638da84"
+ "ms": 3306,
+ "at": "2026-10-13T20:56:17.150Z",
+ "commit": "8f2b39d"
 }
