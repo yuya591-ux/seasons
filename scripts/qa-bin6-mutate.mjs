@@ -10,6 +10,7 @@ const M = [
   { name: 'G0-rngGuard（守りの確かめ: 木の揺れの R() を1つ減らす）', check: 'G0', file: V, from: 'g.userData = { ph: R() * 6.28, amp: 0.02 + R() * 0.02, tilt }', to: 'g.userData = { ph: R() * 6.28, amp: 0.03, tilt }' },
   { name: 'T1-species（樹種を丸い広葉樹だけに）', check: 'T1', file: T, from: "return pink ? 'kasa' : h < 0.24 ? 'sugi' : h < 0.5 ? 'kasa' : 'maru' }", to: "return 'maru' }" },
   { name: 'T1-tint（木ごとの色の振れを外す）', check: 'T1', file: T, from: 'export function crownTint(x, z, sp) {', to: 'export function crownTint(x, z, sp) { return [1, 1, 1]' },
+  { name: 'T1-autumn（紅葉を桜と取り違える前の判じ方に戻す）', check: 'T1', file: V, from: 'baseM.color.r > baseM.color.g * 1.08 && baseM.color.b > baseM.color.g)', to: 'baseM.color.r > baseM.color.g * 1.08)' },
   { name: 'T2-atlas（葉の画を外す）', check: 'T2', file: V, from: 'map: leafAtlas, alphaTest', to: 'map: null, alphaTest' },
   { name: 'T2-cards（縁の葉の板を外す）', check: 'T2', file: V, from: 'const leafCards = !LIGHT', to: 'const leafCards = false' },
   { name: 'T3-plant（細長い葉の株を部屋に置かない）', check: 'T3', file: V, from: 'plant.renderOrder = 2; winRoom.add(plant) }', to: 'plant.renderOrder = 2 }' },

@@ -1,23 +1,5 @@
 [
  {
-  "name": "T1-species（樹種を丸い広葉樹だけに）",
-  "check": "T1",
-  "caught": true,
-  "out": "T1 不合格 (166.3秒) / 検査の終わり: 0/1 合格"
- },
- {
-  "name": "T2-atlas（葉の画を外す）",
-  "check": "T2",
-  "caught": true,
-  "out": "T2 不合格 (176.3秒) / 検査の終わり: 0/1 合格"
- },
- {
-  "name": "T2-cards（縁の葉の板を外す）",
-  "check": "T2",
-  "caught": true,
-  "out": "T2 不合格 (175.6秒) / 検査の終わり: 0/1 合格"
- },
- {
   "name": "T3-plant（細長い葉の株を部屋に置かない）",
   "check": "T3",
   "caught": true,
@@ -28,12 +10,6 @@
   "check": "S1",
   "caught": true,
   "out": "S1 不合格 (70.8秒) / 検査の終わり: 0/1 合格"
- },
- {
-  "name": "S2-wall（壁の模様を外す）",
-  "check": "S2",
-  "caught": true,
-  "out": "S2 不合格 (73.6秒) / 検査の終わり: 0/1 合格"
  },
  {
   "name": "S3-ground（地面の模様を外す）",
@@ -48,12 +24,6 @@
   "out": "G0 不合格 (109.9秒) / 検査の終わり: 0/1 合格"
  },
  {
-  "name": "T1-tint（木ごとの色の振れを外す）",
-  "check": "T1",
-  "caught": true,
-  "out": "T1 不合格 (166.5秒) / 検査の終わり: 0/1 合格"
- },
- {
   "name": "S4-road（通りの模様を外す）",
   "check": "S4",
   "caught": true,
@@ -64,5 +34,35 @@
   "check": "FL",
   "caught": false,
   "out": "FL 合格 (57.6秒) / 検査の終わり: 1/1 合格"
+ },
+ {
+  "name": "T1-species（樹種を丸い広葉樹だけに）",
+  "check": "T1",
+  "caught": true,
+  "out": "T1 不合格 (254.5秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "T1-tint（木ごとの色の振れを外す）",
+  "check": "T1",
+  "caught": true,
+  "out": "T1 不合格 (252.5秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "T2-atlas（葉の画を外す）",
+  "check": "T2",
+  "caught": true,
+  "out": "T2 不合格 (179.3秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "T2-cards（縁の葉の板を外す）",
+  "check": "T2",
+  "caught": true,
+  "out": "T2 不合格 (176.8秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "S2-wall（壁の模様を外す）",
+  "check": "S2",
+  "caught": true,
+  "out": "S2 不合格 (70.4秒) / 検査の終わり: 0/1 合格"
  }
 ]
