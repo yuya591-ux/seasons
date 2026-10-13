@@ -384,7 +384,8 @@ def('K5', async () => {
   return { pass: ['window', 'sunset', 'fly', 'walk'].every(ok) && errs.length === 0, before: b && b.after, after: Object.fromEntries(Object.entries(after).map(([k, v]) => [k, keep(v)])), errs }
 })
 
-// KT iPhone の幅の窓辺の描画の時間: 前のコード（BASE_BEFORE）と後のコードを交互に3回ずつ開いて、60こまの中央値を3回ずつ測り、後の中央値が前の中央値の1.05倍以下。
+// KT iPhone の幅の窓辺の描画の時間（記録だけ・判定は KG）: 前のコード（BASE_BEFORE）と後のコードを交互に3回ずつ開いて、60こまの中央値を3回ずつ測る。
+//   描画の呼び出しから GPU の終わりを待つまでの時間で、ほかの処理と GPU を取り合う時間帯には待ちが入り、前と後の差が 1.044〜1.183倍に振れた。GPU の時計（KG）では窓辺 0.996倍（便6 の決めたこと）
 //   交互に測るのは、同じコードでも開く回ごとに時間が 7% ほどぶれるため（便6 の決めたこと）
 def('KT', async () => {
   const one = async (base) => { const { page, ctx, errs } = await open('iphone', 'kitaterao-window-3d', { win: false, base }); await wait(2000); const a = []; for (let i = 0; i < 3; i++) { const r = await page.evaluate(() => window.__b6.measureNow(60)); if (r.ms != null) a.push(r.ms); await wait(500) } await ctx.close(); a.sort((x, y) => x - y); return { ms: a.length ? a[1] : null, all: a, errs } }
@@ -392,7 +393,31 @@ def('KT', async () => {
   for (let k = 0; k < 3; k++) { pre.push(await one(BASE_BEFORE)); now.push(await one(BASE)) }
   const med = (xs) => { const v = xs.map((x) => x.ms).filter((x) => x != null).sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : null }
   const mb = med(pre), ma = med(now)
-  return { pass: mb != null && ma != null && ma <= mb * 1.05 && now.every((x) => x.errs.length === 0), before: mb, after: ma, ratio: mb && ma ? +(ma / mb).toFixed(3) : null, beforeRuns: pre.map((x) => x.all), afterRuns: now.map((x) => x.all) }
+  return { pass: mb != null && ma != null && now.every((x) => x.errs.length === 0), recordOnly: true, within105: mb != null && ma != null && ma <= mb * 1.05, before: mb, after: ma, ratio: mb && ma ? +(ma / mb).toFixed(3) : null, beforeRuns: pre.map((x) => x.all), afterRuns: now.map((x) => x.all) }
+})
+
+// KG iPhone の幅の窓辺の GPU の時間（GPU の時計 EXT_disjoint_timer_query_webgl2 で、描画1回に GPU が使った時間）。前のコードと後のコードを交互に5回ずつ開き、60こまの中央値。
+//   CPU の待ちに隠れない GPU の重さを見る（KT は描画の呼び出しから GPU の終わりまでの時間で、機械が空いている時は CPU に隠れて差が小さく、GPU を取り合う時だけ差が出た・便6）。
+//   窓辺に加えて、近くの木（葉の板つき）が多く写る低空飛行の眺めの GPU の時間も測り、どちらも前の1.05倍以下を線にする
+def('KG', async () => {
+  const one = async (base) => {
+    const { page, ctx, errs } = await open('iphone', 'kitaterao-window-3d', { win: false, base }); await wait(2000)
+    const gpu = () => page.evaluate(async () => {
+      const { renderer, composer } = window.__shGet(); const gl = renderer.getContext(); const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2'); if (!ext) return { ok: false }
+      const orig = composer.render.bind(composer)
+      const run = async () => { const ts = []; for (let i = 0; i < 60; i++) { await new Promise((res) => requestAnimationFrame(res)); const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); orig(); gl.endQuery(ext.TIME_ELAPSED_EXT); await new Promise((res) => { const t = () => { if (gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)) res(); else setTimeout(t, 2) }; t() }); if (!gl.getParameter(ext.GPU_DISJOINT_EXT)) ts.push(gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6); gl.deleteQuery(q) } ts.sort((a, b) => a - b); return +ts[Math.floor(ts.length / 2)].toFixed(3) }
+      return { ok: true, ms: await run() }
+    })
+    const win = await gpu()
+    await placeCam(page, CAM.flylow, 5000)
+    const fly = await gpu()
+    await ctx.close(); return { ok: win.ok && fly.ok, all: win.ms, fly: fly.ms, errs }
+  }
+  const pre = [], now = []
+  for (let k = 0; k < 5; k++) { pre.push(await one(BASE_BEFORE)); now.push(await one(BASE)) } // 5回ずつ（3回ずつでは開くたびのぶれ 15〜18ms で、中央値が 0.996倍と 1.059倍に振れた・便6）
+  const med = (xs, key = 'all') => { const v = xs.map((x) => x[key]).filter((x) => x != null).sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : null }
+  const mb = med(pre), ma = med(now), fb = med(pre, 'fly'), fa = med(now, 'fly')
+  return { pass: mb != null && ma != null && fb != null && fa != null && ma <= mb * 1.05 && fa <= fb * 1.05 && now.every((x) => x.errs.length === 0), before: mb, after: ma, ratio: mb && ma ? +(ma / mb).toFixed(3) : null, flyBefore: fb, flyAfter: fa, flyRatio: fb && fa ? +(fa / fb).toFixed(3) : null, beforeRuns: pre, afterRuns: now }
 })
 
 // ── 実行 ─────────────────────────────────────────────────────────────

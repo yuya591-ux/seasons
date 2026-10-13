@@ -1,7 +1,7 @@
 {
  "pass": true,
  "kitaterao-window-3d-snow_pc": {
-  "mean": 143.1,
+  "mean": 142.5,
   "white": 0.001,
   "before": {
    "mean": 143.6,
@@ -11,7 +11,7 @@
   "errs": []
  },
  "kitaterao-window-3d-night_pc": {
-  "mean": 42.8,
+  "mean": 42.4,
   "white": 0,
   "before": {
    "mean": 42.7,
@@ -21,7 +21,7 @@
   "errs": []
  },
  "kitaterao-window-3d-sunset_pc": {
-  "mean": 143.7,
+  "mean": 143.5,
   "white": 0.001,
   "before": {
    "mean": 142.9,
@@ -31,7 +31,7 @@
   "errs": []
  },
  "kitaterao-window-3d-sunset_iphone": {
-  "mean": 129.9,
+  "mean": 130.1,
   "white": 0.005,
   "before": {
    "mean": 129,
@@ -41,7 +41,7 @@
   "errs": []
  },
  "kitaterao-window-3d-spring_pc": {
-  "mean": 157.6,
+  "mean": 156.9,
   "white": 0.029,
   "before": {
    "mean": 158.2,
@@ -51,7 +51,7 @@
   "errs": []
  },
  "shishigaya-window-3d_pc": {
-  "mean": 132.9,
+  "mean": 132.4,
   "white": 0.002,
   "before": {
    "mean": 133.1,
@@ -61,7 +61,7 @@
   "errs": []
  },
  "id": "G1",
- "ms": 911442,
- "at": "2026-10-13T19:27:54.593Z",
- "commit": "b53f691"
+ "ms": 1041134,
+ "at": "2026-10-13T22:00:32.063Z",
+ "commit": "0a9fd33"
 }
