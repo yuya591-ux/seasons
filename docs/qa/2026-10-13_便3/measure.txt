@@ -1,0 +1,11 @@
+# 便3 速さの測り（scripts/_bin3-mock.mjs の生の出力。2026-10-13・PC の GPU〈Intel Arc・画面なしの Chromium・--use-angle=d3d11〉）
+# ms = 描画1回（composer.render）の時間に GPU の終わりまで待った時間の中央値（60こま）、calls = 描画の呼び出しの数の中央値
+# iphone は iPhone の幅（402×874・3倍）を PC の GPU で再現した物。本物の iPhone では測っていない
+water pc kitaterao-window-3d pond {"ima":{"ms":11.6,"calls":1020,"n":60},"sora":{"ms":11.7,"calls":968,"n":60},"utsuri":{"ms":21.4,"calls":1938,"n":60},"waterMeshes":54} エラー無し
+water pc kitaterao-window-3d flylow {"ima":{"ms":21.2,"calls":2880,"n":60},"sora":{"ms":21.1,"calls":2834,"n":60},"utsuri":{"ms":42,"calls":5149,"n":60},"waterMeshes":54} エラー無し
+water iphone kitaterao-window-3d pond {"ima":{"ms":9.9,"calls":349,"n":60},"sora":{"ms":9.9,"calls":339,"n":60},"utsuri":{"ms":20.2,"calls":702,"n":60},"waterMeshes":54} エラー無し
+water pc shishigaya-window-3d yato {"ima":{"ms":5.7,"calls":786,"n":60},"sora":{"ms":5.6,"calls":791,"n":60},"waterMeshes":31} エラー無し
+fog pc kitaterao-window-3d window {"ima":{"ms":26.8,"calls":3062,"n":60},"hau":{"ms":28.7,"calls":3071,"n":60},"nagare":{"ms":26,"calls":3068,"n":60}} エラー無し
+fog pc shishigaya-window-3d yato {"ima":{"ms":3.9,"calls":786,"n":60},"hau":{"ms":4.1,"calls":793,"n":60},"nagare":{"ms":3.9,"calls":693,"n":60}} エラー無し
+fog iphone kitaterao-window-3d-sunset sunset {"ima":{"ms":15.3,"calls":1979,"n":60},"hau":{"ms":15.4,"calls":1963,"n":60},"nagare":{"ms":15.4,"calls":1973,"n":60}} エラー無し
+# 画素の差（scripts/_bin3-diff.mjs・diff.jsonl）は 案の画と「今」の画の差。飛行の眺めは車・気球など動く物の差も入る
