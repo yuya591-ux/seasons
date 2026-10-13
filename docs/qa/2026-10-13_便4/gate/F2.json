@@ -1,13 +1,13 @@
 {
  "pass": true,
- "meanDiff": 0.44,
+ "meanDiff": 0.45,
  "over8": 0.002,
- "flowPerSec": 0.9,
+ "flowPerSec": 0.898,
  "a": "docs/qa/2026-10-13_便4/gate/F2_off0.png",
  "b": "docs/qa/2026-10-13_便4/gate/F2_off60.png",
  "errs": [],
  "id": "F2",
- "ms": 35577,
- "at": "2026-10-13T06:13:43.239Z",
- "commit": "dc20604"
+ "ms": 35657,
+ "at": "2026-10-13T06:37:34.819Z",
+ "commit": "a128b44"
 }

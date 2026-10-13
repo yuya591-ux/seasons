@@ -17,12 +17,13 @@ dist/assets/RoundedBoxGeometry-BND4hYrb.js           1.74 kB │ gzip:   0.81 kB
 dist/assets/OutputPass-CBMekD6S.js                   3.10 kB │ gzip:   1.03 kB
 dist/assets/EffectComposer-6g1mEiFA.js               3.93 kB │ gzip:   1.21 kB
 dist/assets/FXAAShader-DBPwA37V.js                   6.28 kB │ gzip:   1.72 kB
-dist/assets/splatViewer-oj9Pcku8.js                  7.66 kB │ gzip:   3.52 kB
+dist/assets/splatViewer-CUWjd838.js                  7.66 kB │ gzip:   3.52 kB
 dist/assets/UnrealBloomPass-BpGZ7xtC.js              9.39 kB │ gzip:   2.43 kB
 dist/assets/BufferGeometryUtils-DqgGtPdn.js         12.55 kB │ gzip:   3.92 kB
 dist/assets/gaussian-splats-3d.module-DlP_Gxvs.js  248.08 kB │ gzip:  64.83 kB
-dist/assets/index-CyuTmIPk.js                      249.64 kB │ gzip:  78.59 kB
-dist/assets/town3dViewer-B29ncHAd.js               541.42 kB │ gzip: 171.44 kB
+dist/assets/index-CitE2BOm.js                      249.63 kB │ gzip:  78.59 kB
+dist/assets/town3dViewer-Dqc6KEH1.js               541.44 kB │ gzip: 171.46 kB
 dist/assets/three.module-CbbBeXoY.js               722.73 kB │ gzip: 184.42 kB
 
-[32m✓ built in 389ms[39m
+[32m✓ built in 419ms[39m
+build exit 0

@@ -5,8 +5,8 @@
   "waterFrac": 0.065,
   "mean": 152.9,
   "std": 8.6,
-  "diffBefore": 35.5,
-  "skyDist": 75.2,
+  "diffBefore": 35.4,
+  "skyDist": 75.1,
   "skyDistBefore": 43.7,
   "meshes": 54,
   "file": "docs/qa/2026-10-13_便4/gate/W1_pond.png",
@@ -32,7 +32,7 @@
  "shot_river": "docs/確認用スクショ/seasons/2026-10-13_便4/W1_川_pc_後.png",
  "errs": [],
  "id": "W1",
- "ms": 50701,
- "at": "2026-10-13T06:11:03.382Z",
- "commit": "dc20604"
+ "ms": 50969,
+ "at": "2026-10-13T06:34:53.818Z",
+ "commit": "a128b44"
 }
