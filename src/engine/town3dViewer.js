@@ -3137,11 +3137,14 @@ export async function mountTown3d(parent, opts = {}) {
   // 樹種と色は木の位置のハッシュで決める（R() は前と同じ順と数だけ回す＝町の配置を変えない）。軽やかは葉の板を挿さない（切り抜きの重さを落とす）。
   const leafAtlas = makeLeafAtlas(THREE)
   const leafCards = !LIGHT
+  // 葉の板（切り抜き）は窓から 90m 以内の近くの木だけ。遠くの木は葉の画だけの不透明の樹冠（切り抜きは iPhone の GPU で重くなりやすい。前と後を交互に測った窓辺の描画の時間が 1.007〜1.069倍と線〈1.05倍〉の近くだったため・便6）
+  const CARD_R = 90
   const greenestLeaf = leafBaseMats.slice().sort((a, b) => (b.color.g - b.color.r) - (a.color.g - a.color.r))[0] // 杉檜に当てる（桜の色を杉に当てない）
   const crownMats = new Map()
-  const crownMat = (m) => { // 葉の画は白〜灰なので、材の色を少し明るくして前の明るさに合わせる
-    let c = crownMats.get(m)
-    if (!c) { c = snowify(new THREE.MeshToonMaterial({ color: m.color.clone().multiplyScalar(1.12), map: leafAtlas, alphaTest: leafCards ? 0.5 : 0, side: leafCards ? THREE.DoubleSide : THREE.FrontSide, vertexColors: true, gradientMap: grad })); crownMats.set(m, c) }
+  const crownMat = (m, cards) => { // 葉の画は白〜灰なので、材の色を少し明るくして前の明るさに合わせる
+    const key = cards ? m : m.id
+    let c = crownMats.get(key)
+    if (!c) { c = snowify(new THREE.MeshToonMaterial({ color: m.color.clone().multiplyScalar(1.12), map: leafAtlas, alphaTest: cards ? 0.5 : 0, side: cards ? THREE.DoubleSide : THREE.FrontSide, vertexColors: true, gradientMap: grad })); crownMats.set(key, c) }
     return c
   }
   const treesArr = []
@@ -3178,9 +3181,10 @@ export async function mountTown3d(parent, opts = {}) {
     }
     if (!hidden) {
       const baseM = leafBaseMats[ci], sp = crownSpecies(x, z, baseM.color.r > baseM.color.g * 1.08 && baseM.color.b > baseM.color.g) // 桜（青みのある桃色）だけ。紅葉は青みが無いので樹種を振る（便6 の外の目）
-      const crown = buildCrown(THREE, sp, { min: bmin, max: bmax }, posHash(x, z, 1), leafCards)
+      const cards = leafCards && Math.hypot(x, z) < CARD_R
+      const crown = buildCrown(THREE, sp, { min: bmin, max: bmax }, posHash(x, z, 1), cards)
       bakeCrownColors(THREE, crown, crownTint(x, z, sp), sp) // 上下の陰陽・房の奥の陰・葉の塊の濃淡・木ごとの明るさと黄み〜青み
-      const leafMesh = new THREE.Mesh(crown.geo, crownMat(sp === 'sugi' && greenestLeaf ? greenestLeaf : baseM)); leafMesh.castShadow = true
+      const leafMesh = new THREE.Mesh(crown.geo, crownMat(sp === 'sugi' && greenestLeaf ? greenestLeaf : baseM, cards)); leafMesh.castShadow = true
       leafMesh.userData = { sp, cardTris: crown.cardTris }; g.add(leafMesh)
     }
     g.position.set(x, gy, z); g.scale.setScalar(scale); g.rotation.z = tilt; if (!hidden) town.add(g)

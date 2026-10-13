@@ -6,17 +6,19 @@
   130,
   50
  ],
- "detail": 0.96,
- "nd": 0.981,
- "detailBefore": 0.96,
- "ndBefore": 0.981,
+ "detail": 0.955,
+ "nd": 0.977,
+ "bd": 1.027,
+ "detailBefore": 0.955,
+ "ndBefore": 0.977,
+ "bdBefore": 1.027,
  "diffBefore": {
   "mean": 0,
   "over8": 0
  },
  "errs": [],
  "id": "S3",
- "ms": 60358,
- "at": "2026-10-13T15:06:23.813Z",
- "commit": "638da84"
+ "ms": 65909,
+ "at": "2026-10-13T18:44:37.576Z",
+ "commit": "a9c04bf"
 }

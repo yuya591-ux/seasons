@@ -6,15 +6,19 @@
   460,
   380
  ],
- "detail": 2.199,
- "detailBefore": 1.364,
+ "detail": 2.22,
+ "nd": 3.09,
+ "bd": 4.373,
+ "detailBefore": 1.355,
+ "ndBefore": 1.826,
+ "bdBefore": 2.567,
  "diffBefore": {
-  "mean": 5.37,
-  "over8": 0.239
+  "mean": 11.72,
+  "over8": 0.398
  },
  "errs": [],
  "id": "S1",
- "ms": 1441,
- "at": "2026-10-13T15:00:21.917Z",
- "commit": "638da84"
+ "ms": 3404,
+ "at": "2026-10-13T17:44:16.302Z",
+ "commit": "a9c04bf"
 }
