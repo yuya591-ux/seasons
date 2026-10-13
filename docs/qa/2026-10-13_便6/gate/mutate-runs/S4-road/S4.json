@@ -6,19 +6,20 @@
   620,
   200
  ],
- "detail": 0.875,
- "nd": 1.252,
- "bd": 0.566,
- "detailBefore": 0.905,
- "ndBefore": 1.197,
- "bdBefore": 0.336,
+ "pr": 1,
+ "detail": 0.891,
+ "nd": 1.166,
+ "bd": 0.416,
+ "detailBefore": 0.591,
+ "ndBefore": 0.773,
+ "bdBefore": 0.317,
  "diffBefore": {
-  "mean": 7.78,
-  "over8": 0.208
+  "mean": 2.02,
+  "over8": 0.008
  },
  "errs": [],
  "id": "S4",
- "ms": 66305,
- "at": "2026-10-13T16:25:16.717Z",
- "commit": "2c43b96"
+ "ms": 100479,
+ "at": "2026-10-13T21:21:45.990Z",
+ "commit": "89965c2"
 }

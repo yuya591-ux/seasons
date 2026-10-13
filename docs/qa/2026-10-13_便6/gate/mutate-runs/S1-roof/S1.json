@@ -6,17 +6,20 @@
   460,
   380
  ],
- "detail": 1.391,
- "nd": 2.051,
- "detailBefore": 1.364,
- "ndBefore": 1.828,
+ "pr": 1,
+ "detail": 1.345,
+ "nd": 2.122,
+ "bd": 3.182,
+ "detailBefore": 1.401,
+ "ndBefore": 1.837,
+ "bdBefore": 2.572,
  "diffBefore": {
-  "mean": 21.15,
-  "over8": 0.775
+  "mean": 23.15,
+  "over8": 0.837
  },
  "errs": [],
  "id": "S1",
- "ms": 70809,
- "at": "2026-10-13T15:58:25.296Z",
- "commit": "27493c1"
+ "ms": 74938,
+ "at": "2026-10-13T21:17:16.355Z",
+ "commit": "89965c2"
 }

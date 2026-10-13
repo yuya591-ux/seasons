@@ -6,19 +6,20 @@
   140,
   120
  ],
- "detail": 1.924,
- "nd": 4.871,
- "bd": 10.949,
- "detailBefore": 2.029,
- "ndBefore": 5.006,
- "bdBefore": 11.65,
+ "pr": 1,
+ "detail": 1.903,
+ "nd": 4.796,
+ "bd": 10.558,
+ "detailBefore": 1.978,
+ "ndBefore": 4.672,
+ "bdBefore": 10.374,
  "diffBefore": {
-  "mean": 17.68,
-  "over8": 0.721
+  "mean": 17.55,
+  "over8": 0.725
  },
  "errs": [],
  "id": "S2",
- "ms": 70427,
- "at": "2026-10-13T17:12:03.654Z",
- "commit": "14c0c67"
+ "ms": 74689,
+ "at": "2026-10-13T21:18:37.304Z",
+ "commit": "89965c2"
 }
