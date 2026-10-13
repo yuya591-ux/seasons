@@ -1,24 +1,24 @@
 {
  "pass": true,
  "crop": [
-  760,
-  450,
-  130,
-  50
+  665,
+  465,
+  150,
+  45
  ],
- "detail": 1.106,
- "nd": 1.132,
- "bd": 1.593,
- "detailBefore": 0.955,
- "ndBefore": 0.977,
- "bdBefore": 1.027,
+ "detail": 1.251,
+ "nd": 1.343,
+ "bd": 1.999,
+ "detailBefore": 0.939,
+ "ndBefore": 0.92,
+ "bdBefore": 1.301,
  "diffBefore": {
-  "mean": 2.21,
-  "over8": 0.006
+  "mean": 11.55,
+  "over8": 0.321
  },
  "errs": [],
  "id": "S3",
- "ms": 64028,
- "at": "2026-10-13T18:45:42.301Z",
- "commit": "a9c04bf"
+ "ms": 164543,
+ "at": "2026-10-13T19:10:32.690Z",
+ "commit": "b53f691"
 }
