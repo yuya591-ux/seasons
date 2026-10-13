@@ -291,10 +291,14 @@ def('K5', async () => {
   await page.evaluate(() => window.__b4.setup()); await page.evaluate(() => { const s = window.__town3dDrift; if (s) s(0) })
   await page.evaluate(() => window.__town3dWindow(true)); await wait(2200)
   await page.evaluate(() => window.__town3dFlyToggle(true)); await wait(3000)
-  await page.evaluate(() => window.__town3dFlyPose(0, 40, 40, Math.PI, -0.2)); await wait(3000)
+  await page.evaluate(() => window.__town3dFlyPose(0, 40, 40, Math.PI, -0.2)); await wait(8000) // 引いたカメラが落ち着くまで（3秒では5回の間に呼び出しが 1589→1833 と上がり続けた）
   after.fly = { ...(await draw()), time: await ms() }
   await page.evaluate(() => window.__town3dFlyPose(2, 6, -18, Math.PI, -0.05)); await wait(800)
-  await page.evaluate(() => window.__town3dLandToggle(true)); await wait(3500)
+  // 着地の動きが終わるまで待ち、向きをそろえる（3.5秒では終わっていない回があり、歩行の呼び出しが 431 前後と 800 前後に分かれた・便4）
+  await page.evaluate(() => window.__town3dLandToggle(true)); await wait(8000)
+  await page.evaluate(() => window.__town3dFaceWalk(Math.PI)); await wait(1500)
+  // それでも着地の後の位置が回ごとに違い、前のコードでも 410 前後と 800 前後に分かれたので、目の高さのカメラを決まった位置に置いて測る
+  await page.evaluate(() => { const g = window.__town3dGroundAt(2, -18); window.__b4.cam = { p: [2, g + 1.6, -18], l: [2, g + 1.6, -40], fov: 60 } }); await wait(1500)
   after.walk = { ...(await draw()), time: await ms() }
   const keep = (v) => v && { calls: v.calls, callsAll: v.callsAll, px: v.px, ms: v.time && v.time.ms }
   const ok = (k) => !!b && after[k] && after[k].calls <= b.after[k].calls * 1.05 && after[k].px <= b.after[k].px * 1.05
