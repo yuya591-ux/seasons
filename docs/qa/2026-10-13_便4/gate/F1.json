@@ -1,17 +1,17 @@
 {
  "sunsetWindow": {
-  "meanDiff": 0.52,
+  "meanDiff": 0.51,
   "over8": 0.02
  },
  "pass": true,
- "meanDiff": 0.86,
- "over8": 0.016,
+ "meanDiff": 0.81,
+ "over8": 0.011,
  "on": "docs/qa/2026-10-13_便4/gate/F1_on.png",
  "off": "docs/qa/2026-10-13_便4/gate/F1_off.png",
  "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/F1_低空_pc_後.png",
  "errs": [],
  "id": "F1",
- "ms": 86534,
- "at": "2026-10-13T05:42:06.916Z",
- "commit": "f25a6b3"
+ "ms": 79235,
+ "at": "2026-10-13T05:58:22.841Z",
+ "commit": "4688376"
 }

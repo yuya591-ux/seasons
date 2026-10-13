@@ -1,9 +1,9 @@
 {
- "waterPx": 174138,
+ "waterPx": 174128,
  "waterFrac": 0.486,
  "mean": 173.2,
- "std": 24.5,
- "diffBefore": 6.9,
+ "std": 24.4,
+ "diffBefore": 6.8,
  "skyDist": 29.8,
  "skyDistBefore": 26.6,
  "meshes": 54,
@@ -14,7 +14,7 @@
  "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/W2_海_pc_後.png",
  "errs": [],
  "id": "W2",
- "ms": 46646,
- "at": "2026-10-13T05:45:19.325Z",
- "commit": "f25a6b3"
+ "ms": 44954,
+ "at": "2026-10-13T05:57:03.541Z",
+ "commit": "4688376"
 }

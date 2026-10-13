@@ -275,11 +275,12 @@ def('G1', async () => {
   }
   return { pass: Object.values(res).every((r) => r.pass), ...res }
 })
-// K5 iPhone の重さ: 窓辺・夕方・飛行・歩行の描画の呼び出しと描く画素数が前の1.05倍以下（便2 の K5 と同じ物差し）。描画の時間は記録だけ
+// K5 iPhone の重さ: 窓辺・夕方・飛行・歩行の描画の呼び出しと描く画素数が前の1.05倍以下（便2 の K5 と同じ物差し）。描画の時間は記録だけ。
+//   呼び出しは1秒おきに5回測った中央値（飛行は車や気球が動くので1回の数がぶれる。前のコードでも 1556 と 1603 の回があり、1回の数で比べた全テストで 1634 が線 1633.8 を超えた・便4）
 def('K5', async () => {
   const b = beforeOf('K5')
   const { page, errs } = await open('iphone', 'kitaterao-window-3d', { win: false })
-  const draw = () => page.evaluate(() => window.__town3dDraw && window.__town3dDraw())
+  const draw = async () => { const rs = []; for (let i = 0; i < 5; i++) { rs.push(await page.evaluate(() => window.__town3dDraw && window.__town3dDraw())); await wait(1000) } const c = rs.map((r) => r.calls).sort((x, y) => x - y); return { ...rs[0], calls: c[2], callsAll: rs.map((r) => r.calls) } }
   const ms = () => page.evaluate(() => window.__b4.measureNow(60))
   const after = {}
   after.window = { ...(await draw()), time: await ms() }
@@ -295,7 +296,7 @@ def('K5', async () => {
   await page.evaluate(() => window.__town3dFlyPose(2, 6, -18, Math.PI, -0.05)); await wait(800)
   await page.evaluate(() => window.__town3dLandToggle(true)); await wait(3500)
   after.walk = { ...(await draw()), time: await ms() }
-  const keep = (v) => v && { calls: v.calls, px: v.px, ms: v.time && v.time.ms }
+  const keep = (v) => v && { calls: v.calls, callsAll: v.callsAll, px: v.px, ms: v.time && v.time.ms }
   const ok = (k) => !!b && after[k] && after[k].calls <= b.after[k].calls * 1.05 && after[k].px <= b.after[k].px * 1.05
   return { pass: ['window', 'sunset', 'fly', 'walk'].every(ok) && errs.length === 0, before: b && b.after, after: Object.fromEntries(Object.entries(after).map(([k, v]) => [k, keep(v)])), errs }
 })
