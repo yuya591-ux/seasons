@@ -1,9 +1,11 @@
 {
- "waterPx": 174129,
+ "waterPx": 174138,
  "waterFrac": 0.486,
- "mean": 181.1,
- "std": 21.8,
- "diffBefore": 8,
+ "mean": 173.2,
+ "std": 24.5,
+ "diffBefore": 6.9,
+ "skyDist": 29.8,
+ "skyDistBefore": 26.6,
  "meshes": 54,
  "file": "docs/qa/2026-10-13_便4/gate/W2_sea.png",
  "stdBefore": 19.6,
@@ -12,7 +14,7 @@
  "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/W2_海_pc_後.png",
  "errs": [],
  "id": "W2",
- "ms": 45091,
- "at": "2026-10-13T05:10:55.677Z",
- "commit": "e841636"
+ "ms": 46646,
+ "at": "2026-10-13T05:45:19.325Z",
+ "commit": "f25a6b3"
 }

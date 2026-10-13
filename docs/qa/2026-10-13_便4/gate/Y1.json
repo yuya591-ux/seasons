@@ -1,0 +1,26 @@
+{
+ "pass": true,
+ "water": {
+  "waterPx": 23284,
+  "waterFrac": 0.065,
+  "mean": 133.2,
+  "std": 8.9,
+  "diffBefore": null,
+  "skyDist": 62.1,
+  "skyDistBefore": null,
+  "meshes": 31,
+  "file": "docs/qa/2026-10-13_便4/gate/Y1_yato.png"
+ },
+ "mistDiff": {
+  "meanDiff": 12.27,
+  "over8": 0.598
+ },
+ "density": 0.02028,
+ "base": -3,
+ "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/Y1_谷戸_pc_後.png",
+ "errs": [],
+ "id": "Y1",
+ "ms": 32975,
+ "at": "2026-10-13T05:45:52.442Z",
+ "commit": "f25a6b3"
+}

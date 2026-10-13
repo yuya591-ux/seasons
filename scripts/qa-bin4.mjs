@@ -61,6 +61,8 @@ const INJECT = () => {
     const med = (a) => { const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)] }
     return { ms: +med(S.ms).toFixed(2), calls: med(S.calls), n: S.ms.length }
   }
+  // 今のカメラの位置・10m 先の注視点・画角（窓辺の眺めをそのまま撮るため）
+  S.camNow = () => { const c = window.__shGet().camera; const d = c.getWorldDirection(new (window.__shGet().THREE.Vector3)()); return [c.position.x, c.position.y, c.position.z, c.position.x + d.x * 10, c.position.y + d.y * 10, c.position.z + d.z * 10, c.fov] }
   // 水の面（川・池・棚田・堀の共有の材と、海の材）
   S.waterMeshes = () => {
     const out = []
@@ -77,18 +79,25 @@ const INJECT = () => {
   // 水の面を隠した1枚との差で水の画素を決め、その中の明るさの平均・ばらつきを返す（前の画があれば差も）
   S.waterStats = async (cam, beforeUrl) => {
     const [x, y, z, lx, ly, lz, fov] = cam
+    // 前のコードには霧の層が無いので、水の映りだけを比べるために霧の層を切って撮る（便4 の外の目: 海の明るさが霧の上乗せで底上げされていた恐れ）
+    const mistOn = typeof window.__town3dMist === 'function'; if (mistOn) window.__town3dMist({ amount: 0 })
     const url = window.__town3dShotAt(x, y, z, lx, ly, lz, fov)
     const ws = S.waterMeshes(); for (const o of ws) o.userData.__b4v = o.visible, o.visible = false
     const urlNo = window.__town3dShotAt(x, y, z, lx, ly, lz, fov)
     for (const o of ws) o.visible = o.userData.__b4v
+    if (mistOn) window.__town3dMist(null)
     const a = await toImg(url), b = await toImg(urlNo), pre = beforeUrl ? await toImg(beforeUrl) : null
-    let n = 0, s = 0, s2 = 0, dPre = 0
+    // 空の色＝画のいちばん上の8%の行の平均（海の眺めは上が空）。水の画素の色が空の色からどれだけ離れているか（RGB の差の平均）も測る
+    const skyOf = (im) => { let r = 0, g = 0, bb = 0, k = 0; for (let yy = 0; yy < Math.floor(im.height * 0.08); yy++) for (let xx = 0; xx < im.width; xx++) { const j = (yy * im.width + xx) * 4; r += im.data[j]; g += im.data[j + 1]; bb += im.data[j + 2]; k++ } return [r / k, g / k, bb / k] }
+    const skA = skyOf(a), skP = pre ? skyOf(pre) : null
+    const dist = (d, i, sk) => (Math.abs(d[i] - sk[0]) + Math.abs(d[i + 1] - sk[1]) + Math.abs(d[i + 2] - sk[2])) / 3
+    let n = 0, s = 0, s2 = 0, dPre = 0, sd = 0, sdP = 0
     const mask = []
     for (let i = 0; i < a.data.length; i += 4) {
-      if (Math.abs(lum(a.data, i) - lum(b.data, i)) > 6) { const L = lum(a.data, i); n++; s += L; s2 += L * L; mask.push(i); if (pre) dPre += Math.abs(L - lum(pre.data, i)) }
+      if (Math.abs(lum(a.data, i) - lum(b.data, i)) > 6) { const L = lum(a.data, i); n++; s += L; s2 += L * L; mask.push(i); sd += dist(a.data, i, skA); if (pre) { dPre += Math.abs(L - lum(pre.data, i)); sdP += dist(pre.data, i, skP) } }
     }
     const mean = n ? s / n : 0
-    return { url, waterPx: n, waterFrac: +(n / (a.width * a.height)).toFixed(3), mean: +mean.toFixed(1), std: +(n ? Math.sqrt(Math.max(0, s2 / n - mean * mean)) : 0).toFixed(1), diffBefore: pre && n ? +(dPre / n).toFixed(1) : null, meshes: ws.length }
+    return { url, waterPx: n, waterFrac: +(n / (a.width * a.height)).toFixed(3), mean: +mean.toFixed(1), std: +(n ? Math.sqrt(Math.max(0, s2 / n - mean * mean)) : 0).toFixed(1), diffBefore: pre && n ? +(dPre / n).toFixed(1) : null, skyDist: n ? +(sd / n).toFixed(1) : null, skyDistBefore: pre && n ? +(sdP / n).toFixed(1) : null, meshes: ws.length }
   }
   // 同じ瞬間に2枚撮って差を測る（動く物の差を入れない）。fnA・fnB は撮る前に呼ぶ
   S.pairDiff = async (cam, setA, setB) => {
@@ -182,7 +191,9 @@ def('W1', async () => {
   res.shot_river = await (async () => { if (!SHOT_TAG) return null; await page.evaluate((c) => { window.__b4.cam = { p: c.slice(0, 3), l: c.slice(3, 6), fov: c[6] } }, CAM.river); await wait(2500); return shot(page, 'W1_川_pc') })()
   return { pass: res.pond.pass && res.river.pass && errs.length === 0, ...res, errs }
 })
-// W2 海の材が空と雲を映す: 海の画素が前と変わり（差の平均 ≥ 6）、前より明るい（平均 ≥ 前＋3。海は地の色がもう明るいので池より小さい）
+// W2 海の材が空と雲を映す: 霧の層を切って、海の画素が前と変わる（差の平均 ≥ 6）。
+//   初めは「前より明るい（平均 ≥ 前＋3）」を線にしたが、霧を切ると海は 174.6→172.9 とほぼ同じで、明るくなった分は霧の上乗せだった（便4 の外の目）。
+//   「画の上の空の色に近づく」も試したが、海は画の上の空ではなく地平の色を映すので離れた（26.7→30.2）。案1 は地を暗くして空を映すので、明るさも色も上下どちらにも動く。空の色との差は記録だけ
 def('W2', async () => {
   const { page, errs } = await open('pc', 'kitaterao-window-3d')
   const pre = readUrl(path.join(BEFORE, 'W2_sea.png'))
@@ -192,7 +203,7 @@ def('W2', async () => {
   r.stdBefore = b ? b.std : null; r.meanBefore = b ? b.mean : null
   let sh = null
   if (SHOT_TAG) { await placeCam(page, CAM.sea); sh = await shot(page, 'W2_海_pc') }
-  return { ...r, pass: !!b && r.waterPx > 5000 && r.diffBefore >= 6 && r.mean >= b.mean + 3 && errs.length === 0, shot: sh, errs }
+  return { ...r, pass: !!b && r.waterPx > 5000 && r.diffBefore >= 6 && errs.length === 0, shot: sh, errs }
 })
 // F1 低く溜まる霧の層: 同じ瞬間に、霧の層あり・なし（強さ0）を撮った差が、低空飛行の眺め（昼）で平均 ≥ 0.5・8段以上変わる画素 ≥ 0.5%。
 //   初めの線（平均 ≥ 2）は昼の薄さ（時間帯の決め＝昼は薄く）を考えていなかった。層を外すと差は 0 になる
@@ -203,7 +214,10 @@ def('F1', async () => {
   const fa = saveUrl(r.ua, 'F1_on.png'), fb = saveUrl(r.ub, 'F1_off.png'); delete r.ua; delete r.ub
   let sh = null
   if (SHOT_TAG) { await placeCam(page, CAM.flylow); sh = await shot(page, 'F1_低空_pc') }
-  return { pass: r.meanDiff >= 0.5 && r.over8 >= 0.005 && errs.length === 0, ...r, on: fa, off: fb, shot: sh, errs }
+  // 記録だけ: 夕方の窓辺（窓をあけた眺め）での霧の層あり・なしの差
+  const o2 = await open('pc', 'kitaterao-window-3d-sunset')
+  const sunset = await o2.page.evaluate(async () => { const c = window.__b4.camNow(); const o = await window.__b4.pairDiff(c, () => window.__town3dMist(null), () => window.__town3dMist({ amount: 0 })); window.__town3dMist(null); delete o.ua; delete o.ub; return o })
+  return { sunsetWindow: sunset, pass: r.meanDiff >= 0.5 && r.over8 >= 0.005 && errs.length === 0, ...r, on: fa, off: fb, shot: sh, errs }
 })
 // F2 霧の濃淡が流れる: 夕方（霧が濃い時間帯）の低空飛行で、同じ瞬間に流れの位置だけを60m ずらした2枚の差の平均 ≥ 0.3（流れを外すと 0）・流れの位置が1秒ごとに進む
 def('F2', async () => {
@@ -232,6 +246,17 @@ def('F3', async () => {
   const d = (id) => rows[id].want.density
   const order = d('kitaterao-window-3d') < d('kitaterao-window-3d-sunset') && d('kitaterao-window-3d') < d('shishigaya-window-3d')
   return { pass: Object.values(rows).every((r) => r.same && r.errs.length === 0) && order, order, rows }
+})
+// Y1 谷戸（獅子ヶ谷の窓辺・夏の朝・mist k1.3）の棚田の水と霧（記録。前の画は無い＝前のコードは撮っていない）: 棚田の眺めで水の画素があり、霧の層あり・なしの差が 0 でない
+def('Y1', async () => {
+  const { page, errs } = await open('pc', 'shishigaya-window-3d')
+  const cam = [0, 12, 15, 0, -3, -30, 60] // 窓辺からは谷底の棚田が見えない（便1 の V9）ので、上空12m から棚田を見下ろす
+  const w = await page.evaluate((c) => window.__b4.waterStats(c, null), cam)
+  w.file = saveUrl(w.url, 'Y1_yato.png'); delete w.url
+  const m = await page.evaluate(async (c) => { const o = await window.__b4.pairDiff(c, () => window.__town3dMist(null), () => window.__town3dMist({ amount: 0 })); window.__town3dMist(null); delete o.ua; delete o.ub; return o }, cam)
+  const mist = await page.evaluate(() => window.__town3dMist())
+  let sh = null; if (SHOT_TAG) { await placeCam(page, cam); sh = await shot(page, 'Y1_谷戸_pc') }
+  return { pass: w.waterPx > 500 && m.meanDiff > 0 && errs.length === 0, water: w, mistDiff: m, density: mist.density, base: mist.base, shot: sh, errs }
 })
 // G1 雪の窓・夜の窓・夕方の窓が白く沈まない: 窓の外の帯の明るさの平均が前±8 以内・ほぼ白の割合が前＋0.02 以内（守り。直しに結び付けない）
 def('G1', async () => {

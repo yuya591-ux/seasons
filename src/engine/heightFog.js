@@ -27,11 +27,11 @@ export function installHeightFog(THREE) {
   #endif
   if ( uMistA.w > 0.0 && uMistA.y > 0.0 ) {
     // 視線に沿って「高さで薄くなる濃さ」を足し合わせる（高さが直線で変わるので式で解ける）。
-    // 溜まる高さより下は厚みの1.5倍で頭打ち（深い谷や海の底で濃さが跳ね上がらないように）
+    // 溜まる高さより下は厚みの0.75倍で頭打ち（海や深い谷で濃さが跳ね上がり、広い海が白く濁らないように）
     vec3 mP = vMistW;
     float mL = length( mP - cameraPosition );
-    float mHc = max( cameraPosition.y - uMistA.x, - 1.5 * uMistA.y );
-    float mHp = max( mP.y - uMistA.x, - 1.5 * uMistA.y );
+    float mHc = max( cameraPosition.y - uMistA.x, - 0.75 * uMistA.y );
+    float mHp = max( mP.y - uMistA.x, - 0.75 * uMistA.y );
     float mDy = mHp - mHc;
     float mOp = abs( mDy ) < 0.05
       ? uMistA.z * mL * exp( - mHp / uMistA.y )
