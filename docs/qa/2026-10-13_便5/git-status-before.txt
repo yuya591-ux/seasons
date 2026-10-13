@@ -1,0 +1,5 @@
+?? "docs/qa/2026-10-13_\344\276\2775/"
+?? scripts/_bin5-inject.js
+?? scripts/_bin5-mock.mjs
+?? scripts/_bin5-vite.config.mjs
+39cd5f60b9e5feea84457f5a3545fb7e72f344d5

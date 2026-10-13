@@ -1,0 +1,11 @@
+# 便5 速さの測り（scripts/_bin5-mock.mjs の生の出力。2026-10-13・PC の GPU〈Intel Arc・画面なしの Chromium・--use-angle=d3d11〉）
+# ms = 描画1回（composer.render）の時間に GPU の終わりまで待った時間の中央値（60こま）、calls = 描画の呼び出しの数の中央値、tris = 三角の数の中央値
+# ima2 = 案を外して「今」に戻してから測り直した値（測りのゆれを見るため）。iphone は iPhone の幅（402×874・3倍）を PC の GPU で再現した物。本物の iPhone では測っていない
+# 木（tree）: katachi=案1・ha=案2（どちらも観葉植物の差し替えを含む）／面（surf）: moyou=案1・outotsu=案2
+tree pc kitaterao-window-3d flylow {"ima":{"ms":20.8,"calls":2837,"tris":893295,"n":60},"n1":[200,4],"katachi":{"ms":19.9,"calls":2608,"tris":898881,"n":60},"n2":[200,4],"ha":{"ms":18.6,"calls":2277,"tris":840735,"n":60},"ima2":{"ms":18.6,"calls":2223,"tris":745791,"n":60}} エラー無し
+tree pc kitaterao-window-3d window {"ima":{"ms":21.9,"calls":3060,"tris":896265,"n":60},"n1":[200,4],"katachi":{"ms":22.3,"calls":3071,"tris":956689,"n":60},"n2":[200,4],"ha":{"ms":21.3,"calls":3068,"tris":974273,"n":60},"ima2":{"ms":21.7,"calls":3074,"tris":895873,"n":60}} エラー無し
+tree iphone kitaterao-window-3d room(窓を閉じた部屋) {"ima":{"ms":14.5,"calls":1866,"tris":721019,"n":60},"n1":[200,4],"katachi":{"ms":14.5,"calls":1838,"tris":741171,"n":60},"n2":[200,4],"ha":{"ms":14.6,"calls":1867,"tris":759097,"n":60},"ima2":{"ms":14.9,"calls":1885,"tris":722383,"n":60}} エラー無し
+tree iphone kitaterao-window-3d window {"ima":{"ms":15.3,"calls":1869,"tris":723781,"n":60},"n1":[200,4],"katachi":{"ms":15.6,"calls":1872,"tris":751905,"n":60},"n2":[200,4],"ha":{"ms":15.3,"calls":1871,"tris":763797,"n":60},"ima2":{"ms":15.1,"calls":1870,"tris":725685,"n":60}} エラー無し
+surf pc kitaterao-window-3d window {"ima":{"ms":21.9,"calls":3060,"tris":896265,"n":60},"n1":473,"moyou":{"ms":22.2,"calls":3072,"tris":896753,"n":60},"n2":473,"outotsu":{"ms":21.9,"calls":3072,"tris":895785,"n":60},"ima2":{"ms":21.9,"calls":3069,"tris":895689,"n":60}} エラー無し
+surf iphone kitaterao-window-3d window {"ima":{"ms":15.2,"calls":1869,"tris":723745,"n":60},"n1":473,"moyou":{"ms":15.4,"calls":1870,"tris":723653,"n":60},"n2":473,"outotsu":{"ms":15.2,"calls":1871,"tris":728093,"n":60},"ima2":{"ms":15,"calls":1865,"tris":725121,"n":60}} エラー無し
+# 低空飛行（flylow）は「今」に戻しても呼び出しが 2837→2223 と下がり続けた（撮る間に飛行の内側の位置が動く様子）ので、案どうしの比べに使わない
