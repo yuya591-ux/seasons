@@ -65,7 +65,7 @@ const INJECT = () => {
   // 木を調べる: 位置の並び（町の配置）・樹種・木ごとの色の明るさ・葉の模様と葉の板の有無
   S.treeInfo = () => {
     const R = window.__b6R; if (!R || !R.trees) return null
-    const pos = [], sp = {}, lum = [], pink = []
+    const pos = [], sp = {}, lum = [], lumMaru = [], pink = []
     let mapN = 0, alphaN = 0, cardTris = 0
     for (const tg of R.trees) {
       pos.push([+tg.position.x.toFixed(2), +tg.position.z.toFixed(2)])
@@ -78,11 +78,14 @@ const INJECT = () => {
       const c = lm.geometry.attributes.color
       let s = 0; if (c) { for (let i = 0; i < c.count; i++) s += 0.299 * c.getX(i) + 0.587 * c.getY(i) + 0.114 * c.getZ(i); s /= c.count }
       lum.push(+s.toFixed(4)) // 頂点色だけの明るさ（材の色は入れない＝樹冠の色の種類の差ではなく、木ごとに足した振れを見る）
+      if (k === 'maru' || k === 'なし') lumMaru.push(s) // 同じ樹種（丸い広葉樹。前は樹種が無いので全部）の中の振れ＝樹種ごとの陰の付け方の違いを入れない
       if (m.color.r > m.color.g * 1.08) pink.push(k)
     }
     const mean = lum.reduce((a, b) => a + b, 0) / Math.max(1, lum.length)
     const std = Math.sqrt(lum.reduce((a, b) => a + (b - mean) * (b - mean), 0) / Math.max(1, lum.length))
-    return { n: R.trees.length, pos, sp, lumStd: +std.toFixed(4), lumMean: +mean.toFixed(4), mapN, alphaN, cardTris, pinkN: pink.length, pinkSp: pink }
+    const mm = lumMaru.reduce((a, b) => a + b, 0) / Math.max(1, lumMaru.length)
+    const stdMaru = Math.sqrt(lumMaru.reduce((a, b) => a + (b - mm) * (b - mm), 0) / Math.max(1, lumMaru.length))
+    return { n: R.trees.length, pos, sp, lumStd: +std.toFixed(4), lumStdMaru: +stdMaru.toFixed(4), lumMean: +mean.toFixed(4), mapN, alphaN, cardTris, pinkN: pink.length, pinkSp: pink }
   }
   // 部屋の観葉植物: 前の20面の玉の葉（半径 0.24・0.18・0.19・0.16）と、作り替えた株（名前 potPlant）
   S.plantInfo = () => {
@@ -154,19 +157,22 @@ const IMG_FNS = () => {
   // 細かな明暗: 各画素と上下左右4つの平均との差の平均（大きいほど細かな模様が多い）
   // 明るさで割った細かな明暗（×100）: 模様は色に掛け算で乗るので、木の影の中と日向で比べられる（木の形が変わると影の落ち方も変わるため・便6）
   window.__ndetail = async (src, [x0, y0, w, h]) => { const im = await window.__img(src), d = im.data, W = im.width, L = window.__L; let s = 0, m = 0; for (let y = y0 + 1; y < y0 + h - 1; y++) for (let x = x0 + 1; x < x0 + w - 1; x++) { s += Math.abs(L(d, W, x, y) - (L(d, W, x - 1, y) + L(d, W, x + 1, y) + L(d, W, x, y - 1) + L(d, W, x, y + 1)) / 4); m += L(d, W, x, y) } return +(100 * s / Math.max(1, m)).toFixed(3) }
+  // 4×4画素ずつ平均してから測る、明るさで割った細かな明暗（×100）: 画面に重ねた紙の粒（1画素）を落として、数画素の大きさの模様（舗装の粒・ひび）を見る（便6）
+  window.__bdetail = async (src, [x0, y0, w, h]) => { const im = await window.__img(src), d = im.data, W = im.width, L = window.__L, B = 4, bw = Math.floor(w / B), bh = Math.floor(h / B), m = new Float32Array(bw * bh); for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) { let s = 0; for (let yy = 0; yy < B; yy++) for (let xx = 0; xx < B; xx++) s += L(d, W, x0 + bx * B + xx, y0 + by * B + yy); m[by * bw + bx] = s / (B * B) } let s = 0, t = 0; for (let y = 1; y < bh - 1; y++) for (let x = 1; x < bw - 1; x++) { const v = m[y * bw + x]; s += Math.abs(v - (m[y * bw + x - 1] + m[y * bw + x + 1] + m[(y - 1) * bw + x] + m[(y + 1) * bw + x]) / 4); t += v } return +(100 * s / Math.max(1, t)).toFixed(3) }
   window.__detail = async (src, [x0, y0, w, h]) => { const im = await window.__img(src), d = im.data, W = im.width, L = window.__L; let s = 0, n = 0; for (let y = y0 + 1; y < y0 + h - 1; y++) for (let x = x0 + 1; x < x0 + w - 1; x++) { s += Math.abs(L(d, W, x, y) - (L(d, W, x - 1, y) + L(d, W, x + 1, y) + L(d, W, x, y - 1) + L(d, W, x, y + 1)) / 4); n++ } return +(s / n).toFixed(3) }
   // 2枚の差: 明るさの差の平均と、8段以上変わった画素の割合
   window.__diff = async (a, b, [x0, y0, w, h]) => { const A = await window.__img(a), B = await window.__img(b), W = A.width, L = window.__L; let s = 0, big = 0, n = 0; for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { const dd = Math.abs(L(A.data, W, x, y) - L(B.data, W, x, y)); s += dd; if (dd >= 8) big++; n++ } return { mean: +(s / n).toFixed(2), over8: +(big / n).toFixed(3) } }
 }
 async function detail(file, crop) { const p = await metricsPage(); await p.evaluate(IMG_FNS); return p.evaluate(([s, c]) => window.__detail(s, c), [b64(file), crop]) }
 async function ndetail(file, crop) { const p = await metricsPage(); await p.evaluate(IMG_FNS); return p.evaluate(([s, c]) => window.__ndetail(s, c), [b64(file), crop]) }
+async function bdetail(file, crop) { const p = await metricsPage(); await p.evaluate(IMG_FNS); return p.evaluate(([s, c]) => window.__bdetail(s, c), [b64(file), crop]) }
 async function diff(fa, fb, crop) { const p = await metricsPage(); await p.evaluate(IMG_FNS); return p.evaluate(([a, b, c]) => window.__diff(a, b, c), [b64(fa), b64(fb), crop]) }
 const beforeImg = (name) => { const f = path.join(BEFORE, `${name}.png`); return fs.existsSync(f) ? f : null }
 // 切り抜きの今の細かな明暗と、前の画の同じ切り抜きの細かな明暗・前との差
 async function cropStats(name, file, crop) {
   const pre = beforeImg(name)
-  const r = { crop, detail: await detail(file, crop), nd: await ndetail(file, crop) }
-  if (pre) { r.detailBefore = await detail(pre, crop); r.ndBefore = await ndetail(pre, crop); r.diffBefore = await diff(file, pre, crop) }
+  const r = { crop, detail: await detail(file, crop), nd: await ndetail(file, crop), bd: await bdetail(file, crop) }
+  if (pre) { r.detailBefore = await detail(pre, crop); r.ndBefore = await ndetail(pre, crop); r.bdBefore = await bdetail(pre, crop); r.diffBefore = await diff(file, pre, crop) }
   return r
 }
 
@@ -207,6 +213,15 @@ async function viewFlylow() {
   views.flylow = { f, f2, errs, page }
   return views.flylow
 }
+// 歩く目線の通りを、木を隠して影を描き直してから撮る（新しい木の縁の葉の板が通りにまだらな影を落とし、通りの模様と混ざるため・便6）
+async function viewWalkNoTree() {
+  if (views.walkNoTree) return views.walkNoTree
+  const w = await viewWalk()
+  await w.page.evaluate(() => { for (const t of window.__b6R.trees) t.visible = false; window.__shGet().renderer.shadowMap.needsUpdate = true }); await wait(2000)
+  const f = await grab(w.page, 'walk_notree')
+  views.walkNoTree = { f, errs: w.errs }
+  return views.walkNoTree
+}
 async function viewLawn() {
   if (views.lawn) return views.lawn
   const { page, errs } = await open('pc', 'kitaterao-window-3d')
@@ -244,8 +259,9 @@ def('G0', async () => {
   }
   return { pass: Object.values(res).every((r) => r.pass), ...res }
 })
-// T1 樹種の形と色の振れ: 木が3つの樹種（丸い広葉樹 maru・傘形 kasa・杉檜 sugi）に分かれ、どれも全体の1割以上。木ごとの頂点色の明るさの振れ（標準偏差）が前の1.5倍以上。
-//   初めは材の色まで含めた明るさの振れで測ったが、前からある6色の差に埋もれて 0.040→0.042 しか動かなかった（便6 の決めたこと）。
+// T1 樹種の形と色の振れ: 木が3つの樹種（丸い広葉樹 maru・傘形 kasa・杉檜 sugi）に分かれ、どれも全体の1割以上。丸い広葉樹の中の木ごとの頂点色の明るさの振れ（標準偏差）が前（樹種が無い全部の木）の3倍以上。
+//   初めは材の色まで含めた明るさの振れで測ったが、前からある6色の差に埋もれて 0.040→0.042 しか動かなかった。次に全部の木の頂点色の振れ（前の1.5倍）にしたが、
+//   色の振れを外しても樹種ごとの陰の付け方の違いで線を越えた（外し回しで落ちなかった・便6 の決めたこと）。
 //   春の桜（桃色の材）は傘形にする。画: 低空飛行の中ほどの木立と丸い木の切り抜きが前と変わる（差の平均 ≥ 5）
 def('T1', async () => {
   const { page, errs } = await open('pc', 'kitaterao-window-3d', { win: false })
@@ -257,10 +273,10 @@ def('T1', async () => {
   const near = await cropStats('flylow', v.f, CROP.treeNear), round = await cropStats('flylow', v.f, CROP.treeRound)
   const n = ti ? ti.n : 0, frac = (k) => ti && ti.sp[k] ? ti.sp[k] / n : 0
   const spOk = ['maru', 'kasa', 'sugi'].every((k) => frac(k) >= 0.1)
-  const lumOk = !!b && ti && ti.lumStd >= b.lumStd * 1.5
+  const lumOk = !!b && ti && ti.lumStdMaru >= b.lumStdMaru * 3
   const pinkOk = !!sp && sp.pinkN > 0 && sp.pinkSp.every((k) => k === 'kasa')
   const imgOk = !!near.diffBefore && near.diffBefore.mean >= 5 && round.diffBefore.mean >= 5
-  return { pass: spOk && lumOk && pinkOk && imgOk && errs.length === 0 && o2.errs.length === 0, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdBefore: b && b.lumStd, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs] }
+  return { pass: spOk && lumOk && pinkOk && imgOk && errs.length === 0 && o2.errs.length === 0, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdMaru: ti && ti.lumStdMaru, lumStdMaruBefore: b && b.lumStdMaru, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs] }
 })
 // T2 葉の模様と縁の葉の板: 樹冠の材が葉の模様（画）と切り抜き（alphaTest）を持ち、葉の板の三角がある。
 //   画: 歩く目線の頭の上の樹冠と、低空飛行の中ほどの木立の細かな明暗が前より増える（歩く目線 ≥ 前＋0.15・木立 ≥ 前＋0.08）
@@ -288,20 +304,28 @@ def('S2', async () => { const v = await viewFlylow(); const st = await cropStats
 // S3 地面の模様（草の濃淡と土の斑）: 公園の上 7m から見下ろした芝の、明るさで割った細かな明暗 ≥ 前の1.1倍。
 //   初めは低空飛行（高さ 50m）の芝で「細かな明暗 ≥ 前＋0.15」としたが、細かな模様は遠いと消える作りで +0.07 だった（便6 の決めたこと）
 def('S3', async () => { const v = await viewLawn(); const st = await cropStats('lawn', v.f, CROP.lawn); return { pass: st.ndBefore != null && st.nd >= st.ndBefore * 1.1 && v.errs.length === 0, ...st, errs: v.errs } })
-// S4 中央の通りの模様（舗装の粒・補修の跡・ひび・轍）: 歩く目線の手前の通りの、明るさで割った細かな明暗 ≥ 前の1.25倍。
-//   初めは「細かな明暗 ≥ 前＋0.1」としたが、木の形が変わって通りに落ちる木の影も変わり、前より暗い所どうしを比べていた（便6 の決めたこと）
-def('S4', async () => { const w = await viewWalk(); const st = await cropStats('walk', w.f, CROP.road); return { pass: st.ndBefore != null && st.nd >= st.ndBefore * 1.25 && w.errs.length === 0, ...st, errs: w.errs } })
-// FL 動いた時のちらつき: 低空飛行でカメラを 0.4m 進めた2枚の差（屋根と木立の切り抜き）が、前の同じ2枚の差の1.5倍以下
+// S4 中央の通りの模様（舗装の粒・補修の跡・ひび・轍）: 歩く目線で木を隠して影を描き直した手前の通りの、4×4画素にまとめて測る明るさで割った細かな明暗 ≥ 前の2倍。
+//   初めは「細かな明暗 ≥ 前＋0.1」としたが、木の形が変わって通りに落ちる木の影も変わり、前より暗い所どうしを比べていた。明るさで割っても、
+//   縁の葉の板のまだらな影で通りの模様を外しても線を越えた（外し回し）ので、前も後も木を隠して影を描き直してから撮る。
+//   1画素ごとの差は画面に重ねた紙の粒を拾って 1.197→1.235 しか動かず、数画素の大きさの舗装の粒とひびは4×4にまとめると見える（0.34→1.43・便6 の決めたこと）
+def('S4', async () => { const w = await viewWalkNoTree(); const st = await cropStats('walk_notree', w.f, CROP.road); return { pass: st.bdBefore != null && st.bd >= st.bdBefore * 2 && w.errs.length === 0, ...st, errs: w.errs } })
+// FL 動いた時のちらつき: 低空飛行の眺めを、開発の口 __town3dShotAt（決まった大きさ 640×560 で1枚描く）でカメラを 0.4m 進めた2枚を同じ瞬間に描き、
+//   遠くの町の帯（画の上から 25〜55%）の差の平均が、前の同じ2枚の差の1.3倍以下（遠くて細かすぎる模様を消さないと、少し動いただけで画素がちらつく）。
+//   初めは画面の撮影を1.5秒あけた2枚で比べたが、その間の画質の自動調整と動く物の差が入り、模様を消す所を外しても落ちなかった（便6 の決めたこと）
 def('FL', async () => {
-  const v = await viewFlylow()
-  const res = {}
-  for (const k of ['roofNear', 'treeNear', 'grass']) {
-    const now = await diff(v.f, v.f2, CROP[k])
-    const pa = beforeImg('flylow'), pb = beforeImg('flylow_step')
-    const pre = pa && pb ? await diff(pa, pb, CROP[k]) : null
-    res[k] = { now, before: pre, pass: !!pre && now.mean <= Math.max(pre.mean * 1.5, pre.mean + 1) }
-  }
-  return { pass: Object.values(res).every((r) => r.pass) && v.errs.length === 0, ...res, errs: v.errs }
+  const { page, errs } = await open('pc', 'kitaterao-window-3d')
+  await placeCam(page, CAM.flylow, 4000)
+  const r = await page.evaluate(async (c) => {
+    const [x, y, z, lx, ly, lz, fov] = c, dx = lx - x, dy = ly - y, dz = lz - z, d = Math.hypot(dx, dy, dz), s = 0.4 / d
+    const ua = window.__town3dShotAt(x, y, z, lx, ly, lz, fov), ub = window.__town3dShotAt(x + dx * s, y + dy * s, z + dz * s, lx + dx * s, ly + dy * s, lz + dz * s, fov)
+    const ld = async (u) => { const im = new Image(); await new Promise((res) => { im.onload = res; im.src = u }); const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const g = cv.getContext('2d'); g.drawImage(im, 0, 0); return g.getImageData(0, 0, cv.width, cv.height) }
+    const A = await ld(ua), B = await ld(ub), L = (q, k) => 0.2126 * q[k] + 0.7152 * q[k + 1] + 0.0722 * q[k + 2]
+    let sm = 0, n = 0; for (let yy = Math.floor(A.height * 0.25); yy < Math.floor(A.height * 0.55); yy++) for (let xx = 0; xx < A.width; xx++) { const k = (yy * A.width + xx) * 4; sm += Math.abs(L(A.data, k) - L(B.data, k)); n++ }
+    return { ua, ub, far: +(sm / n).toFixed(3) }
+  }, CAM.flylow)
+  fs.writeFileSync(path.join(OUT, 'FL_a.png'), Buffer.from(r.ua.split(',')[1], 'base64')); fs.writeFileSync(path.join(OUT, 'FL_b.png'), Buffer.from(r.ub.split(',')[1], 'base64'))
+  const b = beforeOf('FL')
+  return { pass: !!b && b.far != null && r.far <= b.far * 1.3 && errs.length === 0, far: r.far, farBefore: b && b.far, errs }
 })
 // G1 雪の窓・夜の窓・夕方の窓（PC・iPhone）と春の窓が沈まない: 窓の外の帯の明るさの平均が前±8 以内・ほぼ白の割合が前＋0.02 以内（守り）
 def('G1', async () => {

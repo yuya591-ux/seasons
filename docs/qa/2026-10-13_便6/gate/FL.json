@@ -1,41 +1,10 @@
 {
  "pass": true,
- "roofNear": {
-  "now": {
-   "mean": 15.79,
-   "over8": 0.606
-  },
-  "before": {
-   "mean": 15.77,
-   "over8": 0.587
-  },
-  "pass": true
- },
- "treeNear": {
-  "now": {
-   "mean": 14.6,
-   "over8": 0.454
-  },
-  "before": {
-   "mean": 12.69,
-   "over8": 0.383
-  },
-  "pass": true
- },
- "grass": {
-  "now": {
-   "mean": 17.06,
-   "over8": 0.405
-  },
-  "before": {
-   "mean": 18.4,
-   "over8": 0.426
-  },
-  "pass": true
- },
+ "far": 4.357,
+ "farBefore": 3.655,
  "errs": [],
  "id": "FL",
- "ms": 4706,
- "at": "2026-10-13T15:00:30.451Z",
- "commit": "638da84"
+ "ms": 85262,
+ "at": "2026-10-13T16:17:13.083Z",
+ "commit": "27493c1"
 }

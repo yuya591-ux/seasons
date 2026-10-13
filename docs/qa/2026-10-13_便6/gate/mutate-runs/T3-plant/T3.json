@@ -1,0 +1,27 @@
+{
+ "pass": false,
+ "oldN": 0,
+ "found": false,
+ "blades": 0,
+ "plant": {
+  "crop": [
+   1300,
+   610,
+   200,
+   250
+  ],
+  "detail": 1.209,
+  "nd": 1.019,
+  "detailBefore": 1.225,
+  "ndBefore": 0.952,
+  "diffBefore": {
+   "mean": 15.11,
+   "over8": 0.305
+  }
+ },
+ "errs": [],
+ "id": "T3",
+ "ms": 48509,
+ "at": "2026-10-13T15:57:05.338Z",
+ "commit": "27493c1"
+}

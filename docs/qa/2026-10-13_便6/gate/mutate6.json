@@ -1,0 +1,68 @@
+[
+ {
+  "name": "G0-rngGuard（守りの確かめ: 木の揺れの R() を1つ減らす）",
+  "check": "G0",
+  "caught": false,
+  "out": "G0 合格 (109.8秒) / 検査の終わり: 1/1 合格"
+ },
+ {
+  "name": "T1-species（樹種を丸い広葉樹だけに）",
+  "check": "T1",
+  "caught": true,
+  "out": "T1 不合格 (166.3秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "T1-tint（木ごとの色の振れを外す）",
+  "check": "T1",
+  "caught": false,
+  "out": "T1 合格 (163.6秒) / 検査の終わり: 1/1 合格"
+ },
+ {
+  "name": "T2-atlas（葉の画を外す）",
+  "check": "T2",
+  "caught": true,
+  "out": "T2 不合格 (176.3秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "T2-cards（縁の葉の板を外す）",
+  "check": "T2",
+  "caught": true,
+  "out": "T2 不合格 (175.6秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "T3-plant（細長い葉の株を部屋に置かない）",
+  "check": "T3",
+  "caught": true,
+  "out": "T3 不合格 (48.5秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "S1-roof（屋根の模様を外す）",
+  "check": "S1",
+  "caught": true,
+  "out": "S1 不合格 (70.8秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "S2-wall（壁の模様を外す）",
+  "check": "S2",
+  "caught": true,
+  "out": "S2 不合格 (73.6秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "S3-ground（地面の模様を外す）",
+  "check": "S3",
+  "caught": true,
+  "out": "S3 不合格 (66.8秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "S4-road（通りの模様を外す）",
+  "check": "S4",
+  "caught": false,
+  "out": "S4 合格 (67.4秒) / 検査の終わり: 1/1 合格"
+ },
+ {
+  "name": "FL-fade（遠くの細かすぎる模様を消すのを外す）",
+  "check": "FL",
+  "caught": false,
+  "out": "FL 合格 (70.7秒) / 検査の終わり: 1/1 合格"
+ }
+]

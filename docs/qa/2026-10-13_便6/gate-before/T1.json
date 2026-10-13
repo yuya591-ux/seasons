@@ -5,7 +5,7 @@
  },
  "n": 200,
  "lumStd": 0.0188,
- "lumStdBefore": 0.0403,
+ "lumStdMaru": 0.0188,
  "springPink": {
   "n": 151,
   "sp": [
@@ -19,8 +19,10 @@
    370,
    230
   ],
-  "detail": 1.768,
-  "detailBefore": 1.768,
+  "detail": 1.752,
+  "nd": 1.883,
+  "detailBefore": 1.752,
+  "ndBefore": 1.883,
   "diffBefore": {
    "mean": 0,
    "over8": 0
@@ -33,8 +35,10 @@
    200,
    160
   ],
-  "detail": 1.349,
-  "detailBefore": 1.349,
+  "detail": 1.35,
+  "nd": 1.518,
+  "detailBefore": 1.35,
+  "ndBefore": 1.518,
   "diffBefore": {
    "mean": 0,
    "over8": 0
@@ -46,7 +50,7 @@
  "imgOk": false,
  "errs": [],
  "id": "T1",
- "ms": 158603,
- "at": "2026-10-13T14:51:28.730Z",
- "commit": "638da84"
+ "ms": 154891,
+ "at": "2026-10-13T16:08:01.588Z",
+ "commit": "27493c1"
 }

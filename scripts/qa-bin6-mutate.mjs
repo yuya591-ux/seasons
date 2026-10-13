@@ -27,15 +27,20 @@ const OUTF = 'docs/qa/2026-10-13_便6/gate/mutate6.json'
 const prev = only.length && fs.existsSync(OUTF) ? JSON.parse(fs.readFileSync(OUTF, 'utf8')) : []
 const out = prev.filter((p) => !list.some((m) => m.name === p.name))
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+// 開発サーバーが配るファイルの中身に、書き換えた文が入るまで待つ（4秒待ちだけでは、外す前のコードのまま検査が走った回があった・便6 の G0）
+const served = (file, text, want) => { for (let i = 0; i < 60; i++) { const r = spawnSync('curl', ['-s', `http://localhost:4963/seasons/${file}?t=${Date.now()}`], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }); if ((r.stdout || '').includes(text) === want) return true; sleep(1000) } return false }
 for (const m of list) {
   const src = fs.readFileSync(m.file, 'utf8')
   const n = src.split(m.from).length - 1
   if (n !== 1) { out.push({ name: m.name, check: m.check, caught: null, note: `外す所が ${n} か所（1か所でない）` }); console.log(`${m.name}: 外す所が ${n} か所`); continue }
   fs.writeFileSync(m.file, src.replace(m.from, () => m.to))
-  sleep(4000) // 開発サーバーが書き換えを拾うまで（便2 の教訓）
+  const mark = m.to.includes(m.from) ? [m.to, true] : [m.from, false] // 書き換えた文に元の文が含まれる時は、書き換えた文が入ったかで見る
+  if (!served(m.file, mark[0], mark[1])) { execSync(`git checkout HEAD -- ${m.file}`); out.push({ name: m.name, check: m.check, caught: null, note: '開発サーバーが書き換えを配らなかった' }); console.log(`${m.name}: 配られなかった`); continue }
+  sleep(2000)
   const r = spawnSync('node', ['scripts/qa-bin6.mjs', m.check], { env: { ...process.env, QA_OUT: `docs/qa/2026-10-13_便6/gate/mutate-runs/${m.name.split('（')[0]}`, QA_SHOT: '' }, encoding: 'utf8' })
   execSync(`git checkout HEAD -- ${m.file}`)
-  sleep(4000)
+  served(m.file, mark[0], !mark[1])
+  sleep(2000)
   const last = (r.stdout || '').trim().split('\n').slice(-2).join(' / ')
   out.push({ name: m.name, check: m.check, caught: r.status !== 0, out: last })
   console.log(`${m.name}（${m.check}）: ${r.status !== 0 ? '落ちた' : '落ちなかった'} — ${last}`)

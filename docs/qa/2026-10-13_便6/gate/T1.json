@@ -7,7 +7,8 @@
  },
  "n": 200,
  "lumStd": 0.1194,
- "lumStdBefore": 0.0188,
+ "lumStdMaru": 0.1059,
+ "lumStdMaruBefore": 0.0188,
  "springPink": {
   "n": 151,
   "sp": [
@@ -21,11 +22,13 @@
    370,
    230
   ],
-  "detail": 2.329,
-  "detailBefore": 1.768,
+  "detail": 2.331,
+  "nd": 2.587,
+  "detailBefore": 1.752,
+  "ndBefore": 1.883,
   "diffBefore": {
-   "mean": 7.98,
-   "over8": 0.299
+   "mean": 8.69,
+   "over8": 0.328
   }
  },
  "round": {
@@ -35,11 +38,13 @@
    200,
    160
   ],
-  "detail": 1.638,
-  "detailBefore": 1.349,
+  "detail": 1.686,
+  "nd": 2.078,
+  "detailBefore": 1.35,
+  "ndBefore": 1.518,
   "diffBefore": {
-   "mean": 12.77,
-   "over8": 0.538
+   "mean": 12.8,
+   "over8": 0.548
   }
  },
  "spOk": true,
@@ -48,7 +53,7 @@
  "imgOk": true,
  "errs": [],
  "id": "T1",
- "ms": 162319,
- "at": "2026-10-13T14:57:22.724Z",
- "commit": "638da84"
+ "ms": 162846,
+ "at": "2026-10-13T16:14:05.580Z",
+ "commit": "27493c1"
 }
