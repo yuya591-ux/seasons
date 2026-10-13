@@ -12,6 +12,7 @@ export default {
   render: 'town3d', // Three.js ビューア（src/engine/town3dViewer.js）
   town3dKind: 'yato', // 谷戸（棚田・茅葺の屋敷・里山）として組む
   bg3d: 'bg/town3d-yato.jpg', // 奥に敷く実写の里山の谷（棚田・茅葺／遠景を写真級に）
+  mist: { k: 1.3 }, // 低く溜まる霧を朝の既定の1.3倍に（谷底の棚田に朝靄が溜まる＝src/data/mist.js）
 
   palette: {
     early: {

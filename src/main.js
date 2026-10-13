@@ -1,6 +1,7 @@
 // 全体の結線。器（情景データ）＋レンダラ＋音＋UI をつなぐ。
 
 import { SCENES, DEFAULT_SCENE, pickNowScene } from './data/scenes/index.js'
+import { mistFor } from './data/mist.js'
 import { getState, setScene, updateSettings, recordVisit, addViewSeconds, recordEvent, addJournalEntry, markDiscovered, getWorldState } from './state.js'
 import { createRenderer } from './engine/renderer.js'
 import { createEvents2d } from './engine/events2d.js'
@@ -185,6 +186,7 @@ function start() {
           season: (next.axes && next.axes.season) || 'summer',
           weather: next.town3dWeather || null, // 'snow' | 'petals' | 'leaves'（降るもの）
           kind: next.town3dKind || 'town', // 'town'（坂の街）| 'yato'（谷戸）
+          mist: mistFor(next), // 低く溜まる霧の濃さ（時間帯・天気・場所の既定＋情景の mist の上書き）
           bg3d: next.bg3d || null, // 奥に敷く実写背景（Flux生成）。遠景を写真級にする任意の格上げ層
           quality: getState().settings.quality, // 描き込み品質＝low端末の発熱/カクつきを抑える（town3dにも効かせる）
           brightness: getState().settings.brightness, // 明るさ設定を3Dにも反映

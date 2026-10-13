@@ -1,0 +1,18 @@
+{
+ "waterPx": 174129,
+ "waterFrac": 0.486,
+ "mean": 181.1,
+ "std": 21.8,
+ "diffBefore": 8,
+ "meshes": 54,
+ "file": "docs/qa/2026-10-13_便4/gate/W2_sea.png",
+ "stdBefore": 19.6,
+ "meanBefore": 174.6,
+ "pass": true,
+ "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/W2_海_pc_後.png",
+ "errs": [],
+ "id": "W2",
+ "ms": 45091,
+ "at": "2026-10-13T05:10:55.677Z",
+ "commit": "e841636"
+}

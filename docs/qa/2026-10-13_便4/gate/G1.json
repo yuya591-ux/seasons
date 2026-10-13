@@ -1,0 +1,51 @@
+{
+ "pass": true,
+ "kitaterao-window-3d-snow_pc": {
+  "mean": 143.2,
+  "white": 0.001,
+  "before": {
+   "mean": 142.9,
+   "white": 0.001
+  },
+  "pass": true,
+  "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/G1_kitaterao-window-3d-snow_pc_後.png",
+  "errs": []
+ },
+ "kitaterao-window-3d-night_pc": {
+  "mean": 44.1,
+  "white": 0,
+  "before": {
+   "mean": 44,
+   "white": 0
+  },
+  "pass": true,
+  "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/G1_kitaterao-window-3d-night_pc_後.png",
+  "errs": []
+ },
+ "kitaterao-window-3d-sunset_pc": {
+  "mean": 143.9,
+  "white": 0.001,
+  "before": {
+   "mean": 143.3,
+   "white": 0.001
+  },
+  "pass": true,
+  "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/G1_kitaterao-window-3d-sunset_pc_後.png",
+  "errs": []
+ },
+ "kitaterao-window-3d-sunset_iphone": {
+  "mean": 131.3,
+  "white": 0.005,
+  "before": {
+   "mean": 130,
+   "white": 0.005
+  },
+  "pass": true,
+  "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/G1_kitaterao-window-3d-sunset_iphone_後.png",
+  "errs": []
+ },
+ "id": "G1",
+ "ms": 126513,
+ "at": "2026-10-13T05:04:55.741Z",
+ "commit": "e841636"
+}

@@ -1,0 +1,34 @@
+{
+ "pass": true,
+ "pond": {
+  "waterPx": 23260,
+  "waterFrac": 0.065,
+  "mean": 155.4,
+  "std": 8.2,
+  "diffBefore": 37.9,
+  "meshes": 54,
+  "file": "docs/qa/2026-10-13_便4/gate/W1_pond.png",
+  "stdBefore": 28.6,
+  "meanBefore": 117.2,
+  "pass": true
+ },
+ "river": {
+  "waterPx": 62194,
+  "waterFrac": 0.174,
+  "mean": 143.8,
+  "std": 14.8,
+  "diffBefore": 29,
+  "meshes": 54,
+  "file": "docs/qa/2026-10-13_便4/gate/W1_river.png",
+  "stdBefore": 32.5,
+  "meanBefore": 115.4,
+  "pass": true
+ },
+ "shot_pond": "docs/確認用スクショ/seasons/2026-10-13_便4/W1_池_pc_後.png",
+ "shot_river": "docs/確認用スクショ/seasons/2026-10-13_便4/W1_川_pc_後.png",
+ "errs": [],
+ "id": "W1",
+ "ms": 50846,
+ "at": "2026-10-13T05:10:10.497Z",
+ "commit": "e841636"
+}

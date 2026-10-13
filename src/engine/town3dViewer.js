@@ -4,6 +4,7 @@
 // 連打切替に耐えるよう世代トークンで mount をキャンセル可能にする。
 
 import { qualityPlan, normQuality } from '../data/quality.js'
+import { installHeightFog, clearHeightFog, MIST_A, MIST_B } from './heightFog.js'
 
 let token = 0
 let active = null // { renderer, scene, camera, raf, dispose, stage }
@@ -275,6 +276,7 @@ export async function unmountTown3d() {
   if (a) {
     cancelAnimationFrame(a.raf)
     try { a.dispose() } catch (e) { /* 無視 */ }
+    clearHeightFog() // 町の3Dの外では低く溜まる霧を効かせない
     if (a.stage && a.stage.parentNode) a.stage.parentNode.removeChild(a.stage)
   }
 }
@@ -284,6 +286,7 @@ export async function mountTown3d(parent, opts = {}) {
   const my = ++token
   const THREE = await import('three')
   if (my !== token) return
+  installHeightFog(THREE) // 低く溜まる霧の部品（材を組む前に1回だけ）
   // 近景の建物の角を丸める面取り用（低ポリの箱の角を脱す）。近景の数棟だけに使い性能は据え置く。
   const { RoundedBoxGeometry } = await import('three/examples/jsm/geometries/RoundedBoxGeometry.js')
   if (my !== token) return
@@ -402,6 +405,17 @@ export async function mountTown3d(parent, opts = {}) {
     ? { near: (weather === 'snow' ? 54 : 48) * FOG_K.near, far: (weather === 'snow' ? 176 : 168) * FOG_K.far }
     : { near: (weather === 'snow' ? 40 : 30) * FOG_K.near, far: (weather === 'snow' ? 146 : 132) * FOG_K.far } // 大気遠近（手前は鮮明・遠景は空気に溶ける）
   scene.fog = new THREE.Fog(fogCol, FOG.near, FOG.far)
+  // 低く溜まる霧（便3 #2=2）。値は情景のデータ（src/data/mist.js の mistFor）から受け取る。描画の直前に毎フレーム、
+  // 霞の色（日の傾き・飛行で変わる）・流れの位置・日の傾き（夕方へ向かうほど少し濃く）を当てる（applyMist）。
+  const MIST = Object.assign({ base: -4, scale: 4, density: 0, amount: 0, flow: 0, tint: 0.55 }, opts.mist || {})
+  const mistPin = {} // 検証用の口で一時的に上書きする値（amount＝混ざり方・off＝流れの位置）
+  const mistWhite = new THREE.Color(0xeef2f4), mistCol = new THREE.Color()
+  let mistOff = 0, mistDD = 0, mistT = 0 // 流れの位置（m）・直近の日の傾き（0..1）・前に当てた時刻（秒）
+  const applyMist = () => {
+    MIST_A[0] = MIST.base; MIST_A[1] = MIST.scale; MIST_A[2] = MIST.density * (1 + 0.25 * mistDD); MIST_A[3] = mistPin.amount ?? MIST.amount
+    mistCol.copy(scene.fog.color).lerp(mistWhite, MIST.tint); MIST_B[0] = mistCol.r; MIST_B[1] = mistCol.g; MIST_B[2] = mistCol.b; MIST_B[3] = mistPin.off ?? mistOff
+  }
+  applyMist()
 
   // 空ドーム（上=空色, 下=地平の暖色のグラデ）。飛行中は uniform を暖色へ寄せて懐かしい黄昏の空にする。
   const skyUniTop = { value: skyTop.clone() }
@@ -751,6 +765,31 @@ export async function mountTown3d(parent, opts = {}) {
   const glintCol = new THREE.Color(isNight ? 0x5a6e92 : (weather === 'snow' ? 0xe8eef6 : 0xfff0d2)).lerp(new THREE.Color(0xffc888), (isNight || weather === 'snow') ? 0 : duskAmt) // 昼=暖白／夕=金／夜=淡い月明かり
   // 川・池・水路のきらめき（淡い真水の水面のゆらぎ＝歩いて水辺で映える。海より細かく穏やか）。共有uniformをframeで進める。
   const freshUniforms = { uTime: { value: 0 }, uSky: { value: skyHorizon.clone() }, uSky2: { value: skyTop.clone() } } // uSky=地平の色/uSky2=天頂の色。映り込みを縦グラデにする(地平=暖/天頂=空)＝単色の板を脱す。frameで日の傾きに追従
+  // 水面が空と雲を映す（便3 #1=1）。光の計算の後で、水の地の色を暗くし、さざ波で揺れる反射の向きの空の色（地平〜天頂）・
+  // 雲の明るみ・太陽の照り返しを、視線が浅いほど強く映す（本物の水は暗いので映りが読める）。街や橋は映らない（描き足しは無い）。
+  // P=水面の世界の位置の varying／SKYH・SKYT=地平と天頂の空の色の uniform／amp=さざ波の傾きの強さ／sea=海（うねりを大きくゆるく）。
+  // さざ波は遠くほど傾きを弱める（細かい波が遠くで横縞＝モアレになるのを防ぐ）。海は波の大きさを約8倍にする（池の細かいさざ波を広い海に当てると沖が縞になった・便4）
+  const skyMirrorGLSL = (P, SKYH, SKYT, amp, sea) => `
+  {
+    float tM = uTime; vec3 PM = ${P}; vec3 QM = PM * ${sea ? "0.12" : "1.0"};
+    float dxM = 0.85 * cos(QM.x * 0.85 + tM * 0.8) * 0.5 + 0.5 * cos((QM.x + QM.z) * 1.25 + tM * 1.15) + 0.18 * cos(QM.x * 2.3 - QM.z * 1.7 + tM * 1.9);
+    float dzM = 0.7 * cos(QM.z * 0.7 - tM * 0.55) * 0.5 + 0.5 * cos((QM.x + QM.z) * 1.25 + tM * 1.15) - 0.13 * cos(QM.x * 2.3 - QM.z * 1.7 + tM * 1.9);
+    ${sea ? 'dxM *= 0.35; dzM *= 0.35;' : ''}
+    float aM = ${amp} / (1.0 + length(cameraPosition - PM) * ${sea ? '0.004' : '0.03'}); // 遠くほどさざ波を弱める
+    vec3 NM = normalize(vec3(-dxM * aM, 1.0, -dzM * aM));
+    vec3 VM = normalize(cameraPosition - PM);
+    vec3 RM = reflect(-VM, NM);
+    float elM = clamp(RM.y, 0.0, 1.0);
+    vec3 skyM = mix(${SKYH}, ${SKYT}, smoothstep(0.0, 0.55, elM));
+    vec2 cuvM = RM.xz / max(RM.y, 0.08) * 0.9 + vec2(tM * 0.01, tM * 0.004); // 映る雲はゆっくり流れる
+    float clM = 0.5 + 0.5 * sin(cuvM.x * 1.7 + sin(cuvM.y * 1.3) * 1.6) * sin(cuvM.y * 1.1 + cuvM.x * 0.4);
+    float lumM = max(max(${SKYH}.r, ${SKYH}.g), ${SKYH}.b);
+    skyM = mix(skyM, vec3(1.0, 0.99, 0.97) * lumM, smoothstep(0.55, 0.95, clM) * 0.35 * smoothstep(0.02, 0.25, elM));
+    skyM += uGlintCol * pow(max(dot(RM, uGlintDir), 0.0), 24.0) * 0.6;
+    float frM = mix(0.38, 1.0, pow(1.0 - max(dot(NM, VM), 0.0), 3.0)) * 0.9;
+    outgoingLight = mix(outgoingLight * vec3(0.42, 0.5, 0.55), skyM, frM);
+  }
+  #include <opaque_fragment>`
   const freshWater = (mat) => {
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = freshUniforms.uTime
@@ -770,8 +809,7 @@ export async function mountTown3d(parent, opts = {}) {
           vec3 vDirF = normalize(cameraPosition - vWPosF);
           float grazeF = 1.0 - clamp(vDirF.y + rp * 0.05, 0.0, 1.0);
           float fresF = pow(grazeF, 4.0);
-          vec3 reflF = mix(uSky2F, uSkyF, grazeF); // 視線が浅い(遠い水面)ほど地平の暖色、見下ろすほど天頂の空色＝縦グラデの映り込み
-          diffuseColor.rgb = mix(diffuseColor.rgb, reflF, fresF * 0.34);
+          // （便4: 前の薄い映り込み〈地の色へ空の色を fresF×0.34 混ぜる〉は、光の計算の後の「空と雲を映す」〈skyMirrorGLSL〉へ置き換えた）
           // 太陽へ向かう鏡面のきらめき＝波の法線が太陽を眼へ反射する所だけ細かくちらつく「きらめきの道」（小さな高輝度点＝Bloomが映え白飛びしない）。
           float dRxF = 0.85 * cos(vWPosF.x * 0.85 + phf * 0.8) * 0.5 + 0.5 * cos((vWPosF.x + vWPosF.z) * 1.25 + phf * 1.15);
           float dRzF = 0.7 * cos(vWPosF.z * 0.7 - phf * 0.55) * 0.5 + 0.5 * cos((vWPosF.x + vWPosF.z) * 1.25 + phf * 1.15);
@@ -780,6 +818,7 @@ export async function mountTown3d(parent, opts = {}) {
           float twF = 0.5 + 0.5 * sin(vWPosF.x * 5.3 + vWPosF.z * 4.7 + phf * 5.5);
           diffuseColor.rgb += uGlintCol * specF * twF;
         `)
+        .replace('#include <opaque_fragment>', skyMirrorGLSL('vWPosF', 'uSkyF', 'uSky2F', '0.10', false))
     }
     mat.customProgramCacheKey = () => 'freshWater'
     return mat
@@ -3789,8 +3828,7 @@ export async function mountTown3d(parent, opts = {}) {
             float graze = 1.0 - clamp(vDir.y + sw * 0.03, 0.0, 1.0);
             float fres = pow(graze, 4.0);
             // 縦グラデ＝近く（見下ろし）は天頂の色、遠く（浅い視線）は地平の色。塗りの板でなく空を映す水面。
-            vec3 refl = mix(uSky2, uSky, graze);
-            diffuseColor.rgb = mix(diffuseColor.rgb, refl, fres * 0.5);
+            // （便4: 前の映り込み〈地の色へ空の色を fres×0.5 混ぜる〉は、光の計算の後の「空と雲を映す」〈skyMirrorGLSL〉へ置き換えた）
             // 太陽へ向かう、きらめきの道＝波の法線が太陽を眼へ反射する筋だけ細かく輝く（夕日の道）。小さな高輝度点＝Bloomが映え白飛びしない。
             float dSx = 0.045 * cos(vWPos.x * 0.045 + ph * 0.7) * 0.5 + 0.085 * cos((vWPos.x + vWPos.z) * 0.085 + ph * 1.1);
             float dSz = 0.035 * cos(vWPos.z * 0.035 - ph * 0.5) * 0.5 + 0.085 * cos((vWPos.x + vWPos.z) * 0.085 + ph * 1.1) + 0.16 * 0.4 * cos(vWPos.z * 0.16 - ph * 1.7);
@@ -3799,6 +3837,7 @@ export async function mountTown3d(parent, opts = {}) {
             float twS = 0.5 + 0.5 * sin(vWPos.x * 0.5 + vWPos.z * 0.42 + ph * 5.0);
             diffuseColor.rgb += uGlintCol * specS * twS;
           `)
+          .replace('#include <opaque_fragment>', skyMirrorGLSL('vWPos', 'uSky', 'uSky2', '0.16', true))
       }
       const seaMesh = new THREE.Mesh(seaGeo, seaMat)
       seaMesh.position.set(0, SEA.level, -300); seaMesh.receiveShadow = true; town.add(seaMesh) // x≈-880..880・z≈-890..290 を広く覆う（Phase0で遠ざけた西=大正/東=江戸/北=戦国への長い渡りの海）
@@ -10483,6 +10522,7 @@ export async function mountTown3d(parent, opts = {}) {
     }
     // 飛行中も解像度は最高(qCap=1.6)のまま保つ＝景色を一望する時こそ綺麗に。輪郭のギザギザはFXAAでなめらかに（発熱をほぼ増やさず）。
     // 後処理が例外を出したら、そのフレームは直描きにし、5秒後にもう一度後処理を試す。3回続けて失敗したら以後は直描き（一度の例外でFXAAとブルームを失ったままにしない・S38）。
+    mistOff += Math.min(0.25, Math.max(0, t - mistT)) * MIST.flow; mistT = t; mistDD = drift.on ? drift.t / DRIFT_SECS : 0; applyMist() // 低く溜まる霧（霞の色が決まった後に当てる）
     drawCount++
     composerUsed = false
     if (composer && t >= composerRetryT) {
@@ -10718,6 +10758,7 @@ export async function mountTown3d(parent, opts = {}) {
     }
     window.__town3dSoundCounts = () => ({ chime: chimeCount, wing: wingCount }) // 検証用: 鈴・羽音の発火数
     window.__town3dPalProbe = () => ({ duskAmt: +duskAmt.toFixed(2), isNight, snowy: SNOWY, skyTop: '#' + skyTop.getHexString(), skyBright: +skyBright.toFixed(3) }) // 検証用: 時間帯
+    window.__town3dMist = (o) => { if (o === null) { delete mistPin.amount; delete mistPin.off } else if (o) Object.assign(mistPin, o); applyMist(); return { base: MIST.base, scale: MIST.scale, density: MIST.density, amount: MIST.amount, flow: MIST.flow, tint: MIST.tint, off: mistPin.off ?? mistOff, applied: Array.from(MIST_A) } } // 検証用: 低く溜まる霧の値（null で上書きを外す・{ amount } で混ざり方・{ off } で流れの位置を止める）
     window.__town3dDrift = (f) => { drift.t = DRIFT_SECS * Math.max(0, Math.min(1, f || 0)) } // 検証用: 日の傾きのドリフトを任意の進み具合(0..1)へ早送り
     window.__town3dClimb = (v) => { if (active) active.climb = v || 0 } // 検証用（旧）
     window.__town3dSit = () => +((active && active.sitAmt) || 0).toFixed(2) // 検証用: 歩行で立ち止まった「腰をおろす」量(0..1)

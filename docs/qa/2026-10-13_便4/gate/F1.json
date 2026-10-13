@@ -1,0 +1,13 @@
+{
+ "pass": true,
+ "meanDiff": 0.86,
+ "over8": 0.016,
+ "on": "docs/qa/2026-10-13_便4/gate/F1_on.png",
+ "off": "docs/qa/2026-10-13_便4/gate/F1_off.png",
+ "shot": "docs/確認用スクショ/seasons/2026-10-13_便4/F1_低空_pc_後.png",
+ "errs": [],
+ "id": "F1",
+ "ms": 44990,
+ "at": "2026-10-13T05:01:25.039Z",
+ "commit": "e841636"
+}
