@@ -277,7 +277,8 @@ def('T1', async () => {
   const spOk = ['maru', 'kasa', 'sugi'].every((k) => frac(k) >= 0.1)
   const lumOk = !!b && ti && ti.lumStdMaru >= b.lumStdMaru * 3
   const pinkOk = !!sp && sp.pinkN > 0 && sp.pinkSp.every((k) => k === 'kasa')
-  const autumnOk = !!au && ['maru', 'kasa', 'sugi'].every((k) => (au.sp[k] || 0) / au.n >= 0.1)
+  // 秋はどの樹種も1割以上・半分以下（紅葉を桜と取り違えると傘形が 69% に偏った。「1割以上」だけでは通った＝外し回し・便6）
+  const autumnOk = !!au && ['maru', 'kasa', 'sugi'].every((k) => (au.sp[k] || 0) / au.n >= 0.1 && (au.sp[k] || 0) / au.n <= 0.5)
   const imgOk = !!near.diffBefore && near.diffBefore.mean >= 5 && round.diffBefore.mean >= 5
   return { pass: spOk && lumOk && pinkOk && autumnOk && imgOk && errs.length === 0 && o2.errs.length === 0 && o3.errs.length === 0, autumnSp: au && au.sp, autumnOk, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdMaru: ti && ti.lumStdMaru, lumStdMaruBefore: b && b.lumStdMaru, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs, ...o3.errs] }
 })
