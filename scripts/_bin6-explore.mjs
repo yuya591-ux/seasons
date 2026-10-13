@@ -4,7 +4,7 @@ import { chromium } from 'playwright'
 import fs from 'node:fs'
 
 const [dev = 'pc', scene = 'kitaterao-window-3d', ...views] = process.argv.slice(2)
-const OUT = 'docs/qa/2026-10-13_便6/explore'
+const OUT = process.env.EX_OUT || 'docs/qa/2026-10-13_便6/explore'
 fs.mkdirSync(OUT, { recursive: true })
 const DEV = {
   pc: { viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 },
@@ -14,7 +14,7 @@ const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11
 const p = await (await b.newContext(DEV)).newPage()
 const errs = []
 p.on('pageerror', (e) => errs.push(e.message))
-await p.goto('http://localhost:4963/seasons/?dev=1', { waitUntil: 'domcontentloaded', timeout: 120000 })
+await p.goto((process.env.QA_BASE || 'http://localhost:4963/seasons/') + '?dev=1', { waitUntil: 'domcontentloaded', timeout: 120000 })
 await p.waitForTimeout(3000)
 await p.locator('.gate').click().catch(() => {})
 await p.waitForTimeout(1500)
@@ -42,6 +42,7 @@ for (const v of views) {
     await p.evaluate((cc) => { window.__b6x.cam = { p: cc.slice(0, 3), l: cc.slice(3, 6), fov: cc[6] } }, c)
     await p.waitForTimeout(5000)
   }
+  if (process.env.EX_PICK) console.log(name, 'pick', JSON.stringify(await p.evaluate((uv) => window.__town3dPick && window.__town3dPick(...uv), process.env.EX_PICK.split(',').map(Number))).slice(0, 600))
   await p.screenshot({ path: `${OUT}/${dev}-${name}.png` })
   console.log(name, '撮った')
 }
