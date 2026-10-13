@@ -1,0 +1,38 @@
+[
+ {
+  "name": "W1-freshMirror",
+  "check": "W1",
+  "caught": true,
+  "out": "W1 不合格 (33.5秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "W2-seaMirror",
+  "check": "W2",
+  "caught": true,
+  "out": "W2 不合格 (33.2秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "F1-mistLayer",
+  "check": "F1",
+  "caught": true,
+  "out": "F1 不合格 (33.4秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "F2-flow",
+  "check": "F2",
+  "caught": true,
+  "out": "F2 不合格 (37.0秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "F3-passData",
+  "check": "F3",
+  "caught": true,
+  "out": "F3 不合格 (122.7秒) / 検査の終わり: 0/1 合格"
+ },
+ {
+  "name": "F3-timeTable",
+  "check": "F3",
+  "caught": true,
+  "out": "F3 不合格 (122.6秒) / 検査の終わり: 0/1 合格"
+ }
+]

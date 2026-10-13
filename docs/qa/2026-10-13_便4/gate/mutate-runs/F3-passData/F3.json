@@ -1,0 +1,105 @@
+{
+ "pass": false,
+ "order": true,
+ "rows": {
+  "kitaterao-window-3d": {
+   "got": {
+    "base": -4,
+    "scale": 4,
+    "density": 0,
+    "amount": 0,
+    "flow": 0
+   },
+   "want": {
+    "base": -4,
+    "scale": 4,
+    "density": 0.009099999999999999,
+    "amount": 0.82,
+    "flow": 0.9,
+    "tint": 0.55
+   },
+   "same": false,
+   "errs": []
+  },
+  "kitaterao-window-3d-sunset": {
+   "got": {
+    "base": -4,
+    "scale": 4,
+    "density": 0,
+    "amount": 0,
+    "flow": 0
+   },
+   "want": {
+    "base": -4,
+    "scale": 4,
+    "density": 0.014949999999999998,
+    "amount": 0.82,
+    "flow": 0.9,
+    "tint": 0.55
+   },
+   "same": false,
+   "errs": []
+  },
+  "shishigaya-window-3d": {
+   "got": {
+    "base": -4,
+    "scale": 4,
+    "density": 0,
+    "amount": 0,
+    "flow": 0
+   },
+   "want": {
+    "base": -2,
+    "scale": 5,
+    "density": 0.02028,
+    "amount": 0.82,
+    "flow": 0.9,
+    "tint": 0.55
+   },
+   "same": false,
+   "errs": []
+  },
+  "kitaterao-window-3d-snow": {
+   "got": {
+    "base": -4,
+    "scale": 4,
+    "density": 0,
+    "amount": 0,
+    "flow": 0
+   },
+   "want": {
+    "base": -4,
+    "scale": 4,
+    "density": 0.007474999999999999,
+    "amount": 0.82,
+    "flow": 0.9,
+    "tint": 0.55
+   },
+   "same": false,
+   "errs": []
+  },
+  "kitaterao-window-3d-night": {
+   "got": {
+    "base": -4,
+    "scale": 4,
+    "density": 0,
+    "amount": 0,
+    "flow": 0
+   },
+   "want": {
+    "base": -4,
+    "scale": 4,
+    "density": 0.012349999999999998,
+    "amount": 0.82,
+    "flow": 0.9,
+    "tint": 0.2
+   },
+   "same": false,
+   "errs": []
+  }
+ },
+ "id": "F3",
+ "ms": 122665,
+ "at": "2026-10-13T05:21:47.690Z",
+ "commit": "1ec0abe"
+}
