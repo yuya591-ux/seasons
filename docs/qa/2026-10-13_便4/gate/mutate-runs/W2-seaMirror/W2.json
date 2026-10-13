@@ -1,9 +1,11 @@
 {
- "waterPx": 174067,
+ "waterPx": 174075,
  "waterFrac": 0.486,
- "mean": 179.7,
- "std": 17.8,
- "diffBefore": 5.1,
+ "mean": 169.8,
+ "std": 19.8,
+ "diffBefore": 4.8,
+ "skyDist": 30.2,
+ "skyDistBefore": 26.6,
  "meshes": 54,
  "file": "docs/qa/2026-10-13_便4/gate/mutate-runs/W2-seaMirror/W2_sea.png",
  "stdBefore": 19.6,
@@ -12,7 +14,7 @@
  "shot": null,
  "errs": [],
  "id": "W2",
- "ms": 33209,
- "at": "2026-10-13T05:18:32.572Z",
- "commit": "1ec0abe"
+ "ms": 33030,
+ "at": "2026-10-13T05:49:12.385Z",
+ "commit": "8c86cee"
 }

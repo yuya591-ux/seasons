@@ -1,4 +1,8 @@
 {
+ "sunsetWindow": {
+  "meanDiff": 0,
+  "over8": 0
+ },
  "pass": false,
  "meanDiff": 0,
  "over8": 0,
@@ -7,7 +11,7 @@
  "shot": null,
  "errs": [],
  "id": "F1",
- "ms": 33444,
- "at": "2026-10-13T05:19:06.674Z",
- "commit": "1ec0abe"
+ "ms": 66468,
+ "at": "2026-10-13T05:50:19.478Z",
+ "commit": "8c86cee"
 }

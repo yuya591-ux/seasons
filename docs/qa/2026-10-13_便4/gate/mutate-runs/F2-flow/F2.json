@@ -2,12 +2,12 @@
  "pass": false,
  "meanDiff": 0,
  "over8": 0,
- "flowPerSec": 0.903,
+ "flowPerSec": 0.9,
  "a": "docs/qa/2026-10-13_便4/gate/mutate-runs/F2-flow/F2_off0.png",
  "b": "docs/qa/2026-10-13_便4/gate/mutate-runs/F2-flow/F2_off60.png",
  "errs": [],
  "id": "F2",
- "ms": 37006,
- "at": "2026-10-13T05:19:44.394Z",
- "commit": "1ec0abe"
+ "ms": 37361,
+ "at": "2026-10-13T05:50:57.753Z",
+ "commit": "8c86cee"
 }

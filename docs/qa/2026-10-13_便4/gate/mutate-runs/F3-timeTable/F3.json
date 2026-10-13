@@ -42,15 +42,15 @@
   },
   "shishigaya-window-3d": {
    "got": {
-    "base": -2,
-    "scale": 5,
+    "base": -3,
+    "scale": 4,
     "density": 0.02028,
     "amount": 0.82,
     "flow": 0.9
    },
    "want": {
-    "base": -2,
-    "scale": 5,
+    "base": -3,
+    "scale": 4,
     "density": 0.02028,
     "amount": 0.82,
     "flow": 0.9,
@@ -99,7 +99,7 @@
   }
  },
  "id": "F3",
- "ms": 122615,
- "at": "2026-10-13T05:23:50.945Z",
- "commit": "1ec0abe"
+ "ms": 122423,
+ "at": "2026-10-13T05:55:03.915Z",
+ "commit": "8c86cee"
 }
