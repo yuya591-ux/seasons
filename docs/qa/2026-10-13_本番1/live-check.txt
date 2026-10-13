@@ -1,0 +1,9 @@
+公開の precache-manifest: ["/seasons/index.html","/seasons/manifest.webmanifest","/seasons/icon-192.png","/seasons/icon-512.png","/seasons/assets/index-CitE2BOm.js","/seasons/assets/index-DJSiStur.css"]
+手元の precache-manifest: ["/seasons/index.html","/seasons/manifest.webmanifest","/seasons/icon-192.png","/seasons/icon-512.png","/seasons/assets/index-CitE2BOm.js","/seasons/assets/index-DJSiStur.css"]
+一覧が同じか: true
+SHA-256 index-CitE2BOm.js 公開 f726c99ac6e6f68b95385427fda593265132ceea5680e14c1a58e58b16ca9c16 / 手元 f726c99ac6e6f68b95385427fda593265132ceea5680e14c1a58e58b16ca9c16 → 一致
+SHA-256 index-DJSiStur.css 公開 9bce51b2700d48d60ad82b6854095208068376a796ec40983317bb094eeea326 / 手元 9bce51b2700d48d60ad82b6854095208068376a796ec40983317bb094eeea326 → 一致
+読み込んだ画面のプログラム: index-CitE2BOm.js 200・town3dViewer-Dqc6KEH1.js 200・three.module-CbbBeXoY.js 200・RoundedBoxGeometry-BND4hYrb.js 200・BufferGeometryUtils-DqgGtPdn.js 200・Pass-DlKbm51C.js 200・ShaderPass-8qNslxiQ.js 200・CopyShader-CHGAmNbz.js 200・FXAAShader-DBPwA37V.js 200・EffectComposer-6g1mEiFA.js 200・OutputPass-CBMekD6S.js 200・RenderPass-uqzBWsvI.js 200・UnrealBloomPass-BpGZ7xtC.js 200
+既定の起動の題: 窓のむこう — 季節と記憶の町を眺めるアンビエント・画 C:/Users/yuya.satake/ClaudeCode/seasons/docs/qa/2026-10-13_本番1/01_公開_iphone_既定の起動.png
+公開の確かめ OK: 31 情景すべてエラー無し
+live-check exit 0

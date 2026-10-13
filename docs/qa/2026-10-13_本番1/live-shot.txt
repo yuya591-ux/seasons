@@ -1,0 +1,5 @@
+描画の装置: ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)
+10秒: 画 C:/Users/yuya.satake/ClaudeCode/seasons/docs/qa/2026-10-13_本番1/02_公開_iphone_GPU_10秒.png・真ん中の帯（高さの20〜95%）の明るさ 平均 64.3・ばらつき 45.6・canvas [{"w":643,"h":1398,"cls":""}]
+20秒: 画 C:/Users/yuya.satake/ClaudeCode/seasons/docs/qa/2026-10-13_本番1/02_公開_iphone_GPU_20秒.png・真ん中の帯（高さの20〜95%）の明るさ 平均 64.6・ばらつき 44.1・canvas [{"w":643,"h":1398,"cls":""}]
+情景の札: 北寺尾の坂の街
+エラー 0
