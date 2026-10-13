@@ -1,12 +1,18 @@
 {
  "pass": true,
+ "autumnSp": {
+  "sugi": 54,
+  "maru": 98,
+  "kasa": 54
+ },
+ "autumnOk": true,
  "sp": {
   "sugi": 52,
   "maru": 103,
   "kasa": 45
  },
  "n": 200,
- "lumStd": 0.1194,
+ "lumStd": 0.1192,
  "lumStdMaru": 0.1059,
  "lumStdMaruBefore": 0.0188,
  "springPink": {
@@ -22,13 +28,15 @@
    370,
    230
   ],
-  "detail": 2.331,
-  "nd": 2.587,
+  "detail": 2.354,
+  "nd": 2.604,
+  "bd": 5.091,
   "detailBefore": 1.752,
   "ndBefore": 1.883,
+  "bdBefore": 3.876,
   "diffBefore": {
-   "mean": 8.69,
-   "over8": 0.328
+   "mean": 13.52,
+   "over8": 0.487
   }
  },
  "round": {
@@ -38,13 +46,15 @@
    200,
    160
   ],
-  "detail": 1.686,
-  "nd": 2.078,
+  "detail": 1.611,
+  "nd": 1.966,
+  "bd": 2.718,
   "detailBefore": 1.35,
   "ndBefore": 1.518,
+  "bdBefore": 2.501,
   "diffBefore": {
-   "mean": 12.8,
-   "over8": 0.548
+   "mean": 13.68,
+   "over8": 0.561
   }
  },
  "spOk": true,
@@ -53,7 +63,7 @@
  "imgOk": true,
  "errs": [],
  "id": "T1",
- "ms": 162846,
- "at": "2026-10-13T16:14:05.580Z",
- "commit": "27493c1"
+ "ms": 253193,
+ "at": "2026-10-13T16:47:12.917Z",
+ "commit": "6e3de07"
 }

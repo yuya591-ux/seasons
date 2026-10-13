@@ -1,6 +1,6 @@
 // 木の樹冠の作り（2026-10-13・便6＝便5 #1=2「樹種の形と色の振れ＋葉の模様と縁の葉の板」）。
 // 樹種（丸い広葉樹・傘形・杉檜）と木ごとの色の振れを、木の位置のハッシュで決める＝町を作る乱数 R() を回さない（町の配置を変えない）。
-// 樹冠の大きさは、前の樹冠（主房＋房）が入る箱をそのまま使う（木の高さ・幅・当たり判定は前と同じ）。
+// 樹冠は、前の樹冠（主房＋房）が入る箱を元に作る（幹の位置・当たり判定は前と同じ）。杉檜は箱より上へ細く伸び、傘形は横へ広がる（便5 の案の画どおり）。
 // 葉の模様と縁の葉の板は、1枚の小さな画（左半分＝樹冠の面に貼る詰んだ葉・右半分＝縁に挿す葉の房、葉の外は透明）を材の色で染めて描く。
 // three は町の3Dが後から読み込む（読み込みを分けるため）ので、ここでは取り込まずに受け取る。
 
@@ -22,9 +22,12 @@ const n3 = (x, y, z) => {
 export function makeLeafAtlas(THREE) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d')
   const rnd = mkRand(0.37)
-  x.fillStyle = 'rgb(205,205,205)'; x.fillRect(0, 0, 128, 128)
+  // 左の不透明の所は 110px まで。右の葉の房（138px から）との間を透明にあけ、遠くの縮小画で左右がにじみ合わないようにする（便6 の外の目）
+  x.save(); x.beginPath(); x.rect(0, 0, 110, 128); x.clip()
+  x.fillStyle = 'rgb(205,205,205)'; x.fillRect(0, 0, 110, 128)
   const leaf = (cx, cy, l, w, a, v) => { x.save(); x.translate(cx, cy); x.rotate(a); x.fillStyle = `rgb(${v},${v},${v})`; x.beginPath(); x.ellipse(0, 0, l, w, 0, 0, 6.283); x.fill(); x.restore() }
   for (let i = 0; i < 520; i++) leaf(rnd() * 128, rnd() * 128, 3 + rnd() * 3.5, 1.6 + rnd() * 1.6, rnd() * 6.283, (165 + rnd() * 90) | 0)
+  x.restore()
   for (let i = 0; i < 150; i++) { const cx = 192 + (rnd() - 0.5) * 100, cy = 64 + (rnd() - 0.5) * 100; if (Math.hypot(cx - 192, cy - 64) > 54) continue; leaf(cx, cy, 4 + rnd() * 4, 2 + rnd() * 2, rnd() * 6.283, (160 + rnd() * 95) | 0) }
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4
   return t
@@ -59,7 +62,7 @@ function crownUV(p, uv) {
     const amin = Math.min(...a), bmin = Math.min(...b), sa = Math.max(...a) - amin, sb = Math.max(...b) - bmin
     const s = Math.min(1, 0.95 / Math.max(sa, sb, 1e-6)) // 大きな三角は縮めて画の1枚に収める
     const oa = (amin - Math.floor(amin)) * Math.max(0, 1 - sa * s), ob = (bmin - Math.floor(bmin)) * Math.max(0, 1 - sb * s)
-    for (let k = 0; k < 3; k++) uv.setXY(t + k, 0.01 + (oa + (a[k] - amin) * s) * 0.47, ob + (b[k] - bmin) * s)
+    for (let k = 0; k < 3; k++) uv.setXY(t + k, 0.02 + (oa + (a[k] - amin) * s) * 0.38, ob + (b[k] - bmin) * s) // 画の左の 0.02〜0.40（不透明の所の内側）
   }
 }
 
@@ -111,13 +114,14 @@ export function buildCrown(THREE, sp, bb, seed, withCards) {
     for (const [px, py, pz, rr] of clumps) {
       const nC = Math.max(4, Math.round(rr * rr * (sp === 'sugi' ? 3 : 6)))
       for (let k = 0; k < nC; k++) {
-        const a = rnd() * 6.283, e = (sp === 'sugi' ? -0.3 : -0.2) + rnd() * 1.4
+        const a = rnd() * 6.283, e = sp === 'sugi' ? -0.35 + rnd() * 0.6 : -0.2 + rnd() * 1.4 // 杉檜は段の裾まわりだけ（上の細った所で円錐から離れて空に浮かないように・便6 の外の目）
         d.set(Math.cos(a) * Math.cos(e), Math.sin(e), Math.sin(a) * Math.cos(e))
         const s = rr * (0.85 + rnd() * 0.4)
         const q = new THREE.PlaneGeometry(s, s)
         m4.lookAt(o, d, Math.abs(d.y) > 0.95 ? side : up)
         q.rotateZ(rnd() * 6.283); q.applyMatrix4(m4)
-        q.translate(px + d.x * rr, py + d.y * rr * (sp === 'kasa' ? 0.62 : 1), pz + d.z * rr)
+        const off = sp === 'sugi' ? rr * 0.95 : rr
+        q.translate(px + d.x * off, py + d.y * rr * (sp === 'kasa' ? 0.62 : 1), pz + d.z * off)
         const uv = q.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, 0.5 + uv.getX(i) * 0.5, uv.getY(i))
         parts.push(q); cardTris += 2
       }

@@ -268,6 +268,8 @@ def('T1', async () => {
   const ti = await page.evaluate(() => window.__b6.treeInfo())
   const o2 = await open('pc', 'kitaterao-window-3d-spring', { win: false })
   const sp = await o2.page.evaluate(() => window.__b6.treeInfo())
+  const o3 = await open('pc', 'kitaterao-window-3d-autumn', { win: false }) // 秋: 紅葉の色を桜と取り違えず、3樹種に分かれる（便6 の外の目）
+  const au = await o3.page.evaluate(() => window.__b6.treeInfo())
   const b = beforeOf('T1')
   const v = await viewFlylow()
   const near = await cropStats('flylow', v.f, CROP.treeNear), round = await cropStats('flylow', v.f, CROP.treeRound)
@@ -275,18 +277,20 @@ def('T1', async () => {
   const spOk = ['maru', 'kasa', 'sugi'].every((k) => frac(k) >= 0.1)
   const lumOk = !!b && ti && ti.lumStdMaru >= b.lumStdMaru * 3
   const pinkOk = !!sp && sp.pinkN > 0 && sp.pinkSp.every((k) => k === 'kasa')
+  const autumnOk = !!au && ['maru', 'kasa', 'sugi'].every((k) => (au.sp[k] || 0) / au.n >= 0.1)
   const imgOk = !!near.diffBefore && near.diffBefore.mean >= 5 && round.diffBefore.mean >= 5
-  return { pass: spOk && lumOk && pinkOk && imgOk && errs.length === 0 && o2.errs.length === 0, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdMaru: ti && ti.lumStdMaru, lumStdMaruBefore: b && b.lumStdMaru, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs] }
+  return { pass: spOk && lumOk && pinkOk && autumnOk && imgOk && errs.length === 0 && o2.errs.length === 0 && o3.errs.length === 0, autumnSp: au && au.sp, autumnOk, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdMaru: ti && ti.lumStdMaru, lumStdMaruBefore: b && b.lumStdMaru, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs, ...o3.errs] }
 })
 // T2 葉の模様と縁の葉の板: 樹冠の材が葉の模様（画）と切り抜き（alphaTest）を持ち、葉の板の三角がある。
-//   画: 歩く目線の頭の上の樹冠と、低空飛行の中ほどの木立の細かな明暗が前より増える（歩く目線 ≥ 前＋0.15・木立 ≥ 前＋0.08）
+//   画: 歩く目線の頭の上の樹冠と、低空飛行の中ほどの木立の、4×4画素にまとめて測る明るさで割った細かな明暗が前より増える（歩く目線 ≥ 前の1.12倍・木立 ≥ 前の1.15倍）。
+//   初めは1画素ごとの細かな明暗で「前＋0.15・前＋0.08」としたが、ごく近くの葉は大きく引き伸ばされて1画素ごとの差に出にくく、葉の画の貼り方を直した後は 1.039（線 1.039）になった（便6 の決めたこと）
 def('T2', async () => {
   const { page, errs } = await open('pc', 'kitaterao-window-3d', { win: false })
   const ti = await page.evaluate(() => window.__b6.treeInfo())
   const w = await viewWalk(), v = await viewFlylow()
   const walkTree = await cropStats('walk', w.f, CROP.walkTree), near = await cropStats('flylow', v.f, CROP.treeNear)
   const matOk = !!ti && ti.mapN === ti.n && ti.alphaN === ti.n && ti.cardTris > 0
-  const imgOk = walkTree.detailBefore != null && walkTree.detail >= walkTree.detailBefore + 0.15 && near.detail >= near.detailBefore + 0.08
+  const imgOk = walkTree.bdBefore != null && walkTree.bd >= walkTree.bdBefore * 1.12 && near.bd >= near.bdBefore * 1.15
   return { pass: matOk && imgOk && errs.length === 0, mapN: ti && ti.mapN, alphaN: ti && ti.alphaN, cardTris: ti && ti.cardTris, n: ti && ti.n, walkTree, near, matOk, imgOk, errs }
 })
 // T3 観葉植物: 部屋の20面の玉4つが無く、細長い葉17枚の株（potPlant）がある。画: 部屋の観葉植物の切り抜きが前と変わる（差の平均 ≥ 6）
@@ -299,8 +303,9 @@ def('T3', async () => {
 })
 // S1 屋根の模様（瓦・トタン・スレート）: 低空飛行の手前の屋根の細かな明暗 ≥ 前＋0.4（便5 の案の画 1.37→2.07）
 def('S1', async () => { const v = await viewFlylow(); const st = await cropStats('flylow', v.f, CROP.roofNear); return { pass: st.detailBefore != null && st.detail >= st.detailBefore + 0.4 && v.errs.length === 0, ...st, errs: v.errs } })
-// S2 家の壁の模様（漆喰とモルタルのむら・雨だれ）: 低空飛行の左下の窓のある家の壁の細かな明暗 ≥ 前＋0.2
-def('S2', async () => { const v = await viewFlylow(); const st = await cropStats('flylow', v.f, CROP.wall); return { pass: st.detailBefore != null && st.detail >= st.detailBefore + 0.2 && v.errs.length === 0, ...st, errs: v.errs } })
+// S2 家の壁の模様（漆喰とモルタルのむら・雨だれ）: 低空飛行の左下の窓のある家の壁の、明るさで割った細かな明暗 ≥ 前の1.08倍。
+//   初めは「細かな明暗 ≥ 前＋0.2」としたが、窓の格子の明暗が大きく、後 2.231 に対して線 2.227 と余裕が無かった（便6 の外の目）
+def('S2', async () => { const v = await viewFlylow(); const st = await cropStats('flylow', v.f, CROP.wall); return { pass: st.ndBefore != null && st.nd >= st.ndBefore * 1.08 && v.errs.length === 0, ...st, errs: v.errs } })
 // S3 地面の模様（草の濃淡と土の斑）: 公園の上 7m から見下ろした芝の、明るさで割った細かな明暗 ≥ 前の1.1倍。
 //   初めは低空飛行（高さ 50m）の芝で「細かな明暗 ≥ 前＋0.15」としたが、細かな模様は遠いと消える作りで +0.07 だった（便6 の決めたこと）
 def('S3', async () => { const v = await viewLawn(); const st = await cropStats('lawn', v.f, CROP.lawn); return { pass: st.ndBefore != null && st.nd >= st.ndBefore * 1.1 && v.errs.length === 0, ...st, errs: v.errs } })

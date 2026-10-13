@@ -39,9 +39,10 @@ vec3 sfPat(vec3 w, vec3 N) {
   m *= mix(1.0, smoothstep(0.0, 0.06, fr) * smoothstep(0.0, 0.03, fc) * smoothstep(1.0, 0.97, fc) * 0.3 + 0.7, fa) * (0.92 + 0.14 * sfH(vec2(floor(row), floor(col))));
   m *= 0.86 + 0.26 * sfN(w.xz * 0.4);
 #elif SF_KIND == 4
+  float wf = sfFade(al * 9.0); // 微分（fwidth）は分岐の外で取る（分岐の中では値が決まらない）
   if (abs(N.y) < 0.6) {
     m *= 0.9 + 0.16 * sfN(vec2(al, w.y) * 0.7);                                   // 漆喰とモルタルの大きなむら
-    m *= mix(1.0, 0.94 + 0.1 * sfN(vec2(al, w.y) * 9.0), sfFade(al * 9.0));         // 細かな粒
+    m *= mix(1.0, 0.94 + 0.1 * sfN(vec2(al, w.y) * 9.0), wf);                       // 細かな粒
     float st = sfN(vec2(al * 3.5, 0.0)) * smoothstep(0.35, 1.0, sfN(vec2(al * 1.3, w.y * 0.22)));
     m *= 1.0 - 0.16 * smoothstep(0.55, 0.9, st);                                   // 雨だれの縦の筋
     m *= mix(vec3(1.0), vec3(0.93, 0.95, 0.9), smoothstep(0.6, 0.9, sfN(vec2(al, w.y) * 0.3 + 3.0)));
@@ -58,7 +59,7 @@ vec3 sfPat(vec3 w, vec3 N) {
   vec2 pc = floor(w.xz * vec2(0.35, 0.12));
   m *= sfH(pc) > 0.72 ? 0.86 : 1.0;                                                 // 補修の跡（四角いつぎはぎ）
   float ck = abs(sfN(w.xz * 0.8) - 0.5); m *= 1.0 - 0.25 * (1.0 - smoothstep(0.0, 0.025, ck)) * sfFade(w.x * 0.8 * 20.0); // ひび
-  m *= 1.0 - 0.08 * exp(-pow(abs(w.x) - 1.7, 2.0) / 0.12);                          // 轍
+  float rd = abs(w.x) - 1.7; m *= 1.0 - 0.08 * exp(-rd * rd / 0.12);              // 轍（負の数の pow は GPU によって値が決まらないので掛け算で）
   m *= 0.9 + 0.16 * sfN(w.xz * 0.25);
 #endif
   return m;

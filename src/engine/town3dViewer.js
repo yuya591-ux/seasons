@@ -3177,7 +3177,7 @@ export async function mountTown3d(parent, opts = {}) {
       addBox(ox, oy, oz, cr * s, cr * s, cr * s)
     }
     if (!hidden) {
-      const baseM = leafBaseMats[ci], sp = crownSpecies(x, z, baseM.color.r > baseM.color.g * 1.08)
+      const baseM = leafBaseMats[ci], sp = crownSpecies(x, z, baseM.color.r > baseM.color.g * 1.08 && baseM.color.b > baseM.color.g) // 桜（青みのある桃色）だけ。紅葉は青みが無いので樹種を振る（便6 の外の目）
       const crown = buildCrown(THREE, sp, { min: bmin, max: bmax }, posHash(x, z, 1), leafCards)
       bakeCrownColors(THREE, crown, crownTint(x, z, sp), sp) // 上下の陰陽・房の奥の陰・葉の塊の濃淡・木ごとの明るさと黄み〜青み
       const leafMesh = new THREE.Mesh(crown.geo, crownMat(sp === 'sugi' && greenestLeaf ? greenestLeaf : baseM)); leafMesh.castShadow = true

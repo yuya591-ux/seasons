@@ -11,13 +11,15 @@
    900,
    360
   ],
-  "detail": 1.535,
-  "nd": 1.843,
-  "detailBefore": 0.821,
-  "ndBefore": 1.231,
+  "detail": 1.321,
+  "nd": 1.524,
+  "bd": 2.153,
+  "detailBefore": 0.889,
+  "ndBefore": 1.267,
+  "bdBefore": 1.289,
   "diffBefore": {
-   "mean": 24.15,
-   "over8": 0.437
+   "mean": 21.87,
+   "over8": 0.296
   }
  },
  "near": {
@@ -27,20 +29,22 @@
    370,
    230
   ],
-  "detail": 2.054,
-  "nd": 2.606,
-  "detailBefore": 1.768,
-  "ndBefore": 1.895,
+  "detail": 2.178,
+  "nd": 2.562,
+  "bd": 5.007,
+  "detailBefore": 1.752,
+  "ndBefore": 1.883,
+  "bdBefore": 3.876,
   "diffBefore": {
-   "mean": 20.11,
-   "over8": 0.821
+   "mean": 18.98,
+   "over8": 0.7
   }
  },
  "matOk": true,
  "imgOk": true,
  "errs": [],
  "id": "T2",
- "ms": 121585,
- "at": "2026-10-13T15:10:28.773Z",
- "commit": "638da84"
+ "ms": 182727,
+ "at": "2026-10-13T16:55:43.358Z",
+ "commit": "6e3de07"
 }

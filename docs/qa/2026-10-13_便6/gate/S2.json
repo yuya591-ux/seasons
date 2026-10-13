@@ -6,15 +6,19 @@
   140,
   120
  ],
- "detail": 2.231,
- "detailBefore": 2.027,
+ "detail": 2.265,
+ "nd": 5.701,
+ "bd": 12.405,
+ "detailBefore": 2.029,
+ "ndBefore": 5.006,
+ "bdBefore": 11.65,
  "diffBefore": {
-  "mean": 2.75,
-  "over8": 0.101
+  "mean": 14.62,
+  "over8": 0.497
  },
  "errs": [],
  "id": "S2",
- "ms": 1192,
- "at": "2026-10-13T15:00:23.162Z",
- "commit": "638da84"
+ "ms": 3197,
+ "at": "2026-10-13T16:50:20.511Z",
+ "commit": "6e3de07"
 }
