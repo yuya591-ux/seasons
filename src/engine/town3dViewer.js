@@ -5,6 +5,8 @@
 
 import { qualityPlan, normQuality } from '../data/quality.js'
 import { installHeightFog, clearHeightFog, MIST_A, MIST_B } from './heightFog.js'
+import { makeLeafAtlas, buildCrown, crownSpecies, crownTint, bakeCrownColors, posHash } from './treeCrown.js'
+import { applySurfacePattern, SURF, ROOF_SURF } from './surfacePattern.js'
 
 let token = 0
 let active = null // { renderer, scene, camera, raf, dispose, stage }
@@ -1773,6 +1775,7 @@ export async function mountTown3d(parent, opts = {}) {
     // テクスチャは「細かい草目」を高反復で（大スケールは頂点色が担うのでタイル感が出ない）。grazing角を綺麗にする異方性も付与。
     const gm = mottleMat(0xffffff, 150, 0.1, [42, 46]); gm.vertexColors = true // 反復を上げ近接(主観視点)で地面の細部が出る（粗い反復は1タイル超拡大で平滑にボケる）
     if (gm.map) { gm.map.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy()); gm.map.needsUpdate = true }
+    applySurfacePattern(gm, SURF.ground) // 草の濃淡と土の斑（便6＝便5 #2=1）
     const ground = new THREE.Mesh(g, gm)
     ground.receiveShadow = true
     town.add(ground)
@@ -1801,7 +1804,7 @@ export async function mountTown3d(parent, opts = {}) {
     rtx.fillStyle = 'rgba(198,198,198,0.26)'; rtx.fillRect(6, 0, 2, 256); rtx.fillRect(56, 0, 2, 256) // 路肩線
     const roadTex = new THREE.CanvasTexture(rtc); roadTex.wrapS = roadTex.wrapT = THREE.RepeatWrapping; roadTex.repeat.set(1, 8)
     // トゥーン材＝周りの舗装(mottleMat)と同じ平坦な光の乗り。Lambertは陽光を全受けして路面だけ白飛び/夕方に金色へ浮いていた（評価アート）。
-    const road = new THREE.Mesh(rg, snowify(new THREE.MeshToonMaterial({ map: roadTex, gradientMap: grad, vertexColors: true })))
+    const road = new THREE.Mesh(rg, applySurfacePattern(snowify(new THREE.MeshToonMaterial({ map: roadTex, gradientMap: grad, vertexColors: true })), SURF.road)) // 舗装の粒・補修の跡・ひび・轍（便6＝便5 #2=1）
     road.position.z = -35; road.receiveShadow = true; town.add(road)
     // 縁石（道の両肩）。短い箱を地形に沿って並べ1メッシュへ統合＝歩くと路肩が立ち、街路が地に着く。
     {
@@ -1900,7 +1903,7 @@ export async function mountTown3d(parent, opts = {}) {
   ]
   const roofCols = [0x59636e, 0x7a5e50, 0x4e5660, 0x6a6258, 0x5e6a5c, 0x86766a] // くすんだ瓦（スレート青/テラコッタ/紺/灰/苔/茶）
   // 屋根は色ごとに質感テクスチャ（瓦の濃淡・苔・経年のムラ）を1枚ずつ共有＝見下ろしの屋根のベタ塗りを解消
-  const roofMats = roofCols.map((c) => mottleMat(c, 60, 0.13, [3, 2]))
+  const roofMats = roofCols.map((c, i) => applySurfacePattern(mottleMat(c, 60, 0.13, [3, 2]), ROOF_SURF[i])) // 色ごとに瓦・トタン・スレートの模様を重ねる（便6＝便5 #2=1。R() は回さない）
   // 屋上・壁の雑多な設備（室外機/水タンク/塔屋/アンテナ）の共有マテリアル＝見下ろしの密度＝実写の生活感。
   const acMat = toon(0xd8d4c6), tankMat = toon(0x6e6a64), phMat = toon(0x8a8478), antMat = toon(0x46464c)
   // 屋上に干す布団の色（くすんだ生活色・上から見下ろす窓に映える彩り）。
@@ -1951,6 +1954,7 @@ export async function mountTown3d(parent, opts = {}) {
     const roofL = [] // 瓦屋根の建物-local素片（回転確定後に材質ごとへグローバル統合）
     const wm = toon(wallCols[(R() * wallCols.length) | 0]) // 壁は軽量な拡散材（多数あるため性能優先）
     wm.vertexColors = true // 壁面の縦グラデ（接地AO＋空の光）を頂点色で乗せる
+    applySurfacePattern(wm, SURF.wall) // 漆喰とモルタルのむら・雨だれの筋（便6＝便5 #2=1。同じ模様の壁は1つのプログラムを共有）
     const rep = Math.max(1, Math.round(w / 2.6)), repV = Math.max(1, Math.round(h / 2.4))
     const wvi = (((Math.floor(x) * 73856093) ^ (Math.floor(z) * 19349663)) >>> 0) % winMapBases.length // 建物ごとに窓の種類を変える（位置ハッシュ＝主R()非消費）
     const m = winMapBases[wvi].clone(); m.repeat.set(rep, repV); m.needsUpdate = true
@@ -3129,6 +3133,17 @@ export async function mountTown3d(parent, opts = {}) {
           : [[0x46673a, 0x547a40, 0x648a48, 0x748f4c, 0x52784a, 0x5e8444], [0x689050, 0x7ea05c, 0x92b066, 0xa2b66e, 0x86a868, 0x90ac5c]] // 夏の樹冠に色幅（深緑〜若葉〜黄緑〜青緑）＝同色の綿玉畑を脱す
   const leafBaseMats = leafBase.map((c) => { const m = toon(c); m.vertexColors = true; return m }) // 樹冠に頂点色の上下グラデ（陰陽）を効かせる
   const leafHiMats = leafHi.map(toon)
+  // 樹冠の作り（便6＝便5 #1=2）: 樹種の形（丸い広葉樹・傘形・杉檜）と木ごとの色の振れ＋葉の模様と縁の葉の板（treeCrown.js）。
+  // 樹種と色は木の位置のハッシュで決める（R() は前と同じ順と数だけ回す＝町の配置を変えない）。軽やかは葉の板を挿さない（切り抜きの重さを落とす）。
+  const leafAtlas = makeLeafAtlas(THREE)
+  const leafCards = !LIGHT
+  const greenestLeaf = leafBaseMats.slice().sort((a, b) => (b.color.g - b.color.r) - (a.color.g - a.color.r))[0] // 杉檜に当てる（桜の色を杉に当てない）
+  const crownMats = new Map()
+  const crownMat = (m) => { // 葉の画は白〜灰なので、材の色を少し明るくして前の明るさに合わせる
+    let c = crownMats.get(m)
+    if (!c) { c = snowify(new THREE.MeshToonMaterial({ color: m.color.clone().multiplyScalar(1.12), map: leafAtlas, alphaTest: leafCards ? 0.5 : 0, side: leafCards ? THREE.DoubleSide : THREE.FrontSide, vertexColors: true, gradientMap: grad })); crownMats.set(m, c) }
+    return c
+  }
   const treesArr = []
   const trunkGeos = [] // 全ての幹を1メッシュへ統合（静止＝ドローコール大幅削減）
   // hidden: 軽やかで作ってから隠す木（乱数と着地の避け所は前と同じに回し、葉・幹・接地影・当たり判定は町へ足さない＝配置はふつうと同じ・重さは前の軽やかと同じ・S25）
@@ -3151,32 +3166,27 @@ export async function mountTown3d(parent, opts = {}) {
     tg.applyMatrix4(new THREE.Matrix4().makeTranslation(0, trunkH / 2, 0))
     tg.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x, gy, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, tilt)), new THREE.Vector3(scale, scale, scale)))
     if (hidden) tg.dispose(); else trunkGeos.push(tg)
-    // 葉: 主房＋房をローカルで作り1つへ統合（木ごとに1メッシュ。陰色で統一＝トゥーンの陰影で立体感）。
-    const leafGeos = []
-    const main = new THREE.IcosahedronGeometry(r, det)
-    main.applyMatrix4(new THREE.Matrix4().makeScale(ax, ay, ax)); main.applyMatrix4(new THREE.Matrix4().makeTranslation(0, trunkH + r * ay * 0.5, 0))
-    leafGeos.push(main)
+    // 葉: 前の主房＋房の大きさと置き場を R() で前と同じ順に決め（町の配置を変えない）、それが入る箱の中に樹冠を作る（便6・treeCrown.js）。
+    const bmin = [Infinity, Infinity, Infinity], bmax = [-Infinity, -Infinity, -Infinity]
+    const addBox = (cx, cy, cz, ex, ey, ez) => { const c = [cx, cy, cz], e = [ex, ey, ez]; for (let a = 0; a < 3; a++) { bmin[a] = Math.min(bmin[a], c[a] - e[a]); bmax[a] = Math.max(bmax[a], c[a] + e[a]) } }
+    addBox(0, trunkH + r * ay * 0.5, 0, r * ax, r * ay, r * ax) // 主房
     const nC = scale > 1.4 ? 3 + ((R() * 2) | 0) : 1 + (R() < 0.5 ? 1 : 0) // 房数は元に戻す（性能優先）。輪郭の不揃いは色幅と樹形(tall/broad)で出す
     for (let k = 0; k < nC; k++) {
       const cr = r * (0.44 + R() * 0.42), s = 0.85 + R() * 0.3
-      const cg = new THREE.IcosahedronGeometry(cr, det)
-      cg.applyMatrix4(new THREE.Matrix4().makeScale(s, s, s))
-      cg.applyMatrix4(new THREE.Matrix4().makeTranslation((R() - 0.5) * r * ax * 1.5, trunkH + r * ay * (0.42 + (k + 1) / (nC + 1) * 0.95), (R() - 0.4) * r * ax * 1.1))
-      leafGeos.push(cg)
+      const ox = (R() - 0.5) * r * ax * 1.5, oy = trunkH + r * ay * (0.42 + (k + 1) / (nC + 1) * 0.95), oz = (R() - 0.4) * r * ax * 1.1
+      addBox(ox, oy, oz, cr * s, cr * s, cr * s)
     }
-    const merged = BufferGeometryUtils.mergeGeometries ? BufferGeometryUtils.mergeGeometries(leafGeos, false) : leafGeos[0]
-    leafGeos.forEach((lg) => { if (lg !== merged) lg.dispose() })
-    // 樹冠の上下に陰影（下=陰り0.8 / 上=陽の当たり1.22）を頂点色で焼く＝統合で失った陰陽の立体感を無コストで回復。
-    { const mp = merged.attributes.position, cols = new Float32Array(mp.count * 3); let minY = Infinity, maxY = -Infinity
-      for (let i = 0; i < mp.count; i++) { const y = mp.getY(i); if (y < minY) minY = y; if (y > maxY) maxY = y }
-      const span = Math.max(0.001, maxY - minY)
-      for (let i = 0; i < mp.count; i++) { const v = 0.8 + (mp.getY(i) - minY) / span * 0.42; cols[i * 3] = v; cols[i * 3 + 1] = v; cols[i * 3 + 2] = v }
-      merged.setAttribute('color', new THREE.BufferAttribute(cols, 3)) }
-    const leafMesh = new THREE.Mesh(merged, leafBaseMats[ci]); leafMesh.castShadow = true; g.add(leafMesh)
+    if (!hidden) {
+      const baseM = leafBaseMats[ci], sp = crownSpecies(x, z, baseM.color.r > baseM.color.g * 1.08)
+      const crown = buildCrown(THREE, sp, { min: bmin, max: bmax }, posHash(x, z, 1), leafCards)
+      bakeCrownColors(THREE, crown, crownTint(x, z, sp), sp) // 上下の陰陽・房の奥の陰・葉の塊の濃淡・木ごとの明るさと黄み〜青み
+      const leafMesh = new THREE.Mesh(crown.geo, crownMat(sp === 'sugi' && greenestLeaf ? greenestLeaf : baseM)); leafMesh.castShadow = true
+      leafMesh.userData = { sp, cardTris: crown.cardTris }; g.add(leafMesh)
+    }
     g.position.set(x, gy, z); g.scale.setScalar(scale); g.rotation.z = tilt; if (!hidden) town.add(g)
     g.userData = { ph: R() * 6.28, amp: 0.02 + R() * 0.02, tilt }
     spawnAvoid.push({ x, z, r: scale * 1.7 + 0.5 })   // 着地: 樹冠に埋もれて降りない（隠す木も登録＝後の路傍の物の置き場がふつうと同じ）
-    if (hidden) { merged.dispose(); return }
+    if (hidden) return
     colliders.push({ x, z, r: scale * 0.35 + 0.3 })   // 歩行: 幹だけ避ける（樹冠の下はくぐれる）
     treesArr.push(g)
   }
@@ -7681,7 +7691,28 @@ export async function mountTown3d(parent, opts = {}) {
     }
     { const px = 1.9, pz = 0.9 // 観葉植物（窓辺の床）
       cyl(0.19, 0.14, 0.34, px, FY + 0.17, pz, potMat, 14)                     // 鉢
-      for (const [dx, dy, dz, s] of [[0, 0.42, 0, 0.24], [-0.13, 0.34, 0.06, 0.18], [0.12, 0.36, -0.05, 0.19], [0.02, 0.54, -0.02, 0.16]]) { const lf = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), leaf); lf.position.set(px + dx, FY + 0.34 + dy, pz + dz); grad(lf); lf.renderOrder = 2; winRoom.add(lf) } // 葉群
+      // 葉群（便6＝便5 の決めた事 V6）: 前は20面の玉4つ。鉢の口から弧を描いて広がる細長い葉17枚の株に作り替えた。
+      // 葉ごとの向き・反り・長さは自前の乱数（主の R() を回さない）。部屋の陰影は grad で焼き、葉ごとの濃淡を掛ける。
+      { let h = 2619 >>> 0; const rnd = () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296 }
+        const P = [], I = [], shade = [], nL = 17, segs = 7, by = FY + 0.34
+        for (let k = 0; k < nL; k++) {
+          const a = k / nL * 6.283 * 1.618 + rnd() * 0.4, el = 0.55 + rnd() * 0.75, L = 0.3 + rnd() * 0.28, W = 0.05 + rnd() * 0.035, droop = 0.25 + rnd() * 0.3
+          const dx = Math.cos(a), dz = Math.sin(a), sx = -Math.sin(a), sz = Math.cos(a), sh = 0.75 + rnd() * 0.45, b0 = P.length / 3
+          const ox = px + dx * 0.03, oz = pz + dz * 0.03, oy = by + 0.02 + rnd() * 0.05
+          for (let s = 0; s <= segs; s++) {
+            const t = s / segs, w = W * Math.pow(Math.sin(Math.PI * Math.min(0.98, t * 0.92 + 0.06)), 0.7)
+            const hx = Math.cos(el) * L * t, hy = Math.sin(el) * L * t - droop * L * t * t
+            const cx = ox + dx * hx, cy = oy + hy, cz = oz + dz * hx, v = sh * (0.82 + 0.3 * t)
+            P.push(cx - sx * w, cy - w * 0.25, cz - sz * w, cx, cy + w * 0.12, cz, cx + sx * w, cy - w * 0.25, cz + sz * w) // 中央の葉脈で少し折れる
+            shade.push(v, v * 1.1, v)
+          }
+          for (let s = 0; s < segs; s++) { const r0 = b0 + s * 3, r1 = b0 + (s + 1) * 3; I.push(r0, r1, r0 + 1, r0 + 1, r1, r1 + 1, r0 + 1, r1 + 1, r0 + 2, r0 + 2, r1 + 1, r1 + 2) }
+        }
+        const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); pg.setIndex(I); pg.computeVertexNormals()
+        const leafDS = leaf.clone(); leafDS.side = THREE.DoubleSide; winRoomMats.push(leafDS)
+        const plant = new THREE.Mesh(pg, leafDS); grad(plant)
+        const pc = pg.attributes.color; for (let i = 0; i < pc.count; i++) { const j = (i / 3) | 0, m = i % 3 === 1 ? 1.08 : 1; pc.setXYZ(i, pc.getX(i) * shade[j] * m, pc.getY(i) * shade[j] * m, pc.getZ(i) * shade[j]) }
+        plant.name = 'potPlant'; plant.userData.blades = nL; plant.renderOrder = 2; winRoom.add(plant) }
     }
     // ── 奥壁（振り返ると）: 襖（薄墨の山水）＋神棚＋黒電話 ──
     // 襖絵: 鳥の子紙に薄墨の遠山と草＝静かな山水。乗り出さず眺める奥の上質。
@@ -7922,6 +7953,7 @@ export async function mountTown3d(parent, opts = {}) {
         for (const e of winEmis) e.dispose()
         // 樹冠フェードのクローン材（近づいた木の半透明版）は userData 上に残り scene の traverse から漏れる＝個別に解放。
         for (const tr of treesArr) { if (tr.userData && tr.userData.fadeMat) tr.userData.fadeMat.dispose() }
+        leafAtlas.dispose() // 樹冠の葉の画（便6）
         grad.dispose()
       } catch (e) { /* 無視 */ }
       // 後処理(EffectComposer/Bloom/FXAA)のRenderTargetをGPUから解放（評価 技術-致命2）。

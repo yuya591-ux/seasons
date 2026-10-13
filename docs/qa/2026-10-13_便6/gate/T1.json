@@ -1,0 +1,54 @@
+{
+ "pass": true,
+ "sp": {
+  "sugi": 52,
+  "maru": 103,
+  "kasa": 45
+ },
+ "n": 200,
+ "lumStd": 0.1194,
+ "lumStdBefore": 0.0188,
+ "springPink": {
+  "n": 151,
+  "sp": [
+   "kasa"
+  ]
+ },
+ "near": {
+  "crop": [
+   590,
+   330,
+   370,
+   230
+  ],
+  "detail": 2.329,
+  "detailBefore": 1.768,
+  "diffBefore": {
+   "mean": 7.98,
+   "over8": 0.299
+  }
+ },
+ "round": {
+  "crop": [
+   1090,
+   770,
+   200,
+   160
+  ],
+  "detail": 1.638,
+  "detailBefore": 1.349,
+  "diffBefore": {
+   "mean": 12.77,
+   "over8": 0.538
+  }
+ },
+ "spOk": true,
+ "lumOk": true,
+ "pinkOk": true,
+ "imgOk": true,
+ "errs": [],
+ "id": "T1",
+ "ms": 162319,
+ "at": "2026-10-13T14:57:22.724Z",
+ "commit": "638da84"
+}

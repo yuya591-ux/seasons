@@ -1,0 +1,20 @@
+{
+ "pass": true,
+ "crop": [
+  60,
+  620,
+  460,
+  380
+ ],
+ "detail": 2.199,
+ "detailBefore": 1.364,
+ "diffBefore": {
+  "mean": 5.37,
+  "over8": 0.239
+ },
+ "errs": [],
+ "id": "S1",
+ "ms": 1441,
+ "at": "2026-10-13T15:00:21.917Z",
+ "commit": "638da84"
+}

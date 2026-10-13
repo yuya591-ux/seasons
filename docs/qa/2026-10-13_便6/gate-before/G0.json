@@ -1,0 +1,31 @@
+{
+ "pass": false,
+ "kitaterao-window-3d": {
+  "rngEnd": 180856,
+  "fest": 0,
+  "trees": 200,
+  "posHash": "3097:3266001436",
+  "errs": [],
+  "pass": false
+ },
+ "shishigaya-window-3d": {
+  "rngEnd": 148280,
+  "fest": 0,
+  "trees": 160,
+  "posHash": "2285:556649056",
+  "errs": [],
+  "pass": false
+ },
+ "kitaterao-window-3d-spring": {
+  "rngEnd": 49692,
+  "fest": 0,
+  "trees": 198,
+  "posHash": "3040:3018408666",
+  "errs": [],
+  "pass": false
+ },
+ "id": "G0",
+ "ms": 97267,
+ "at": "2026-10-13T14:11:25.415Z",
+ "commit": "638da84"
+}

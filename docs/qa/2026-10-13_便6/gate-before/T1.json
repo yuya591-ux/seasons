@@ -1,0 +1,52 @@
+{
+ "pass": false,
+ "sp": {
+  "なし": 200
+ },
+ "n": 200,
+ "lumStd": 0.0188,
+ "lumStdBefore": 0.0403,
+ "springPink": {
+  "n": 151,
+  "sp": [
+   "なし"
+  ]
+ },
+ "near": {
+  "crop": [
+   590,
+   330,
+   370,
+   230
+  ],
+  "detail": 1.768,
+  "detailBefore": 1.768,
+  "diffBefore": {
+   "mean": 0,
+   "over8": 0
+  }
+ },
+ "round": {
+  "crop": [
+   1090,
+   770,
+   200,
+   160
+  ],
+  "detail": 1.349,
+  "detailBefore": 1.349,
+  "diffBefore": {
+   "mean": 0,
+   "over8": 0
+  }
+ },
+ "spOk": false,
+ "lumOk": false,
+ "pinkOk": false,
+ "imgOk": false,
+ "errs": [],
+ "id": "T1",
+ "ms": 158603,
+ "at": "2026-10-13T14:51:28.730Z",
+ "commit": "638da84"
+}

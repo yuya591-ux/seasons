@@ -1,0 +1,46 @@
+{
+ "pass": true,
+ "mapN": 200,
+ "alphaN": 200,
+ "cardTris": 24302,
+ "n": 200,
+ "walkTree": {
+  "crop": [
+   0,
+   0,
+   900,
+   360
+  ],
+  "detail": 1.535,
+  "nd": 1.843,
+  "detailBefore": 0.821,
+  "ndBefore": 1.231,
+  "diffBefore": {
+   "mean": 24.15,
+   "over8": 0.437
+  }
+ },
+ "near": {
+  "crop": [
+   590,
+   330,
+   370,
+   230
+  ],
+  "detail": 2.054,
+  "nd": 2.606,
+  "detailBefore": 1.768,
+  "ndBefore": 1.895,
+  "diffBefore": {
+   "mean": 20.11,
+   "over8": 0.821
+  }
+ },
+ "matOk": true,
+ "imgOk": true,
+ "errs": [],
+ "id": "T2",
+ "ms": 121585,
+ "at": "2026-10-13T15:10:28.773Z",
+ "commit": "638da84"
+}
