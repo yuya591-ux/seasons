@@ -9,6 +9,7 @@ import path from 'node:path'
 import { execSync } from 'node:child_process'
 
 const BASE = process.env.QA_BASE || 'http://localhost:4963/seasons/'
+const BASE_BEFORE = process.env.QA_BASE_BEFORE || 'http://localhost:4964/seasons/' // KT が使う前のコード（復元地点 638da84 を別の作業フォルダに出し、_bin6-vite.config.mjs の番号を 4964 にして起動）
 const OUT = process.env.QA_OUT || 'docs/qa/2026-10-13_便6/gate'
 const BEFORE = process.env.QA_BEFORE || 'docs/qa/2026-10-13_便6/gate-before'
 const SHOT_TAG = process.env.QA_SHOT || ''
@@ -96,7 +97,7 @@ const INJECT = () => {
   }
 }
 
-async function open(dev, scene, { win = true } = {}) {
+async function open(dev, scene, { win = true, base = BASE } = {}) {
   const b = await getBrowser()
   const ctx = await b.newContext(DEVICES[dev])
   if (dev === 'iphone') await ctx.addInitScript(() => { Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 5 }); Object.defineProperty(navigator, 'platform', { get: () => 'iPhone' }) })
@@ -105,7 +106,7 @@ async function open(dev, scene, { win = true } = {}) {
   const errs = []
   page.on('pageerror', (e) => errs.push('PE: ' + e.message))
   page.on('console', (m) => { if (m.type() === 'error' && !/favicon|manifest|preload/i.test(m.text())) errs.push('CE: ' + m.text().slice(0, 200)) })
-  await page.goto(BASE + '?dev=1', { waitUntil: 'domcontentloaded', timeout: 120000 })
+  await page.goto(base + '?dev=1', { waitUntil: 'domcontentloaded', timeout: 120000 })
   await page.waitForTimeout(2500)
   await page.waitForSelector('.gate', { timeout: 15000 }).catch(() => {})
   await page.evaluate(() => { const g = document.querySelector('.gate'); if (g) g.click() }).catch(() => {})
@@ -318,7 +319,8 @@ def('G1', async () => {
   }
   return { pass: Object.values(res).every((r) => r.pass), ...res }
 })
-// K5 iPhone の重さ: 窓辺・夕方・飛行・歩行の描画の呼び出しと描く画素数が前の1.05倍以下（便2 の K5 と同じ物差し）。窓辺の描画の時間も前の1.05倍以下（3回測った中央値）。
+// K5 iPhone の重さ: 窓辺・夕方・飛行・歩行の描画の呼び出しと描く画素数が前の1.05倍以下（便2 の K5 と同じ物差し）。窓辺の描画の時間は記録だけ（判定は KT）。
+//   初めは窓辺の時間も「前の1.05倍以下」にしたが、別々の時刻に1回ずつ測ると同じコードでも 30.2〜32.3ms・前のコードでも 40.3 と 30.6 にぶれた（便6 の決めたこと）
 //   呼び出しは1秒おきに5回測った中央値。飛行は8秒待つ・歩行は目の高さのカメラを決まった位置に置く（便4 で固めた測り方）
 def('K5', async () => {
   const b = beforeOf('K5')
@@ -343,8 +345,18 @@ def('K5', async () => {
   after.walk = { ...(await draw()) }
   const keep = (v) => v && { calls: v.calls, callsAll: v.callsAll, px: v.px, tris: v.tris, ms: v.time && v.time.ms, msAll: v.time && v.time.all }
   const ok = (k) => !!b && after[k] && after[k].calls <= b.after[k].calls * 1.05 && after[k].px <= b.after[k].px * 1.05
-  const timeOk = !!b && after.window.time.ms != null && b.after.window.ms != null && after.window.time.ms <= b.after.window.ms * 1.05
-  return { pass: ['window', 'sunset', 'fly', 'walk'].every(ok) && timeOk && errs.length === 0, timeOk, before: b && b.after, after: Object.fromEntries(Object.entries(after).map(([k, v]) => [k, keep(v)])), errs }
+  return { pass: ['window', 'sunset', 'fly', 'walk'].every(ok) && errs.length === 0, before: b && b.after, after: Object.fromEntries(Object.entries(after).map(([k, v]) => [k, keep(v)])), errs }
+})
+
+// KT iPhone の幅の窓辺の描画の時間: 前のコード（BASE_BEFORE）と後のコードを交互に3回ずつ開いて、60こまの中央値を3回ずつ測り、後の中央値が前の中央値の1.05倍以下。
+//   交互に測るのは、同じコードでも開く回ごとに時間が 7% ほどぶれるため（便6 の決めたこと）
+def('KT', async () => {
+  const one = async (base) => { const { page, ctx, errs } = await open('iphone', 'kitaterao-window-3d', { win: false, base }); await wait(2000); const a = []; for (let i = 0; i < 3; i++) { const r = await page.evaluate(() => window.__b6.measureNow(60)); if (r.ms != null) a.push(r.ms); await wait(500) } await ctx.close(); a.sort((x, y) => x - y); return { ms: a.length ? a[1] : null, all: a, errs } }
+  const pre = [], now = []
+  for (let k = 0; k < 3; k++) { pre.push(await one(BASE_BEFORE)); now.push(await one(BASE)) }
+  const med = (xs) => { const v = xs.map((x) => x.ms).filter((x) => x != null).sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : null }
+  const mb = med(pre), ma = med(now)
+  return { pass: mb != null && ma != null && ma <= mb * 1.05 && now.every((x) => x.errs.length === 0), before: mb, after: ma, ratio: mb && ma ? +(ma / mb).toFixed(3) : null, beforeRuns: pre.map((x) => x.all), afterRuns: now.map((x) => x.all) }
 })
 
 // ── 実行 ─────────────────────────────────────────────────────────────
