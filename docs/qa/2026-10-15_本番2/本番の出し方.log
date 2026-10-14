@@ -7,3 +7,22 @@ Actions 最新: 38398330933 f073e83 completed success 2026-10-13T12:41:45Z
 便9 の全テスト: 54bd696 で 15/15・最後まで届いた true ・作業ツリーの変更 なし
 54bd696..HEAD のコードの変更: 0 行（0 なら空）
 手元ビルド: a149a40 で build exit 0・assets/index-DdD3pEv-.js assets/index-DJSiStur.css 
+== 手順3: origin の main へ push
+CLAUDE.md 48行がまだ「Claude Code は push しない」（申し送り K1 まだ）なので、裕也さんが打った
+$ git push origin main
+   f073e83..8cf3cb6  main -> main
+git ls-remote origin refs/heads/main → 8cf3cb6a2e526565ea06fd3070c8fecbe751e20e
+== 手順4: GitHub Actions の結果（actions-run.json・actions-jobs.json）
+run 38651177606・8cf3cb6・completed success・2026-10-14T22:58:34Z〜23:09:09Z（約10分）
+build: npm ci・npm run build・npx playwright install・npm run smoke・upload-pages-artifact すべて success／deploy: deploy-pages success
+== 手順5: 公開のページが新しいビルドか（live-check.txt）
+公開と手元の precache-manifest が同じ: true
+公開の画面のプログラム: assets/index-DdD3pEv-.js・assets/index-DJSiStur.css
+SHA-256 assets/index-DdD3pEv-.js 公開・手元 一致 a3cf83820cab79ed465a1eade63499c9276e6520d364561178b90273f0183c86
+SHA-256 assets/index-DJSiStur.css 公開・手元 一致 9bce51b2700d48d60ad82b6854095208068376a796ec40983317bb094eeea326
+SHA-256 assets/town3dViewer-YZvl69yW.js 公開・手元 一致 8266018cc8124515085f95f5d2574be1c6c2227ccfad1350fe4e4ed2142b68ad
+== 手順6: 公開のページで全情景を開く（live-smoke.txt・scripts/qa-smoke.mjs の行き先だけを公開のアドレスに替えた写しで回し、写しは消した）
+公開の確かめ: SMOKE OK: 31 情景すべてエラー無し・live-smoke exit 0
+== 手順7: 公開のページの北寺尾の窓辺を iPhone の幅・本物の GPU（Intel Arc・D3D11）で20秒後に撮った（live-shot.txt・01_公開_iphone_北寺尾の窓辺.png）
+真ん中の帯の明るさの平均 144.5・振れ 58・ページのエラー 0。窓の外に町・観覧車・塔、室内に猫が写る
+== 戻し方: 便6 と便9 の木と面を前の公開と同じに戻す時は、git checkout f073e83 -- src で src を戻すコミットを作って push する（前の公開の画面のプログラム index-CitE2BOm.js）

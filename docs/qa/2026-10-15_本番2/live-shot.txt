@@ -1,0 +1,1 @@
+{"file":"docs/qa/2026-10-15_本番2/01_公開_iphone_北寺尾の窓辺.png","gpu":"ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)","middleBand":{"mean":144.5,"std":58},"errs":[]}

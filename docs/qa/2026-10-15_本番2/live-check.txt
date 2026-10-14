@@ -1,0 +1,7 @@
+公開と手元の precache-manifest が同じ: true
+公開の画面のプログラム: assets/index-DdD3pEv-.js・assets/index-DJSiStur.css
+SHA-256 assets/index-DdD3pEv-.js 公開・手元 一致 a3cf83820cab79ed465a1eade63499c9276e6520d364561178b90273f0183c86
+SHA-256 assets/index-DJSiStur.css 公開・手元 一致 9bce51b2700d48d60ad82b6854095208068376a796ec40983317bb094eeea326
+SHA-256 assets/town3dViewer-YZvl69yW.js 公開・手元 一致 8266018cc8124515085f95f5d2574be1c6c2227ccfad1350fe4e4ed2142b68ad
+公開の町の部品に便9 の直しが入っている: SF_FINE 0 true・葉の板を挿さない（leafCards=false 相当） true
+公開の確かめ: SMOKE OK: 31 情景すべてエラー無し・live-smoke exit 0
