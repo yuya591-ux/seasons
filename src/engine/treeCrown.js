@@ -74,7 +74,7 @@ export function buildCrown(THREE, sp, bb, seed, withCards) {
   const cx = (bb.min[0] + bb.max[0]) / 2, cz = (bb.min[2] + bb.max[2]) / 2, cy = (bb.min[1] + bb.max[1]) / 2
   const rx = (bb.max[0] - bb.min[0]) / 2, ry = (bb.max[1] - bb.min[1]) / 2, rm = Math.min(rx, ry)
   const parts = [], clumps = []
-  const ico = (r) => new THREE.IcosahedronGeometry(r, 2)
+  const ico = (r) => new THREE.IcosahedronGeometry(r, withCards ? 2 : 1) // 葉の板を持たない遠くの木は房を1段粗く（三角が約4分の1。低空飛行の GPU の時間を減らす・便6）
   if (sp === 'sugi') { // 杉・檜: 細い段重ねの円錐（下ほど広い）。輪郭が尖って街の緑に縦の線が入る。底は開く（歩く目線で見上げた時に平らな円板が見えないように）
     const n = 4, y0 = bb.min[1] - ry * 0.15, top = bb.max[1] + ry * 0.55, R0 = rx * 0.72
     for (let k = 0; k < n; k++) {

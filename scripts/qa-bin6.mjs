@@ -433,6 +433,8 @@ def('KG', async () => {
   const res = {}
   for (const view of ['window', 'fly']) {
     const A = await setup(BASE_BEFORE, view), B = await setup(BASE, view)
+    // 記録しない慣らしを3回ずつ（2つ目に開いたページは、測り始めにまだ材の組み立てなどが残り、初めの数回だけ 8.4ms と高かった・便6）
+    for (let k = 0; k < 3; k++) { await pause(B.page, true); await pause(A.page, false); await gpu(A.page); await pause(A.page, true); await pause(B.page, false); await gpu(B.page) }
     const pre = [], now = []
     for (let k = 0; k < 12; k++) {
       await pause(B.page, true); await pause(A.page, false); await wait(300); pre.push(await gpu(A.page))

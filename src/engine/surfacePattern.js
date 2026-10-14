@@ -15,6 +15,8 @@ float sfN(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0
   return mix(mix(sfH(i), sfH(i + vec2(1.0, 0.0)), u.x), mix(sfH(i + vec2(0.0, 1.0)), sfH(i + vec2(1.0, 1.0)), u.x), u.y); }
 float sfFade(float c) { return 1.0 - smoothstep(0.35, 0.9, fwidth(c)); } // 遠くて細かすぎる模様はちらつくので消す
 vec3 sfPat(vec3 w, vec3 N) {
+  float sfD = length(w - cameraPosition);
+  if (sfD > 160.0) return vec3(1.0); // 遠くは描かない（模様は画素より細かい。低空飛行で画面いっぱいの屋根と地面の GPU の時間を減らす・便6）
   vec3 m = vec3(1.0);
   float hz = length(N.xz);
   vec3 e = hz > 0.05 ? normalize(vec3(N.z, 0.0, -N.x)) : vec3(1.0, 0.0, 0.0);
@@ -62,7 +64,7 @@ vec3 sfPat(vec3 w, vec3 N) {
   float rd = abs(w.x) - 1.7; m *= 1.0 - 0.08 * exp(-rd * rd / 0.12);              // 轍（負の数の pow は GPU によって値が決まらないので掛け算で）
   m *= 0.9 + 0.16 * sfN(w.xz * 0.25);
 #endif
-  return m;
+  return mix(m, vec3(1.0), smoothstep(110.0, 160.0, sfD)); // 110〜160m でなだらかに消す
 }
 `
 
