@@ -3136,7 +3136,7 @@ export async function mountTown3d(parent, opts = {}) {
   // 樹冠の作り（便6＝便5 #1=2）: 樹種の形（丸い広葉樹・傘形・杉檜）と木ごとの色の振れ＋葉の模様と縁の葉の板（treeCrown.js）。
   // 樹種と色は木の位置のハッシュで決める（R() は前と同じ順と数だけ回す＝町の配置を変えない）。軽やかは葉の板を挿さない（切り抜きの重さを落とす）。
   const leafAtlas = makeLeafAtlas(THREE)
-  const leafCards = !LIGHT
+  const leafCards = false // 【便9】縁の葉の板は挿さない（便8 #1=1。前は軽やかの外だけ挿した〈!LIGHT〉。葉の模様と木ごとの色の振れは残す。樹冠の GPU の仕事を前の1.05倍の内に収めるため）
   // 葉の板（切り抜き）は窓から 90m 以内の近くの木だけ。遠くの木は葉の画だけの不透明の樹冠（切り抜きは iPhone の GPU で重くなりやすい。前と後を交互に測った窓辺の描画の時間が 1.007〜1.069倍と線〈1.05倍〉の近くだったため・便6）
   const CARD_R = 40 // 【便6】90m→40m: 樹冠と葉の板を別のメッシュに分けたので、葉の板を持つ木の数だけ描画の呼び出しが増える（90m の63本では歩く目線が前の1.070倍になった）
   const greenestLeaf = leafBaseMats.slice().sort((a, b) => (b.color.g - b.color.r) - (a.color.g - a.color.r))[0] // 杉檜に当てる（桜の色を杉に当てない）

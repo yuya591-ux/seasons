@@ -14,6 +14,8 @@ float sfH(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); 
 float sfN(vec2 p) { vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
   return mix(mix(sfH(i), sfH(i + vec2(1.0, 0.0)), u.x), mix(sfH(i + vec2(0.0, 1.0)), sfH(i + vec2(1.0, 1.0)), u.x), u.y); }
 float sfFade(float c) { return 1.0 - smoothstep(0.35, 0.9, fwidth(c)); } // 遠くて細かすぎる模様はちらつくので消す
+// 【便9】細かい層（屋根の苔・トタンの大きなむら・壁の細かな粒と色むら・芝の細かな明暗と色むら）は描かない（便8 #1=1。便6 の直しの GPU の仕事を前の1.05倍の内に収めるため）。1 にすると便6 の形に戻る
+#define SF_FINE 0
 vec3 sfPat(vec3 w, vec3 N) {
   float sfD = length(w - cameraPosition);
   if (sfD > 160.0) return vec3(1.0); // 遠くは描かない（模様は画素より細かい。低空飛行で画面いっぱいの屋根と地面の GPU の時間を減らす・便6）
@@ -27,14 +29,18 @@ vec3 sfPat(vec3 w, vec3 N) {
   float fr = fract(row), fc = fract(col), fa = sfFade(row);
   m *= mix(1.0, mix(0.66, 1.06, smoothstep(0.0, 0.22, fr)) * (0.9 + 0.12 * sin(fc * 6.2832)) * (0.9 + 0.2 * sfH(vec2(floor(row), floor(col)))), fa);
   m *= 0.84 + 0.3 * sfN(w.xz * 0.45);
+#if SF_FINE
   m *= mix(vec3(1.0), vec3(0.86, 0.96, 0.82), smoothstep(0.62, 0.85, sfN(w.xz * 0.7 + 11.0)) * 0.6); // 苔
+#endif
 #elif SF_KIND == 2
   float cr = al / 0.1, fa = sfFade(cr);
   m *= mix(1.0, 0.86 + 0.18 * (0.5 + 0.5 * sin(cr * 6.2832)), fa);                // 波板の筋
   float seam = fract(sl / 1.8); m *= mix(1.0, mix(0.7, 1.0, smoothstep(0.0, 0.04, seam)), sfFade(sl / 1.8 * 20.0)); // 板の継ぎ目
   float rust = smoothstep(0.55, 0.85, sfN(vec2(al * 2.2, sl * 0.18)) * 0.7 + sfN(w.xz * 0.5) * 0.4);
   m *= mix(vec3(1.0), vec3(1.18, 0.86, 0.66), rust * 0.55);                          // 錆
+#if SF_FINE
   m *= 0.88 + 0.22 * sfN(w.xz * 0.35 + 5.0);
+#endif
 #elif SF_KIND == 3
   float row = sl / 0.24, col = al / 0.4 + floor(row) * 0.5;
   float fr = fract(row), fc = fract(col), fa = sfFade(row);
@@ -44,18 +50,27 @@ vec3 sfPat(vec3 w, vec3 N) {
   float wf = sfFade(al * 9.0); // 微分（fwidth）は分岐の外で取る（分岐の中では値が決まらない）
   if (abs(N.y) < 0.6) {
     m *= 0.9 + 0.16 * sfN(vec2(al, w.y) * 0.7);                                   // 漆喰とモルタルの大きなむら
+#if SF_FINE
     m *= mix(1.0, 0.94 + 0.1 * sfN(vec2(al, w.y) * 9.0), wf);                       // 細かな粒
+#endif
     float st = sfN(vec2(al * 3.5, 0.0)) * smoothstep(0.35, 1.0, sfN(vec2(al * 1.3, w.y * 0.22)));
     m *= 1.0 - 0.16 * smoothstep(0.55, 0.9, st);                                   // 雨だれの縦の筋
+#if SF_FINE
     m *= mix(vec3(1.0), vec3(0.93, 0.95, 0.9), smoothstep(0.6, 0.9, sfN(vec2(al, w.y) * 0.3 + 3.0)));
+#endif
   }
 #elif SF_KIND == 5
-  m *= 0.84 + 0.3 * sfN(w.xz * 0.9);
+  float gn = sfN(w.xz * 0.9); // 草の濃淡と土の斑で同じ値を使う（【便9】1回だけ求める）
+  m *= 0.84 + 0.3 * gn;
+#if SF_FINE
   m *= mix(1.0, 0.88 + 0.24 * sfN(w.xz * 4.5), sfFade(w.x * 4.5));
   m *= mix(1.0, 0.9 + 0.2 * sfH(floor(w.xz * 14.0)), sfFade(w.x * 14.0));           // 草の葉先の細かな明暗
-  float soil = smoothstep(0.6, 0.8, sfN(w.xz * 0.16 + 7.0) * 0.75 + sfN(w.xz * 0.9) * 0.35);
+#endif
+  float soil = smoothstep(0.6, 0.8, sfN(w.xz * 0.16 + 7.0) * 0.75 + gn * 0.35);
   m *= mix(vec3(1.0), vec3(1.12, 0.98, 0.78), soil * 0.6);                           // 土の斑
+#if SF_FINE
   m *= mix(vec3(1.0), vec3(0.95, 1.04, 0.86), smoothstep(0.5, 0.8, sfN(w.xz * 0.3 + 2.0)) * 0.5); // 若草と枯れ草の色むら
+#endif
 #elif SF_KIND == 6
   m *= mix(1.0, 0.9 + 0.18 * sfH(floor(w.xz * 30.0)), sfFade(w.x * 30.0));         // 舗装の粒
   vec2 pc = floor(w.xz * vec2(0.35, 0.12));
