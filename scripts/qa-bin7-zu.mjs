@@ -11,12 +11,14 @@ const NAME = {
   5: '＋CPU の時間を記録', 6: '＋下ごしらえで CPU の時間を外す', 7: '＋動く物を隠す（世界の位置）', 8: '動く物＝親から見た位置',
   9: '動く物＝町の入れ物から見た位置', 10: '動く物＝親の位置のつなぎ', 11: '時刻を固める（隠さない）', 12: '1つずつ開く（動く物を隠したまま）',
   13: '下ごしらえの時間で割る', 14: '同上（GPU の速さを記録）', 15: '2つの枠で1こまずつ交互', 16: '＋1こまごとに終わりを待つ',
+  17: '下ごしらえを塊の中で 30ms に合わせ直す', 18: '＋割らない（今の既定）', 19: '最後のコミットの通しの回（今の既定）',
 }
 const rows = []
 for (const f of fs.readdirSync(D).filter((f) => /^try\d+_(GS|GS1|GSP)\.json$/.test(f))) {
   const n = parseInt(f.slice(3)); const r = JSON.parse(fs.readFileSync(`${D}/${f}`, 'utf8'))
   rows.push({ n, name: NAME[n] || '', w: r.window && r.window.ratio, f: r.fly && r.fly.ratio })
 }
+{ const r = JSON.parse(fs.readFileSync('docs/qa/2026-10-14_便7/gate/GS.json', 'utf8')); rows.push({ n: 19, name: NAME[19], w: r.window.ratio, f: r.fly.ratio }) }
 rows.sort((a, b) => a.n - b.n)
 
 // 図1: 試しごとの比（窓辺＝丸・低空飛行＝三角）。灰色の帯が 0.98〜1.02（目指した幅）、点線が 0.95・1.05
@@ -44,24 +46,37 @@ svg += `<circle cx="30" cy="${yb + 46}" r="8" fill="#2c6fb7"/><text x="44" y="${
 // 図2: 試し14 の間の GPU の動作の速さ（0.5秒おき・nvidia-smi）
 const L = fs.readFileSync(`${D}/try14_nvidia-smi.csv`, 'utf8').trim().split(/\r?\n/).map((l) => l.split(', '))
 const gr = L.map((x) => parseInt(x[2])), mem = L.map((x) => parseInt(x[3]))
-const W2 = 900, H2 = 420, px0 = 70, px1 = 870, py0 = 70, py1 = 350
+const W2 = 940, H2 = 420, px0 = 70, px1 = 870, py0 = 70, py1 = 350
 const PX = (i) => px0 + i / Math.max(1, L.length - 1) * (px1 - px0)
 const PY = (v, m) => py1 - v / m * (py1 - py0)
 const pl = (a, m) => a.map((v, i) => `${PX(i).toFixed(1)},${PY(v, m).toFixed(1)}`).join(' ')
 const svg2 = `<svg xmlns="http://www.w3.org/2000/svg" width="${W2}" height="${H2}" font-family="'Yu Gothic UI','Meiryo',sans-serif">
 <rect width="100%" height="100%" fill="#fff"/>
-<text x="20" y="32" font-size="22" font-weight="700" fill="#222">測っている間の GPU の動作の速さ（試し14・0.5秒おき）</text>
-<text x="20" y="56" font-size="15" fill="#2c6fb7">計算の速さ（MHz・左の目盛り 0〜3105）</text><text x="420" y="56" font-size="15" fill="#c4512b">メモリの速さ（MHz・0〜8000）</text>
+<text x="20" y="32" font-size="22" font-weight="700" fill="#222">試し14 の間の GPU の動作の速さ（0.5秒おき・高い所が測っている塊、低い所はページを整える待ち）</text>
+<text x="20" y="56" font-size="15" fill="#2c6fb7">計算の速さ（MHz・左の目盛り）</text><text x="420" y="56" font-size="15" fill="#c4512b">メモリの速さ（MHz・右の目盛り）</text>
 <polyline points="${pl(gr, 3105)}" fill="none" stroke="#2c6fb7" stroke-width="2"/>
 <polyline points="${pl(mem, 8000)}" fill="none" stroke="#c4512b" stroke-width="1.5" opacity="0.8"/>
 <line x1="${px0}" x2="${px1}" y1="${py1}" y2="${py1}" stroke="#555"/>
+${[0, 2000, 4000, 6000, 8000].map((v) => `<text x="${px1 + 8}" y="${PY(v, 8000) + 5}" font-size="13" fill="#c4512b">${v}</text>`).join('')}
 ${[0, 1000, 2000, 3000].map((v) => `<text x="${px0 - 8}" y="${PY(v, 3105) + 5}" font-size="13" text-anchor="end" fill="#2c6fb7">${v}</text>`).join('')}
 <text x="${px0}" y="${py1 + 26}" font-size="14" fill="#444">0秒</text><text x="${px1}" y="${py1 + 26}" font-size="14" text-anchor="end" fill="#444">${(L.length / 2).toFixed(0)}秒</text>
 <text x="${px0}" y="${py1 + 52}" font-size="15" fill="#222">計算の速さ ${Math.min(...gr)}〜${Math.max(...gr)}MHz・メモリの速さ ${Math.min(...mem)}〜${Math.max(...mem)}MHz を行き来した</text></svg>`
 
+// 図3: 便6 の直しの内訳（窓辺・前→後の比。前と後の両方で隠した物を変えて測る）
+const V = [['base', '何も隠さない'], ['cards', '葉の板を隠す'], ['trees', '木を全部隠す'], ['plant', '木と観葉植物を隠す'], ['nosurf', '＋面の模様を当てない（一時の形）']]
+const br = V.map(([k, label]) => { const r = JSON.parse(fs.readFileSync(`${D}/${k}_GG.json`, 'utf8')).window; return { label, a: r.a, b: r.b, ratio: r.ratio } })
+const W3 = 900, H3 = 70 + br.length * 56 + 40, bx0 = 330, bx1 = 860, blo = 0.95, bhi = 1.25
+const BX = (v) => bx0 + (v - blo) / (bhi - blo) * (bx1 - bx0)
+let svg3 = `<svg xmlns="http://www.w3.org/2000/svg" width="${W3}" height="${H3}" font-family="'Yu Gothic UI','Meiryo',sans-serif"><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-size="22" font-weight="700" fill="#222">便6 の直しの内訳（窓辺・後÷前。1.00 なら増えていない）</text>
+<line x1="${BX(1)}" x2="${BX(1)}" y1="48" y2="${56 + br.length * 56}" stroke="#555"/><line x1="${BX(1.05)}" x2="${BX(1.05)}" y1="48" y2="${56 + br.length * 56}" stroke="#c4512b" stroke-dasharray="5 4"/>
+<text x="${BX(1.05) + 4}" y="62" font-size="13" fill="#c4512b">線 1.05</text>`
+br.forEach((r, i) => { const y = 80 + i * 56; svg3 += `<text x="20" y="${y + 6}" font-size="17" fill="#222">${r.label}</text><rect x="${BX(1)}" y="${y - 12}" width="${Math.max(1, BX(r.ratio) - BX(1))}" height="24" fill="${r.ratio > 1.05 ? '#c4512b' : '#2c6fb7'}"/><text x="${Math.max(BX(r.ratio), BX(1)) + 8}" y="${y + 6}" font-size="15" fill="#222">${r.ratio.toFixed(3)}（${r.a}→${r.b}ms）</text>` })
+for (const v of [0.95, 1, 1.05, 1.1, 1.15, 1.2, 1.25]) svg3 += `<text x="${BX(v)}" y="${H3 - 14}" font-size="14" text-anchor="middle" fill="#444">${v.toFixed(2)}</text>`
+svg3 += '</svg>'
 const b = await chromium.launch()
 const p = await b.newPage({ viewport: { width: W, height: H } })
-for (const [s, w, h, name] of [[svg, W, H, '01_同じコードどうしの比.png'], [svg2, W2, H2, '02_GPUの動作の速さ.png']]) {
+for (const [s, w, h, name] of [[svg, W, H, '01_同じコードどうしの比.png'], [svg2, W2, H2, '02_GPUの動作の速さ.png'], [svg3, W3, H3, '03_便6の直しの内訳.png']]) {
   await p.setViewportSize({ width: w, height: h })
   await p.setContent(`<body style="margin:0">${s}</body>`)
   await p.screenshot({ path: `${OUT}/${name}` })
