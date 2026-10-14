@@ -42,7 +42,8 @@ const INJECT = () => {
     const orig = composer.render.bind(composer)
     composer.render = (...a) => {
       const c = S.cam
-      if (c) { camera.position.set(...c.p); camera.lookAt(...c.l); if (c.fov && camera.fov !== c.fov) { camera.fov = c.fov; camera.updateProjectionMatrix() } camera.updateMatrixWorld() }
+      // 上向きも真上に戻す（飛行中はアプリが旋回の傾きで up を傾け、回ごとに写す範囲がずれた・便6）
+      if (c) { camera.position.set(...c.p); camera.up.set(0, 1, 0); camera.lookAt(...c.l); if (c.fov && camera.fov !== c.fov) { camera.fov = c.fov; camera.updateProjectionMatrix() } camera.updateMatrixWorld() }
       const t0 = performance.now()
       const ar = renderer.info.autoReset; renderer.info.autoReset = false; renderer.info.reset()
       const r = orig(...a)
