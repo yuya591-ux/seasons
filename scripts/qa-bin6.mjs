@@ -67,7 +67,7 @@ const INJECT = () => {
   S.treeInfo = () => {
     const R = window.__b6R; if (!R || !R.trees) return null
     const pos = [], sp = {}, lum = [], lumMaru = [], pink = []
-    let mapN = 0, alphaN = 0, cardTris = 0, nearN = 0
+    let mapN = 0, alphaN = 0, cardTris = 0, nearN = 0, cardMeshN = 0
     for (const tg of R.trees) {
       pos.push([+tg.position.x.toFixed(2), +tg.position.z.toFixed(2)])
       const lm = tg.children.find((c) => c.isMesh); if (!lm) continue
@@ -76,6 +76,7 @@ const INJECT = () => {
       if (m.map) mapN++
       const cm = tg.children.find((c) => c.isMesh && c.userData && c.userData.cards) // 縁の葉の板は樹冠と別のメッシュ（切り抜きは葉の板だけ・便6）
       if (cm && cm.material.alphaTest > 0) alphaN++
+      if (cm) cardMeshN++ // 【便9】葉の板のメッシュの数（切り抜きの有無によらない）
       cardTris += (lm.userData && lm.userData.cardTris) || 0
       if (Math.hypot(tg.position.x, tg.position.z) < 40) nearN++ // 葉の板を挿す近くの木（窓から 40m 以内・便6）
       const c = lm.geometry.attributes.color
@@ -88,7 +89,7 @@ const INJECT = () => {
     const std = Math.sqrt(lum.reduce((a, b) => a + (b - mean) * (b - mean), 0) / Math.max(1, lum.length))
     const mm = lumMaru.reduce((a, b) => a + b, 0) / Math.max(1, lumMaru.length)
     const stdMaru = Math.sqrt(lumMaru.reduce((a, b) => a + (b - mm) * (b - mm), 0) / Math.max(1, lumMaru.length))
-    return { n: R.trees.length, pos, sp, lumStd: +std.toFixed(4), lumStdMaru: +stdMaru.toFixed(4), lumMean: +mean.toFixed(4), mapN, alphaN, nearN, cardTris, pinkN: pink.length, pinkSp: pink }
+    return { n: R.trees.length, pos, sp, lumStd: +std.toFixed(4), lumStdMaru: +stdMaru.toFixed(4), lumMean: +mean.toFixed(4), mapN, alphaN, nearN, cardTris, cardMeshN, pinkN: pink.length, pinkSp: pink }
   }
   // 部屋の観葉植物: 前の20面の玉の葉（半径 0.24・0.18・0.19・0.16）と、作り替えた株（名前 potPlant）
   S.plantInfo = () => {
@@ -289,7 +290,7 @@ def('T1', async () => {
   const imgOk = !!near.diffBefore && near.diffBefore.mean >= 5 && round.diffBefore.mean >= 5
   return { pass: spOk && lumOk && pinkOk && autumnOk && imgOk && errs.length === 0 && o2.errs.length === 0 && o3.errs.length === 0, autumnSp: au && au.sp, autumnOk, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdMaru: ti && ti.lumStdMaru, lumStdMaruBefore: b && b.lumStdMaru, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs, ...o3.errs] }
 })
-// T2 葉の模様と縁の葉の板: どの樹冠の材も葉の模様（画）を持ち、窓から 40m 以内の近くの木だけが切り抜き（alphaTest）の葉の板のメッシュを持ち、葉の板の三角がある。
+// T2 葉の模様と縁の葉の板: どの樹冠の材も葉の模様（画）を持ち、~~窓から 40m 以内の近くの木だけが切り抜き（alphaTest）の葉の板のメッシュを持ち、葉の板の三角がある~~（【便9】葉の板のメッシュと三角が1つも無い＝便8 #1=1）。
 //   画: 歩く目線の頭の上の樹冠と、低空飛行の中ほどの木立の、4×4画素にまとめて測る明るさで割った細かな明暗が前より増える（歩く目線 ≥ 前の1.12倍・木立 ≥ 前の1.15倍）。
 //   初めは1画素ごとの細かな明暗で「前＋0.15・前＋0.08」としたが、ごく近くの葉は大きく引き伸ばされて1画素ごとの差に出にくく、葉の画の貼り方を直した後は 1.039（線 1.039）になった（便6 の決めたこと）
 def('T2', async () => {
@@ -297,10 +298,11 @@ def('T2', async () => {
   const ti = await page.evaluate(() => window.__b6.treeInfo())
   const w = await viewWalk(), v = await viewFlylow()
   const walkTree = await cropStats('walk', w.f, CROP.walkTree), near = await cropStats('flylow', v.f, CROP.treeNear)
-  const matOk = !!ti && ti.mapN === ti.n && ti.alphaN === ti.nearN && ti.nearN > 0 && ti.cardTris > 0
+  // ~~窓から 40m 以内の近くの木だけが葉の板を持つ（ti.alphaN === ti.nearN && ti.nearN > 0 && ti.cardTris > 0）~~（【便9】便8 #1=1 で縁の葉の板をやめたので、葉の板のメッシュも三角も1つも無いことを見る。葉の模様は前のまま全部の樹冠が持つ）
+  const matOk = !!ti && ti.mapN === ti.n && ti.n > 0 && ti.cardMeshN === 0 && ti.alphaN === 0 && ti.cardTris === 0
   // 歩く目線の樹冠は記録だけ（描く細かさを 1.0 に固定すると 1.811→1.918 で、頭の上の木が丸い木から杉に替わり形ごと違うので、葉の模様の物差しにならない・便6）
   const imgOk = near.bdBefore != null && near.bd >= near.bdBefore * 1.15
-  return { pass: matOk && imgOk && errs.length === 0, mapN: ti && ti.mapN, alphaN: ti && ti.alphaN, nearN: ti && ti.nearN, cardTris: ti && ti.cardTris, n: ti && ti.n, walkTree, near, matOk, imgOk, errs }
+  return { pass: matOk && imgOk && errs.length === 0, mapN: ti && ti.mapN, alphaN: ti && ti.alphaN, nearN: ti && ti.nearN, cardTris: ti && ti.cardTris, cardMeshN: ti && ti.cardMeshN, n: ti && ti.n, walkTree, near, matOk, imgOk, errs }
 })
 // T3 観葉植物: 部屋の20面の玉4つが無く、細長い葉17枚の株（potPlant）がある。画: 部屋の観葉植物の切り抜きが前と変わる（差の平均 ≥ 6）
 def('T3', async () => {

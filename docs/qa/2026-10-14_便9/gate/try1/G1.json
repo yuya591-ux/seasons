@@ -1,0 +1,67 @@
+{
+ "pass": true,
+ "kitaterao-window-3d-snow_pc": {
+  "mean": 143.6,
+  "white": 0.001,
+  "before": {
+   "mean": 143.6,
+   "white": 0.001
+  },
+  "pass": true,
+  "errs": []
+ },
+ "kitaterao-window-3d-night_pc": {
+  "mean": 42.5,
+  "white": 0,
+  "before": {
+   "mean": 42.7,
+   "white": 0
+  },
+  "pass": true,
+  "errs": []
+ },
+ "kitaterao-window-3d-sunset_pc": {
+  "mean": 143.6,
+  "white": 0.001,
+  "before": {
+   "mean": 142.9,
+   "white": 0.001
+  },
+  "pass": true,
+  "errs": []
+ },
+ "kitaterao-window-3d-sunset_iphone": {
+  "mean": 129.7,
+  "white": 0.005,
+  "before": {
+   "mean": 129,
+   "white": 0.005
+  },
+  "pass": true,
+  "errs": []
+ },
+ "kitaterao-window-3d-spring_pc": {
+  "mean": 157.4,
+  "white": 0.028,
+  "before": {
+   "mean": 158.2,
+   "white": 0.029
+  },
+  "pass": true,
+  "errs": []
+ },
+ "shishigaya-window-3d_pc": {
+  "mean": 133,
+  "white": 0.002,
+  "before": {
+   "mean": 133.1,
+   "white": 0.002
+  },
+  "pass": true,
+  "errs": []
+ },
+ "id": "G1",
+ "ms": 646047,
+ "at": "2026-10-14T12:52:18.128Z",
+ "commit": "4fcc51f"
+}
