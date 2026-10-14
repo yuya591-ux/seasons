@@ -1,0 +1,25 @@
+{
+ "pass": false,
+ "crop": [
+  450,
+  870,
+  620,
+  200
+ ],
+ "pr": 1,
+ "detail": 0.896,
+ "nd": 1.182,
+ "bd": 0.427,
+ "detailBefore": 0.613,
+ "ndBefore": 0.791,
+ "bdBefore": 0.325,
+ "diffBefore": {
+  "mean": 2.3,
+  "over8": 0.012
+ },
+ "errs": [],
+ "id": "S4",
+ "ms": 52885,
+ "at": "2026-10-14T22:08:45.776Z",
+ "commit": "78910f6"
+}

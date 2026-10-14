@@ -316,9 +316,17 @@ def('T3', async () => {
 })
 // S1 屋根の模様（瓦・トタン・スレート）: 低空飛行の手前の屋根の細かな明暗 ≥ 前＋0.4（便5 の案の画 1.37→2.07）
 def('S1', async () => { const v = await viewFlylow(); const st = await cropStats('flylow', v.f, CROP.roofNear); return { pass: st.detailBefore != null && st.detail >= st.detailBefore + 0.4 && v.errs.length === 0, ...st, errs: v.errs } })
-// S2 家の壁の模様（漆喰とモルタルのむら・雨だれ）: 低空飛行の左下の窓のある家の壁の、明るさで割った細かな明暗 ≥ 前の1.08倍。
+// S2 家の壁の模様（漆喰とモルタルのむら・雨だれ）: 低空飛行の左下の窓のある家の壁の、明るさで割った細かな明暗 ≥ 前の1.08倍（【便9】と、壁の材が模様のプログラムで描かれていること）。
 //   初めは「細かな明暗 ≥ 前＋0.2」としたが、窓の格子の明暗が大きく、後 2.231 に対して線 2.227 と余裕が無かった（便6 の外の目）
-def('S2', async () => { const v = await viewFlylow(); const st = await cropStats('flylow', v.f, CROP.wall); return { pass: st.ndBefore != null && st.nd >= st.ndBefore * 1.08 && v.errs.length === 0, ...st, errs: v.errs } })
+//   【便9】案1（便8 #1=1）で壁の細かな粒と色むらを描かなくなり、残した大きなむらと雨だれの筋は、この切り抜きの明暗に出ない
+//   （種をそろえて壁の模様を外しても 4.932→4.930。画の 1.12倍は木の影など壁の模様の外から来ている）。そこで、壁の材が模様のプログラム（-surf4）で
+//   描かれていることを足して見る（画の線 前の1.08倍はそのまま残す）
+def('S2', async () => {
+  const v = await viewFlylow(); const st = await cropStats('flylow', v.f, CROP.wall)
+  const surf4 = await v.page.evaluate(() => { const g = window.__shGet && window.__shGet(); return g ? (g.renderer.info.programs || []).filter((p) => String(p.cacheKey).includes('-surf4')).length : -1 })
+  const matOk = surf4 > 0, imgOk = st.ndBefore != null && st.nd >= st.ndBefore * 1.08
+  return { pass: matOk && imgOk && v.errs.length === 0, surf4, matOk, imgOk, ...st, errs: v.errs }
+})
 // S3 地面の模様（草の濃淡と土の斑）: ~~公園の上 7m から見下ろした芝の、明るさで割った細かな明暗 ≥ 前の1.1倍~~（【便9】地面の材が模様のプログラムで描かれ、芝の細かな明暗が前の0.98倍以上。下の注を見る）。
 //   初めは低空飛行（高さ 50m）の芝で「細かな明暗 ≥ 前＋0.15」としたが、細かな模様は遠いと消える作りで +0.07 だった（便6 の決めたこと）
 // ~~判定: 公園の芝の明るさで割った細かな明暗 ≥ 前の1.1倍~~（【便9】便9 の裁定「案1 のまま」で草の葉先の細かな明暗と色むらを描かなくなり、近くの芝は前の1.01倍に戻った。
