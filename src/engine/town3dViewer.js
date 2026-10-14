@@ -3138,7 +3138,7 @@ export async function mountTown3d(parent, opts = {}) {
   const leafAtlas = makeLeafAtlas(THREE)
   const leafCards = !LIGHT
   // 葉の板（切り抜き）は窓から 90m 以内の近くの木だけ。遠くの木は葉の画だけの不透明の樹冠（切り抜きは iPhone の GPU で重くなりやすい。前と後を交互に測った窓辺の描画の時間が 1.007〜1.069倍と線〈1.05倍〉の近くだったため・便6）
-  const CARD_R = 90
+  const CARD_R = 40 // 【便6】90m→40m: 樹冠と葉の板を別のメッシュに分けたので、葉の板を持つ木の数だけ描画の呼び出しが増える（90m の63本では歩く目線が前の1.070倍になった）
   const greenestLeaf = leafBaseMats.slice().sort((a, b) => (b.color.g - b.color.r) - (a.color.g - a.color.r))[0] // 杉檜に当てる（桜の色を杉に当てない）
   const crownMats = new Map()
   const crownMat = (m, cards) => { // 葉の画は白〜灰なので、材の色を少し明るくして前の明るさに合わせる

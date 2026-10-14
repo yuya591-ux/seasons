@@ -1,11 +1,35 @@
 {
- "at": "2026-10-13T22:48:07.921Z",
+ "at": "2026-10-14T03:31:44.476Z",
  "ids": [
+  "G0",
+  "T1",
+  "T2",
+  "T3",
+  "S1",
+  "S2",
+  "S3",
+  "S4",
+  "FL",
+  "G1",
+  "K5",
+  "KT",
   "KG"
  ],
  "summary": {
-  "KG": true
+  "G0": true,
+  "T1": true,
+  "T2": true,
+  "T3": true,
+  "S1": true,
+  "S2": true,
+  "S3": true,
+  "S4": true,
+  "FL": true,
+  "G1": true,
+  "K5": false,
+  "KT": true,
+  "KG": false
  },
- "pass": 1,
- "total": 1
+ "pass": 11,
+ "total": 13
 }

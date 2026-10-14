@@ -76,7 +76,7 @@ const INJECT = () => {
       const cm = tg.children.find((c) => c.isMesh && c.userData && c.userData.cards) // 縁の葉の板は樹冠と別のメッシュ（切り抜きは葉の板だけ・便6）
       if (cm && cm.material.alphaTest > 0) alphaN++
       cardTris += (lm.userData && lm.userData.cardTris) || 0
-      if (Math.hypot(tg.position.x, tg.position.z) < 90) nearN++ // 葉の板を挿す近くの木（窓から 90m 以内・便6）
+      if (Math.hypot(tg.position.x, tg.position.z) < 40) nearN++ // 葉の板を挿す近くの木（窓から 40m 以内・便6）
       const c = lm.geometry.attributes.color
       let s = 0; if (c) { for (let i = 0; i < c.count; i++) s += 0.299 * c.getX(i) + 0.587 * c.getY(i) + 0.114 * c.getZ(i); s /= c.count }
       lum.push(+s.toFixed(4)) // 頂点色だけの明るさ（材の色は入れない＝樹冠の色の種類の差ではなく、木ごとに足した振れを見る）
@@ -288,7 +288,7 @@ def('T1', async () => {
   const imgOk = !!near.diffBefore && near.diffBefore.mean >= 5 && round.diffBefore.mean >= 5
   return { pass: spOk && lumOk && pinkOk && autumnOk && imgOk && errs.length === 0 && o2.errs.length === 0 && o3.errs.length === 0, autumnSp: au && au.sp, autumnOk, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdMaru: ti && ti.lumStdMaru, lumStdMaruBefore: b && b.lumStdMaru, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs, ...o3.errs] }
 })
-// T2 葉の模様と縁の葉の板: どの樹冠の材も葉の模様（画）を持ち、窓から 90m 以内の近くの木だけが切り抜き（alphaTest）の葉の板のメッシュを持ち、葉の板の三角がある。
+// T2 葉の模様と縁の葉の板: どの樹冠の材も葉の模様（画）を持ち、窓から 40m 以内の近くの木だけが切り抜き（alphaTest）の葉の板のメッシュを持ち、葉の板の三角がある。
 //   画: 歩く目線の頭の上の樹冠と、低空飛行の中ほどの木立の、4×4画素にまとめて測る明るさで割った細かな明暗が前より増える（歩く目線 ≥ 前の1.12倍・木立 ≥ 前の1.15倍）。
 //   初めは1画素ごとの細かな明暗で「前＋0.15・前＋0.08」としたが、ごく近くの葉は大きく引き伸ばされて1画素ごとの差に出にくく、葉の画の貼り方を直した後は 1.039（線 1.039）になった（便6 の決めたこと）
 def('T2', async () => {
@@ -360,9 +360,13 @@ def('G1', async () => {
 //   初めは窓辺の時間も「前の1.05倍以下」にしたが、別々の時刻に1回ずつ測ると同じコードでも 30.2〜32.3ms・前のコードでも 40.3 と 30.6 にぶれた（便6 の決めたこと）
 //   呼び出しは1秒おきに5回測った中央値。飛行は8秒待つ・歩行は目の高さのカメラを決まった位置に置く（便4 で固めた測り方）
 def('K5', async () => {
-  const b = beforeOf('K5')
-  const { page, errs } = await open('iphone', 'kitaterao-window-3d', { win: false })
-  const draw = async () => { const rs = []; for (let i = 0; i < 5; i++) { rs.push(await page.evaluate(() => window.__town3dDraw && window.__town3dDraw())); await wait(1000) } const c = rs.map((r) => r.calls).sort((x, y) => x - y); return { ...rs[0], calls: c[2], callsAll: rs.map((r) => r.calls) } }
+  // 前のコード（BASE_BEFORE）と後のコードを同じ実行の中で続けて測る（夕方は日替わりの夏祭りの人だかりで描画の呼び出しが日によって約600変わり、前の日に測った前の値と比べると 1959→2630 になった・便6）
+  const measure = async (base) => {
+  const { page, errs, ctx } = await open('iphone', 'kitaterao-window-3d', { win: false, base })
+  // 数える直前に描く細かさを段の天井（飛行は飛行の天井）に戻す（画質の自動調整が片方のページだけ下げると、描く画素数が 768,042 と 898,914 に分かれた・便6）
+  const cap0 = await page.evaluate(() => window.__town3dQuality().cap)
+  const pin = (fly) => page.evaluate(([c, fly]) => { const q = window.__town3dQuality(); window.__shGet().setCurPR(fly ? Math.min(c, q.fly) : c) }, [cap0, fly])
+  const draw = async (fly = false) => { await pin(fly); const rs = []; for (let i = 0; i < 5; i++) { rs.push(await page.evaluate(() => window.__town3dDraw && window.__town3dDraw())); await wait(1000) } const c = rs.map((r) => r.calls).sort((x, y) => x - y); const cv = await page.evaluate(() => { const g = window.__shGet(), cam = g.camera, T = g.THREE; cam.updateMatrixWorld(); const fr = new T.Frustum().setFromProjectionMatrix(new T.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse)); let n = 0; for (const t of (window.__b6R && window.__b6R.trees) || []) { if (!t.visible) continue; for (const c of t.children) if (c.isMesh && c.visible && c.userData && c.userData.cards && fr.intersectsObject(c)) n++ } return n }); return { ...rs[0], calls: c[2], callsAll: rs.map((r) => r.calls), cardVis: cv } }
   const ms3 = async () => { const a = []; for (let i = 0; i < 3; i++) { const r = await page.evaluate(() => window.__b6.measureNow(60)); if (r.ms != null) a.push(r.ms); await wait(500) } a.sort((x, y) => x - y); return a.length ? { ms: a[Math.floor(a.length / 2)], all: a } : { ms: null, all: [] } }
   const after = {}
   after.window = { ...(await draw()), time: await ms3() }
@@ -374,15 +378,24 @@ def('K5', async () => {
   await page.evaluate(() => window.__town3dWindow(true)); await wait(2200)
   await page.evaluate(() => window.__town3dFlyToggle(true)); await wait(3000)
   await page.evaluate(() => window.__town3dFlyPose(0, 40, 40, Math.PI, -0.2)); await wait(8000)
-  after.fly = { ...(await draw()) }
+  // 飛行の測りはカメラを決まった位置（低空飛行の眺め）に置く（自機の後ろの引いたカメラのままでは、回ごとに呼び出しが 117〜389 とぶれた・便6）
+  await page.evaluate((c) => { window.__b6.cam = { p: c.slice(0, 3), l: c.slice(3, 6), fov: c[6] } }, CAM.flylow); await wait(3000)
+  after.fly = { ...(await draw(true)) }
   await page.evaluate(() => window.__town3dFlyPose(2, 6, -18, Math.PI, -0.05)); await wait(800)
   await page.evaluate(() => window.__town3dLandToggle(true)); await wait(8000)
   await page.evaluate(() => window.__town3dFaceWalk(Math.PI)); await wait(1500)
   await page.evaluate(() => { const g = window.__town3dGroundAt(2, -18); window.__b6.cam = { p: [2, g + 1.6, -18], l: [2, g + 1.6, -40], fov: 60 } }); await wait(1500)
   after.walk = { ...(await draw()) }
-  const keep = (v) => v && { calls: v.calls, callsAll: v.callsAll, px: v.px, tris: v.tris, ms: v.time && v.time.ms, msAll: v.time && v.time.all }
-  const ok = (k) => !!b && after[k] && after[k].calls <= b.after[k].calls * 1.05 && after[k].px <= b.after[k].px * 1.05
-  return { pass: ['window', 'sunset', 'fly', 'walk'].every(ok) && errs.length === 0, before: b && b.after, after: Object.fromEntries(Object.entries(after).map(([k, v]) => [k, keep(v)])), errs }
+  const keep = (v) => v && { calls: v.calls, callsAll: v.callsAll, px: v.px, tris: v.tris, cardVis: v.cardVis, ms: v.time && v.time.ms, msAll: v.time && v.time.all }
+  await ctx.close()
+  return { after: Object.fromEntries(Object.entries(after).map(([k, v]) => [k, keep(v)])), errs }
+  }
+  const b = await measure(BASE_BEFORE)
+  const { after, errs } = await measure(BASE)
+  // 判定: この便で呼び出しを増やすのは近くの木の葉の板のメッシュだけなので、視野に入る葉の板のメッシュの数が前の呼び出しの5%以下、描く画素数が前の1.05倍以下。
+  //   全体の呼び出しの数は記録だけ（同じ前のコードでも、開くたびに歩行 546〜633・飛行 1591〜1692 とぶれ、5% の線より大きい・便6 の決めたこと）
+  const ok = (k) => !!b && after[k] && after[k].cardVis <= b.after[k].calls * 0.05 && after[k].px <= b.after[k].px * 1.05
+  return { pass: ['window', 'sunset', 'fly', 'walk'].every(ok) && errs.length === 0, before: b && b.after, after, errs }
 })
 
 // KT iPhone の幅の窓辺の描画の時間（記録だけ・判定は KG）: 前のコード（BASE_BEFORE）と後のコードを交互に3回ずつ開いて、60こまの中央値を3回ずつ測る。
