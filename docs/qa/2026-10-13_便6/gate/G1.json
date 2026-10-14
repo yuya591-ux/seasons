@@ -1,7 +1,7 @@
 {
  "pass": true,
  "kitaterao-window-3d-snow_pc": {
-  "mean": 142.4,
+  "mean": 142.7,
   "white": 0.001,
   "before": {
    "mean": 143.6,
@@ -21,7 +21,7 @@
   "errs": []
  },
  "kitaterao-window-3d-sunset_pc": {
-  "mean": 143.1,
+  "mean": 143.2,
   "white": 0.001,
   "before": {
    "mean": 142.9,
@@ -31,8 +31,8 @@
   "errs": []
  },
  "kitaterao-window-3d-sunset_iphone": {
-  "mean": 129.4,
-  "white": 0.005,
+  "mean": 130.1,
+  "white": 0.004,
   "before": {
    "mean": 129,
    "white": 0.005
@@ -42,7 +42,7 @@
  },
  "kitaterao-window-3d-spring_pc": {
   "mean": 157.8,
-  "white": 0.03,
+  "white": 0.029,
   "before": {
    "mean": 158.2,
    "white": 0.029
@@ -51,7 +51,7 @@
   "errs": []
  },
  "shishigaya-window-3d_pc": {
-  "mean": 133.4,
+  "mean": 132.8,
   "white": 0.002,
   "before": {
    "mean": 133.1,
@@ -61,7 +61,7 @@
   "errs": []
  },
  "id": "G1",
- "ms": 1082523,
- "at": "2026-10-14T02:09:36.054Z",
- "commit": "a673a96"
+ "ms": 734194,
+ "at": "2026-10-14T06:53:45.651Z",
+ "commit": "3e4e4c1"
 }

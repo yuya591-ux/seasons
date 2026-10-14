@@ -7,19 +7,19 @@
   380
  ],
  "pr": 1,
- "detail": 2.125,
- "nd": 2.969,
- "bd": 4.37,
- "detailBefore": 1.401,
- "ndBefore": 1.837,
- "bdBefore": 2.572,
+ "detail": 2.197,
+ "nd": 3.431,
+ "bd": 5.343,
+ "detailBefore": 1.237,
+ "ndBefore": 1.81,
+ "bdBefore": 3.207,
  "diffBefore": {
-  "mean": 6.11,
-  "over8": 0.281
+  "mean": 5.29,
+  "over8": 0.233
  },
  "errs": [],
  "id": "S1",
- "ms": 6407,
- "at": "2026-10-14T01:45:18.472Z",
- "commit": "a673a96"
+ "ms": 2664,
+ "at": "2026-10-14T06:36:55.660Z",
+ "commit": "3e4e4c1"
 }
