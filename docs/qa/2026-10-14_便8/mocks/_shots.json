@@ -1,0 +1,93 @@
+{
+ "at": "2026-10-14T11:54:07.924Z",
+ "log": {
+  "before": {
+   "base": "http://localhost:4964/seasons/",
+   "shots": {
+    "window_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/before_window_iphone.png",
+     "pr": 1.6
+    },
+    "flylow_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/before_flylow_iphone.png",
+     "pr": 1.2
+    },
+    "flylow_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/before_flylow_pc.png",
+     "pr": 1
+    },
+    "walk_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/before_walk_pc.png",
+     "pr": 1
+    }
+   },
+   "errs": []
+  },
+  "now": {
+   "base": "http://localhost:4963/seasons/",
+   "shots": {
+    "window_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/now_window_iphone.png",
+     "pr": 1.6
+    },
+    "flylow_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/now_flylow_iphone.png",
+     "pr": 1.2
+    },
+    "flylow_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/now_flylow_pc.png",
+     "pr": 1
+    },
+    "walk_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/now_walk_pc.png",
+     "pr": 1
+    }
+   },
+   "errs": []
+  },
+  "an1": {
+   "base": "http://localhost:4965/seasons/",
+   "shots": {
+    "window_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an1_window_iphone.png",
+     "pr": 1.6
+    },
+    "flylow_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an1_flylow_iphone.png",
+     "pr": 1.2
+    },
+    "flylow_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an1_flylow_pc.png",
+     "pr": 1
+    },
+    "walk_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an1_walk_pc.png",
+     "pr": 1
+    }
+   },
+   "errs": []
+  },
+  "an2": {
+   "base": "http://localhost:4966/seasons/",
+   "shots": {
+    "window_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an2_window_iphone.png",
+     "pr": 1.6
+    },
+    "flylow_iphone": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an2_flylow_iphone.png",
+     "pr": 1.2
+    },
+    "flylow_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an2_flylow_pc.png",
+     "pr": 1
+    },
+    "walk_pc": {
+     "f": "docs/qa/2026-10-14_便8/mocks/an2_walk_pc.png",
+     "pr": 1
+    }
+   },
+   "errs": []
+  }
+ }
+}

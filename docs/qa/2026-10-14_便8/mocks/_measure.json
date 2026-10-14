@@ -1,0 +1,266 @@
+{
+ "grass": {
+  "shot": "flylow_pc",
+  "crop": [
+   560,
+   990,
+   180,
+   80
+  ],
+  "before": {
+   "nd": 2.339,
+   "vsNow": {
+    "mean": 1.31,
+    "over8": 0
+   }
+  },
+  "now": {
+   "nd": 2.49
+  },
+  "an1": {
+   "nd": 2.42,
+   "vsNow": {
+    "mean": 0.9,
+    "over8": 0
+   }
+  },
+  "an2": {
+   "nd": 1.982,
+   "vsNow": {
+    "mean": 1.53,
+    "over8": 0
+   }
+  }
+ },
+ "roofNear": {
+  "shot": "flylow_pc",
+  "crop": [
+   60,
+   620,
+   460,
+   380
+  ],
+  "before": {
+   "nd": 2.009,
+   "vsNow": {
+    "mean": 5.22,
+    "over8": 0.242
+   }
+  },
+  "now": {
+   "nd": 3.42
+  },
+  "an1": {
+   "nd": 3.399,
+   "vsNow": {
+    "mean": 1.34,
+    "over8": 0.002
+   }
+  },
+  "an2": {
+   "nd": 3.255,
+   "vsNow": {
+    "mean": 1.56,
+    "over8": 0.003
+   }
+  }
+ },
+ "wall": {
+  "shot": "flylow_pc",
+  "crop": [
+   400,
+   820,
+   140,
+   120
+  ],
+  "before": {
+   "nd": 4.736,
+   "vsNow": {
+    "mean": 1.49,
+    "over8": 0.006
+   }
+  },
+  "now": {
+   "nd": 4.902
+  },
+  "an1": {
+   "nd": 4.816,
+   "vsNow": {
+    "mean": 0.89,
+    "over8": 0.002
+   }
+  },
+  "an2": {
+   "nd": 4.315,
+   "vsNow": {
+    "mean": 1.19,
+    "over8": 0.003
+   }
+  }
+ },
+ "road": {
+  "shot": "walk_pc",
+  "crop": [
+   450,
+   870,
+   620,
+   200
+  ],
+  "before": {
+   "nd": 2.408,
+   "vsNow": {
+    "mean": 26.06,
+    "over8": 0.913
+   }
+  },
+  "now": {
+   "nd": 1.588
+  },
+  "an1": {
+   "nd": 1.588,
+   "vsNow": {
+    "mean": 0.16,
+    "over8": 0
+   }
+  },
+  "an2": {
+   "nd": 1.587,
+   "vsNow": {
+    "mean": 0,
+    "over8": 0
+   }
+  }
+ },
+ "treeNear": {
+  "shot": "flylow_pc",
+  "crop": [
+   590,
+   330,
+   370,
+   230
+  ],
+  "before": {
+   "nd": 1.82,
+   "vsNow": {
+    "mean": 7.65,
+    "over8": 0.299
+   }
+  },
+  "now": {
+   "nd": 2.489
+  },
+  "an1": {
+   "nd": 2.367,
+   "vsNow": {
+    "mean": 1.47,
+    "over8": 0.043
+   }
+  },
+  "an2": {
+   "nd": 2.499,
+   "vsNow": {
+    "mean": 0.72,
+    "over8": 0.006
+   }
+  }
+ },
+ "treeCenter": {
+  "shot": "flylow_pc",
+  "crop": [
+   1000,
+   560,
+   320,
+   400
+  ],
+  "before": {
+   "nd": 2.064,
+   "vsNow": {
+    "mean": 7.19,
+    "over8": 0.249
+   }
+  },
+  "now": {
+   "nd": 2.588
+  },
+  "an1": {
+   "nd": 2.443,
+   "vsNow": {
+    "mean": 2.3,
+    "over8": 0.052
+   }
+  },
+  "an2": {
+   "nd": 2.509,
+   "vsNow": {
+    "mean": 1.32,
+    "over8": 0.013
+   }
+  }
+ },
+ "walkTree": {
+  "shot": "walk_pc",
+  "crop": [
+   0,
+   0,
+   900,
+   360
+  ],
+  "before": {
+   "nd": 1.199,
+   "vsNow": {
+    "mean": 23.16,
+    "over8": 0.268
+   }
+  },
+  "now": {
+   "nd": 1.295
+  },
+  "an1": {
+   "nd": 1.204,
+   "vsNow": {
+    "mean": 1.57,
+    "over8": 0.03
+   }
+  },
+  "an2": {
+   "nd": 1.291,
+   "vsNow": {
+    "mean": 0.22,
+    "over8": 0.004
+   }
+  }
+ },
+ "windowTree": {
+  "shot": "window_iphone",
+  "crop": [
+   643,
+   1336,
+   560,
+   180
+  ],
+  "before": {
+   "nd": 0.574,
+   "vsNow": {
+    "mean": 9.79,
+    "over8": 0.255
+   }
+  },
+  "now": {
+   "nd": 0.711
+  },
+  "an1": {
+   "nd": 0.661,
+   "vsNow": {
+    "mean": 3.06,
+    "over8": 0.082
+   }
+  },
+  "an2": {
+   "nd": 0.709,
+   "vsNow": {
+    "mean": 0.29,
+    "over8": 0.005
+   }
+  }
+ }
+}

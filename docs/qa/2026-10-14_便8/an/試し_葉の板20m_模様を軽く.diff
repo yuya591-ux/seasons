@@ -1,0 +1,54 @@
+diff --git a/src/engine/surfacePattern.js b/src/engine/surfacePattern.js
+index 15ff876..c51f954 100644
+--- a/src/engine/surfacePattern.js
++++ b/src/engine/surfacePattern.js
+@@ -27,14 +27,12 @@ vec3 sfPat(vec3 w, vec3 N) {
+   float fr = fract(row), fc = fract(col), fa = sfFade(row);
+   m *= mix(1.0, mix(0.66, 1.06, smoothstep(0.0, 0.22, fr)) * (0.9 + 0.12 * sin(fc * 6.2832)) * (0.9 + 0.2 * sfH(vec2(floor(row), floor(col)))), fa);
+   m *= 0.84 + 0.3 * sfN(w.xz * 0.45);
+-  m *= mix(vec3(1.0), vec3(0.86, 0.96, 0.82), smoothstep(0.62, 0.85, sfN(w.xz * 0.7 + 11.0)) * 0.6); // 苔
+ #elif SF_KIND == 2
+   float cr = al / 0.1, fa = sfFade(cr);
+   m *= mix(1.0, 0.86 + 0.18 * (0.5 + 0.5 * sin(cr * 6.2832)), fa);                // 波板の筋
+   float seam = fract(sl / 1.8); m *= mix(1.0, mix(0.7, 1.0, smoothstep(0.0, 0.04, seam)), sfFade(sl / 1.8 * 20.0)); // 板の継ぎ目
+   float rust = smoothstep(0.55, 0.85, sfN(vec2(al * 2.2, sl * 0.18)) * 0.7 + sfN(w.xz * 0.5) * 0.4);
+   m *= mix(vec3(1.0), vec3(1.18, 0.86, 0.66), rust * 0.55);                          // 錆
+-  m *= 0.88 + 0.22 * sfN(w.xz * 0.35 + 5.0);
+ #elif SF_KIND == 3
+   float row = sl / 0.24, col = al / 0.4 + floor(row) * 0.5;
+   float fr = fract(row), fc = fract(col), fa = sfFade(row);
+@@ -44,18 +42,14 @@ vec3 sfPat(vec3 w, vec3 N) {
+   float wf = sfFade(al * 9.0); // 微分（fwidth）は分岐の外で取る（分岐の中では値が決まらない）
+   if (abs(N.y) < 0.6) {
+     m *= 0.9 + 0.16 * sfN(vec2(al, w.y) * 0.7);                                   // 漆喰とモルタルの大きなむら
+-    m *= mix(1.0, 0.94 + 0.1 * sfN(vec2(al, w.y) * 9.0), wf);                       // 細かな粒
+     float st = sfN(vec2(al * 3.5, 0.0)) * smoothstep(0.35, 1.0, sfN(vec2(al * 1.3, w.y * 0.22)));
+     m *= 1.0 - 0.16 * smoothstep(0.55, 0.9, st);                                   // 雨だれの縦の筋
+-    m *= mix(vec3(1.0), vec3(0.93, 0.95, 0.9), smoothstep(0.6, 0.9, sfN(vec2(al, w.y) * 0.3 + 3.0)));
+   }
+ #elif SF_KIND == 5
+-  m *= 0.84 + 0.3 * sfN(w.xz * 0.9);
+-  m *= mix(1.0, 0.88 + 0.24 * sfN(w.xz * 4.5), sfFade(w.x * 4.5));
+-  m *= mix(1.0, 0.9 + 0.2 * sfH(floor(w.xz * 14.0)), sfFade(w.x * 14.0));           // 草の葉先の細かな明暗
+-  float soil = smoothstep(0.6, 0.8, sfN(w.xz * 0.16 + 7.0) * 0.75 + sfN(w.xz * 0.9) * 0.35);
++  float gn = sfN(w.xz * 0.9);
++  m *= 0.84 + 0.3 * gn;
++  float soil = smoothstep(0.6, 0.8, sfN(w.xz * 0.16 + 7.0) * 0.75 + gn * 0.35);
+   m *= mix(vec3(1.0), vec3(1.12, 0.98, 0.78), soil * 0.6);                           // 土の斑
+-  m *= mix(vec3(1.0), vec3(0.95, 1.04, 0.86), smoothstep(0.5, 0.8, sfN(w.xz * 0.3 + 2.0)) * 0.5); // 若草と枯れ草の色むら
+ #elif SF_KIND == 6
+   m *= mix(1.0, 0.9 + 0.18 * sfH(floor(w.xz * 30.0)), sfFade(w.x * 30.0));         // 舗装の粒
+   vec2 pc = floor(w.xz * vec2(0.35, 0.12));
+diff --git a/src/engine/town3dViewer.js b/src/engine/town3dViewer.js
+index ab88b9e..7781835 100644
+--- a/src/engine/town3dViewer.js
++++ b/src/engine/town3dViewer.js
+@@ -3138,7 +3138,7 @@ export async function mountTown3d(parent, opts = {}) {
+   const leafAtlas = makeLeafAtlas(THREE)
+   const leafCards = !LIGHT
+   // 葉の板（切り抜き）は窓から 90m 以内の近くの木だけ。遠くの木は葉の画だけの不透明の樹冠（切り抜きは iPhone の GPU で重くなりやすい。前と後を交互に測った窓辺の描画の時間が 1.007〜1.069倍と線〈1.05倍〉の近くだったため・便6）
+-  const CARD_R = 40 // 【便6】90m→40m: 樹冠と葉の板を別のメッシュに分けたので、葉の板を持つ木の数だけ描画の呼び出しが増える（90m の63本では歩く目線が前の1.070倍になった）
++  const CARD_R = 20 // 【便6】90m→40m: 樹冠と葉の板を別のメッシュに分けたので、葉の板を持つ木の数だけ描画の呼び出しが増える（90m の63本では歩く目線が前の1.070倍になった）
+   const greenestLeaf = leafBaseMats.slice().sort((a, b) => (b.color.g - b.color.r) - (a.color.g - a.color.r))[0] // 杉檜に当てる（桜の色を杉に当てない）
+   const crownMats = new Map()
+   const crownMat = (m, cards) => { // 葉の画は白〜灰なので、材の色を少し明るくして前の明るさに合わせる
