@@ -3,12 +3,17 @@
 //   node scripts/qa-bin7.mjs <ID…|all>   QA_OUT=…（既定 docs/qa/2026-10-14_便7/gate）
 // 検査:
 //   GS 同じコードどうし（前と前）を同じ測り方で比べ、窓辺と低空飛行の比が 0.98〜1.02 に入る（測り方の物差しの確かめ）
-//   GG 前のコードと後のコードを比べ、窓辺と低空飛行のどちらも後が前の1.05倍以下
+//   GG 前のコードと後のコードを比べ、窓辺と低空飛行のどちらも後が前の1.05倍以下（GS が合格した測り方で）
 // 便6 の KG（scripts/qa-bin6.mjs）から変えた所:
 //   1. 測る間はアプリの描画の繰り返しを止め（おやすみと同じ口）、止めた同じ状態を自分で描く＝鳥・雲・人の動きで描く量が回ごとに変わらない
 //   2. 1こまごとに GPU の終わりを待たず、続けて描いてから時計の結果をまとめて読む＝GPU が空いて動作の速さが落ちない
 //   3. 前と後を短い塊（20こま）で ABBA の順に交互に測り、塊の組ごとの比の中央値で判じる＝ゆっくりした速さの変化が比に入らない
 //   4. 描く細かさは段の天井（飛行は飛行の天井）にそろえる＝本物の iPhone が描く細かさ
+//   5. 専用の GPU（RTX 4050）で描かせ、両方のページの乱数の種をそろえる
+//   6. 測るこまの前に、GPU だけが重い下ごしらえ（約30ms）を挟む。GPU がそれをこなす間に CPU がこまの指示（約14ms）を送り終えるので、
+//      時計はこまの GPU の正味の仕事（窓辺 約0.86ms）だけを測る。下ごしらえは慣らしの塊ごとに、塊の中の時間で 30ms に合わせ直す
+//      （合わせ直さないと、GPU が速くなった塊の中で 5〜6ms に縮み、CPU の待ちが数に入った・便7 の外の目）
+//   ※便7 で試して採らなかった形（動く物を隠す QA_DYN=1・時刻を固める QA_FIXT・下ごしらえで割る QA_NORM=1・1つずつ開く GS1・2つの枠 GSP）は、切り分けの道具として残す
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -64,7 +69,7 @@ const INJECT = () => {
   const prert = new T.WebGLRenderTarget(1024, 1024, { depthBuffer: false }) // GPU が速い時でも 30ms 以上にできる大きさ（512 では最も重くして 5.6ms だった・便7）
   const preMat = new T.ShaderMaterial({ uniforms: { uN: { value: 600 } }, depthTest: false, depthWrite: false,
     vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
-    fragmentShader: 'uniform int uN; void main(){ vec2 p = gl_FragCoord.xy * 0.001; float a = 0.0; for (int i = 0; i < 4096; i++) { if (i >= uN) break; a += sin(p.x * float(i) + a) * cos(p.y + a * 0.5); } gl_FragColor = vec4(a * 1e-6, 0.0, 0.0, 1.0); }' })
+    fragmentShader: 'uniform int uN; void main(){ vec2 p = gl_FragCoord.xy * 0.001; float a = 0.0; for (int i = 0; i < 16384; i++) { if (i >= uN) break; a += sin(p.x * float(i) + a) * cos(p.y + a * 0.5); } gl_FragColor = vec4(a * 1e-6, 0.0, 0.0, 1.0); }' })
   const preMesh = new T.Mesh(new T.PlaneGeometry(2, 2), preMat); preMesh.frustumCulled = false
   const preScene = new T.Scene(); preScene.add(preMesh)
   const preCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1)
@@ -90,7 +95,7 @@ const INJECT = () => {
       const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); S.pre(); gl.endQuery(ext.TIME_ELAPSED_EXT)
       await new Promise((res) => { const t = () => (gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE) ? res() : setTimeout(t, 1)); t() })
       const ms = gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6; gl.deleteQuery(q)
-      if (k >= 1) preMat.uniforms.uN.value = Math.max(16, Math.min(4096, Math.round(preMat.uniforms.uN.value * target / Math.max(0.5, ms))))
+      if (k >= 1) preMat.uniforms.uN.value = Math.max(16, Math.min(16384, Math.round(preMat.uniforms.uN.value * target / Math.max(0.5, ms))))
       S.preMs = +ms.toFixed(2)
     }
     return { n: preMat.uniforms.uN.value, ms: S.preMs }
@@ -131,6 +136,8 @@ const INJECT = () => {
     S.dyn = [...dyn]
     return S.dyn.length
   }
+  // 塊の中で測った下ごしらえの時間（ms）から、次の塊で target ms になるよう重さを直す（合わせる時は GPU が遅く、塊の中では速くなって 5〜6ms に縮み、CPU の時間 約14ms を隠せていなかった・便7 の外の目）
+  S.adapt = (preMs, target = 30) => { if (preMs > 0) preMat.uniforms.uN.value = Math.max(16, Math.min(16384, Math.round(preMat.uniforms.uN.value * target / preMs))); return preMat.uniforms.uN.value }
   S.hideDynamic = () => { let n = 0; for (const o of S.dyn || []) if (o.visible) { o.visible = false; n++ } return n }
   // 隠した物の内訳: 木（__b6R.trees の子）が入っていないか・親の名前ごとの数
   S.dynInfo = () => { const tr = new Set(); for (const t of (window.__b6R && window.__b6R.trees) || []) t.traverse((c) => tr.add(c)); const by = {}; let treeN = 0; for (const o of S.dyn || []) { if (tr.has(o)) treeN++; let p = o; while (p.parent && p.parent !== g.scene) p = p.parent; const k = (p.name || p.type) + (p === o ? '' : '>'); by[k] = (by[k] || 0) + 1 } return { treeN, by: Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 12) } }
@@ -191,12 +198,13 @@ async function setupTarget(page, base, view) {
 const med = (a) => { const v = a.filter((x) => x != null && Number.isFinite(x)).sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : null }
 const r3 = (x) => (x == null ? null : +x.toFixed(3))
 const q25 = (a) => { const v = a.filter((x) => x != null && Number.isFinite(x)).sort((p, q) => p - q); return v.length ? v[Math.floor((v.length - 1) / 4)] : null }
-// 塊の値は下側の4分の1の値（CPU の送りの待ちが混じった遅いこまに引っぱられない・便7）
-const NORM = process.env.QA_NORM !== '0' // 下ごしらえの時間で割る（既定）
+// 塊の値は、割らない時（既定）は下側の4分の1の値（遅いこまに引っぱられない）。QA_NORM=1 の時は、こまごとに下ごしらえの時間で割った値の中央値（便7）
+const NORM = process.env.QA_NORM === '1' // 下ごしらえの時間で割る（QA_NORM=1 の時だけ）。割ると、ページごとの下ごしらえの時間の違い（約4%）が比に入ったので、既定では割らない（便7）
+const PREIN = new WeakMap(), LASTPRE = new WeakMap() // ページごとに、塊の中の下ごしらえの時間
 const RAW = new WeakMap() // ページごとに、塊ごとの割る前の GPU の時間
 const CPU = new WeakMap() // ページごとに、塊ごとの描く指示を送る時間（CPU 側）
 const SIZES = new WeakMap() // ページごとに、塊を測った時の描く面の大きさ（途中で変わったら分かるように）
-const burst = async (page) => { const r = await page.evaluate((n) => window.__b7.burst(n), BATCH); if (!r) return null; const k = `${r.pr}:${r.w}x${r.h}`; const m = SIZES.get(page) || new Set(); m.add(k); SIZES.set(page, m); const c = CPU.get(page) || []; c.push(q25(r.cpu)); CPU.set(page, c); const w = RAW.get(page) || []; w.push(q25(r.ms)); RAW.set(page, w)
+const burst = async (page) => { const r = await page.evaluate((n) => window.__b7.burst(n), BATCH); if (!r) return null; const k = `${r.pr}:${r.w}x${r.h}`; const m = SIZES.get(page) || new Set(); m.add(k); SIZES.set(page, m); const c = CPU.get(page) || []; c.push(q25(r.cpu)); CPU.set(page, c); const w = RAW.get(page) || []; w.push(q25(r.ms)); RAW.set(page, w); const pp = PREIN.get(page) || []; pp.push(med(r.pre)); PREIN.set(page, pp); LASTPRE.set(page, med(r.pre))
   if (!NORM) return q25(r.ms)
   // こまごとに、直前の下ごしらえの時間で割る（GPU の動作の速さが上下しても、同じ仕事の下ごしらえも同じ割合で変わるので比に残らない・便7）。値は「下ごしらえ 40ms あたり」の ms
   const rs = r.ms.map((m, i) => (m != null && r.pre[i] ? m / r.pre[i] * 40 : null)); return med(rs) }
@@ -205,7 +213,8 @@ const burst = async (page) => { const r = await page.evaluate((n) => window.__b7
 async function compare(baseA, baseB, view) {
   const A = await open(baseA, view), B = await open(baseB, view)
   // 慣らし: 記録せずに両方を4塊ずつ（GPU の動作の速さを上げ、材の組み立ての残りを済ませる）
-  for (let k = 0; k < 4; k++) { await burst(A.page); await burst(B.page) }
+  for (let k = 0; k < 6; k++) { for (const P of [A, B]) { await burst(P.page); await P.page.evaluate((m) => window.__b7.adapt(m, 30), LASTPRE.get(P.page)) } }
+  PREIN.set(A.page, []); PREIN.set(B.page, []); CPU.set(A.page, []); CPU.set(B.page, [])
   const ratios = [], aRuns = [], bRuns = []
   for (let k = 0; k < ROUNDS; k++) {
     const a1 = await burst(A.page), b1 = await burst(B.page), b2 = await burst(B.page), a2 = await burst(A.page)
@@ -213,7 +222,7 @@ async function compare(baseA, baseB, view) {
     const a = avg(a1, a2), b = avg(b1, b2)
     aRuns.push(r3(a)); bRuns.push(r3(b)); if (a && b) ratios.push(b / a)
   }
-  const out = { view, prA: A.pr, prB: B.pr, sizeA: [...(SIZES.get(A.page) || [])], sizeB: [...(SIZES.get(B.page) || [])], rawA: r3(med(RAW.get(A.page) || [])), rawB: r3(med(RAW.get(B.page) || [])), cpuA: r3(med(CPU.get(A.page) || [])), cpuB: r3(med(CPU.get(B.page) || [])), infoA: A.info, infoB: B.info, gpu: A.info.gpu, callsA: A.info.calls, callsB: B.info.calls, a: r3(med(aRuns)), b: r3(med(bRuns)), ratio: r3(med(ratios)), ratioMin: r3(Math.min(...ratios)), ratioMax: r3(Math.max(...ratios)), ratios: ratios.map(r3), aRuns, bRuns, errs: [...A.errs, ...B.errs] }
+  const out = { view, prA: A.pr, prB: B.pr, sizeA: [...(SIZES.get(A.page) || [])], sizeB: [...(SIZES.get(B.page) || [])], preInA: (PREIN.get(A.page) || []).map(r3), preInB: (PREIN.get(B.page) || []).map(r3), rawA: r3(med(RAW.get(A.page) || [])), rawB: r3(med(RAW.get(B.page) || [])), cpuA: r3(med(CPU.get(A.page) || [])), cpuB: r3(med(CPU.get(B.page) || [])), infoA: A.info, infoB: B.info, gpu: A.info.gpu, callsA: A.info.calls, callsB: B.info.calls, a: r3(med(aRuns)), b: r3(med(bRuns)), ratio: r3(med(ratios)), ratioMin: r3(Math.min(...ratios)), ratioMax: r3(Math.max(...ratios)), ratios: ratios.map(r3), aRuns, bRuns, errs: [...A.errs, ...B.errs] }
   await A.ctx.close(); await B.ctx.close()
   return out
 }
@@ -401,6 +410,7 @@ for (const id of ids) {
   let r
   try { r = await fn() } catch (e) { r = { pass: false, threw: String(e && e.stack || e).slice(0, 400) } }
   r.id = id; r.ms = Date.now() - t0; r.at = new Date().toISOString()
+  r.settings = { GPU_HIGH, SEED, FIX_T, HIDE_DYN, NORM, ROUNDS, BATCH, PAIR_N, PAGES, SEQ_BURSTS } // その回の設定（記録から測り方が分かるように・便7 の外の目）
   try { r.commit = execSync('git rev-parse --short HEAD').toString().trim() } catch { /* 無視 */ }
   fs.writeFileSync(path.join(OUT, `${id}.json`), JSON.stringify(r, null, 1))
   summary[id] = r.pass
