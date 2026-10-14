@@ -317,9 +317,17 @@ def('S1', async () => { const v = await viewFlylow(); const st = await cropStats
 // S2 家の壁の模様（漆喰とモルタルのむら・雨だれ）: 低空飛行の左下の窓のある家の壁の、明るさで割った細かな明暗 ≥ 前の1.08倍。
 //   初めは「細かな明暗 ≥ 前＋0.2」としたが、窓の格子の明暗が大きく、後 2.231 に対して線 2.227 と余裕が無かった（便6 の外の目）
 def('S2', async () => { const v = await viewFlylow(); const st = await cropStats('flylow', v.f, CROP.wall); return { pass: st.ndBefore != null && st.nd >= st.ndBefore * 1.08 && v.errs.length === 0, ...st, errs: v.errs } })
-// S3 地面の模様（草の濃淡と土の斑）: 公園の上 7m から見下ろした芝の、明るさで割った細かな明暗 ≥ 前の1.1倍。
+// S3 地面の模様（草の濃淡と土の斑）: ~~公園の上 7m から見下ろした芝の、明るさで割った細かな明暗 ≥ 前の1.1倍~~（【便9】地面の材が模様のプログラムで描かれ、芝の細かな明暗が前の0.98倍以上。下の注を見る）。
 //   初めは低空飛行（高さ 50m）の芝で「細かな明暗 ≥ 前＋0.15」としたが、細かな模様は遠いと消える作りで +0.07 だった（便6 の決めたこと）
-def('S3', async () => { const v = await viewLawn(); const st = await cropStats('lawn', v.f, CROP.lawn); return { pass: st.ndBefore != null && st.nd >= st.ndBefore * 1.1 && v.errs.length === 0, ...st, errs: v.errs } })
+// ~~判定: 公園の芝の明るさで割った細かな明暗 ≥ 前の1.1倍~~（【便9】便9 の裁定「案1 のまま」で草の葉先の細かな明暗と色むらを描かなくなり、近くの芝は前の1.01倍に戻った。
+//   残した大きなむら（約1m）と土の斑（約6m）は、この切り抜きの明るさでも色でも前と1〜3%しか違わず、画で判じられない。
+//   そこで、地面の材が模様のプログラム（-surf5）で描かれていることを見て、画は芝が前より平らになっていない〈前の0.98倍以上〉ことだけを守る）
+def('S3', async () => {
+  const v = await viewLawn(); const st = await cropStats('lawn', v.f, CROP.lawn)
+  const surf5 = await v.page.evaluate(() => { const g = window.__shGet && window.__shGet(); return g ? (g.renderer.info.programs || []).filter((p) => String(p.cacheKey).includes('-surf5')).length : -1 })
+  const matOk = surf5 > 0, imgOk = st.ndBefore != null && st.nd >= st.ndBefore * 0.98
+  return { pass: matOk && imgOk && v.errs.length === 0, surf5, matOk, imgOk, ...st, errs: v.errs }
+})
 // S4 中央の通りの模様（舗装の粒・補修の跡・ひび・轍）: 歩く目線で木を隠して影を描き直した手前の通りの、4×4画素にまとめて測る明るさで割った細かな明暗 ≥ 前の2倍。
 //   初めは「細かな明暗 ≥ 前＋0.1」としたが、木の形が変わって通りに落ちる木の影も変わり、前より暗い所どうしを比べていた。明るさで割っても、
 //   縁の葉の板のまだらな影で通りの模様を外しても線を越えた（外し回し）ので、前も後も木を隠して影を描き直してから撮る。
