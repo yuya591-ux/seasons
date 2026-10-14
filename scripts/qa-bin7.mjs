@@ -33,6 +33,7 @@ const GPU_HIGH = process.env.QA_GPU !== 'low' // 専用の GPU で描かせる�
 const SEED = process.env.QA_SEED !== '0' // 両方のページの Math.random の種をそろえる（開くたびに時々の出来事や鳥の数が違い、同じコードでも呼び出しが 1694 と 1720 に分かれた・便7）
 const seedRandom = () => { let a = 20261014; Math.random = () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
 const FIX_T = +(process.env.QA_FIXT ?? 0) // 止める直前に両方のページの時刻をここ（ページを開いてからの ms）へ飛ばして固める。0 で使わない（固めても動く物の数はそろわなかった・便7。既定は使わない）
+const HIDE = process.env.QA_HIDE || '' // 切り分け: cards・trees
 const HIDE_DYN = process.env.QA_DYN === '1' // 動く物を隠して測る（QA_DYN=1 の時だけ）。木の入れ物が風で揺れて木まで隠れ、隠れる物が2ページで違って比が 1.239倍に片寄ったので、既定では隠さない（便7）
 // 時刻の口: 止める直前に performance.now を決まった値に固める（町を歩く人などが時刻で動き、開いた時刻の違いで視野に入る人の数が違って、同じコードでも呼び出しが 1726 と 1673 に分かれた・便7）
 const clockHook = () => { const real = performance.now.bind(performance); let fixed = null; performance.now = () => (fixed == null ? real() : fixed); window.__b7fix = (ms) => { fixed = Math.max(ms, real()); return fixed } }
@@ -189,6 +190,11 @@ async function setupTarget(page, base, view) {
   const fixedAt = FIX_T ? await page.evaluate((ms) => window.__b7fix(ms), FIX_T) : null
   if (FIX_T) await wait(400) // 固めた時刻で数こま描かせる（町の動く物が固めた時刻の位置へ移る）
   await page.evaluate(() => window.__town3dPaused(true)); await wait(300)
+  // 切り分け: QA_HIDE=cards（葉の板）・trees（木を全部）を前と後の両方で隠して測る（便6 の直しのどこが重いかを見る・便7）
+  if (HIDE) await page.evaluate((h) => { for (const t of (window.__b6R && window.__b6R.trees) || []) { if (h.includes('trees')) t.visible = false; else if (h.includes('cards')) for (const c of t.children) if (c.userData && c.userData.cards) c.visible = false }
+    // plant: 部屋の観葉植物（前の20面の玉4つ・後の株 potPlant）
+    if (h.includes('plant')) window.__shGet().scene.traverse((o) => { const p = o.geometry && o.geometry.parameters; if (o.name === 'potPlant' || (o.isMesh && o.geometry.type === 'IcosahedronGeometry' && p && p.detail === 0 && o.renderOrder === 2 && [0.24, 0.18, 0.19, 0.16].some((r) => Math.abs(p.radius - r) < 1e-6))) o.visible = false })
+  }, HIDE)
   const hidN = HIDE_DYN ? await page.evaluate(() => window.__b7.hideDynamic()) : 0
   const pre = await page.evaluate(() => window.__b7.calibrate(40))
   const info = await page.evaluate(() => ({ pre: window.__b7.preMs, gpu: window.__b7.gpuName, timer: window.__b7.hasTimer, calls: window.__town3dDraw && window.__town3dDraw().calls, pr: window.__town3dQuality().pr }))
@@ -200,11 +206,11 @@ const r3 = (x) => (x == null ? null : +x.toFixed(3))
 const q25 = (a) => { const v = a.filter((x) => x != null && Number.isFinite(x)).sort((p, q) => p - q); return v.length ? v[Math.floor((v.length - 1) / 4)] : null }
 // 塊の値は、割らない時（既定）は下側の4分の1の値（遅いこまに引っぱられない）。QA_NORM=1 の時は、こまごとに下ごしらえの時間で割った値の中央値（便7）
 const NORM = process.env.QA_NORM === '1' // 下ごしらえの時間で割る（QA_NORM=1 の時だけ）。割ると、ページごとの下ごしらえの時間の違い（約4%）が比に入ったので、既定では割らない（便7）
-const PREIN = new WeakMap(), LASTPRE = new WeakMap() // ページごとに、塊の中の下ごしらえの時間
+const PREIN = new WeakMap(), LASTPRE = new WeakMap(), LASTCPU = new WeakMap() // ページごとに、塊の中の下ごしらえの時間
 const RAW = new WeakMap() // ページごとに、塊ごとの割る前の GPU の時間
 const CPU = new WeakMap() // ページごとに、塊ごとの描く指示を送る時間（CPU 側）
 const SIZES = new WeakMap() // ページごとに、塊を測った時の描く面の大きさ（途中で変わったら分かるように）
-const burst = async (page) => { const r = await page.evaluate((n) => window.__b7.burst(n), BATCH); if (!r) return null; const k = `${r.pr}:${r.w}x${r.h}`; const m = SIZES.get(page) || new Set(); m.add(k); SIZES.set(page, m); const c = CPU.get(page) || []; c.push(q25(r.cpu)); CPU.set(page, c); const w = RAW.get(page) || []; w.push(q25(r.ms)); RAW.set(page, w); const pp = PREIN.get(page) || []; pp.push(med(r.pre)); PREIN.set(page, pp); LASTPRE.set(page, med(r.pre))
+const burst = async (page) => { const r = await page.evaluate((n) => window.__b7.burst(n), BATCH); if (!r) return null; const k = `${r.pr}:${r.w}x${r.h}`; const m = SIZES.get(page) || new Set(); m.add(k); SIZES.set(page, m); const c = CPU.get(page) || []; c.push(q25(r.cpu)); CPU.set(page, c); const w = RAW.get(page) || []; w.push(q25(r.ms)); RAW.set(page, w); const pp = PREIN.get(page) || []; pp.push(med(r.pre)); PREIN.set(page, pp); LASTPRE.set(page, med(r.pre)); LASTCPU.set(page, med(r.cpu))
   if (!NORM) return q25(r.ms)
   // こまごとに、直前の下ごしらえの時間で割る（GPU の動作の速さが上下しても、同じ仕事の下ごしらえも同じ割合で変わるので比に残らない・便7）。値は「下ごしらえ 40ms あたり」の ms
   const rs = r.ms.map((m, i) => (m != null && r.pre[i] ? m / r.pre[i] * 40 : null)); return med(rs) }
@@ -213,7 +219,7 @@ const burst = async (page) => { const r = await page.evaluate((n) => window.__b7
 async function compare(baseA, baseB, view) {
   const A = await open(baseA, view), B = await open(baseB, view)
   // 慣らし: 記録せずに両方を4塊ずつ（GPU の動作の速さを上げ、材の組み立ての残りを済ませる）
-  for (let k = 0; k < 6; k++) { for (const P of [A, B]) { await burst(P.page); await P.page.evaluate((m) => window.__b7.adapt(m, 30), LASTPRE.get(P.page)) } }
+  for (let k = 0; k < 6; k++) { for (const P of [A, B]) { await burst(P.page); await P.page.evaluate(([m, t]) => window.__b7.adapt(m, t), [LASTPRE.get(P.page), Math.max(30, 1.6 * (LASTCPU.get(P.page) || 0))]) } } // 下ごしらえは CPU の時間の 1.6倍以上（最低 30ms）。GG の低空飛行で CPU の時間が 33ms に伸び、30ms では隠せなかった（便7）
   PREIN.set(A.page, []); PREIN.set(B.page, []); CPU.set(A.page, []); CPU.set(B.page, [])
   const ratios = [], aRuns = [], bRuns = []
   for (let k = 0; k < ROUNDS; k++) {
@@ -320,9 +326,9 @@ def('GSP', async () => {
 // GG 前のコードと後のコード: 窓辺と低空飛行のどちらも後が前の1.05倍以下
 def('GG', async () => {
   const res = {}
-  for (const view of ['window', 'fly']) res[view] = await compare(BASE_BEFORE, BASE, view)
+  for (const view of (process.env.QA_VIEWS || 'window,fly').split(',')) res[view] = await compare(BASE_BEFORE, BASE, view)
   const ok = (v) => res[v].ratio != null && res[v].ratio <= 1.05 && res[v].errs.length === 0
-  return { pass: ok('window') && ok('fly'), rounds: ROUNDS, batch: BATCH, ...res }
+  return { pass: Object.keys(res).every(ok), rounds: ROUNDS, batch: BATCH, ...res }
 })
 
 // GD 切り分け（記録だけ）: 同じコードの2ページを止めた後に1こまずつ描いて画を取り、画素の差の平均を見る（2ページの絵が同じかどうか）
@@ -410,7 +416,7 @@ for (const id of ids) {
   let r
   try { r = await fn() } catch (e) { r = { pass: false, threw: String(e && e.stack || e).slice(0, 400) } }
   r.id = id; r.ms = Date.now() - t0; r.at = new Date().toISOString()
-  r.settings = { GPU_HIGH, SEED, FIX_T, HIDE_DYN, NORM, ROUNDS, BATCH, PAIR_N, PAGES, SEQ_BURSTS } // その回の設定（記録から測り方が分かるように・便7 の外の目）
+  r.settings = { HIDE, GPU_HIGH, SEED, FIX_T, HIDE_DYN, NORM, ROUNDS, BATCH, PAIR_N, PAGES, SEQ_BURSTS } // その回の設定（記録から測り方が分かるように・便7 の外の目）
   try { r.commit = execSync('git rev-parse --short HEAD').toString().trim() } catch { /* 無視 */ }
   fs.writeFileSync(path.join(OUT, `${id}.json`), JSON.stringify(r, null, 1))
   summary[id] = r.pass
