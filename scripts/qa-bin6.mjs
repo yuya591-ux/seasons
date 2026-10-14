@@ -73,7 +73,8 @@ const INJECT = () => {
       const k = (lm.userData && lm.userData.sp) || 'なし'; sp[k] = (sp[k] || 0) + 1
       const m = (tg.userData && tg.userData.origMat) || lm.material
       if (m.map) mapN++
-      if (m.alphaTest > 0) alphaN++
+      const cm = tg.children.find((c) => c.isMesh && c.userData && c.userData.cards) // 縁の葉の板は樹冠と別のメッシュ（切り抜きは葉の板だけ・便6）
+      if (cm && cm.material.alphaTest > 0) alphaN++
       cardTris += (lm.userData && lm.userData.cardTris) || 0
       if (Math.hypot(tg.position.x, tg.position.z) < 90) nearN++ // 葉の板を挿す近くの木（窓から 90m 以内・便6）
       const c = lm.geometry.attributes.color
@@ -287,7 +288,7 @@ def('T1', async () => {
   const imgOk = !!near.diffBefore && near.diffBefore.mean >= 5 && round.diffBefore.mean >= 5
   return { pass: spOk && lumOk && pinkOk && autumnOk && imgOk && errs.length === 0 && o2.errs.length === 0 && o3.errs.length === 0, autumnSp: au && au.sp, autumnOk, sp: ti && ti.sp, n, lumStd: ti && ti.lumStd, lumStdMaru: ti && ti.lumStdMaru, lumStdMaruBefore: b && b.lumStdMaru, springPink: sp && { n: sp.pinkN, sp: [...new Set(sp.pinkSp)] }, near, round, spOk, lumOk, pinkOk, imgOk, errs: [...errs, ...o2.errs, ...o3.errs] }
 })
-// T2 葉の模様と縁の葉の板: どの樹冠の材も葉の模様（画）を持ち、窓から 90m 以内の近くの木だけが切り抜き（alphaTest）を持ち、葉の板の三角がある。
+// T2 葉の模様と縁の葉の板: どの樹冠の材も葉の模様（画）を持ち、窓から 90m 以内の近くの木だけが切り抜き（alphaTest）の葉の板のメッシュを持ち、葉の板の三角がある。
 //   画: 歩く目線の頭の上の樹冠と、低空飛行の中ほどの木立の、4×4画素にまとめて測る明るさで割った細かな明暗が前より増える（歩く目線 ≥ 前の1.12倍・木立 ≥ 前の1.15倍）。
 //   初めは1画素ごとの細かな明暗で「前＋0.15・前＋0.08」としたが、ごく近くの葉は大きく引き伸ばされて1画素ごとの差に出にくく、葉の画の貼り方を直した後は 1.039（線 1.039）になった（便6 の決めたこと）
 def('T2', async () => {
@@ -396,28 +397,40 @@ def('KT', async () => {
   return { pass: mb != null && ma != null && now.every((x) => x.errs.length === 0), recordOnly: true, within105: mb != null && ma != null && ma <= mb * 1.05, before: mb, after: ma, ratio: mb && ma ? +(ma / mb).toFixed(3) : null, beforeRuns: pre.map((x) => x.all), afterRuns: now.map((x) => x.all) }
 })
 
-// KG iPhone の幅の窓辺の GPU の時間（GPU の時計 EXT_disjoint_timer_query_webgl2 で、描画1回に GPU が使った時間）。前のコードと後のコードを交互に5回ずつ開き、60こまの中央値。
-//   CPU の待ちに隠れない GPU の重さを見る（KT は描画の呼び出しから GPU の終わりまでの時間で、機械が空いている時は CPU に隠れて差が小さく、GPU を取り合う時だけ差が出た・便6）。
-//   窓辺に加えて、近くの木（葉の板つき）が多く写る低空飛行の眺めの GPU の時間も測り、どちらも前の1.05倍以下を線にする
+// KG iPhone の幅の GPU の時間（GPU の時計 EXT_disjoint_timer_query_webgl2 で、描画1回に GPU が使った時間）。窓辺と低空飛行の眺めで、どちらも後が前の1.05倍以下。
+//   CPU の待ちに隠れない GPU の重さを見る（KT は描画の呼び出しから GPU の終わりまでの時間で、GPU を取り合う時だけ差が出た・便6）。
+//   前のコードと後のコードのページを同時に開いておき、測らない方は描画を止め、15こまの慣らしの後に30こまずつ交互に12回測って中央値を比べる。
+//   初めはページを開くたびに60こまを測り交互に5回ずつ比べたが、機械が GPU を取り合う時間帯は同じコードでも 15〜25ms と振れた（便6 の決めたこと）
 def('KG', async () => {
-  const one = async (base) => {
-    const { page, ctx, errs } = await open('iphone', 'kitaterao-window-3d', { win: false, base }); await wait(2000)
-    const gpu = () => page.evaluate(async () => {
-      const { renderer, composer } = window.__shGet(); const gl = renderer.getContext(); const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2'); if (!ext) return { ok: false }
-      const orig = composer.render.bind(composer)
-      const run = async () => { const ts = []; for (let i = 0; i < 60; i++) { await new Promise((res) => requestAnimationFrame(res)); const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); orig(); gl.endQuery(ext.TIME_ELAPSED_EXT); await new Promise((res) => { const t = () => { if (gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)) res(); else setTimeout(t, 2) }; t() }); if (!gl.getParameter(ext.GPU_DISJOINT_EXT)) ts.push(gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6); gl.deleteQuery(q) } ts.sort((a, b) => a - b); return +ts[Math.floor(ts.length / 2)].toFixed(3) }
-      return { ok: true, ms: await run() }
-    })
-    const win = await gpu()
-    await placeCam(page, CAM.flylow, 5000)
-    const fly = await gpu()
-    await ctx.close(); return { ok: win.ok && fly.ok, all: win.ms, fly: fly.ms, errs }
+  const setup = async (base, view) => {
+    const { page, ctx, errs } = await open('iphone', 'kitaterao-window-3d', { win: view === 'fly', base }); await wait(1500)
+    if (view === 'fly') await placeCam(page, CAM.flylow, 5000)
+    await page.evaluate(() => window.__shGet().setCurPR(1))
+    return { page, ctx, errs }
   }
-  const pre = [], now = []
-  for (let k = 0; k < 5; k++) { pre.push(await one(BASE_BEFORE)); now.push(await one(BASE)) } // 5回ずつ（3回ずつでは開くたびのぶれ 15〜18ms で、中央値が 0.996倍と 1.059倍に振れた・便6）
-  const med = (xs, key = 'all') => { const v = xs.map((x) => x[key]).filter((x) => x != null).sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : null }
-  const mb = med(pre), ma = med(now), fb = med(pre, 'fly'), fa = med(now, 'fly')
-  return { pass: mb != null && ma != null && fb != null && fa != null && ma <= mb * 1.05 && fa <= fb * 1.05 && now.every((x) => x.errs.length === 0), before: mb, after: ma, ratio: mb && ma ? +(ma / mb).toFixed(3) : null, flyBefore: fb, flyAfter: fa, flyRatio: fb && fa ? +(fa / fb).toFixed(3) : null, beforeRuns: pre, afterRuns: now }
+  const gpu = (page) => page.evaluate(async () => {
+    const { renderer, composer } = window.__shGet(); const gl = renderer.getContext(); const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2'); if (!ext) return null
+    const ts = []
+    // 初めの15こまは慣らし（止めていた間に GPU の動作の速さが落ち、測り始めが遅くなる・便6）
+    for (let i = 0; i < 45; i++) { await new Promise((res) => requestAnimationFrame(res)); const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); composer.render(); gl.endQuery(ext.TIME_ELAPSED_EXT); await new Promise((res) => { const t = () => { if (gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)) res(); else setTimeout(t, 2) }; t() }); if (i >= 15 && !gl.getParameter(ext.GPU_DISJOINT_EXT)) ts.push(gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6); gl.deleteQuery(q) }
+    ts.sort((a, b) => a - b); return ts.length ? ts[Math.floor(ts.length / 2)] : null
+  })
+  const pause = (page, on) => page.evaluate((v) => window.__town3dPaused && window.__town3dPaused(v), on)
+  const med = (a) => { const v = a.filter((x) => x != null).sort((p, q) => p - q); return v.length ? +v[Math.floor(v.length / 2)].toFixed(3) : null }
+  const res = {}
+  for (const view of ['window', 'fly']) {
+    const A = await setup(BASE_BEFORE, view), B = await setup(BASE, view)
+    const pre = [], now = []
+    for (let k = 0; k < 12; k++) {
+      await pause(B.page, true); await pause(A.page, false); await wait(300); pre.push(await gpu(A.page))
+      await pause(A.page, true); await pause(B.page, false); await wait(300); now.push(await gpu(B.page))
+    }
+    const mb = med(pre), ma = med(now)
+    res[view] = { before: mb, after: ma, ratio: mb && ma ? +(ma / mb).toFixed(3) : null, beforeRuns: pre.map((x) => x && +x.toFixed(3)), afterRuns: now.map((x) => x && +x.toFixed(3)), errs: B.errs }
+    await A.ctx.close(); await B.ctx.close()
+  }
+  const ok = (v) => res[v].before != null && res[v].after != null && res[v].after <= res[v].before * 1.05 && res[v].errs.length === 0
+  return { pass: ok('window') && ok('fly'), ...res }
 })
 
 // ── 実行 ─────────────────────────────────────────────────────────────

@@ -3183,9 +3183,11 @@ export async function mountTown3d(parent, opts = {}) {
       const baseM = leafBaseMats[ci], sp = crownSpecies(x, z, baseM.color.r > baseM.color.g * 1.08 && baseM.color.b > baseM.color.g) // 桜（青みのある桃色）だけ。紅葉は青みが無いので樹種を振る（便6 の外の目）
       const cards = leafCards && Math.hypot(x, z) < CARD_R
       const crown = buildCrown(THREE, sp, { min: bmin, max: bmax }, posHash(x, z, 1), cards)
-      bakeCrownColors(THREE, crown, crownTint(x, z, sp), sp) // 上下の陰陽・房の奥の陰・葉の塊の濃淡・木ごとの明るさと黄み〜青み
-      const leafMesh = new THREE.Mesh(crown.geo, crownMat(sp === 'sugi' && greenestLeaf ? greenestLeaf : baseM, cards)); leafMesh.castShadow = true
+      const tint = crownTint(x, z, sp), cm = sp === 'sugi' && greenestLeaf ? greenestLeaf : baseM
+      bakeCrownColors(THREE, crown, tint, sp) // 上下の陰陽・房の奥の陰・葉の塊の濃淡・木ごとの明るさと黄み〜青み
+      const leafMesh = new THREE.Mesh(crown.geo, crownMat(cm, false)); leafMesh.castShadow = true // 樹冠は不透明の材（切り抜きは葉の板だけ）
       leafMesh.userData = { sp, cardTris: crown.cardTris }; g.add(leafMesh)
+      if (crown.cardGeo) { bakeCrownColors(THREE, crown, tint, sp, crown.cardGeo); const cardMesh = new THREE.Mesh(crown.cardGeo, crownMat(cm, true)); cardMesh.userData = { cards: true }; g.add(cardMesh) } // 縁の葉の板（樹冠と一緒に揺れる・影は落とさない）
     }
     g.position.set(x, gy, z); g.scale.setScalar(scale); g.rotation.z = tilt; if (!hidden) town.add(g)
     g.userData = { ph: R() * 6.28, amp: 0.02 + R() * 0.02, tilt }
@@ -9337,6 +9339,7 @@ export async function mountTown3d(parent, opts = {}) {
           const op = Math.max(0.1, Math.min(1, (dc - 1.4) / 2.6)) // 近いほど薄く（真下=ほぼ透明→4uで不透明）
           tr.userData.fadeMat.opacity = op; tr.userData.fadeMat.depthWrite = op > 0.65
         } else if (tr.userData.fadeMat && leaf.material === tr.userData.fadeMat) { leaf.material = tr.userData.origMat } // 遠ざかる/飛行で不透明に戻す
+        const cardM = tr.children[1]; if (cardM) cardM.visible = !(walkFade && dc < 4.4) // 樹冠を薄くする間は縁の葉の板を隠す（便6）
       }
     }
     // 電線のスズメ＝時々ぴょこっと跳ねて尾を振る（窓辺の微小イベント＝静止した影でなく生きた小鳥）。

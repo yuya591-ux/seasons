@@ -67,7 +67,8 @@ function crownUV(p, uv) {
 }
 
 // 樹冠を作る。bb ={ min: [x,y,z], max: [x,y,z] }（木の中の座標）。withCards で縁の葉の板を挿す。
-// 返す物: { geo, cardTris（葉の板の三角の数） }
+// 返す物: { geo（不透明の樹冠）, cardGeo（葉の板・切り抜きで描く。無ければ null）, cardTris（葉の板の三角の数） }
+// 樹冠と葉の板を分けるのは、切り抜き（透けた所を描かない）の処理を葉の板だけに掛けるため（樹冠ごと切り抜きの材にすると、低空飛行の GPU の時間が前の1.08倍になった・便6）
 export function buildCrown(THREE, sp, bb, seed, withCards) {
   const rnd = mkRand(seed)
   const cx = (bb.min[0] + bb.max[0]) / 2, cz = (bb.min[2] + bb.max[2]) / 2, cy = (bb.min[1] + bb.max[1]) / 2
@@ -109,6 +110,7 @@ export function buildCrown(THREE, sp, bb, seed, withCards) {
   }
   // 縁の葉の板: 房の表面に、外を向く小さな板を挿す。UV は画の右半分（葉の外は透明）
   let cardTris = 0
+  const cards = []
   if (withCards) {
     const o = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), side = new THREE.Vector3(1, 0, 0), d = new THREE.Vector3(), m4 = new THREE.Matrix4()
     for (const [px, py, pz, rr] of clumps) {
@@ -123,12 +125,12 @@ export function buildCrown(THREE, sp, bb, seed, withCards) {
         const off = sp === 'sugi' ? rr * 0.95 : rr
         q.translate(px + d.x * off, py + d.y * rr * (sp === 'kasa' ? 0.62 : 1), pz + d.z * off)
         const uv = q.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, 0.5 + uv.getX(i) * 0.5, uv.getY(i))
-        parts.push(q); cardTris += 2
+        cards.push(q); cardTris += 2
       }
     }
   }
-  for (const g of parts) { if (g.index) { const ng = g.toNonIndexed(); g.copy(ng); ng.dispose() } }
-  return { geo: mergeAll(THREE, parts), cardTris, cx, cy, cz, rx, ry }
+  for (const g of cards) { const ng = g.toNonIndexed(); g.copy(ng); ng.dispose() }
+  return { geo: mergeAll(THREE, parts), cardGeo: cards.length ? mergeAll(THREE, cards) : null, cardTris, cx, cy, cz, rx, ry }
 }
 
 // 木ごとの色の振れ（明るさ ±18%・黄み〜青み）。杉檜は濃い青緑
@@ -138,8 +140,8 @@ export function crownTint(x, z, sp) {
 }
 
 // 樹冠の頂点色: 上下の陰陽（前と同じ 0.8→1.22）× 樹冠の中ほどの陰 × 葉の塊の濃淡 × 木ごとの色
-export function bakeCrownColors(THREE, crown, tint, sp) {
-  const geo = crown.geo, p = geo.attributes.position, c = new Float32Array(p.count * 3)
+export function bakeCrownColors(THREE, crown, tint, sp, geo = crown.geo) {
+  const p = geo.attributes.position, c = new Float32Array(p.count * 3)
   let minY = Infinity, maxY = -Infinity; for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < minY) minY = y; if (y > maxY) maxY = y }
   const span = Math.max(0.001, maxY - minY)
   for (let i = 0; i < p.count; i++) {
