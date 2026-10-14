@@ -1,0 +1,28 @@
+{
+ "pass": false,
+ "surf5": 0,
+ "matOk": false,
+ "imgOk": true,
+ "crop": [
+  665,
+  465,
+  150,
+  45
+ ],
+ "pr": 1,
+ "detail": 0.92,
+ "nd": 0.914,
+ "bd": 1.212,
+ "detailBefore": 0.925,
+ "ndBefore": 0.918,
+ "bdBefore": 1.209,
+ "diffBefore": {
+  "mean": 0.07,
+  "over8": 0
+ },
+ "errs": [],
+ "id": "S3",
+ "ms": 49444,
+ "at": "2026-10-14T13:23:42.086Z",
+ "commit": "02c4682"
+}
