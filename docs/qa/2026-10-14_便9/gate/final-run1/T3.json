@@ -1,0 +1,30 @@
+{
+ "pass": true,
+ "oldN": 0,
+ "found": true,
+ "blades": 17,
+ "plant": {
+  "crop": [
+   1300,
+   610,
+   200,
+   250
+  ],
+  "pr": 1,
+  "detail": 1.293,
+  "nd": 1.101,
+  "bd": 3.048,
+  "detailBefore": 1.228,
+  "ndBefore": 0.955,
+  "bdBefore": 2.391,
+  "diffBefore": {
+   "mean": 14.72,
+   "over8": 0.307
+  }
+ },
+ "errs": [],
+ "id": "T3",
+ "ms": 36855,
+ "at": "2026-10-14T13:53:22.223Z",
+ "commit": "7415b00"
+}

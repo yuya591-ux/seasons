@@ -190,6 +190,8 @@ async function setupTarget(page, base, view) {
   const fixedAt = FIX_T ? await page.evaluate((ms) => window.__b7fix(ms), FIX_T) : null
   if (FIX_T) await wait(400) // 固めた時刻で数こま描かせる（町の動く物が固めた時刻の位置へ移る）
   await page.evaluate(() => window.__town3dPaused(true)); await wait(300)
+  // 【便9】止めた後にもう一度細かさを合わせる（合わせてから止めるまでの間に、アプリの自動の画質が後のページだけ飛行の細かさを 1.2→1.08 に下げた回が2回あった）
+  await page.evaluate((v) => window.__shGet().setCurPR(v), pr); await wait(200)
   // 切り分け: QA_HIDE=cards（葉の板）・trees（木を全部）を前と後の両方で隠して測る（便6 の直しのどこが重いかを見る・便7）
   if (HIDE) await page.evaluate((h) => { for (const t of (window.__b6R && window.__b6R.trees) || []) { if (h.includes('trees')) t.visible = false; else if (h.includes('cards')) for (const c of t.children) if (c.userData && c.userData.cards) c.visible = false }
     // plant: 部屋の観葉植物（前の20面の玉4つ・後の株 potPlant）
@@ -327,7 +329,9 @@ def('GSP', async () => {
 def('GG', async () => {
   const res = {}
   for (const view of (process.env.QA_VIEWS || 'window,fly').split(',')) res[view] = await compare(BASE_BEFORE, BASE, view)
-  const ok = (v) => res[v].ratio != null && res[v].ratio <= 1.05 && res[v].errs.length === 0
+  // 【便9】前と後の描く面の大きさ（細かさ:幅x高さ）が、どちらも1つに決まっていて同じ時だけ判じる（そろわない回の比は、同じ細かさの比べにならない）
+  const same = (v) => res[v].sizeA.length === 1 && res[v].sizeB.length === 1 && res[v].sizeA[0] === res[v].sizeB[0]
+  const ok = (v) => same(v) && res[v].ratio != null && res[v].ratio <= 1.05 && res[v].errs.length === 0
   return { pass: Object.keys(res).every(ok), rounds: ROUNDS, batch: BATCH, ...res }
 })
 

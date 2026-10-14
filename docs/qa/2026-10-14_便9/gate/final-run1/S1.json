@@ -1,0 +1,25 @@
+{
+ "pass": true,
+ "crop": [
+  60,
+  620,
+  460,
+  380
+ ],
+ "pr": 1,
+ "detail": 2.175,
+ "nd": 3.382,
+ "bd": 5.297,
+ "detailBefore": 1.237,
+ "ndBefore": 1.81,
+ "bdBefore": 3.207,
+ "diffBefore": {
+  "mean": 4.93,
+  "over8": 0.205
+ },
+ "errs": [],
+ "id": "S1",
+ "ms": 53972,
+ "at": "2026-10-14T13:54:16.805Z",
+ "commit": "7415b00"
+}
