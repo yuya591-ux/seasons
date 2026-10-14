@@ -1,0 +1,9 @@
+== 受けた言葉: 「はい」（2026-10-15・便9 の報告の #1「便6 と便9 の直しを本番へ出すか」への答え）
+== 手順1: 出す前の版の控え
+origin/main: f073e83
+Actions 最新: 38398330933 f073e83 completed success 2026-10-13T12:41:45Z
+公開の precache-manifest: assets/index-CitE2BOm.js・assets/index-DJSiStur.css
+== 手順2: 関門（出す物 f073e83..a149a40＝44 コミット・src は  3 files changed, 318 insertions(+), 23 deletions(-)）
+便9 の全テスト: 54bd696 で 15/15・最後まで届いた true ・作業ツリーの変更 なし
+54bd696..HEAD のコードの変更: 0 行（0 なら空）
+手元ビルド: a149a40 で build exit 0・assets/index-DdD3pEv-.js assets/index-DJSiStur.css 
