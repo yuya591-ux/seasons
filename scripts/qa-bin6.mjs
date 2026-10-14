@@ -109,6 +109,8 @@ async function open(dev, scene, { win = true, base = BASE } = {}) {
   const ctx = await b.newContext(DEVICES[dev])
   if (dev === 'iphone') await ctx.addInitScript(() => { Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 5 }); Object.defineProperty(navigator, 'platform', { get: () => 'iPhone' }) })
   await ctx.addInitScript(pinStart, scene)
+  // 【便9】Math.random の種をそろえる（便7 の qa-bin7.mjs と同じ）。時々の出来事（気球・にわか雨など）が回ごとに違い、同じコードで S2 の壁が前の 1.123・1.121・1.019倍と揺れた。QA_SEED=0 で前の形
+  if (process.env.QA_SEED !== '0') await ctx.addInitScript(() => { let a = 20261014; Math.random = () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } })
   const page = await ctx.newPage()
   const errs = []
   page.on('pageerror', (e) => errs.push('PE: ' + e.message))

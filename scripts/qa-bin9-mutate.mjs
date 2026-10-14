@@ -14,6 +14,10 @@ const M = [
   { name: 'T2-atlas（葉の画を外す）', check: 'T2', script: B6, file: V, from: 'map: leafAtlas, alphaTest', to: 'map: null, alphaTest' },
   // 書き換えた S3 が守る物（地面の模様）
   { name: 'S3-ground（地面の模様を外す）', check: 'S3', script: B6, file: V, from: '    applySurfacePattern(gm, SURF.ground)', to: '    void SURF.ground' },
+  // 種をそろえた便6 の検査（【便9】）でも、面の模様を外すと落ちるか
+  { name: 'S1-roof（屋根の模様を外す）', check: 'S1', script: B6, file: V, from: 'applySurfacePattern(mottleMat(c, 60, 0.13, [3, 2]), ROOF_SURF[i])', to: 'mottleMat(c, 60, 0.13, [3, 2])' },
+  { name: 'S2-wall（壁の模様を外す）', check: 'S2', script: B6, file: V, from: '    applySurfacePattern(wm, SURF.wall)', to: '    void SURF.wall' },
+  { name: 'S4-road（通りの模様を外す）', check: 'S4', script: B6, file: V, from: 'applySurfacePattern(snowify(new THREE.MeshToonMaterial({ map: roadTex, gradientMap: grad, vertexColors: true })), SURF.road)', to: 'snowify(new THREE.MeshToonMaterial({ map: roadTex, gradientMap: grad, vertexColors: true }))' },
   // この便の直しが守る重さ（GG）: 片方ずつ便6 の形へ戻すと線を越えるか
   { name: 'GG-fine（面の模様の細かい層を戻す）', check: 'GG', script: B7, file: P, from: '#define SF_FINE 0', to: '#define SF_FINE 1' },
   { name: 'GG-cards（縁の葉の板を戻す）', check: 'GG', script: B7, file: V, from: CARDS_NOW, to: 'const leafCards = !LIGHT //' },
