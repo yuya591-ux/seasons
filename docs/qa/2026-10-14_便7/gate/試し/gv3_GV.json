@@ -1,0 +1,64 @@
+{
+ "pass": true,
+ "recordOnly": true,
+ "fly": {
+  "nA": 993,
+  "nB": 981,
+  "callsA": 1003,
+  "callsB": 991,
+  "diff": [
+   [
+    "-/-/PlaneGeometry/4/",
+    33,
+    32
+   ],
+   [
+    "-/-/CylinderGeometry/76/",
+    4,
+    3
+   ],
+   [
+    "-/-/BufferGeometry/72/",
+    6,
+    0
+   ],
+   [
+    "-/-/SphereGeometry/255/",
+    2,
+    0
+   ],
+   [
+    "-/-/BufferGeometry/44/",
+    2,
+    0
+   ]
+  ]
+ },
+ "window": {
+  "nA": 1020,
+  "nB": 1027,
+  "callsA": 1024,
+  "callsB": 1031,
+  "diff": [
+   [
+    "-/-/BoxGeometry/24/",
+    387,
+    391
+   ],
+   [
+    "-/-/RoundedBoxGeometry/900/",
+    36,
+    37
+   ],
+   [
+    "-/-/BufferGeometry/216/",
+    1,
+    3
+   ]
+  ]
+ },
+ "id": "GV",
+ "ms": 170703,
+ "at": "2026-10-14T08:52:22.151Z",
+ "commit": "423d781"
+}

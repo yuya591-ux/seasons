@@ -1,0 +1,119 @@
+{
+ "pass": true,
+ "recordOnly": true,
+ "fly": {
+  "nA": 1700,
+  "nB": 1720,
+  "callsA": 1714,
+  "callsB": 1732,
+  "diff": [
+   [
+    "-/-/BoxGeometry/24/",
+    485,
+    486
+   ],
+   [
+    "-/-/PlaneGeometry/4/",
+    43,
+    42
+   ],
+   [
+    "-/-/CylinderGeometry/76/",
+    42,
+    43
+   ],
+   [
+    "-/-/BufferGeometry/324/",
+    172,
+    169
+   ],
+   [
+    "-/-/BufferGeometry/2940/",
+    43,
+    42
+   ],
+   [
+    "-/-/CylinderGeometry/30/",
+    43,
+    40
+   ],
+   [
+    "-/-/BufferGeometry/86/",
+    14,
+    16
+   ],
+   [
+    "-/-/SphereGeometry/255/",
+    28,
+    32
+   ],
+   [
+    "-/-/SphereGeometry/437/",
+    7,
+    8
+   ],
+   [
+    "-/-/SphereGeometry/221/",
+    14,
+    17
+   ],
+   [
+    "-/-/SphereGeometry/143/",
+    8,
+    9
+   ],
+   [
+    "-/-/SphereGeometry/195/",
+    17,
+    19
+   ],
+   [
+    "-/-/BufferGeometry/72/",
+    42,
+    48
+   ],
+   [
+    "-/-/BufferGeometry/44/",
+    14,
+    16
+   ],
+   [
+    "-/-/BufferGeometry/58/",
+    14,
+    16
+   ],
+   [
+    "-/-/SphereGeometry/169/",
+    14,
+    16
+   ],
+   [
+    "-/-/BufferGeometry/8/",
+    0,
+    1
+   ]
+  ]
+ },
+ "window": {
+  "nA": 1868,
+  "nB": 1866,
+  "callsA": 1875,
+  "callsB": 1873,
+  "diff": [
+   [
+    "-/-/BufferGeometry/324/",
+    188,
+    187
+   ],
+   [
+    "-/-/CylinderGeometry/30/",
+    47,
+    46
+   ]
+  ]
+ },
+ "id": "GV",
+ "ms": 161292,
+ "at": "2026-10-14T08:48:57.441Z",
+ "commit": "423d781"
+}

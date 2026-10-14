@@ -1,0 +1,93 @@
+{
+ "pass": true,
+ "recordOnly": true,
+ "fly": {
+  "nA": 1714,
+  "nB": 1661,
+  "callsA": 1726,
+  "callsB": 1673,
+  "diff": [
+   [
+    "-/-/CylinderGeometry/34/",
+    11,
+    9
+   ],
+   [
+    "-/-/PlaneGeometry/4/",
+    42,
+    40
+   ],
+   [
+    "-/-/CylinderGeometry/76/",
+    43,
+    41
+   ],
+   [
+    "-/-/BufferGeometry/86/",
+    16,
+    12
+   ],
+   [
+    "-/-/SphereGeometry/255/",
+    32,
+    24
+   ],
+   [
+    "-/-/SphereGeometry/437/",
+    8,
+    6
+   ],
+   [
+    "-/-/SphereGeometry/221/",
+    16,
+    13
+   ],
+   [
+    "-/-/SphereGeometry/143/",
+    9,
+    7
+   ],
+   [
+    "-/-/SphereGeometry/195/",
+    19,
+    14
+   ],
+   [
+    "-/-/BufferGeometry/72/",
+    48,
+    36
+   ],
+   [
+    "-/-/BufferGeometry/44/",
+    16,
+    12
+   ],
+   [
+    "-/-/BufferGeometry/58/",
+    16,
+    12
+   ],
+   [
+    "-/-/SphereGeometry/169/",
+    16,
+    12
+   ],
+   [
+    "-/-/BufferGeometry/8/",
+    0,
+    1
+   ]
+  ]
+ },
+ "window": {
+  "nA": 1852,
+  "nB": 1852,
+  "callsA": 1859,
+  "callsB": 1859,
+  "diff": []
+ },
+ "id": "GV",
+ "ms": 160251,
+ "at": "2026-10-14T08:45:20.109Z",
+ "commit": "423d781"
+}

@@ -1,0 +1,157 @@
+{
+ "pass": false,
+ "rounds": 12,
+ "batch": 20,
+ "window": {
+  "view": "window",
+  "prA": 1.6,
+  "prB": 1.6,
+  "sizeA": [
+   "1.6:643x1398"
+  ],
+  "sizeB": [
+   "1.6:643x1398"
+  ],
+  "infoA": {
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 1859,
+   "pr": 1.6
+  },
+  "infoB": {
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 1859,
+   "pr": 1.6
+  },
+  "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "callsA": 1859,
+  "callsB": 1859,
+  "a": 12.462,
+  "b": 12.591,
+  "ratio": 1.01,
+  "ratioMin": 0.969,
+  "ratioMax": 1.051,
+  "ratios": [
+   0.996,
+   1.02,
+   0.987,
+   1.01,
+   1.024,
+   1.01,
+   0.969,
+   0.988,
+   1.014,
+   1.03,
+   1.051,
+   0.997
+  ],
+  "aRuns": [
+   12.516,
+   12.35,
+   12.462,
+   12.623,
+   13.453,
+   12.382,
+   12.743,
+   12.39,
+   13.03,
+   12.264,
+   12.182,
+   12.279
+  ],
+  "bRuns": [
+   12.468,
+   12.591,
+   12.299,
+   12.749,
+   13.773,
+   12.508,
+   12.348,
+   12.236,
+   13.217,
+   12.626,
+   12.808,
+   12.24
+  ],
+  "errs": []
+ },
+ "fly": {
+  "view": "fly",
+  "prA": 1.2,
+  "prB": 1.2,
+  "sizeA": [
+   "1.2:482x1048"
+  ],
+  "sizeB": [
+   "1.2:482x1048"
+  ],
+  "infoA": {
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 1727,
+   "pr": 1.2
+  },
+  "infoB": {
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 1674,
+   "pr": 1.2
+  },
+  "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "callsA": 1727,
+  "callsB": 1674,
+  "a": 13.473,
+  "b": 12.377,
+  "ratio": 0.926,
+  "ratioMin": 0.85,
+  "ratioMax": 0.943,
+  "ratios": [
+   0.94,
+   0.922,
+   0.908,
+   0.939,
+   0.85,
+   0.943,
+   0.926,
+   0.912,
+   0.882,
+   0.93,
+   0.918,
+   0.929
+  ],
+  "aRuns": [
+   12.915,
+   13.473,
+   13.723,
+   14.037,
+   14.642,
+   13.521,
+   13.36,
+   13.134,
+   13.636,
+   13.169,
+   13.357,
+   13.263
+  ],
+  "bRuns": [
+   12.134,
+   12.416,
+   12.46,
+   13.186,
+   12.445,
+   12.755,
+   12.377,
+   11.978,
+   12.027,
+   12.248,
+   12.263,
+   12.318
+  ],
+  "errs": []
+ },
+ "id": "GS",
+ "ms": 186367,
+ "at": "2026-10-14T08:33:55.080Z",
+ "commit": "423d781"
+}

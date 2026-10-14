@@ -1,0 +1,257 @@
+{
+ "pass": false,
+ "rounds": 12,
+ "batch": 20,
+ "window": {
+  "view": "window",
+  "prA": 1.6,
+  "prB": 1.6,
+  "sizeA": [
+   "1.6:643x1398"
+  ],
+  "sizeB": [
+   "1.6:643x1398"
+  ],
+  "cpuA": 11.4,
+  "cpuB": 10.5,
+  "infoA": {
+   "pre": {
+    "n": 4096,
+    "ms": 36.32
+   },
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 1045,
+   "pr": 1.6,
+   "fixedAt": null,
+   "dynN": 1590,
+   "hidN": 1588,
+   "dyn": {
+    "treeN": 200,
+    "by": [
+     [
+      "Group>",
+      1589
+     ],
+     [
+      "Sprite",
+      1
+     ]
+    ]
+   }
+  },
+  "infoB": {
+   "pre": {
+    "n": 4096,
+    "ms": 33.88
+   },
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 1047,
+   "pr": 1.6,
+   "fixedAt": null,
+   "dynN": 1566,
+   "hidN": 1564,
+   "dyn": {
+    "treeN": 200,
+    "by": [
+     [
+      "Group>",
+      1565
+     ],
+     [
+      "Sprite",
+      1
+     ]
+    ]
+   }
+  },
+  "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "callsA": 1045,
+  "callsB": 1047,
+  "a": 3.846,
+  "b": 3.368,
+  "ratio": 0.978,
+  "ratioMin": 0.809,
+  "ratioMax": 1.137,
+  "ratios": [
+   0.873,
+   0.864,
+   1.009,
+   0.987,
+   1.006,
+   0.847,
+   0.889,
+   0.836,
+   1.022,
+   1.137,
+   0.978,
+   0.809
+  ],
+  "aRuns": [
+   3.857,
+   3.642,
+   3.673,
+   3.322,
+   3.321,
+   4.307,
+   4.19,
+   4.024,
+   3.846,
+   3.332,
+   3.404,
+   4.015
+  ],
+  "bRuns": [
+   3.368,
+   3.146,
+   3.707,
+   3.278,
+   3.343,
+   3.649,
+   3.726,
+   3.365,
+   3.931,
+   3.789,
+   3.329,
+   3.25
+  ],
+  "errs": []
+ },
+ "fly": {
+  "view": "fly",
+  "prA": 1.2,
+  "prB": 1.2,
+  "sizeA": [
+   "1.2:482x1048"
+  ],
+  "sizeB": [
+   "1.2:482x1048"
+  ],
+  "cpuA": 10.2,
+  "cpuB": 9.7,
+  "infoA": {
+   "pre": {
+    "n": 4096,
+    "ms": 36.33
+   },
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 996,
+   "pr": 1.2,
+   "fixedAt": null,
+   "dynN": 1553,
+   "hidN": 1551,
+   "dyn": {
+    "treeN": 200,
+    "by": [
+     [
+      "Group>",
+      1549
+     ],
+     [
+      "Sprite",
+      2
+     ],
+     [
+      "Mesh",
+      1
+     ],
+     [
+      "Points",
+      1
+     ]
+    ]
+   }
+  },
+  "infoB": {
+   "pre": {
+    "n": 4096,
+    "ms": 25.46
+   },
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "timer": true,
+   "calls": 998,
+   "pr": 1.2,
+   "fixedAt": null,
+   "dynN": 1538,
+   "hidN": 1536,
+   "dyn": {
+    "treeN": 200,
+    "by": [
+     [
+      "Group>",
+      1534
+     ],
+     [
+      "Sprite",
+      2
+     ],
+     [
+      "Mesh",
+      1
+     ],
+     [
+      "Points",
+      1
+     ]
+    ]
+   }
+  },
+  "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "callsA": 996,
+  "callsB": 998,
+  "a": 2.995,
+  "b": 2.832,
+  "ratio": 0.971,
+  "ratioMin": 0.913,
+  "ratioMax": 1.043,
+  "ratios": [
+   1.043,
+   1.041,
+   0.995,
+   0.961,
+   0.993,
+   0.919,
+   0.954,
+   0.971,
+   1.007,
+   0.935,
+   0.913,
+   0.931
+  ],
+  "aRuns": [
+   2.895,
+   2.828,
+   2.742,
+   2.942,
+   2.835,
+   3.082,
+   2.995,
+   3.04,
+   2.891,
+   3.024,
+   3.061,
+   3.019
+  ],
+  "bRuns": [
+   3.021,
+   2.943,
+   2.728,
+   2.828,
+   2.815,
+   2.832,
+   2.858,
+   2.952,
+   2.91,
+   2.828,
+   2.794,
+   2.811
+  ],
+  "errs": []
+ },
+ "id": "GS",
+ "ms": 231778,
+ "at": "2026-10-14T09:05:01.306Z",
+ "commit": "423d781"
+}
