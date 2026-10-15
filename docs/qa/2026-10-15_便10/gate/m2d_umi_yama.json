@@ -1,0 +1,29 @@
+{
+ "at": "2026-10-15T14:11:58.832Z",
+ "rounds": 12,
+ "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+ "size": [
+  703,
+  1529
+ ],
+ "timer": true,
+ "海辺 描き込む": {
+  "ima": 3.096,
+  "an": 3.069,
+  "ratio": 0.992,
+  "rmin": 0.991,
+  "rmax": 0.997,
+  "rounds": 12
+ },
+ "山あい 描き込む": {
+  "ima": 6.285,
+  "an": 6.978,
+  "ratio": 1.11,
+  "rmin": 1.109,
+  "rmax": 1.792,
+  "rounds": 12
+ },
+ "errs": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

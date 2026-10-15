@@ -1,0 +1,61 @@
+{
+ "at": "2026-10-15T14:10:57.853Z",
+ "rounds": 10,
+ "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+ "size": [
+  703,
+  1529
+ ],
+ "timer": true,
+ "雨の窓 案1": {
+  "ima": 1.16,
+  "an": 1.811,
+  "ratio": 1.567,
+  "rmin": 1.514,
+  "rmax": 1.614,
+  "rounds": 10
+ },
+ "雨の窓 案2": {
+  "ima": 1.159,
+  "an": 2.053,
+  "ratio": 1.777,
+  "rmin": 1.756,
+  "rmax": 1.809,
+  "rounds": 10
+ },
+ "雨の窓 案1（ぼかしを1回作る形）": {
+  "ima": 1.159,
+  "an": 0.946,
+  "ratio": 0.816,
+  "rmin": 0.801,
+  "rmax": 0.832,
+  "rounds": 10
+ },
+ "雨の窓 案2（ぼかしを1回作る形）": {
+  "ima": 1.159,
+  "an": 1.214,
+  "ratio": 1.041,
+  "rmin": 0.699,
+  "rmax": 1.051,
+  "rounds": 10
+ },
+ "海辺 描き込む": {
+  "ima": 3.096,
+  "an": 3.919,
+  "ratio": 1.266,
+  "rmin": 1.265,
+  "rmax": 1.969,
+  "rounds": 10
+ },
+ "山あい 描き込む": {
+  "ima": 6.285,
+  "an": 7.89,
+  "ratio": 1.255,
+  "rmin": 0.79,
+  "rmax": 1.958,
+  "rounds": 10
+ },
+ "errs": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}
