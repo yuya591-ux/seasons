@@ -5,6 +5,7 @@
 import { getShader } from '../shaders/index.js'
 import { qualityPlan, normQuality } from '../data/quality.js'
 import { hexToRgb, mixRgb } from '../util/color.js'
+import { makeBlurredCanvas } from './bgBlur.js'
 
 const BASE = import.meta.env.BASE_URL || '/'
 
@@ -149,19 +150,24 @@ export function createRenderer(canvas) {
   let panoDepthTex = null
   let panoDepthReady = 0
   let panoKey = null
+  // 画（Image か canvas）を貼ったテクスチャを作る
+  function uploadTexture(src) {
+    const tex = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, tex)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false) // baseV=0 を画像上端に合わせる
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, src)
+    // NPOT のため CLAMP・mipmapなし（横ループはシェーダー側で fract 処理）
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    return tex
+  }
   function loadTexture(url, onReady) {
     const img = new Image()
     let tex = null
     img.onload = () => {
-      tex = gl.createTexture()
-      gl.bindTexture(gl.TEXTURE_2D, tex)
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false) // baseV=0 を画像上端に合わせる
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img)
-      // NPOT のため CLAMP・mipmapなし（横ループはシェーダー側で fract 処理）
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+      tex = uploadTexture(img)
       onReady(tex, img)
     }
     img.onerror = () => onReady(null)
@@ -201,12 +207,15 @@ export function createRenderer(canvas) {
   let bgKey = null
   let bgTexKey = null // 今貼っている背景の画が、どの情景の鍵で読んだものか（検証用・S53）
   let bgAspect = 1 // 背景の画の縦横比（横/縦）。シェーダーが画面を覆うように切り抜くのに使う（D6）
+  let bgBlurTex = null // 背景の画を読み込みの時に1回ぼかした画（雨の窓の結露したガラス越しの景色・便11）。雨の窓の情景だけ作る
   function loadBg(s) {
     const key = s && s.bg ? s.bg : null
     if (key === bgKey) return
     bgKey = key
     if (bgTex) gl.deleteTexture(bgTex) // 旧テクスチャを解放（GPUメモリの累積を防ぐ）
+    if (bgBlurTex) gl.deleteTexture(bgBlurTex)
     bgTex = null
+    bgBlurTex = null
     bgTexKey = null
     bgReady = 0
     if (!key) return
@@ -216,6 +225,7 @@ export function createRenderer(canvas) {
       bgTex = tex
       bgTexKey = tex ? key : null
       if (img && img.naturalHeight) bgAspect = img.naturalWidth / img.naturalHeight
+      if (tex && img && (s.render || 'rainGlass') === 'rainGlass') { const cv = makeBlurredCanvas(img); if (cv) bgBlurTex = uploadTexture(cv) }
       bgReady = tex ? 1 : 0
     })
   }
@@ -310,6 +320,7 @@ export function createRenderer(canvas) {
       uBg: gl.getUniformLocation(program, 'uBg'),
       uHasBg: gl.getUniformLocation(program, 'uHasBg'),
       uBgAspect: gl.getUniformLocation(program, 'uBgAspect'),
+      uBgBlur: gl.getUniformLocation(program, 'uBgBlur'),
       uDepth: gl.getUniformLocation(program, 'uDepth'),
       uHasDepth: gl.getUniformLocation(program, 'uHasDepth'),
       uIntensity: gl.getUniformLocation(program, 'uIntensity'),
@@ -484,6 +495,12 @@ export function createRenderer(canvas) {
       gl.uniform1f(loc.uHasBg, bgReady)
       if (loc.uBgAspect) gl.uniform1f(loc.uBgAspect, bgAspect)
     }
+    // 背景の画のぼけた写し（あれば）をテクスチャユニット3に。まだ無い時は元の画を読む
+    if (loc.uBgBlur) {
+      gl.activeTexture(gl.TEXTURE3)
+      gl.bindTexture(gl.TEXTURE_2D, bgBlurTex || bgTex)
+      gl.uniform1i(loc.uBgBlur, 3)
+    }
     gl.uniform1f(loc.uBright, settings.brightness)
     if (scene) {
       const c = currentColors(seconds)
@@ -553,6 +570,7 @@ export function createRenderer(canvas) {
       panoDepthReady = 0
       panoKey = null
       bgTex = null
+      bgBlurTex = null
       bgReady = 0
       bgKey = null
       fbo = null

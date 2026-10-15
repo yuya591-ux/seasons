@@ -78,9 +78,39 @@ const FRAGMENT_BODY = /* glsl */ `
     vec3 mc = mcol * mix(1.12, 0.70, belowTop) * mix(0.82, 1.12, shade);
     // 森のテクスチャ（近い山ほど）＋流れる雲の影が斜面を渡る。明暗＋緑の濃淡の二周波で、
     // なめらかなグラデの斜面に針葉樹の塊の手触りを与える（のっぺりした緑の面を脱す）。
+
+  #if WIN_DETAIL == 0
     if (tex > 0.01) {
       float f1 = fbm(vec2(x * 26.0 + seed, p.y * 18.0)) - 0.5;
-      float f2 = fbm(vec2(x * 58.0 + seed, p.y * 42.0)) - 0.5; // 細かな木立の粒
+  #else
+    float reliefH = 0.5;
+    if (tex > 0.45) {
+      // 山肌の起伏: 稜線から谷へ下る尾根と沢（横に細かく・縦に長い雑音の高さ）に、左上の朝日で陰を付ける
+      float dX = 0.010;
+      mat2 reliefRot = mat2(0.8, 0.6, -0.6, 0.8); // 雑音を斜めに回して読む（升目を陰に出さない）
+      float hC = fbm(reliefRot * vec2(x * 7.0 + seed, p.y * 9.0 + seed)); reliefH = hC;
+      float hR = fbm(reliefRot * vec2((x + dX) * 7.0 + seed, p.y * 9.0 + seed));
+      vec3 nn = normalize(vec3((hC - hR), 0.35 * dX, dX * 2.2)); // 朝日は左＝横の傾きだけで陰を付ける
+      float relief = clamp(dot(nn, normalize(vec3(-0.6, 0.5, 0.65))), 0.0, 1.0);
+      mc *= mix(1.0, mix(0.80, 1.14, relief), tex * smoothstep(0.3, 0.6, tex));
+      // 木立の点描（樹冠の丸い粒。上が明るく下が陰る）
+      vec2 tc = vec2(x * 70.0 + floor(p.y * 58.0) * 0.5, p.y * 58.0); // 段ごとに半分ずらす（四角い並びにしない）
+      vec2 ti = floor(tc);
+      vec2 tf = fract(tc) - 0.5 - (vec2(h21(ti + seed), h21(ti + seed + 3.3)) - 0.5) * 0.7;
+      float crown = smoothstep(0.42, 0.10, length(tf)) * step(0.25, h21(ti + seed + 7.7));
+      mc *= mix(1.0, mix(0.93, 1.0 + 0.10 * smoothstep(-0.1, 0.4, tf.y), crown), tex * 0.8 * smoothstep(0.4, 0.8, tex));
+    }
+    if (tex > 0.01) {
+      float f1 = (tex > 0.45 ? reliefH : fbm(vec2(x * 26.0 + seed, p.y * 18.0))) - 0.5; // 近い層は起伏の雑音を使い回す
+  #endif
+
+
+  #if WIN_DETAIL == 0
+      float f2 = fbm(vec2(x * 58.0 + seed, p.y * 42.0)) - 0.5;
+  #else
+      float f2 = tex > 0.45 ? 0.0 : fbm(vec2(x * 58.0 + seed, p.y * 42.0)) - 0.5; // 近い層の細かな粒は木立の点描が受け持つ
+  #endif
+ // 細かな木立の粒
       mc *= 1.0 + (f1 * 0.20 + f2 * 0.11) * tex;
       mc = mix(mc, mc * vec3(0.85, 1.0, 0.80), max(0.0, -f1) * 0.45 * tex); // 谷筋の木陰は緑が深く沈む
       float cloudSh = smoothstep(0.42, 0.74, fbm(vec2(x * 0.55 + uTime * 0.02, 4.0))); // 大きな雲影
@@ -111,8 +141,16 @@ const FRAGMENT_BODY = /* glsl */ `
     vec2 vp = vec2(p.x, p.y - pitch + curve);
 
     // 朝の空
+
+  #if WIN_DETAIL == 0
     vec3 col = mix(uHorizon, uSkyMid, smoothstep(0.3, 0.66, vp.y));
     col = mix(col, uSkyTop, smoothstep(0.62, 1.0, vp.y));
+  #else
+    vec3 col = mix(uHorizon, uSkyMid, smoothstep(0.3, 0.55, vp.y));
+    col = mix(col, uSkyTop, smoothstep(0.50, 0.86, vp.y));
+    col = mix(col, uSkyTop * vec3(0.78, 0.86, 1.0), smoothstep(0.80, 1.05, vp.y)); // 天頂ほど深い青
+  #endif
+
     // 高層の朝雲（見回すと流れる＝空も動く）。明るい霞んだ空には白い雲は溶けて見えないので、
     // 朝陽側は暖色に輝き／影側はごく淡い青灰で「浮く雲の立体」を出し、平らな上空に朝の情感を足す。
     float mcl = fbm(vec2((ax + yaw * 0.55) * 1.05 + uTime * 0.005, vp.y * 2.0));
@@ -120,7 +158,15 @@ const FRAGMENT_BODY = /* glsl */ `
     float warmSide = smoothstep(0.5, -0.45, ax);                                // 左(朝陽側)ほど暖色
     vec3 cloudC = mix(mix(uSkyMid, vec3(0.74, 0.79, 0.86), 0.5), vec3(1.0, 0.95, 0.86), warmSide); // 影側=淡青灰, 陽側=暖クリーム
     cloudC = mix(cloudC, uSunGlow, warmSide * 0.4);
+
+  #if WIN_DETAIL == 0
     col = mix(col, cloudC, cloudM * 0.5);
+  #else
+    col = mix(col, cloudC, cloudM * 0.5);
+    // 高い空の薄い雲（前からある雲の雑音を使い回し、上の空ほどはっきり白く見せる）
+    col = mix(col, mix(vec3(0.97, 0.97, 0.96), uSkyMid, 0.2), smoothstep(0.50, 0.70, mcl) * smoothstep(0.62, 0.86, vp.y) * 0.5);
+  #endif
+
     // 朝陽側の地平がほんのり燃える（霞に溶ける朝の温度差＝平らな空に奥行きと朝の情感）
     float glowH = smoothstep(0.58, 0.34, vp.y) * smoothstep(0.14, 0.40, vp.y);
     col = mix(col, mix(uHorizon, uSunGlow, 0.55), glowH * smoothstep(0.7, -0.6, ax) * 0.42);
@@ -128,7 +174,13 @@ const FRAGMENT_BODY = /* glsl */ `
     vec2 sunC = vec2(-0.25 - yaw * 0.6, 0.72);
     float sunDist = distance(vec2(ax, vp.y), sunC);
     float sun = exp(-sunDist * 3.0);
+
+  #if WIN_DETAIL == 0
     col += uSunGlow * sun * 0.5;
+  #else
+    col += uSunGlow * sun * 0.28;
+  #endif
+
     col = mix(col, vec3(1.0, 0.97, 0.9), smoothstep(0.05, 0.04, sunDist) * 0.7);
     vec2 sd = vec2(ax, vp.y) - sunC;
     float rays = (0.5 + 0.5 * sin(atan(sd.y, sd.x) * 16.0 + uTime * 0.08)) * exp(-length(sd) * 1.3);
@@ -176,8 +228,11 @@ const QUALITY_DEFINES = {
   light: '#define OCTAVES 3\n',
 }
 
+// 便11（便10 #3=1）: 空を上ほど深い青にして薄い雲を足し、近い2つの山の層に尾根と沢の起伏の陰と木立の粒を付ける（V37）。0 で前の山あいに戻る
+const WIN_DETAIL = '#define WIN_DETAIL 1\n'
+
 export function buildFragment(quality) {
   const defines = QUALITY_DEFINES[quality] || QUALITY_DEFINES.standard
   const body = FRAGMENT_BODY.replace('void main()', GLASS_GLSL + '\n' + GRADE_GLSL + '\n' + BIRDS_GLSL + '\n' + FRAME_GLSL + '\n  void main()')
-  return defines + body
+  return defines + WIN_DETAIL + body
 }

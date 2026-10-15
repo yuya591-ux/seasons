@@ -623,6 +623,19 @@ export async function mountTown3d(parent, opts = {}) {
     return m
   }
   const toon = (hex) => snowify(new THREE.MeshToonMaterial({ color: hex, gradientMap: grad }))
+  // 便11（便10 #1=1）: 煙の粒＝白い球をやめ、縁のぼけた丸い板（いつも画面を向く）にする（V21）。板の幅は球の直径の 1.2倍（SMOKE_K）で見かけを合わせる。false で前の球に戻る
+  const SMOKE_SPRITES = true, SMOKE_K = 2.4
+  let smokeTex = null
+  const smokePuffTex = () => {
+    if (smokeTex) return smokeTex
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64
+    const x = cv.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32)
+    gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)')
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64)
+    smokeTex = new THREE.CanvasTexture(cv)
+    return smokeTex
+  }
+  const smokePuff = (color, opacity) => new THREE.Sprite(new THREE.SpriteMaterial({ map: smokePuffTex(), color, transparent: true, opacity, depthWrite: false, fog: true }))
   // 手描き調の輪郭線（反転ハル）。背面を黒で少し大きく描き、シルエットに線を出す。共有・軽量・霞で遠景は淡く。
   // OUTLINE=線の太さ（後から調整可）。fog:true で遠景の線も空気遠近で淡くなる。
   const OUTLINE = 1.022 // 線の太さ（背面ハルの拡大率。太いと箱の角で剥離して浮くため細めに。調整可）
@@ -4989,7 +5002,7 @@ export async function mountTown3d(parent, opts = {}) {
         for (const by of [4, 8, 12]) { const band = new THREE.Mesh(new THREE.CylinderGeometry(0.72 - by * 0.012, 0.86 - by * 0.012, 1.3, 12), toon(0xc24a33)); band.position.y = by; g.add(band) }
         const tip = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff5a4a, fog: true })); tip.position.y = 16.4; g.add(tip)
         const smokeMat = new THREE.MeshBasicMaterial({ color: 0xd8dde2, transparent: true, opacity: 0.16, depthWrite: false, fog: true })
-        for (let s = 0; s < 3; s++) { const pf = new THREE.Mesh(new THREE.SphereGeometry(1.0 + s * 0.5, 7, 6), smokeMat); pf.position.set(0.4 + s * 0.5, 17.5 + s * 1.8, 0.2); g.add(pf) } // たなびく煙（淡い）
+        for (let s = 0; s < 3; s++) { const pf = SMOKE_SPRITES ? smokePuff(0xd8dde2, 0.16) : new THREE.Mesh(new THREE.SphereGeometry(1.0 + s * 0.5, 7, 6), smokeMat); if (SMOKE_SPRITES) pf.scale.set((1.0 + s * 0.5) * SMOKE_K, (1.0 + s * 0.5) * SMOKE_K, 1); pf.position.set(0.4 + s * 0.5, 17.5 + s * 1.8, 0.2); g.add(pf) } // たなびく煙（淡い）
         colliders.push({ x: hx + c[0], z: hz + c[1], r: 1.1 })
       }
       // ガスタンク（球形・脚付き）
@@ -5676,6 +5689,32 @@ export async function mountTown3d(parent, opts = {}) {
   // 評価(美術-H2)で「七角錐の書き割り」と指摘→ 幅広く低い山を多数重ねて連続した不規則な尾根に、
   // 奥の層ほど空色へ強く青ませて大気遠近の奥行きを段階化する。
   const mtnLo = new THREE.Color(0x66765c), mtnBlue = new THREE.Color(0x94a4b2)
+  // 便11（便10 #1=1）: 六角錐の平らな面をやめ、細かく割った山を尾根と沢の起伏で押し引きし、尾根を明るく沢を深い緑にする（V18・V70）。
+  // 起伏は山の番号と頂点の位置から決める＝町の乱数 R() は使わない（町の配置は変わらない）。false で前の六角錐に戻る
+  const MTN_RIDGED = true
+  const mHash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s) }
+  const mNoise = (x, y) => { const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy, ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy)
+    const a = mHash(ix, iy), b = mHash(ix + 1, iy), c = mHash(ix, iy + 1), d = mHash(ix + 1, iy + 1); return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy }
+  const mRidged = (x, y) => { let s = 0, a = 0.5, f = 1; for (let i = 0; i < 4; i++) { s += a * (1 - Math.abs(mNoise(x * f, y * f) * 2 - 1)); f *= 2.1; a *= 0.5 } return s }
+  const ridgedMountainGeo = (rad, h, k) => {
+    const g = new THREE.ConeGeometry(rad, h, 48, 12)
+    const pos = g.attributes.position, col = new Float32Array(pos.count * 3)
+    const ox = k * 3.7, oz = k * 1.3
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
+      const t = (y + h / 2) / h // 0=裾 1=頂
+      const ang = Math.atan2(z, x)
+      const rg = mRidged(Math.cos(ang) * 2.2 + ox + t * 1.5, Math.sin(ang) * 2.2 + oz + t * 1.5) // 尾根と沢
+      const kR = 0.86 + 0.32 * rg
+      pos.setX(i, x * kR); pos.setZ(i, z * kR)
+      pos.setY(i, y + h * 0.10 * (rg - 0.5) * Math.sin(t * Math.PI))
+      const v = 0.80 + 0.32 * rg + (mNoise(x * 0.35 + ox, z * 0.35 + y * 0.2) - 0.5) * 0.16 // 尾根は明るく、沢は深い緑
+      col[i * 3] = v; col[i * 3 + 1] = v * 1.02; col[i * 3 + 2] = v * 0.98
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3))
+    g.computeVertexNormals()
+    return g
+  }
   for (let layer = 0; layer < 3; layer++) {
     const dist = 132 + layer * 52
     const baseY = -6 + layer * 5            // 基底を地中に沈め、上部の稜線だけ見せる（重なりが尾根になる）
@@ -5686,7 +5725,7 @@ export async function mountTown3d(parent, opts = {}) {
       const x = Math.sin(ang) * dist + (R() - 0.5) * 44
       const z = -Math.cos(ang) * dist - 22
       const rad = 56 + R() * 46, h = (20 + R() * 30) * (1 - layer * 0.12) // 幅広く低い＝なだらかな山・高さを散らす
-      const m = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 6), toon(col))
+      const m = MTN_RIDGED ? new THREE.Mesh(ridgedMountainGeo(rad, h, mtns.length), snowify(new THREE.MeshLambertMaterial({ color: col, vertexColors: true }))) : new THREE.Mesh(new THREE.ConeGeometry(rad, h, 6), toon(col))
       m.position.set(x, baseY, z); m.rotation.y = R() * 6
       scene.add(m); mtns.push(m)
     }
@@ -5766,7 +5805,7 @@ export async function mountTown3d(parent, opts = {}) {
     const smokeMat = new THREE.MeshBasicMaterial({ color: 0xe8e4dc, transparent: true, opacity: 0, depthWrite: false, fog: true })
     // 煙の源を作る共通関数。各源ごとに上昇高さ・なびき・広がり・濃さを持たせる。
     const mkSmoke = (mx, my, mz, n, params) => { const g = new THREE.Group(); g.position.set(mx, my, mz)
-      for (let s = 0; s < n; s++) { const pf = new THREE.Mesh(new THREE.SphereGeometry(1.0, 7, 6), smokeMat.clone()); pf.userData = { ph: s / n, spd: 0.8 + R() * 0.4 }; g.add(pf) }
+      for (let s = 0; s < n; s++) { const pf = SMOKE_SPRITES ? smokePuff(0xe8e4dc, 0) : new THREE.Mesh(new THREE.SphereGeometry(1.0, 7, 6), smokeMat.clone()); pf.userData = { ph: s / n, spd: 0.8 + R() * 0.4 }; g.add(pf) }
       g.userData = params; town.add(g); townSmoke.push(g) }
     // 銭湯（煉瓦の高い煙突＝遠くからの目印）
     const sx = -24, sz = -34, sgy = heightAt(sx, sz)
@@ -6245,6 +6284,76 @@ export async function mountTown3d(parent, opts = {}) {
       mat.customProgramCacheKey = () => 'cloudsea'
       return mat
     }
+    // 便11（便10 #1=1）: 雲海を、平たい多面体の玉の重なり（角ばった縁と丸いへこみ＝V23）から、1枚の面に位置から計算した雲の厚みと
+    // 3段のもこもこの起伏で陰を付ける形にする（谷は青い陰・切れ間は4か所のまま・遠くは空気に溶ける）。陰の傾きは隣の画素との差から取る
+    // （起伏の雑音を1画素1回で済ませる。1画素3回の形は高く飛ぶ眺めで 1.205倍だった・便10）。false で前の玉の重なりに戻る
+    const CLOUD_SEA_SHEET = true
+    const makeCloudSeaSheet = ({ seaR, gaps, seaLowC, seaHighC, seaSunDir, seaSunCol }) => {
+      const uni = {
+        uTime: seaUni.uTime, uLow: { value: new THREE.Color(seaLowC) }, uHigh: { value: new THREE.Color(seaHighC) },
+        uSun: { value: seaSunDir.clone() }, uSunCol: { value: seaSunCol.clone() }, uSeaR: { value: seaR },
+        uGaps: { value: gaps.map((g) => new THREE.Vector3(g.x, g.z, g.r)) }, uHaze: { value: baseFogCol.clone() },
+      }
+      const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, fog: false, side: THREE.DoubleSide })
+      mat.onBeforeCompile = (sh) => {
+        Object.assign(sh.uniforms, uni)
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW;')
+          .replace('#include <project_vertex>', '#include <project_vertex>\n  vW = (modelMatrix * vec4(transformed, 1.0)).xyz;')
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+          varying vec3 vW; uniform float uTime; uniform vec3 uLow; uniform vec3 uHigh; uniform vec3 uSun; uniform vec3 uSunCol; uniform float uSeaR; uniform vec3 uGaps[4]; uniform vec3 uHaze;
+          float csH(vec2 p) { p = fract(p * vec2(123.34, 345.45)); p += dot(p, p + 34.345); return fract(p.x * p.y); }
+          float csN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(csH(i), csH(i + vec2(1, 0)), f.x), mix(csH(i + vec2(0, 1)), csH(i + vec2(1, 1)), f.x), f.y); }
+          float csF3(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 3; i++) { s += a * csN(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p; a *= 0.5; } return s / 0.875 * 0.97; }
+          // 雲の厚み（0..1）。大きな塊がゆっくり流れ、谷も薄い雲でつながる
+          float csD(vec2 xz) {
+            vec2 w = vec2(uTime * 0.6, uTime * 0.25);
+            float big = csF3(xz * 0.006 + w * 0.004);
+            return 0.18 + 0.82 * smoothstep(0.22, 0.62, big);
+          }
+          float csGap(vec2 xz) {
+            float k = 1.0;
+            for (int i = 0; i < 4; i++) { float gd = length(xz - uGaps[i].xy); k *= smoothstep(uGaps[i].z * 0.7, uGaps[i].z * 1.3, gd); }
+            return k;
+          }
+          // 雲の頂の高さ（m）＝大きなもこもこの頭・中くらいの房・細かな粒の3段の丸い盛り上がり
+          float csB(vec2 p) { float v = csN(p) * 2.0 - 1.0; return sqrt(v * v + 0.004); } // 丸い頂と細い谷（積雲の房の形）
+          float csHt(vec2 xz, float d) {
+            vec2 w = vec2(uTime * 0.6, uTime * 0.25);
+            float h1 = sqrt(csB(xz * 0.012 + w * 0.004));
+            float h2 = sqrt(csB(mat2(1.6, 1.2, -1.2, 1.6) * xz * 0.034 + w * 0.01));
+            float h3 = csB(mat2(1.2, -1.6, 1.6, 1.2) * xz * 0.09 + w * 0.02);
+            return d * (18.0 * h1 + 7.0 * h2 + 2.0 * h3);
+          }`)
+          .replace('#include <color_fragment>', `#include <color_fragment>
+          {
+            vec2 xz = vW.xz;
+            float d = csD(xz);
+            float H = csHt(xz, d);
+            // 傾きは隣の画素との差から取る（起伏の雑音は1画素1回）
+            vec3 Pw = vec3(xz.x, H, xz.y);
+            vec3 n = normalize(cross(dFdx(Pw), dFdy(Pw)));
+            if (n.y < 0.0) n = -n;
+            float ndl = dot(n, normalize(uSun));
+            float lit = smoothstep(-0.2, 0.9, ndl);
+            float ao = smoothstep(3.0, 22.0, H);                           // 谷（薄い所・塊の間）は翳る
+            vec3 c = mix(uLow * vec3(0.58, 0.63, 0.80), uHigh * 1.05, clamp(lit * 0.85 + ao * 0.45 - 0.30, 0.0, 1.0)); // 谷は青い陰
+            c += uSunCol * pow(max(ndl, 0.0), 6.0) * 0.12;                 // 陽を受ける頂
+            c += uSunCol * (1.0 - smoothstep(0.05, 0.35, d)) * 0.10;       // 薄い縁は光が透ける
+            float far = length(vW.xz - cameraPosition.xz);
+            c = mix(c, uHaze, smoothstep(260.0, 520.0, far) * 0.55);        // 遠くは空気に溶ける
+            diffuseColor.rgb = c;
+            float a = csGap(xz);
+            a *= 1.0 - smoothstep(uSeaR * 0.80, uSeaR * 0.998, length(vW.xz));
+            a *= smoothstep(4.0, 30.0, length(vW - cameraPosition));
+            diffuseColor.a *= a;
+          }`)
+      }
+      mat.customProgramCacheKey = () => 'cloudsea-sheet'
+      seaMats.push(mat) // 高さで透明度を動かす（前の雲海の材と同じ）
+      const g = new THREE.PlaneGeometry(seaR * 2, seaR * 2, 1, 1); g.rotateX(-Math.PI / 2)
+      const m = new THREE.Mesh(g, mat); m.position.y = -2; m.frustumCulled = false
+      return m
+    }
     const seaMat = applySeaShader(new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, fog: false }))
     const discMat = applySeaShader(new THREE.MeshBasicMaterial({ color: seaLowC, transparent: true, opacity: 0, depthWrite: false, fog: false }))
     seaMats.push(seaMat, discMat)
@@ -6263,16 +6372,18 @@ export async function mountTown3d(parent, opts = {}) {
         if (gaps.some((gp) => Math.hypot(gx - gp.x, gz - gp.z) < gp.r)) continue // 雲の切れ間（地上が覗く穴）
         const jx = gx + (R() - 0.5) * step * 0.4, jz = gz + (R() - 0.5) * step * 0.4, baseY = (R() - 0.5) * 9
         // やわらかな雲海＝大きめに重ねた広く平たい底＋低くゆるい膨らみ。個々の綿玉でなく、うねる雲の海として連続させる。
+        // 便11: 1枚の雲の面（CLOUD_SEA_SHEET）の時は玉を作らない。町の乱数 R() は前と同じ順に同じ回数だけ回す（後に作る物の配置を変えない）
         const sB = (LIGHT ? 20 : 18) + R() * 10
         const hiJ = new THREE.Color(seaHighC).lerp(new THREE.Color(seaLowC), R() * 0.3).getHex() // 頂の明度を少し散らす＝のっぺり白を脱す（painterly）
-        const gb = new THREE.IcosahedronGeometry(sB, 1); gb.scale(1.18, 0.4, 1.18); gb.translate(jx, baseY, jz); cloudTint(gb, -16, 42, seaLowC, hiJ); seaGeos.push(gb) // 広く平たい底＝隣と重なって連続面に
+        if (!CLOUD_SEA_SHEET) { const gb = new THREE.IcosahedronGeometry(sB, 1); gb.scale(1.18, 0.4, 1.18); gb.translate(jx, baseY, jz); cloudTint(gb, -16, 42, seaLowC, hiJ); seaGeos.push(gb) } // 広く平たい底＝隣と重なって連続面に
         const bumps = 1 + ((R() * 1.6) | 0)
-        for (let bI = 0; bI < bumps; bI++) { const sBu = sB * (0.6 + R() * 0.4), bx = jx + (R() - 0.5) * sB * 0.6, bz = jz + (R() - 0.5) * sB * 0.6, by = baseY + sB * 0.22 + R() * 3; const gg = new THREE.IcosahedronGeometry(sBu, 1); gg.scale(1.1, 0.54, 1.1); gg.translate(bx, by, bz); cloudTint(gg, -16, 42, seaLowC, hiJ); seaGeos.push(gg) } // 低くゆるい膨らみ
-        if (R() < 0.3) { const st = 5 + R() * 4, gt = new THREE.IcosahedronGeometry(st, 2); gt.scale(1.1, 0.64, 1.1); gt.translate(jx + (R() - 0.5) * sB * 0.5, baseY + sB * 0.38 + R() * 3, jz + (R() - 0.5) * sB * 0.5); cloudTint(gt, -16, 50, seaLowC, seaHighC); seaGeos.push(gt) } // 控えめな頂＝丸い輪郭(det2)＋頂をいちばん明るく＝雲のもくもくが空に映える(輪郭・評価)
+        for (let bI = 0; bI < bumps; bI++) { const sBu = sB * (0.6 + R() * 0.4), bx = jx + (R() - 0.5) * sB * 0.6, bz = jz + (R() - 0.5) * sB * 0.6, by = baseY + sB * 0.22 + R() * 3; if (!CLOUD_SEA_SHEET) { const gg = new THREE.IcosahedronGeometry(sBu, 1); gg.scale(1.1, 0.54, 1.1); gg.translate(bx, by, bz); cloudTint(gg, -16, 42, seaLowC, hiJ); seaGeos.push(gg) } } // 低くゆるい膨らみ
+        if (R() < 0.3) { const st = 5 + R() * 4; const tx = jx + (R() - 0.5) * sB * 0.5, ty = baseY + sB * 0.38 + R() * 3, tz = jz + (R() - 0.5) * sB * 0.5; if (!CLOUD_SEA_SHEET) { const gt = new THREE.IcosahedronGeometry(st, 2); gt.scale(1.1, 0.64, 1.1); gt.translate(tx, ty, tz); cloudTint(gt, -16, 50, seaLowC, seaHighC); seaGeos.push(gt) } } // 控えめな頂＝丸い輪郭(det2)＋頂をいちばん明るく＝雲のもくもくが空に映える(輪郭・評価)
       }
     }
-    const seaMerged = BufferGeometryUtils.mergeGeometries(seaGeos, false); seaGeos.forEach((g) => g.dispose())
-    if (seaMerged) cloudSeaG.add(new THREE.Mesh(seaMerged, seaMat))
+    if (seaGeos.length) { const seaMerged = BufferGeometryUtils.mergeGeometries(seaGeos, false); seaGeos.forEach((g) => g.dispose())
+      if (seaMerged) cloudSeaG.add(new THREE.Mesh(seaMerged, seaMat)) }
+    if (CLOUD_SEA_SHEET) cloudSeaG.add(makeCloudSeaSheet({ seaR, gaps, seaLowC, seaHighC, seaSunDir, seaSunCol }))
     scene.add(cloudSeaG); cloudSea = cloudSeaG
     // 天上界の光芒（天使の梯子）＝雲海に常時そっと差し込む光の柱。下界の街には無い神々しさ＝差別化③。
     // skyDrifters['godshaft']で高度フェード（cloudReveal）＆カメラ追従。控えめ（ギラつかせない）・加算ビルボード7枚＝軽量。
@@ -6464,6 +6575,7 @@ export async function mountTown3d(parent, opts = {}) {
     const gloryTex = new THREE.CanvasTexture(glCv)
     glory = new THREE.Mesh(new THREE.CircleGeometry(16, 44), new THREE.MeshBasicMaterial({ map: gloryTex, transparent: true, opacity: 0, depthWrite: false, fog: false }))
     glory.rotation.x = -Math.PI / 2; glory.visible = false; scene.add(glory)
+    glory.renderOrder = 1 // 便11: 雲海の1枚の面（描く順 0）より後に描く＝雲の上に映る（V24・面の下に隠さない）
 
     // やさしい幻想：雲海の上にかかる大きな虹のアーチ。晴れた日に現れ、くぐると淡い分光に包まれる（実際にくぐれる夢の虹）。
     { const grp = new THREE.Group(), mats = []
@@ -10550,7 +10662,7 @@ export async function mountTown3d(parent, opts = {}) {
         u.ph += dt * u.spd * 0.09; if (u.ph > 1) u.ph -= 1
         pf.position.set(u.ph * sp.drift + Math.sin(u.ph * 6.0 + u.spd) * 0.8, u.ph * sp.rise, Math.cos(u.ph * 5.0 + u.spd) * 0.6) // +Xへなびきながら昇る
         pf.material.opacity = Math.sin(u.ph * Math.PI) * sp.op
-        const sc = 0.7 + u.ph * sp.maxSc; pf.scale.set(sc, sc, sc) } // 昇るほど広がって薄れる
+        const sc = 0.7 + u.ph * sp.maxSc; if (pf.isSprite) pf.scale.set(sc * SMOKE_K, sc * SMOKE_K, 1); else pf.scale.set(sc, sc, sc) } // 昇るほど広がって薄れる（板の粒は球の見かけに合わせて SMOKE_K 倍）
     }
     // 「いつもと違う光景」定期イベントを進め、各タイムスケールで時々起こす
     updateFx(dt)
