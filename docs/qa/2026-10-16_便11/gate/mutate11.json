@@ -1,0 +1,98 @@
+{
+ "at": "2026-10-16T00:59:59.004Z",
+ "commit": "fff54e2",
+ "all": true,
+ "res": [
+  {
+   "name": "雲海の1枚の面を外す（CLOUD_SEA_SHEET=false）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-kensa.mjs K1",
+   "caught": true,
+   "failed": [
+    "K1 不合格 {\"pass\":false,\"sheet\":0,\"blobs\":1,\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "虹の輪の描く順を外す（renderOrder 1 の行）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-kensa.mjs K2",
+   "caught": true,
+   "failed": [
+    "K2 不合格 {\"pass\":false,\"glory\":0,\"sheetOrder\":0}"
+   ]
+  },
+  {
+   "name": "遠山の作り替えを外す（MTN_RIDGED=false）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-kensa.mjs K3",
+   "caught": true,
+   "failed": [
+    "K3 不合格 {\"pass\":false,\"cone48\":0,\"cone6big\":36}"
+   ]
+  },
+  {
+   "name": "煙の板を外す（SMOKE_SPRITES=false）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-kensa.mjs K4",
+   "caught": true,
+   "failed": [
+    "K4 不合格 {\"pass\":false,\"sprites\":0,\"smokeSpheres\":12}"
+   ]
+  },
+  {
+   "name": "レンズの水滴を外す（RAIN_LENS 0）",
+   "file": "src/shaders/rainGlass.js",
+   "check": "_bin11-kensa.mjs K5",
+   "caught": true,
+   "failed": [
+    "K5 不合格 {\"pass\":false,\"frags\":1,\"lens\":false,\"trail\":true,\"blurTex\":true,\"canvasTex\":[[290,508],[496,297]],\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "伝い落ちた跡を外す（RAIN_TRAIL 0）",
+   "file": "src/shaders/rainGlass.js",
+   "check": "_bin11-kensa.mjs K5",
+   "caught": true,
+   "failed": [
+    "K5 不合格 {\"pass\":false,\"frags\":1,\"lens\":true,\"trail\":false,\"blurTex\":true,\"canvasTex\":[[290,508],[496,297]],\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "ぼかした写しを外す（作らない）",
+   "file": "src/engine/renderer.js",
+   "check": "_bin11-kensa.mjs K5",
+   "caught": true,
+   "failed": [
+    "K5 不合格 {\"pass\":false,\"frags\":1,\"lens\":true,\"trail\":true,\"blurTex\":false,\"canvasTex\":[],\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "海辺の描き込みを外す（WIN_DETAIL 0）",
+   "file": "src/shaders/windowSea.js",
+   "check": "_bin11-kensa.mjs K6",
+   "caught": true,
+   "failed": [
+    "K6 不合格 {\"pass\":false,\"detail\":false,\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "山あいの描き込みを外す（WIN_DETAIL 0）",
+   "file": "src/shaders/windowMountains.js",
+   "check": "_bin11-kensa.mjs K7",
+   "caught": true,
+   "failed": [
+    "K7 不合格 {\"pass\":false,\"detail\":false,\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "雲海の乱数の消費を1つ減らす（頂の明度の散らし）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-rcheck.mjs kitaterao-window-3d",
+   "caught": true,
+   "failed": [
+    "kitaterao-window-3d 違う [[\"遠山の後\",0.9601294581618656],[\"煙の後\",0.17138631687242797],[\"雲海の後\",0.46987311385459535],[\"町の終わり\",0.15683727709190673]] [[\"遠山の後\",0.9601294581618656],[\"煙の後\",0.17138631687242797],[\"雲",
+    "R() の並び: 違う情景がある"
+   ]
+  }
+ ]
+}
