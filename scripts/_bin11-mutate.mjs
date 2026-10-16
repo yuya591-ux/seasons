@@ -35,7 +35,7 @@ for (const m of M) {
   await new Promise((r) => setTimeout(r, 2500)) // 開発サーバーが書き換えを拾うのを待つ
   const r = spawnSync('node', ['scripts/' + m.check[0], ...(m.check[1] ? [m.check[1]] : [])], { env: { ...process.env, QA_OUT: `${OUT}/mutate`, KENSA_NAME: 'kensa-mutate', KUMO_PORTS: '4966,4963,mutate' }, encoding: 'utf8', shell: process.platform === 'win32', maxBuffer: 64 * 1024 * 1024 })
   execSync(`git checkout HEAD -- "${m.file}"`)
-  const diff = execSync('git diff --stat').toString().trim()
+  const diff = execSync(`git diff --stat -- . ":(exclude)${OUT}"`).toString().trim() // 外し回し自身が書く記録（gate）は数えない
   if (diff) throw new Error('戻した後に差分が残った: ' + diff)
   const lines = ((r.stdout || '') + (r.stderr || '')).split('\n').filter((l) => /不合格|違う|quadY/.test(l)).map((l) => l.slice(0, 200))
   const caught = r.status !== 0
