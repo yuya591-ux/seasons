@@ -1,0 +1,68 @@
+{
+ "at": "2026-10-16T02:36:50.468Z",
+ "pass": true,
+ "near": {
+  "ima": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 0.991,
+   "quadY": 0.992,
+   "gradX": 1.428,
+   "gradY": 1.501,
+   "flickMean": 0.011,
+   "flickP99": 0.29,
+   "file": "docs/qa/2026-10-16_便11/gate/final/kumo-ima-near.png",
+   "errs": []
+  },
+  "ato": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 0.998,
+   "quadY": 0.991,
+   "gradX": 1.53,
+   "gradY": 1.719,
+   "flickMean": 0.005,
+   "flickP99": 0.15,
+   "file": "docs/qa/2026-10-16_便11/gate/final/kumo-ato-near.png",
+   "errs": []
+  }
+ },
+ "down": {
+  "ima": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 0.993,
+   "quadY": 1.023,
+   "gradX": 2.811,
+   "gradY": 2.744,
+   "flickMean": 0.001,
+   "flickP99": 0,
+   "file": "docs/qa/2026-10-16_便11/gate/final/kumo-ima-down.png",
+   "errs": []
+  },
+  "ato": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 0.993,
+   "quadY": 1.011,
+   "gradX": 2.642,
+   "gradY": 2.59,
+   "flickMean": 0,
+   "flickP99": 0,
+   "file": "docs/qa/2026-10-16_便11/gate/final/kumo-ato-down.png",
+   "errs": []
+  }
+ }
+}

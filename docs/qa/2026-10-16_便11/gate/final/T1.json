@@ -1,0 +1,71 @@
+{
+ "pass": true,
+ "autumnSp": {
+  "sugi": 54,
+  "maru": 98,
+  "kasa": 54
+ },
+ "autumnOk": true,
+ "sp": {
+  "sugi": 52,
+  "maru": 103,
+  "kasa": 45
+ },
+ "n": 200,
+ "lumStd": 0.1259,
+ "lumStdMaru": 0.1059,
+ "lumStdMaruBefore": 0.0188,
+ "springPink": {
+  "n": 151,
+  "sp": [
+   "kasa"
+  ]
+ },
+ "near": {
+  "crop": [
+   590,
+   330,
+   370,
+   230
+  ],
+  "pr": 1,
+  "detail": 2.153,
+  "nd": 2.383,
+  "bd": 4.907,
+  "detailBefore": 1.708,
+  "ndBefore": 1.852,
+  "bdBefore": 3.854,
+  "diffBefore": {
+   "mean": 7.54,
+   "over8": 0.292
+  }
+ },
+ "round": {
+  "crop": [
+   1090,
+   770,
+   200,
+   160
+  ],
+  "pr": 1,
+  "detail": 1.465,
+  "nd": 1.757,
+  "bd": 2.526,
+  "detailBefore": 1.439,
+  "ndBefore": 1.611,
+  "bdBefore": 3.184,
+  "diffBefore": {
+   "mean": 12.79,
+   "over8": 0.48
+  }
+ },
+ "spOk": true,
+ "lumOk": true,
+ "pinkOk": true,
+ "imgOk": true,
+ "errs": [],
+ "id": "T1",
+ "ms": 148448,
+ "at": "2026-10-16T02:10:30.099Z",
+ "commit": "05b6a4b"
+}

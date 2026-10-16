@@ -1,0 +1,56 @@
+{
+ "at": "2026-10-16T02:34:12.178Z",
+ "port": 4963,
+ "pass": true,
+ "K1": {
+  "pass": true,
+  "sheet": 1,
+  "blobs": 0,
+  "depth": 1,
+  "sheetWarm": true,
+  "errs": []
+ },
+ "K2": {
+  "pass": true,
+  "glory": 1,
+  "sheetOrder": 0
+ },
+ "K3": {
+  "pass": true,
+  "cone48": 36,
+  "cone6big": 0
+ },
+ "K4": {
+  "pass": true,
+  "sprites": 12,
+  "smokeSpheres": 0
+ },
+ "K5": {
+  "pass": true,
+  "frags": 1,
+  "lens": true,
+  "trail": true,
+  "blurTex": true,
+  "canvasTex": [
+   [
+    290,
+    508
+   ],
+   [
+    496,
+    297
+   ]
+  ],
+  "errs": []
+ },
+ "K6": {
+  "pass": true,
+  "detail": true,
+  "errs": []
+ },
+ "K7": {
+  "pass": true,
+  "detail": true,
+  "errs": []
+ }
+}

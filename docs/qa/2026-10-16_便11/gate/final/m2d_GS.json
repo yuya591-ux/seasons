@@ -1,0 +1,37 @@
+{
+ "kind": "GS",
+ "at": "2026-10-16T02:38:27.029Z",
+ "rounds": 20,
+ "pass": true,
+ "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+ "size": [
+  703,
+  1529
+ ],
+ "timer": true,
+ "雨の窓 同じコードどうし": {
+  "a": 0.29,
+  "b": 0.29,
+  "ratio": 1,
+  "rmin": 0.998,
+  "rmax": 1.004,
+  "rounds": 20
+ },
+ "海辺 同じコードどうし": {
+  "a": 0.567,
+  "b": 0.567,
+  "ratio": 1,
+  "rmin": 0.954,
+  "rmax": 1.005,
+  "rounds": 20
+ },
+ "山あい 同じコードどうし": {
+  "a": 1.136,
+  "b": 1.137,
+  "ratio": 1.009,
+  "rmin": 0.931,
+  "rmax": 1.073,
+  "rounds": 20
+ },
+ "errs": []
+}
