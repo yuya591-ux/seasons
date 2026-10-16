@@ -1,0 +1,6 @@
+公開と手元の precache-manifest が同じ: true
+公開の画面のプログラム: assets/index-D9peF473.js・assets/index-DJSiStur.css
+SHA-256 assets/index-D9peF473.js 公開・手元 一致 de4c14f941b03f904df7753add49298334dfa0ca5c88e6dcd20193b0cfd0166e
+SHA-256 assets/index-DJSiStur.css 公開・手元 一致 9bce51b2700d48d60ad82b6854095208068376a796ec40983317bb094eeea326
+SHA-256 assets/town3dViewer-BzPbw1ht.js 公開・手元 一致 0d9d4cbc4dca6377b1b8be2ad5ad87e13cf3eec5e3c84af50ea4820a8e9a45fc
+公開の部品に便11 の直しが入っている: 雲海の深さだけの面 true・RAIN_LENS 1 true・RAIN_TRAIL 1 true・WIN_DETAIL 1 true
