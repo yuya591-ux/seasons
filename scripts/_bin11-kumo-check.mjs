@@ -13,10 +13,13 @@ const UA_IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleW
 const IPHONE = { viewport: { width: 402, height: 874 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: UA_IPHONE }
 const VIEWS = {
   // 雲のすぐ上（雲の面の高さ 86 の 10m 上から斜めに見下ろす）と、真下寄りに見下ろす寄り
-  near: { pose: [0, 96, 40, 3.14159, -0.3], cam: { p: [0, 96, 40], l: [0, 86, 5] } },
-  down: { pose: [30, 94, -60, 3.14159, -0.8], cam: { p: [30, 94, -60], l: [30, 84, -75] } },
+  // 雲の切れ間（町の上 15,-25 など4か所）から離れた所に置く（初めは切れ間にかかり、透けた町が多く写った）
+  near: { pose: [-80, 96, 150, 3.14159, -0.3], cam: { p: [-80, 96, 150], l: [-80, 86, 115] } },
+  down: { pose: [-60, 92, 70, 3.14159, -0.8], cam: { p: [-60, 92, 70], l: [-60, 84, 58] } },
 }
 const FRAMES = 12
+// 比べる2つの開発サーバー（既定 前＝4966・後＝4963）。KUMO_PORTS=<前>,<後>,<名前> で替える（便11: 画素の差で傾きを取った 6b493d9 を 4969 で測った）
+const [P_A, P_B, TAG] = (process.env.KUMO_PORTS || '4966,4963,').split(',')
 const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu'] })
 async function measure(port, vname) {
   const v = VIEWS[vname]
@@ -55,8 +58,14 @@ async function measure(port, vname) {
       }
     }
     await new Promise((res) => setTimeout(res, 800))
+    // アプリの描画の繰り返しを止め、雲海の時刻（前と後のどちらの雲海の材も同じ uTime を使う）を 1/60 秒ずつ等しく進めて自分で描く
+    // （アプリの毎こまの刻みは不揃いで、流れる雲の模様の動きが明滅として数えられたため）
+    window.__town3dPaused(true); await new Promise((res) => setTimeout(res, 300))
+    let uT = null
+    g.scene.traverse((o) => { const m = o.material; if (!uT && o.isMesh && m && m.customProgramCacheKey && /^cloudsea/.test(m.customProgramCacheKey())) { const pu = renderer.properties.get(m).uniforms; if (pu && pu.uTime) uT = pu.uTime } })
+    const t0 = uT ? uT.value : 0
     want = N
-    for (let k = 0; k < 400 && want > 0; k++) await new Promise((res) => setTimeout(res, 25))
+    for (let k = 0; k < N; k++) { if (uT) uT.value = t0 + k / 60; composer.render() }
     composer.render = orig
     const { w, h } = frames[0]
     // 画の下 6割（雲の面）だけを見る。gl の行は下から上なので、行 0〜0.6h が画の下 6割
@@ -70,18 +79,18 @@ async function measure(port, vname) {
     for (let k = 1; k < frames.length - 1; k++) { const A = frames[k - 1].L, B = frames[k].L, C = frames[k + 1].L; for (let y = y0; y < y1; y += 2) for (let x = 0; x < w; x += 2) { const i = y * w + x; t2.push(Math.abs(B[i] - (A[i] + C[i]) / 2)) } }
     t2.sort((p, q) => p - q)
     const mean = t2.reduce((s, v) => s + v, 0) / t2.length
-    return { w, h, frames: frames.length, quadX: +(bdX / nBdX / (inX / nInX)).toFixed(3), quadY: +(bdY / nBdY / (inY / nInY)).toFixed(3), gradX: +(inX / nInX).toFixed(3), gradY: +(inY / nInY).toFixed(3), flickMean: +mean.toFixed(3), flickP99: +t2[Math.floor(t2.length * 0.99)].toFixed(2), png: frames[0].png }
+    return { timeHooked: !!uT, w, h, frames: frames.length, quadX: +(bdX / nBdX / (inX / nInX)).toFixed(3), quadY: +(bdY / nBdY / (inY / nInY)).toFixed(3), gradX: +(inX / nInX).toFixed(3), gradY: +(inY / nInY).toFixed(3), flickMean: +mean.toFixed(3), flickP99: +t2[Math.floor(t2.length * 0.99)].toFixed(2), png: frames[0].png }
   }, [v.cam, FRAMES])
   await ctx.close()
-  const file = `${OUT}/kumo-${port === 4966 ? 'ima' : 'ato'}-${vname}.png`
+  const file = `${OUT}/kumo-${TAG}${String(port) === P_A ? 'ima' : 'ato'}-${vname}.png`
   fs.writeFileSync(file, Buffer.from(r.png.split(',')[1], 'base64')); delete r.png
   return { pr, ...r, file, errs }
 }
 const res = {}
 for (const vname of Object.keys(VIEWS)) {
-  const ima = await measure(4966, vname), ato = await measure(4963, vname)
+  const ima = await measure(+P_A, vname), ato = await measure(+P_B, vname)
   res[vname] = { ima, ato }
   console.log(vname, '今', JSON.stringify({ ...ima, errs: ima.errs.length }), '\n  後', JSON.stringify({ ...ato, errs: ato.errs.length }))
 }
 await b.close()
-fs.writeFileSync(`${OUT}/kumo-check.json`, JSON.stringify({ at: new Date().toISOString(), ...res }, null, 1))
+fs.writeFileSync(`${OUT}/kumo-check${TAG ? '-' + TAG : ''}.json`, JSON.stringify({ at: new Date().toISOString(), ...res }, null, 1))

@@ -8,7 +8,7 @@ const kind = process.argv[2] || 'GS'
 const rounds = +(process.argv[3] || 10)
 const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu', '--enable-webgl-draft-extensions'] })
 const p = await (await b.newContext({ viewport: { width: 800, height: 800 } })).newPage()
-const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 300)) })
+const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text().slice(0, 300)) }) // 部品の読み込みの 404（GPU の旗を付けた時だけ出る・絵の計算のエラーではない）は数えない
 await p.goto('http://localhost:4963/seasons/scripts/_bin11-m2d.html', { waitUntil: 'load', timeout: 120000 })
 await p.waitForFunction(() => window.__ready, null, { timeout: 60000 })
 const JOBS = {

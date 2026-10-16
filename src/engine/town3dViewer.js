@@ -6303,12 +6303,22 @@ export async function mountTown3d(parent, opts = {}) {
           varying vec3 vW; uniform float uTime; uniform vec3 uLow; uniform vec3 uHigh; uniform vec3 uSun; uniform vec3 uSunCol; uniform float uSeaR; uniform vec3 uGaps[4]; uniform vec3 uHaze;
           float csH(vec2 p) { p = fract(p * vec2(123.34, 345.45)); p += dot(p, p + 34.345); return fract(p.x * p.y); }
           float csN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(csH(i), csH(i + vec2(1, 0)), f.x), mix(csH(i + vec2(0, 1)), csH(i + vec2(1, 1)), f.x), f.y); }
-          float csF3(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 3; i++) { s += a * csN(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p; a *= 0.5; } return s / 0.875 * 0.97; }
-          // 雲の厚み（0..1）。大きな塊がゆっくり流れ、谷も薄い雲でつながる
-          float csD(vec2 xz) {
+          // 値の雑音と、その傾き（同じ4つの読みから式で出す）。x=値・yz=傾き
+          vec3 csNd(vec2 p) {
+            vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f), du = 6.0 * f * (1.0 - f);
+            float a = csH(i), b = csH(i + vec2(1, 0)), c = csH(i + vec2(0, 1)), e = csH(i + vec2(1, 1));
+            float k1 = b - a, k2 = c - a, k4 = a - b - c + e;
+            return vec3(a + k1 * u.x + k2 * u.y + k4 * u.x * u.y, du * vec2(k1 + k4 * u.y, k2 + k4 * u.x));
+          }
+          // 雲の厚み（0..1）。大きな塊がゆっくり流れ、谷も薄い雲でつながる。yz＝場所（xz）についての傾き
+          vec3 csD(vec2 xz) {
             vec2 w = vec2(uTime * 0.6, uTime * 0.25);
-            float big = csF3(xz * 0.006 + w * 0.004);
-            return 0.18 + 0.82 * smoothstep(0.22, 0.62, big);
+            vec2 p = xz * 0.006 + w * 0.004; mat2 J = mat2(0.006); mat2 M = mat2(1.6, 1.2, -1.2, 1.6);
+            float s = 0.0, a = 0.5; vec2 g = vec2(0.0);
+            for (int i = 0; i < 3; i++) { vec3 n = csNd(p); s += a * n.x; g += a * (n.yz * J); p = M * p; J = M * J; a *= 0.5; }
+            float big = s / 0.875 * 0.97; g *= 0.97 / 0.875;
+            float t = clamp((big - 0.22) / 0.4, 0.0, 1.0);
+            return vec3(0.18 + 0.82 * t * t * (3.0 - 2.0 * t), 0.82 * 6.0 * t * (1.0 - t) / 0.4 * g);
           }
           float csGap(vec2 xz) {
             float k = 1.0;
@@ -6316,23 +6326,32 @@ export async function mountTown3d(parent, opts = {}) {
             return k;
           }
           // 雲の頂の高さ（m）＝大きなもこもこの頭・中くらいの房・細かな粒の3段の丸い盛り上がり
-          float csB(vec2 p) { float v = csN(p) * 2.0 - 1.0; return sqrt(v * v + 0.004); } // 丸い頂と細い谷（積雲の房の形）
-          float csHt(vec2 xz, float d) {
+          // 丸い頂と細い谷（積雲の房の形）。x=値・yz=雑音の場所 p についての傾き
+          vec3 csBd(vec2 p) { vec3 n = csNd(p); float v = n.x * 2.0 - 1.0; float B = sqrt(v * v + 0.004); return vec3(B, (v / B) * 2.0 * n.yz); }
+          // 雲の頂の高さ（m）と、その傾き。大きなもこもこの頭・中くらいの房・細かな粒の3段の丸い盛り上がり
+          // 便11（外の目の確かめ・2026-10-16）: 傾きは「隣の画素との差（dFdx・dFdy）」で取らず、雑音の式から出す。GPU は隣の画素との差を
+          // 2×2 の組ごとに1つの値で出すので、斜めに遠くまで見える所で組ごとに陰が段になり、縦の 2×2 の塊が出た（iPhone の描く細かさで測った）。
+          // fw＝1画素が受け持つ広さ（m）。画素より細かくなった段の起伏は、その段の平均の高さへ寄せる（遠くの細かな粒のちらつきを抑える）
+          vec3 csHt(vec2 xz, vec3 D, float fw) {
             vec2 w = vec2(uTime * 0.6, uTime * 0.25);
-            float h1 = sqrt(csB(xz * 0.012 + w * 0.004));
-            float h2 = sqrt(csB(mat2(1.6, 1.2, -1.2, 1.6) * xz * 0.034 + w * 0.01));
-            float h3 = csB(mat2(1.2, -1.6, 1.6, 1.2) * xz * 0.09 + w * 0.02);
-            return d * (18.0 * h1 + 7.0 * h2 + 2.0 * h3);
+            float k1 = 1.0 - smoothstep(0.12, 0.35, fw * 0.012), k2 = 1.0 - smoothstep(0.12, 0.35, fw * 0.068), k3 = 1.0 - smoothstep(0.12, 0.35, fw * 0.18);
+            mat2 M2 = mat2(1.6, 1.2, -1.2, 1.6), M3 = mat2(1.2, -1.6, 1.6, 1.2);
+            float h1 = 0.67, h2 = 0.67, h3 = 0.5; vec2 g1 = vec2(0.0), g2 = vec2(0.0), g3 = vec2(0.0);
+            if (k1 > 0.0) { vec3 b = csBd(xz * 0.012 + w * 0.004); float s = sqrt(b.x); h1 = mix(0.67, s, k1); g1 = k1 * 0.5 / s * b.yz * 0.012; }
+            if (k2 > 0.0) { vec3 b = csBd(M2 * xz * 0.034 + w * 0.01); float s = sqrt(b.x); h2 = mix(0.67, s, k2); g2 = k2 * 0.5 / s * (b.yz * M2) * 0.034; }
+            if (k3 > 0.0) { vec3 b = csBd(M3 * xz * 0.09 + w * 0.02); h3 = mix(0.5, b.x, k3); g3 = k3 * (b.yz * M3) * 0.09; }
+            float S = 18.0 * h1 + 7.0 * h2 + 2.0 * h3;
+            return vec3(D.x * S, D.yz * S + D.x * (18.0 * g1 + 7.0 * g2 + 2.0 * g3));
           }`)
           .replace('#include <color_fragment>', `#include <color_fragment>
           {
             vec2 xz = vW.xz;
-            float d = csD(xz);
-            float H = csHt(xz, d);
-            // 傾きは隣の画素との差から取る（起伏の雑音は1画素1回）
-            vec3 Pw = vec3(xz.x, H, xz.y);
-            vec3 n = normalize(cross(dFdx(Pw), dFdy(Pw)));
-            if (n.y < 0.0) n = -n;
+            vec3 D = csD(xz);
+            float d = D.x;
+            vec3 Hg = csHt(xz, D, max(length(dFdx(xz)), length(dFdy(xz))));
+            float H = Hg.x;
+            // 傾きは雑音の式から出した高さの傾き（起伏の雑音は1画素1回）
+            vec3 n = normalize(vec3(-Hg.y, 1.0, -Hg.z));
             float ndl = dot(n, normalize(uSun));
             float lit = smoothstep(-0.2, 0.9, ndl);
             float ao = smoothstep(3.0, 22.0, H);                           // 谷（薄い所・塊の間）は翳る
