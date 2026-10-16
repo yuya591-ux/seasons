@@ -1,6 +1,6 @@
 {
- "at": "2026-10-16T00:59:59.004Z",
- "commit": "fff54e2",
+ "at": "2026-10-16T01:41:45.167Z",
+ "commit": "67fa1ab",
  "all": true,
  "res": [
   {
@@ -9,7 +9,7 @@
    "check": "_bin11-kensa.mjs K1",
    "caught": true,
    "failed": [
-    "K1 不合格 {\"pass\":false,\"sheet\":0,\"blobs\":1,\"errs\":[]}"
+    "K1 不合格 {\"pass\":false,\"sheet\":0,\"blobs\":1,\"depth\":0,\"sheetWarm\":false,\"errs\":[]}"
    ]
   },
   {
@@ -82,6 +82,37 @@
    "caught": true,
    "failed": [
     "K7 不合格 {\"pass\":false,\"detail\":false,\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "深さだけの面を外す",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-kensa.mjs K1",
+   "caught": true,
+   "failed": [
+    "K1 不合格 {\"pass\":false,\"sheet\":1,\"blobs\":0,\"depth\":0,\"sheetWarm\":true,\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "夜と夕の琥珀色を外す",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-kensa.mjs K1",
+   "caught": true,
+   "failed": [
+    "K1 不合格 {\"pass\":false,\"sheet\":1,\"blobs\":0,\"depth\":1,\"sheetWarm\":false,\"errs\":[]}"
+   ]
+  },
+  {
+   "name": "雲の陰の傾きを隣の画素との差に戻す",
+   "file": "src/engine/town3dViewer.js",
+   "check": "_bin11-kumo-check.mjs ",
+   "caught": true,
+   "failed": [
+    "near 今 {\"pr\":1.2,\"timeHooked\":true,\"w\":482,\"h\":1048,\"frames\":12,\"quadX\":0.992,\"quadY\":0.993,\"gradX\":1.428,\"gradY\":1.501,\"flickMean\":0.011,\"flickP99\":0.29,\"file\":\"docs/qa/2026-10-16_便11/gate/mutate/kum",
+    "  後 {\"pr\":1.2,\"timeHooked\":true,\"w\":482,\"h\":1048,\"frames\":12,\"quadX\":1.035,\"quadY\":1.164,\"gradX\":1.513,\"gradY\":1.615,\"flickMean\":0.007,\"flickP99\":0.29,\"file\":\"docs/qa/2026-10-16_便11/gate/mutate/kumo-m",
+    "down 今 {\"pr\":1.2,\"timeHooked\":true,\"w\":482,\"h\":1048,\"frames\":12,\"quadX\":0.993,\"quadY\":1.023,\"gradX\":2.811,\"gradY\":2.744,\"flickMean\":0.001,\"flickP99\":0,\"file\":\"docs/qa/2026-10-16_便11/gate/mutate/kumo-m",
+    "  後 {\"pr\":1.2,\"timeHooked\":true,\"w\":482,\"h\":1048,\"frames\":12,\"quadX\":0.992,\"quadY\":1.009,\"gradX\":2.644,\"gradY\":2.596,\"flickMean\":0,\"flickP99\":0,\"file\":\"docs/qa/2026-10-16_便11/gate/mutate/kumo-mutateat",
+    "雲の 2×2 の塊: 不合格"
    ]
   },
   {

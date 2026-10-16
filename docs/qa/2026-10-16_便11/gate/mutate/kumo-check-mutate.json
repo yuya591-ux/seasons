@@ -1,0 +1,68 @@
+{
+ "at": "2026-10-16T01:41:09.779Z",
+ "pass": false,
+ "near": {
+  "ima": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 0.992,
+   "quadY": 0.993,
+   "gradX": 1.428,
+   "gradY": 1.501,
+   "flickMean": 0.011,
+   "flickP99": 0.29,
+   "file": "docs/qa/2026-10-16_便11/gate/mutate/kumo-mutateima-near.png",
+   "errs": []
+  },
+  "ato": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 1.035,
+   "quadY": 1.164,
+   "gradX": 1.513,
+   "gradY": 1.615,
+   "flickMean": 0.007,
+   "flickP99": 0.29,
+   "file": "docs/qa/2026-10-16_便11/gate/mutate/kumo-mutateato-near.png",
+   "errs": []
+  }
+ },
+ "down": {
+  "ima": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 0.993,
+   "quadY": 1.023,
+   "gradX": 2.811,
+   "gradY": 2.744,
+   "flickMean": 0.001,
+   "flickP99": 0,
+   "file": "docs/qa/2026-10-16_便11/gate/mutate/kumo-mutateima-down.png",
+   "errs": []
+  },
+  "ato": {
+   "pr": 1.2,
+   "timeHooked": true,
+   "w": 482,
+   "h": 1048,
+   "frames": 12,
+   "quadX": 0.992,
+   "quadY": 1.009,
+   "gradX": 2.644,
+   "gradY": 2.596,
+   "flickMean": 0,
+   "flickP99": 0,
+   "file": "docs/qa/2026-10-16_便11/gate/mutate/kumo-mutateato-down.png",
+   "errs": []
+  }
+ }
+}
