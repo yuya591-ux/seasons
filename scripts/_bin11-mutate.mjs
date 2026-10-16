@@ -22,6 +22,9 @@ const M = [
   { name: 'ぼかした写しを外す（作らない）', file: 'src/engine/renderer.js', a: "const cv = makeBlurredCanvas(img); if (cv) bgBlurTex = uploadTexture(cv)", b: 'const cv = null', check: ['_bin11-kensa.mjs', 'K5'] },
   { name: '海辺の描き込みを外す（WIN_DETAIL 0）', file: 'src/shaders/windowSea.js', a: "const WIN_DETAIL = '#define WIN_DETAIL 1", b: "const WIN_DETAIL = '#define WIN_DETAIL 0", check: ['_bin11-kensa.mjs', 'K6'] },
   { name: '山あいの描き込みを外す（WIN_DETAIL 0）', file: 'src/shaders/windowMountains.js', a: "const WIN_DETAIL = '#define WIN_DETAIL 1", b: "const WIN_DETAIL = '#define WIN_DETAIL 0", check: ['_bin11-kensa.mjs', 'K7'] },
+  { name: '深さだけの面を外す', file: 'src/engine/town3dViewer.js', a: '      return [dm, m]', b: '      return [m]', check: ['_bin11-kensa.mjs', 'K1'] },
+  { name: '夜と夕の琥珀色を外す', file: 'src/engine/town3dViewer.js', a: 'c = mix(c, uWarm, uWarmAmt * (0.45 + 0.55 * (1.0 - clamp(lum, 0.0, 1.0))));', b: '', check: ['_bin11-kensa.mjs', 'K1'] },
+  { name: '雲の陰の傾きを隣の画素との差に戻す', file: 'src/engine/town3dViewer.js', a: '            vec3 n = normalize(vec3(-Hg.y, 1.0, -Hg.z));', b: '            vec3 Pw = vec3(xz.x, H, xz.y); vec3 n = normalize(cross(dFdx(Pw), dFdy(Pw))); if (n.y < 0.0) n = -n;', check: ['_bin11-kumo-check.mjs', ''] },
   { name: '雲海の乱数の消費を1つ減らす（頂の明度の散らし）', file: 'src/engine/town3dViewer.js', a: '.lerp(new THREE.Color(seaLowC), R() * 0.3).getHex()', b: '.lerp(new THREE.Color(seaLowC), 0.15).getHex()', check: ['_bin11-rcheck.mjs', 'kitaterao-window-3d'] },
 ]
 const res = []
@@ -30,11 +33,11 @@ for (const m of M) {
   if (src.split(m.a).length !== 2) throw new Error('外す所が1つに決まらない: ' + m.name)
   fs.writeFileSync(m.file, src.replace(m.a, () => m.b))
   await new Promise((r) => setTimeout(r, 2500)) // 開発サーバーが書き換えを拾うのを待つ
-  const r = spawnSync('node', ['scripts/' + m.check[0], m.check[1]], { env: { ...process.env, QA_OUT: `${OUT}/mutate`, KENSA_NAME: 'kensa-mutate' }, encoding: 'utf8', shell: process.platform === 'win32', maxBuffer: 64 * 1024 * 1024 })
+  const r = spawnSync('node', ['scripts/' + m.check[0], ...(m.check[1] ? [m.check[1]] : [])], { env: { ...process.env, QA_OUT: `${OUT}/mutate`, KENSA_NAME: 'kensa-mutate', KUMO_PORTS: '4966,4963,mutate' }, encoding: 'utf8', shell: process.platform === 'win32', maxBuffer: 64 * 1024 * 1024 })
   execSync(`git checkout HEAD -- "${m.file}"`)
   const diff = execSync('git diff --stat').toString().trim()
   if (diff) throw new Error('戻した後に差分が残った: ' + diff)
-  const lines = ((r.stdout || '') + (r.stderr || '')).split('\n').filter((l) => /不合格|違う/.test(l)).map((l) => l.slice(0, 200))
+  const lines = ((r.stdout || '') + (r.stderr || '')).split('\n').filter((l) => /不合格|違う|quadY/.test(l)).map((l) => l.slice(0, 200))
   const caught = r.status !== 0
   res.push({ name: m.name, file: m.file, check: m.check.join(' '), caught, failed: lines })
   console.log(`${caught ? '落ちた' : '落ちなかった'} ${m.name} → ${m.check.join(' ')} ${lines[0] || ''}`)

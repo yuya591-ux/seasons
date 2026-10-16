@@ -1,6 +1,7 @@
 // 便11（2026-10-16・便10 #1=1 #2=2 #3=1 で作る便）の検査: 直しが1つずつ入っているかを、開発サーバー（既定 4963）の本物のページで見る。
 // 使い方: node scripts/_bin11-kensa.mjs [ID…|all]   出力: QA_OUT（既定 docs/qa/2026-10-16_便11/gate）/kensa.json
-//   K1 雲海: 雲海の入れ物に1枚の雲の面（材の鍵 cloudsea-sheet）があり、前の玉の重なり（頂点の色を持つ大きな形）が無い
+//   K1 雲海: 雲海の入れ物に1枚の雲の面（材の鍵 cloudsea-sheet）があり、前の玉の重なり（頂点の色を持つ大きな形）が無い。
+//      雲の面と同じ形の深さだけの面（cloudsea-sheet-depth・描く順 -1）があり、雲の面が夜と夕の琥珀色（uWarm）を持つ（便11 の外の目の見直しで足した）
 //   K2 虹の輪: 雲海の上の虹の輪の描く順が、雲の面より後（雲の面の下に隠れない＝V24）
 //   K3 遠山: 遠山が細かく割った山（周りの割り 48）で、前の六角錐（周りの割り 6）が残っていない
 //   K4 煙: 銭湯・夕餉・臨海の煙の粒が縁のぼけた板（Sprite）で、前の白い球が残っていない
@@ -44,10 +45,11 @@ async function townInfo() {
   const { ctx, p, errs } = await open('kitaterao-window-3d', 12000)
   const r = await p.evaluate(() => {
     const g = window.__shGet && window.__shGet(); if (!g) return { err: '撮影の口（__shGet）が無い' }
-    const out = { sheet: 0, sheetOrder: null, blobs: 0, glory: null, cone48: 0, cone6big: 0, sprites: 0, smokeSpheres: 0 }
+    const out = { sheet: 0, sheetWarm: false, depth: 0, sheetOrder: null, blobs: 0, glory: null, cone48: 0, cone6big: 0, sprites: 0, smokeSpheres: 0 }
     g.scene.traverse((o) => {
       const m = o.material, geo = o.geometry
-      if (o.isMesh && m && m.customProgramCacheKey && m.customProgramCacheKey() === 'cloudsea-sheet') { out.sheet++; out.sheetOrder = o.renderOrder }
+      if (o.isMesh && m && m.customProgramCacheKey && m.customProgramCacheKey() === 'cloudsea-sheet') { out.sheet++; out.sheetOrder = o.renderOrder; out.sheetWarm = String(m.onBeforeCompile).includes('c = mix(c, uWarm, uWarmAmt') }
+      if (o.isMesh && m && m.customProgramCacheKey && m.customProgramCacheKey() === 'cloudsea-sheet-depth' && o.renderOrder === -1 && m.depthWrite && !m.colorWrite) out.depth++
       if (o.isMesh && m && m.customProgramCacheKey && m.customProgramCacheKey() === 'cloudsea' && geo.attributes.color && geo.attributes.position.count > 1000) out.blobs++
       if (o.isMesh && geo && geo.type === 'CircleGeometry' && geo.parameters.radius === 16 && m.map) out.glory = o.renderOrder
       if (o.isMesh && geo && geo.type === 'ConeGeometry') { const q = geo.parameters; if (q.radialSegments === 48 && q.heightSegments === 12) out.cone48++; if (q.radialSegments === 6 && q.radius >= 56) out.cone6big++ }
@@ -60,7 +62,7 @@ async function townInfo() {
   town = { ...r, errs }
   return town
 }
-def('K1', async () => { const t = await townInfo(); return { pass: t.sheet === 1 && t.blobs === 0 && !t.errs.length, sheet: t.sheet, blobs: t.blobs, errs: t.errs } })
+def('K1', async () => { const t = await townInfo(); return { pass: t.sheet === 1 && t.blobs === 0 && t.depth === 1 && t.sheetWarm && !t.errs.length, sheet: t.sheet, blobs: t.blobs, depth: t.depth, sheetWarm: t.sheetWarm, errs: t.errs } })
 def('K2', async () => { const t = await townInfo(); return { pass: t.glory != null && t.sheetOrder != null && t.glory > t.sheetOrder, glory: t.glory, sheetOrder: t.sheetOrder } })
 def('K3', async () => { const t = await townInfo(); return { pass: t.cone48 >= 30 && t.cone6big === 0, cone48: t.cone48, cone6big: t.cone6big } })
 def('K4', async () => { const t = await townInfo(); return { pass: t.sprites >= 6 && t.smokeSpheres === 0, sprites: t.sprites, smokeSpheres: t.smokeSpheres } })

@@ -93,4 +93,8 @@ for (const vname of Object.keys(VIEWS)) {
   console.log(vname, '今', JSON.stringify({ ...ima, errs: ima.errs.length }), '\n  後', JSON.stringify({ ...ato, errs: ato.errs.length }))
 }
 await b.close()
-fs.writeFileSync(`${OUT}/kumo-check${TAG ? '-' + TAG : ''}.json`, JSON.stringify({ at: new Date().toISOString(), ...res }, null, 1))
+// 合否: 後の 2×2 の境目÷組の中が、どちらの眺めでも縦横とも 1.05 以下（塊を 25% 混ぜると 1.31〜1.36 になる物差し）
+const pass = Object.values(res).every((v) => v.ato.quadX <= 1.05 && v.ato.quadY <= 1.05 && !v.ato.errs.length)
+fs.writeFileSync(`${OUT}/kumo-check${TAG ? '-' + TAG : ''}.json`, JSON.stringify({ at: new Date().toISOString(), pass, ...res }, null, 1))
+console.log(`雲の 2×2 の塊: ${pass ? '合格' : '不合格'}`)
+process.exit(pass ? 0 : 1)

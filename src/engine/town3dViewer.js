@@ -6285,14 +6285,17 @@ export async function mountTown3d(parent, opts = {}) {
       return mat
     }
     // 便11（便10 #1=1）: 雲海を、平たい多面体の玉の重なり（角ばった縁と丸いへこみ＝V23）から、1枚の面に位置から計算した雲の厚みと
-    // 3段のもこもこの起伏で陰を付ける形にする（谷は青い陰・切れ間は4か所のまま・遠くは空気に溶ける）。陰の傾きは隣の画素との差から取る
+    // 3段のもこもこの起伏で陰を付ける形にする（谷は青い陰・切れ間は4か所のまま・遠くは空気に溶ける）。陰の傾きは雑音の式から出す（下の csHt）
     // （起伏の雑音を1画素1回で済ませる。1画素3回の形は高く飛ぶ眺めで 1.205倍だった・便10）。false で前の玉の重なりに戻る
+    // 夜と夕は、前の雲海と同じく谷ほど街明かりの琥珀色が灯る（uWarm）。雲の面は深さを書かないので、同じ形の「深さだけの面」を
+    // 半透明の物の中で最初に描き、雲の下にある入道雲や浮き島の下半分が雲の上に透けて重ならないようにする（便11 の外の目の見直しで見つけた）
     const CLOUD_SEA_SHEET = true
     const makeCloudSeaSheet = ({ seaR, gaps, seaLowC, seaHighC, seaSunDir, seaSunCol }) => {
       const uni = {
         uTime: seaUni.uTime, uLow: { value: new THREE.Color(seaLowC) }, uHigh: { value: new THREE.Color(seaHighC) },
         uSun: { value: seaSunDir.clone() }, uSunCol: { value: seaSunCol.clone() }, uSeaR: { value: seaR },
         uGaps: { value: gaps.map((g) => new THREE.Vector3(g.x, g.z, g.r)) }, uHaze: { value: baseFogCol.clone() },
+        uWarm: { value: seaWarm }, uWarmAmt: { value: seaWarmAmt },
       }
       const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, fog: false, side: THREE.DoubleSide })
       mat.onBeforeCompile = (sh) => {
@@ -6300,7 +6303,7 @@ export async function mountTown3d(parent, opts = {}) {
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW;')
           .replace('#include <project_vertex>', '#include <project_vertex>\n  vW = (modelMatrix * vec4(transformed, 1.0)).xyz;')
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-          varying vec3 vW; uniform float uTime; uniform vec3 uLow; uniform vec3 uHigh; uniform vec3 uSun; uniform vec3 uSunCol; uniform float uSeaR; uniform vec3 uGaps[4]; uniform vec3 uHaze;
+          varying vec3 vW; uniform float uTime; uniform vec3 uLow; uniform vec3 uHigh; uniform vec3 uSun; uniform vec3 uSunCol; uniform float uSeaR; uniform vec3 uGaps[4]; uniform vec3 uHaze; uniform vec3 uWarm; uniform float uWarmAmt;
           float csH(vec2 p) { p = fract(p * vec2(123.34, 345.45)); p += dot(p, p + 34.345); return fract(p.x * p.y); }
           float csN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(csH(i), csH(i + vec2(1, 0)), f.x), mix(csH(i + vec2(0, 1)), csH(i + vec2(1, 1)), f.x), f.y); }
           // 値の雑音と、その傾き（同じ4つの読みから式で出す）。x=値・yz=傾き
@@ -6325,7 +6328,6 @@ export async function mountTown3d(parent, opts = {}) {
             for (int i = 0; i < 4; i++) { float gd = length(xz - uGaps[i].xy); k *= smoothstep(uGaps[i].z * 0.7, uGaps[i].z * 1.3, gd); }
             return k;
           }
-          // 雲の頂の高さ（m）＝大きなもこもこの頭・中くらいの房・細かな粒の3段の丸い盛り上がり
           // 丸い頂と細い谷（積雲の房の形）。x=値・yz=雑音の場所 p についての傾き
           vec3 csBd(vec2 p) { vec3 n = csNd(p); float v = n.x * 2.0 - 1.0; float B = sqrt(v * v + 0.004); return vec3(B, (v / B) * 2.0 * n.yz); }
           // 雲の頂の高さ（m）と、その傾き。大きなもこもこの頭・中くらいの房・細かな粒の3段の丸い盛り上がり
@@ -6360,6 +6362,8 @@ export async function mountTown3d(parent, opts = {}) {
             c += uSunCol * (1.0 - smoothstep(0.05, 0.35, d)) * 0.10;       // 薄い縁は光が透ける
             float far = length(vW.xz - cameraPosition.xz);
             c = mix(c, uHaze, smoothstep(260.0, 520.0, far) * 0.55);        // 遠くは空気に溶ける
+            float lum = dot(c, vec3(0.299, 0.587, 0.114));
+            c = mix(c, uWarm, uWarmAmt * (0.45 + 0.55 * (1.0 - clamp(lum, 0.0, 1.0)))); // 谷ほど街明かりの琥珀色が灯る（前の雲海と同じ式）
             diffuseColor.rgb = c;
             float a = csGap(xz);
             a *= 1.0 - smoothstep(uSeaR * 0.80, uSeaR * 0.998, length(vW.xz));
@@ -6371,7 +6375,27 @@ export async function mountTown3d(parent, opts = {}) {
       seaMats.push(mat) // 高さで透明度を動かす（前の雲海の材と同じ）
       const g = new THREE.PlaneGeometry(seaR * 2, seaR * 2, 1, 1); g.rotateX(-Math.PI / 2)
       const m = new THREE.Mesh(g, mat); m.position.y = -2; m.frustumCulled = false
-      return m
+      // 深さだけの面: 色は描かず、雲が半分以上濃い所（切れ間・縁・カメラのすぐ近く・高さで薄い時を除く）だけ深さを書く。描く順 -1＝半透明の物の最初
+      const dmat = new THREE.MeshBasicMaterial({ colorWrite: false, transparent: true, opacity: 0, depthWrite: true, fog: false, side: THREE.DoubleSide })
+      dmat.onBeforeCompile = (sh) => {
+        Object.assign(sh.uniforms, { uSeaR: uni.uSeaR, uGaps: uni.uGaps })
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW;')
+          .replace('#include <project_vertex>', '#include <project_vertex>\n  vW = (modelMatrix * vec4(transformed, 1.0)).xyz;')
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+          varying vec3 vW; uniform float uSeaR; uniform vec3 uGaps[4];`)
+          .replace('#include <color_fragment>', `#include <color_fragment>
+          {
+            float a = 1.0;
+            for (int i = 0; i < 4; i++) { float gd = length(vW.xz - uGaps[i].xy); a *= smoothstep(uGaps[i].z * 0.7, uGaps[i].z * 1.3, gd); }
+            a *= 1.0 - smoothstep(uSeaR * 0.80, uSeaR * 0.998, length(vW.xz));
+            a *= smoothstep(4.0, 30.0, length(vW - cameraPosition));
+            if (diffuseColor.a * a < 0.5) discard;
+          }`)
+      }
+      dmat.customProgramCacheKey = () => 'cloudsea-sheet-depth'
+      seaMats.push(dmat)
+      const dm = new THREE.Mesh(g, dmat); dm.position.y = -2; dm.frustumCulled = false; dm.renderOrder = -1
+      return [dm, m]
     }
     const seaMat = applySeaShader(new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, fog: false }))
     const discMat = applySeaShader(new THREE.MeshBasicMaterial({ color: seaLowC, transparent: true, opacity: 0, depthWrite: false, fog: false }))
@@ -6402,7 +6426,7 @@ export async function mountTown3d(parent, opts = {}) {
     }
     if (seaGeos.length) { const seaMerged = BufferGeometryUtils.mergeGeometries(seaGeos, false); seaGeos.forEach((g) => g.dispose())
       if (seaMerged) cloudSeaG.add(new THREE.Mesh(seaMerged, seaMat)) }
-    if (CLOUD_SEA_SHEET) cloudSeaG.add(makeCloudSeaSheet({ seaR, gaps, seaLowC, seaHighC, seaSunDir, seaSunCol }))
+    if (CLOUD_SEA_SHEET) cloudSeaG.add(...makeCloudSeaSheet({ seaR, gaps, seaLowC, seaHighC, seaSunDir, seaSunCol }))
     scene.add(cloudSeaG); cloudSea = cloudSeaG
     // 天上界の光芒（天使の梯子）＝雲海に常時そっと差し込む光の柱。下界の街には無い神々しさ＝差別化③。
     // skyDrifters['godshaft']で高度フェード（cloudReveal）＆カメラ追従。控えめ（ギラつかせない）・加算ビルボード7枚＝軽量。

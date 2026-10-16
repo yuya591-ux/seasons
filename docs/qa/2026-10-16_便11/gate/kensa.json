@@ -1,11 +1,13 @@
 {
- "at": "2026-10-16T00:37:30.136Z",
+ "at": "2026-10-16T01:12:11.531Z",
  "port": 4963,
  "pass": true,
  "K1": {
   "pass": true,
   "sheet": 1,
   "blobs": 0,
+  "depth": 1,
+  "sheetWarm": true,
   "errs": []
  },
  "K2": {
