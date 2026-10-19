@@ -1,0 +1,131 @@
+{
+ "at": "2026-10-19T23:22:50.611Z",
+ "port": 4982,
+ "pass": true,
+ "K1": {
+  "pass": true,
+  "day": [
+   "none",
+   "none",
+   "none",
+   "none"
+  ],
+  "night": [
+   "none",
+   "none",
+   "none",
+   "none"
+  ],
+  "errs": []
+ },
+ "K2": {
+  "pass": true,
+  "day": [
+   0.3,
+   0.3,
+   0.3,
+   0.119
+  ],
+  "night": [
+   0.317,
+   0.319,
+   0.317,
+   0.318
+  ]
+ },
+ "K3": {
+  "pass": true,
+  "mike": true,
+  "black": 0,
+  "lums": [
+   0.7518,
+   0.8271,
+   0.3262,
+   0.0961
+  ]
+ },
+ "K4": {
+  "pass": true,
+  "catX": 0.28,
+  "toyHomeX": -0.32,
+  "blanX": [
+   -0.42,
+   -0.408,
+   -0.396
+  ]
+ },
+ "K5": {
+  "pass": true,
+  "n": 46,
+  "dayOut": 0,
+  "nightOut": 0
+ },
+ "K6": {
+  "pass": true,
+  "tatW": 512
+ },
+ "K7": {
+  "pass": true,
+  "day": 10,
+  "night": 10
+ },
+ "K8": {
+  "pass": true,
+  "nightBigSeg": 15,
+  "ceilWarm": 2.885,
+  "backWarm": 0.888,
+  "dayBigSeg": 0
+ },
+ "K9": {
+  "pass": true,
+  "chimeX": 1.82
+ },
+ "K10": {
+  "pass": true,
+  "shadeY": 2.94,
+  "lampParts": 6,
+  "lampVis": 0,
+  "lampN": 312
+ },
+ "K11": {
+  "pass": true,
+  "railsVis": 1
+ },
+ "K12": {
+  "pass": true,
+  "lockX": -1.1
+ },
+ "K13": {
+  "pass": true,
+  "camX": 0.552,
+  "yaw": 0
+ },
+ "K14": {
+  "pass": true,
+  "portrait": -1.12,
+  "landscape": -0.6,
+  "errs": []
+ },
+ "K15": {
+  "pass": true,
+  "eye": [
+   0,
+   15.7,
+   17.1
+  ],
+  "roomY": 14.5,
+  "roomZ": 15.8,
+  "open": {
+   "lockX": -1.1,
+   "camX": 0.553,
+   "camZ": 17.1,
+   "eyeZ": 17.1,
+   "yaw": 0
+  },
+  "errs": []
+ },
+ "K16": {
+  "pass": true,
+  "out": "docs/qa/2026-10-20_便13/gate/k16/kensa-ui.png ボタンあり エラー無し"
+ }
+}
