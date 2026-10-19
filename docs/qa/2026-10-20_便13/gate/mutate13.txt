@@ -1,0 +1,20 @@
+落ちた 猫の毛の材に部屋の陰影の関数を段の画として渡す（前の形・V8） → K1 K1 不合格 {"pass":false,"day":["function","function","function","function"],"night":["function","function","function","function"],"errs":[]}
+落ちた 猫の自分の明るさを外す → K2 K2 不合格 {"pass":false,"day":[0,0,0,0],"night":[0,0,0,0]}
+落ちた 三毛の黒のブチを上げる直しを外す → K3 K3 不合格 {"pass":false,"mike":true,"black":1,"lums":[0.7518,0.8271,0.3262,0.038]}
+落ちた 猫の置き場を前の 0.5 に戻す（V44） → K4 K4 不合格 {"pass":false,"catX":0.5,"toyHomeX":-0.32,"blanX":[-0.42,-0.408,-0.396]}
+落ちた 毛糸玉の置き場を前の 0 に戻す（V44） → K4 K4 不合格 {"pass":false,"catX":0.28,"toyHomeX":0,"blanX":[-0.42,-0.408,-0.396]}
+落ちた 膝掛けの置き場を前の -0.62 に戻す（V44） → K4 K4 不合格 {"pass":false,"catX":0.28,"toyHomeX":-0.32,"blanX":[-0.62,-0.608,-0.596]}
+落ちた ほこりを光の中だけに置く直しを外す（V5） → K5 K5 不合格 {"pass":false,"n":46,"dayOut":16,"nightOut":36}
+落ちた 畳の絵を前の 256 に戻す（V7） → K6 K6 不合格 {"pass":false,"tatW":256}
+落ちた カーテンのひだの陰影を外す（V7） → K7 K7 不合格 {"pass":false,"day":0,"night":10}
+落ちた 夜の灯りの焼き込みを外す（#1=1） → K8 K8 不合格 {"pass":false,"nightBigSeg":0,"ceilWarm":0,"backWarm":0.788,"dayBigSeg":0}
+落ちた 風鈴を窓の中の前の置き場に戻す（#2=2） → K9 K9 不合格 {"pass":false,"chimeX":0.816}
+落ちた 電灯を上げる直しを外す（#2=2・V50） → K10 K10 不合格 {"pass":false,"shadeY":2.32,"lampParts":6,"lampVis":6,"lampN":312}
+落ちた 手すりを1本にする直しを外す（#2=2） → K11 K11 不合格 {"pass":false,"railsVis":9}
+落ちた 錠が障子と一緒にすべる行を外す（#2=2） → K12 K12 不合格 {"pass":false,"lockX":0.1}
+落ちた 窓をあけた時の目の寄りを 0 にする（#2=2） → K13 K13 不合格 {"pass":false,"camX":0.002,"yaw":0}
+落ちた 角部屋の最初の向きを外す（#3=1） → K14 K14 不合格 {"pass":false,"portrait":0,"landscape":0,"errs":[]}
+落ちた 谷戸の窓と目の置き場を前に戻す（#4=1） → K15 K15 不合格 {"pass":false,"eye":[0,28,27],"roomY":26.5,"roomZ":23.8,"open":{"lockX":-1.1,"camX":0.553,"camZ":25.2,"eyeZ":27,"yaw":0},"errs":[]}
+落ちた 谷戸で窓をあけた時の前への出を減らさない（#4=1） → K15 K15 不合格 {"pass":false,"eye":[0,15.7,17.1],"roomY":14.5,"roomZ":15.8,"open":{"lockX":-1.1,"camX":0.553,"camZ":15.3,"eyeZ":17.1,"yaw":0},"errs":[]}
+落ちた 撮影の台本の、撮る直前にボタンを出す手を外す → K16 K16 不合格 {"pass":false,"out":"docs/qa/2026-10-20_便13/gate/mutate/k16/kensa-ui.png ボタン無し（idle） エラー無し"}
+外し回しの終わり: 19/19 で検査が落ちた
