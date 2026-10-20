@@ -1,0 +1,28 @@
+{
+ "pass": true,
+ "surf4": 2,
+ "matOk": true,
+ "imgOk": true,
+ "crop": [
+  400,
+  820,
+  140,
+  120
+ ],
+ "pr": 1,
+ "detail": 1.928,
+ "nd": 4.925,
+ "bd": 10.982,
+ "detailBefore": 1.717,
+ "ndBefore": 4.388,
+ "bdBefore": 10.78,
+ "diffBefore": {
+  "mean": 1.29,
+  "over8": 0.004
+ },
+ "errs": [],
+ "id": "S2",
+ "ms": 65679,
+ "at": "2026-10-20T00:42:41.879Z",
+ "commit": "99e1fa2"
+}
