@@ -11,6 +11,7 @@
 //   K12 窓をあけると錠が障子と一緒に左へ／K13 窓をあけると目が右へ寄る（#2=2）
 //   K14 角部屋の最初の向き（縦 -1.12・横 -0.6）（#3=1）／K15 谷戸の目と部屋の高さ・窓をあけても目が前へ出ない（#4=1）
 //   K16 撮影の台本でボタンを出して撮れる（_bin13-shot.mjs ui=1 が「ボタンあり」）
+//   K17 猫が場所を移る時の左の端が -0.15（ちゃぶ台を 0.2 右へ動かした分。外の目の見直しで足した）。K4 にちゃぶ台の天板・K8 に床の光だまり・K9 に風鈴の腕木も足した
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 import { spawnSync } from 'node:child_process'
@@ -26,6 +27,11 @@ const probe = () => {
   const toon = []; T.winCat.g.traverse((o) => { if (o.isMesh && o.material && o.material.isMeshToonMaterial && !toon.includes(o.material)) toon.push(o.material) })
   r.toon = toon.map((m) => ({ grad: m.gradientMap == null ? 'none' : typeof m.gradientMap === 'function' ? 'function' : 'tex', lum: +lum(m.color).toFixed(4), emi: +(lum(m.emissive) / Math.max(1e-4, lum(m.color))).toFixed(3), rg: +(m.color.r / Math.max(1e-4, m.color.g)).toFixed(3) }))
   r.catX = +T.winCat.g.position.x.toFixed(3); r.toyHomeX = T.winCat.toyHome.x
+  const chabu = T.winRoom.children.find((o) => o.isMesh && o.geometry.type === 'CylinderGeometry' && o.geometry.parameters.radiusTop === 0.5 && Math.abs(o.geometry.parameters.height - 0.05) < 1e-6)
+  r.chabuX = chabu ? +chabu.position.x.toFixed(3) : null
+  const pool = T.winRoom.children.find((o) => o.isMesh && o.geometry.type === 'PlaneGeometry' && Math.abs(o.geometry.parameters.width - 3.4) < 1e-6)
+  r.poolZ = pool ? +pool.position.z.toFixed(3) : null
+  r.chimeArm = T.winRoom.children.filter((o) => o.isMesh && o.geometry.parameters && Math.abs(o.geometry.parameters.depth - 0.3) < 1e-6 && Math.abs(o.geometry.parameters.width - 0.03) < 1e-6 && T.windChime && Math.abs(o.position.x - T.windChime.position.x) < 0.01).length
   r.blanX = T.winRoom.children.filter((o) => o.isMesh && o.geometry.parameters && Math.abs(o.geometry.parameters.width - 0.46) < 1e-6 && Math.abs(o.geometry.parameters.height - 0.038) < 1e-6).map((o) => +o.position.x.toFixed(3))
   r.dust = T.winDust.base.map((p) => [+p.x0.toFixed(3), +p.y0.toFixed(3), +p.z0.toFixed(3)])
   const tat = T.winRoom.children.find((o) => o.isMesh && o.material.map && o.material.map.repeat.x === 3 && Math.abs(o.material.map.repeat.y - 2.4) < 0.01)
@@ -51,6 +57,12 @@ const probe = () => {
   r.yaw = +a.yaw.toFixed(3); r.yawTarget = +a.yawTarget.toFixed(3)
   return r
 }
+const relocLeft = async () => { // 猫が場所を移る時の左の端: 乱数を 0.5 に固めて真左へ大きく移らせ、行き先 x1 を読む
+  const T = window.__b13T, c = T.winCat, keep = Math.random
+  c.alert = 0; c.petActive = 0; c.relocP = 1; c.visitPhase = 0; c.chaseT = 99; c.relocT = -1; Math.random = () => 0.5
+  await new Promise((r) => setTimeout(r, 400)); Math.random = keep
+  return +c.x1.toFixed(3)
+}
 const afterOpen = () => { const T = window.__b13T; return { lockX: T.lock ? +T.lock.position.x.toFixed(3) : null, camX: +T.camera.position.x.toFixed(3), camZ: +T.camera.position.z.toFixed(3), eyeZ: +T.eye.z.toFixed(3), yaw: +T.getActive().yaw.toFixed(3) } }
 const cache = {}
 async function info(scene, vp = { width: 402, height: 874 }) {
@@ -58,6 +70,7 @@ async function info(scene, vp = { width: 402, height: 874 }) {
   if (cache[key]) return cache[key]
   const ctx = await b.newContext(vp.width < vp.height ? { viewport: vp, deviceScaleFactor: 3, isMobile: true, hasTouch: true } : { viewport: vp, deviceScaleFactor: 1 }) // 縦は撮影の iPhone と同じ扱い（スマホの眺め）
   await ctx.addInitScript(seedRandom, 20261020)
+  await ctx.addInitScript(() => { window.__b13Coat = 6 }) // 猫は三毛で開く（K3 が毛色の運に左右されない。_bin13-vite.config.mjs の口）
   const p = await ctx.newPage(), errs = []
   p.on('pageerror', (e) => errs.push(e.message))
   p.on('console', (m) => { if (m.type() === 'error' && /shader|program|GLSL|compile|bin13/i.test(m.text())) errs.push(m.text().slice(0, 300)) })
@@ -68,6 +81,7 @@ async function info(scene, vp = { width: 402, height: 874 }) {
   await p.evaluate((s) => window.__applyScene(s), scene)
   await p.waitForTimeout(9000)
   const r = await p.evaluate(probe)
+  r.relocX1 = await p.evaluate(relocLeft)
   await p.evaluate(() => window.__town3dWindow(true)); await p.waitForTimeout(2600)
   r.open = await p.evaluate(afterOpen)
   await ctx.close()
@@ -77,25 +91,27 @@ const near = (a, b, e = 0.02) => a != null && Math.abs(a - b) <= e
 const DAY = 'kitaterao-window-3d', NIGHT = 'kitaterao-window-3d-rain-night', CORNER = 'autumn-dusk-corner-room', YATO = 'shishigaya-window-3d'
 const CHECKS = {
   K1: async () => { const d = await info(DAY), n = await info(NIGHT); const ok = [d, n].every((t) => t.toon.length >= 4 && t.toon.every((m) => m.grad === 'none')); return { pass: ok && !d.errs.length && !n.errs.length, day: d.toon.map((m) => m.grad), night: n.toon.map((m) => m.grad), errs: [...d.errs, ...n.errs] } },
-  K2: async () => { const d = await info(DAY), n = await info(NIGHT); return { pass: d.toon.every((m) => m.emi >= 0.1) && d.toon.filter((m) => near(m.emi, 0.3)).length >= 3 && n.toon.every((m) => m.emi >= 0.25), day: d.toon.map((m) => m.emi), night: n.toon.map((m) => m.emi) } }, // 三毛のブチは明るくした後の色・夜は灯りの暖かみを掛けた後の色と比べるので、0.3・0.4 ちょうどにならない
+  K2: async () => { const d = await info(DAY), n = await info(NIGHT); return { pass: d.toon.every((m) => near(m.emi, 0.3)) && n.toon.every((m) => m.emi >= 0.25), day: d.toon.map((m) => m.emi), night: n.toon.map((m) => m.emi) } }, // 夜は灯りの暖かみを掛けた後の色と比べるので 0.4 ちょうどにならない
+  // K3 は三毛で開く（__b13Coat = 6）
   K3: async () => { const d = await info(DAY); const mike = d.toon[0].lum > 0.35 && d.toon.some((m) => m.rg > 1.3); const black = d.toon.filter((m) => m.lum < 0.08).length; return { pass: mike && black === 0, mike, black, lums: d.toon.map((m) => m.lum) } },
-  K4: async () => { const d = await info(DAY); return { pass: near(d.catX, 0.28) && near(d.toyHomeX, -0.32) && d.blanX.length === 3 && d.blanX.every((x, i) => near(x, -0.42 + i * 0.012, 0.005)), catX: d.catX, toyHomeX: d.toyHomeX, blanX: d.blanX } },
+  K4: async () => { const d = await info(DAY); return { pass: near(d.catX, 0.28) && near(d.toyHomeX, -0.32) && near(d.chabuX, -0.52) && d.blanX.length === 3 && d.blanX.every((x, i) => near(x, -0.62 + i * 0.012, 0.005)), catX: d.catX, toyHomeX: d.toyHomeX, chabuX: d.chabuX, blanX: d.blanX } }, // 膝掛けは元の置き場（座布団に食い込まない）
   K5: async () => {
     const d = await info(DAY), n = await info(NIGHT)
     const dayOut = d.dust.filter(([x, y, z]) => !(Math.abs(x) <= 1.2 && z >= 0.35 && z <= 2.95 && y <= 1.9 && y >= -1.1)).length
-    const nightOut = n.dust.filter(([x, y, z]) => !(Math.hypot(x, z - 2.4) <= 1.0 && y <= 1.9 && y >= 0.3)).length
+    const nightOut = n.dust.filter(([x, y, z]) => !(Math.hypot(x, z - 2.4) <= 1.0 && z <= 2.4 && y <= 1.9 && y >= 0.3)).length // 夜は灯りの下の輪の窓側の半分（目のすぐ前に来ない）
     return { pass: d.dust.length > 30 && dayOut === 0 && nightOut === 0, n: d.dust.length, dayOut, nightOut }
   },
   K6: async () => { const d = await info(DAY); return { pass: d.tatW === 512, tatW: d.tatW } },
   K7: async () => { const d = await info(DAY), n = await info(NIGHT); return { pass: d.curt.length === 10 && d.curt.every(Boolean) && n.curt.every(Boolean), day: d.curt.filter(Boolean).length, night: n.curt.filter(Boolean).length } },
-  K8: async () => { const d = await info(DAY), n = await info(NIGHT); return { pass: n.bigSeg >= 5 && n.ceilWarm > 1.4 && n.backWarm != null && n.backWarm < 1.2 && d.bigSeg === 0, nightBigSeg: n.bigSeg, ceilWarm: n.ceilWarm, backWarm: n.backWarm, dayBigSeg: d.bigSeg } },
-  K9: async () => { const d = await info(DAY); return { pass: d.chimeX != null && d.chimeX > 1.2, chimeX: d.chimeX } },
+  K8: async () => { const d = await info(DAY), n = await info(NIGHT); return { pass: n.bigSeg >= 5 && n.ceilWarm > 1.4 && n.backWarm != null && n.backWarm < 1.2 && d.bigSeg === 0 && near(n.poolZ, 2.65), nightBigSeg: n.bigSeg, ceilWarm: n.ceilWarm, backWarm: n.backWarm, dayBigSeg: d.bigSeg, poolZ: n.poolZ } }, // 床の光だまりは動かした電灯の真下
+  K9: async () => { const d = await info(DAY); return { pass: d.chimeX != null && d.chimeX > 1.2 && d.chimeArm === 1, chimeX: d.chimeX, chimeArm: d.chimeArm } }, // 風鈴を吊る腕木が1本ある（宙に浮かない）
   K10: async () => { const d = await info(DAY); return { pass: near(d.shadeY, 2.94) && d.lampParts >= 6 && d.lampVis === 0, shadeY: d.shadeY, lampParts: d.lampParts, lampVis: d.lampVis, lampN: d.lampN } },
   K11: async () => { const d = await info(DAY); return { pass: d.railsVis === 1, railsVis: d.railsVis } },
   K12: async () => { const d = await info(DAY); return { pass: d.open.lockX != null && d.open.lockX < -1.0, lockX: d.open.lockX } },
   K13: async () => { const d = await info(DAY); return { pass: d.open.camX > 0.4, camX: d.open.camX, yaw: d.open.yaw } },
   K14: async () => { const p = await info(CORNER), l = await info(CORNER, { width: 1280, height: 720 }); return { pass: near(p.yawTarget, -1.12) && near(l.yawTarget, -0.6) && !p.errs.length, portrait: p.yawTarget, landscape: l.yawTarget, errs: p.errs } },
   K15: async () => { const y = await info(YATO); return { pass: near(y.eye[1], 15.7) && near(y.eye[2], 17.1) && near(y.roomY, 14.5) && near(y.roomZ, 15.8) && Math.abs(y.open.camZ - y.open.eyeZ) < 0.2 && !y.errs.length, eye: y.eye, roomY: y.roomY, roomZ: y.roomZ, open: y.open, errs: y.errs } },
+  K17: async () => { const d = await info(DAY); return { pass: near(d.relocX1, -0.15), relocX1: d.relocX1 } }, // 猫が場所を移る時の左の端（ちゃぶ台を右へ動かした分だけ狭めた）
   K16: async () => {
     const r = spawnSync('node', ['scripts/_bin13-shot.mjs', 'iphone', DAY, 'still', 'kensa-ui', 'ui=1'], { env: { ...process.env, QA_OUT: OUT + '/k16', B13_PORT: String(PORT) }, encoding: 'utf8', shell: process.platform === 'win32' })
     const out = (r.stdout || '') + (r.stderr || '')

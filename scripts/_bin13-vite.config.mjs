@@ -25,6 +25,10 @@ export default defineConfig({
         const eol = code.indexOf('\n', i)
         code = code.slice(0, eol + 1) + '    ' + add + '\n' + code.slice(eol + 1)
       }
+      // 検査用: 猫の毛色を window.__b13Coat で名指しできるようにする（毛色は開くたびの乱数で、種をそろえても読み込みの間合いで変わったため。三毛＝6）
+      const coatA = 'const coat = COATS[(Math.random() * COATS.length) | 0]'
+      if (code.split(coatA).length !== 2) throw new Error('bin13-hook: 猫の毛色の行が1つに決まらない')
+      code = code.replace(coatA, 'const coat = COATS[window.__b13Coat != null ? window.__b13Coat : ((Math.random() * COATS.length) | 0)]')
       return code
     },
   }],

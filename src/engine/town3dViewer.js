@@ -7790,7 +7790,7 @@ export async function mountTown3d(parent, opts = {}) {
     box(0.5, 0.05, 0.5, 0, 2.55 + LAMP_UP, LZ, woodDk); cyl(0.09, 0.09, 0.14, 0, 2.06 + LAMP_UP, LZ, lampMat) // 傘の天板＋電球
     box(0.018, 0.42, 0.018, 0.17, 1.86 + LAMP_UP, LZ, woodDk); cyl(0.04, 0.04, 0.09, 0.17, 1.6 + LAMP_UP, LZ, lampMat) // 灯りの引き紐＋握り玉（昭和の暮らし）
     { const gTex = cv(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 1, 32, 32, 32); g.addColorStop(0, 'rgba(255,232,178,0.95)'); g.addColorStop(0.45, 'rgba(255,216,150,0.32)'); g.addColorStop(1, 'rgba(255,216,150,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64) }); const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: gTex, transparent: true, opacity: isNight ? 0.9 : 0.42, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })); gl.position.set(0, 2.12 + LAMP_UP, LZ); gl.scale.set(2.4, 2.4, 1); gl.renderOrder = 6; winRoom.add(gl); winRoomMats.push(gl.material) } // 灯りの暖かいにじみ（夜ほど強い）
-    if (isNight) { const pTex = cv(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 2, 32, 32, 32); g.addColorStop(0, 'rgba(255,224,168,0.55)'); g.addColorStop(0.6, 'rgba(255,210,150,0.18)'); g.addColorStop(1, 'rgba(255,210,150,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64) }); const pool = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshBasicMaterial({ map: pTex, transparent: true, opacity: 0.6, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })); pool.rotation.x = -Math.PI / 2; pool.position.set(0, FY + 0.04, 2.4); pool.renderOrder = 4; winRoom.add(pool); winRoomMats.push(pool.material) } // 夜: 灯りが畳に落とす暖かな光だまり
+    if (isNight) { const pTex = cv(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 2, 32, 32, 32); g.addColorStop(0, 'rgba(255,224,168,0.55)'); g.addColorStop(0.6, 'rgba(255,210,150,0.18)'); g.addColorStop(1, 'rgba(255,210,150,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64) }); const pool = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshBasicMaterial({ map: pTex, transparent: true, opacity: 0.6, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })); pool.rotation.x = -Math.PI / 2; pool.position.set(0, FY + 0.04, LZ); pool.renderOrder = 4; winRoom.add(pool); winRoomMats.push(pool.material) } // 夜: 灯りが畳に落とす暖かな光だまり
     if (!isNight) { // 昼/夕: 窓から差し込む光が畳に落ちる陽だまり（窓際が明るく室内へ伸びる）＝見回すと部屋に陽が射している温かさ
       const sTex = cv(96, 96, (x) => { const g = x.createLinearGradient(0, 0, 0, 96); g.addColorStop(0, 'rgba(255,240,206,0.62)'); g.addColorStop(0.45, 'rgba(255,234,194,0.3)'); g.addColorStop(1, 'rgba(255,230,188,0)'); x.fillStyle = g; x.fillRect(0, 0, 96, 96) })
       const shaft = new THREE.Mesh(new THREE.PlaneGeometry(owW * 1.5, 3.0), new THREE.MeshBasicMaterial({ map: sTex, transparent: true, opacity: 0.3 + duskAmt * 0.22, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }))
@@ -7849,7 +7849,8 @@ export async function mountTown3d(parent, opts = {}) {
       cyl(0.045, 0.045, 0.02, mx, my + 0.15, mz + 0.08, brass, 10)             // 小判
     }
     // ── ちゃぶ台（昭和の茶の間の主役）＝低い円卓＋急須＋湯呑み＋みかんの鉢。左手前の床（猫の定位置=右と分けて据える）。陽だまりに置く。──
-    { const tx = -0.72, tz = 2.25, ty = FY, topM = mk(C(0x8a6a44, 0x4a3826)), kyusu = mk(C(0x5e5446, 0x33342c)), mikan = mk(C(0xf0962e, 0x8a5018))
+    const CHABU_X = -0.52 // 便13（V44）: 前は -0.72。窓辺のちゃぶ台の一式（円卓・急須・湯呑み・みかん・脇の座布団）を 0.2 内側（右）へ（iPhone の縦の左下で切れない）
+    { const tx = CHABU_X, tz = 2.25, ty = FY, topM = mk(C(0x8a6a44, 0x4a3826)), kyusu = mk(C(0x5e5446, 0x33342c)), mikan = mk(C(0xf0962e, 0x8a5018))
       cyl(0.5, 0.5, 0.05, tx, ty + 0.34, tz, topM, 22)                                    // 円い天板
       cyl(0.42, 0.46, 0.02, tx, ty + 0.305, tz, woodDk, 20)                               // 天板裏の見切り
       for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) cyl(0.03, 0.04, 0.32, tx + lx * 0.34, ty + 0.16, tz + lz * 0.34, woodDk, 6) // 折りたたみ脚
@@ -7946,6 +7947,7 @@ export async function mountTown3d(parent, opts = {}) {
     if (season === 'summer') {
       const CHIME_OUT = true // 便13 #2=2: 風鈴を窓の右の外（カーテンの前）へ（窓の中で黒い「T」の影になっていた＝V13）。false にすると前の置き場
       const wc = new THREE.Group(); if (CHIME_OUT) wc.position.set(owW / 2 + 0.62, oT + 0.12, 0.42); else wc.position.set(owW * 0.34, oT + 0.02, 0.42); winRoom.add(wc); windChime = wc
+      if (CHIME_OUT) { box(0.03, 0.03, 0.3, wc.position.x, wc.position.y + 0.015, 0.29, woodDk); box(0.08, 0.1, 0.02, wc.position.x, wc.position.y + 0.02, 0.16, woodDk) } // 便13: 窓の右の壁から風鈴を吊る腕木と壁の座金（宙に浮かない＝外の目の3）
       const cordMat = mk(C(0x7a6a4e, 0x3a342a))
       const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.46, 5), cordMat); cord.position.y = -0.23; cord.renderOrder = 3; wc.add(cord)
       const glass = new THREE.MeshBasicMaterial({ color: isNight ? 0x86a6ae : 0xbfe2e8, transparent: true, opacity: 0.72, fog: false }); winRoomMats.push(glass)
@@ -7960,7 +7962,7 @@ export async function mountTown3d(parent, opts = {}) {
       box(0.07, 0.05, 0.07, 0.1, FY + 0.12, 2.5, tieMat)          // 中央の綴じ
       for (const [dx, dz] of [[0.34, 0.34], [-0.34, 0.34], [0.34, -0.34], [-0.34, -0.34]]) box(0.05, 0.04, 0.05, 0.1 + dx, FY + 0.115, 2.5 + dz, tieMat) // 四隅の房
       const blanMat = mk(C(0xcdb48e, 0x4a4036), clothTex) // たたんだ膝掛け（生成りの暖色）＝ここで暖まれる安心
-      const BLAN_X = -0.42 // 便13（V44）: 前は -0.62。膝掛けの一式を 0.2 内側（右）へ（iPhone の縦の左下で切れない）
+      const BLAN_X = -0.62 // 便13: 便12 の案では膝掛けも 0.2 右へ動いたが、窓辺の座布団（左の端 -0.32）に食い込むので元の置き場のまま（ちゃぶ台だけを動かす）
       for (let i = 0; i < 3; i++) box(0.46, 0.038, 0.5 - i * 0.05, BLAN_X + i * 0.012, FY + 0.045 + i * 0.036, 2.46, blanMat) // 少しずつずらした層
       floorShadow(BLAN_X + 0.02, 2.46, 0.62, 0.62) } // 膝掛けの接地影
     // ── 窓辺の読みかけの本（くつろぎの時間の気配。少しずれて積む） ──
@@ -7998,7 +8000,7 @@ export async function mountTown3d(parent, opts = {}) {
       const DUST_IN_LIGHT = true
       if (DUST_IN_LIGHT) { let h = 7; const rnd = () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296 }
         base.forEach((b, i) => {
-          if (isNight) { const a = rnd() * 6.283, r = 0.25 + rnd() * 0.75; b.x0 = Math.cos(a) * r; b.z0 = LZ - LAMP_BACK + Math.sin(a) * r; b.y0 = 1.9 - rnd() * 1.6 } // 灯りの下（傘を上げる前の高さ＝目の高さの帯）
+          if (isNight) { const a = rnd() * 6.283, r = 0.25 + rnd() * 0.75; b.x0 = Math.cos(a) * r; b.z0 = LZ - LAMP_BACK - Math.abs(Math.sin(a)) * r; b.y0 = 1.9 - rnd() * 1.6 } // 灯りの下（傘を上げる前の高さ＝目の高さの帯）。輪の窓側の半分だけ（目のすぐ前で大きくぼけない）
           else { const s = rnd(); b.x0 = (rnd() - 0.5) * (owW - 0.3) - 0.15 * s; b.y0 = (0.25 + rnd() * 1.5) * (1 - s) + FY * s + 0.15; b.z0 = 0.35 + s * 2.6 } // 窓→畳の斜めの帯
           dp[i * 3] = b.x0; dp[i * 3 + 1] = b.y0; dp[i * 3 + 2] = b.z0 }) }
       const dgeo = new THREE.BufferGeometry(); dgeo.setAttribute('position', new THREE.BufferAttribute(dp, 3))
@@ -8035,7 +8037,7 @@ export async function mountTown3d(parent, opts = {}) {
       const furD = Mt(isNight ? dk(coat.d) : coat.d)  // 縞・陰
       const furL = Mt(isNight ? dk(coat.l) : coat.l)  // 背の明るみ
       const white = Mt(isNight ? dk(coat.w) : coat.w) // 胸・口先・足先
-      if (coat.n) furL.color.lerp(new THREE.Color(0x6a5c52), 0.75) // 便13: 三毛の黒のブチは、陰影が乗る明るさまで上げる（真っ黒の穴に見えない）
+      if (coat.n) { furL.color.lerp(new THREE.Color(0x6a5c52), 0.75); furL.emissive.copy(furL.color).multiplyScalar(CAT_EMI) } // 便13: 三毛の黒のブチは、陰影が乗る明るさまで上げる（真っ黒の穴に見えない）。自分の明るさも上げた後の色から取る
       const pink = M(isNight ? 0x7e615d : 0xd69a90)  // 鼻・耳の内
       const dark = M(isNight ? 0x231e19 : 0x3b332b)  // 閉じた目・口
       const whisk = M(isNight ? 0x9a9384 : 0xeee7d6) // ひげ
@@ -8112,7 +8114,7 @@ export async function mountTown3d(parent, opts = {}) {
       for (const o of solid) { const m = o.material; if (hue.has(m) || !m.color) continue; const c = m.color, L = Math.max(0.02, 0.299 * c.r + 0.587 * c.g + 0.114 * c.b); hue.set(m, [c.r / L, c.g / L, c.b / L]); m.color.setRGB(L, L, L) }
       const seen = new Set(), v = new THREE.Vector3(), sz = new THREE.Vector3()
       for (const o of solid) {
-        if (seen.has(o.geometry)) o.geometry = o.geometry.clone() // 形を分け合う物は2回焼かない
+        if (seen.has(o.geometry)) continue // 形を分け合う物は2回焼かない（1つ目で焼いた色をそのまま使う）
         o.geometry.computeBoundingBox(); o.geometry.boundingBox.getSize(sz)
         const hasCol = !!o.geometry.attributes.color
         if (hasCol && o.geometry instanceof THREE.BoxGeometry && Math.max(sz.x, sz.y, sz.z) > 1.2 && o.parent === winRoom && o.rotation.x === 0 && o.rotation.y === 0 && o.rotation.z === 0) {
@@ -10515,7 +10517,8 @@ export async function mountTown3d(parent, opts = {}) {
       if (c.relocT < 0 && c.relocP >= 1 && c.petActive < 1 && c.alert < 0.3) { c.relocT = 46 + R() * 60; c.relocP = 0
         c.x0 = c.g.position.x; c.z0 = c.g.position.z; c.rot0 = c.g.rotation.y; c.g.rotation.z = 0
         const ang = Math.random() * 6.28, d = 0.55 + Math.random() * 0.75
-        c.x1 = Math.max(-0.35, Math.min(1.35, c.x0 + Math.cos(ang) * d)); c.z1 = Math.max(1.05, Math.min(2.35, c.z0 + Math.sin(ang) * d))
+        c.x1 = Math.max(-0.15, Math.min(1.35, c.x0 + Math.cos(ang) * d)); // 便13: 左の端は前の -0.35。ちゃぶ台を 0.2 右へ動かしたので、卓との重なりが前と同じ幅になるよう 0.2 狭めた
+        c.z1 = Math.max(1.05, Math.min(2.35, c.z0 + Math.sin(ang) * d))
         c.rot1 = Math.atan2(c.x1 - c.x0, c.z1 - c.z0) }
       // じゃれ追い: ご機嫌な時、止まった毛糸玉へ自分から歩み寄り、着いたら打つ（relocの歩行を流用・飽きる(playful減衰)まで繰り返す）。
       if (c.chaseT === undefined) c.chaseT = 4 + R() * 4
@@ -10525,7 +10528,7 @@ export async function mountTown3d(parent, opts = {}) {
         if (toyRest && dToy > 0.55 && dToy < 2.4) { c.chaseT = 4 + R() * 5; c.relocP = 0; c.chaseToy = true
           c.x0 = c.g.position.x; c.z0 = c.g.position.z; c.rot0 = c.g.rotation.y; c.g.rotation.z = 0
           const ddx = c.toyG.position.x - c.x0, ddz = c.toyG.position.z - c.z0, dd = Math.hypot(ddx, ddz) || 1
-          c.x1 = Math.max(-0.35, Math.min(1.35, c.x0 + ddx / dd * (dd - 0.4))); c.z1 = Math.max(1.05, Math.min(2.35, c.z0 + ddz / dd * (dd - 0.4))); c.rot1 = Math.atan2(c.x1 - c.x0, c.z1 - c.z0)
+          c.x1 = Math.max(-0.15, Math.min(1.35, c.x0 + ddx / dd * (dd - 0.4))); /* 便13: 左の端は前の -0.35（ちゃぶ台を右へ動かした分だけ狭めた） */ c.z1 = Math.max(1.05, Math.min(2.35, c.z0 + ddz / dd * (dd - 0.4))); c.rot1 = Math.atan2(c.x1 - c.x0, c.z1 - c.z0)
         } else c.chaseT = 4 + R() * 4 // 条件外なら近いうちに再判定
       }
       const reloc = c.relocP < 1

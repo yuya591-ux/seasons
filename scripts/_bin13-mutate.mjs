@@ -1,4 +1,4 @@
-// 便13（2026-10-20）の外し回し: 直しを1つずつ外し（値1つを前に戻す）、その直しを見る検査が落ちるかを確かめる（qa-gate §3 (5-後)）。便11 の _bin11-mutate.mjs の写し。
+// 便13（2026-10-20）の外し回し（外の目の見直しの後に6通り足して24通り）: 直しを1つずつ外し（値1つを前に戻す）、その直しを見る検査が落ちるかを確かめる（qa-gate §3 (5-後)）。便11 の _bin11-mutate.mjs の写し。
 // 外した後は git checkout HEAD -- <ファイル> で戻し、git diff --stat が0行かを見る。始める前に作業ツリーに変更が無いかを確かめる（clean-tree）。
 // 使い方: 開発サーバー 4982（scripts/_bin13-vite.config.mjs・今のコード）を起動してから  node scripts/_bin13-mutate.mjs
 //   出力: docs/qa/2026-10-20_便13/gate/mutate13.json（直し1件ごとに { name, file, check, caught, failed }）
@@ -19,7 +19,12 @@ const M = [
   { name: '三毛の黒のブチを上げる直しを外す', file: V, a: 'if (coat.n) furL.color.lerp(', b: 'if (false) furL.color.lerp(', check: 'K3' },
   { name: '猫の置き場を前の 0.5 に戻す（V44）', file: V, a: 'const CAT_X = 0.28', b: 'const CAT_X = 0.5', check: 'K4' },
   { name: '毛糸玉の置き場を前の 0 に戻す（V44）', file: V, a: 'const toyHome = { x: -0.32, z: 1.42 }', b: 'const toyHome = { x: 0.0, z: 1.42 }', check: 'K4' },
-  { name: '膝掛けの置き場を前の -0.62 に戻す（V44）', file: V, a: 'const BLAN_X = -0.42', b: 'const BLAN_X = -0.62', check: 'K4' },
+  { name: 'ちゃぶ台の一式の置き場を前の -0.72 に戻す（V44）', file: V, a: 'const CHABU_X = -0.52', b: 'const CHABU_X = -0.72', check: 'K4' },
+  { name: '三毛のブチの自分の明るさを、明るくする前の色のままにする（外の目の12）', file: V, a: ' furL.emissive.copy(furL.color).multiplyScalar(CAT_EMI) }', b: ' }', check: 'K2' },
+  { name: '夜のほこりの輪を窓側の半分に限らない（外の目の13）', file: V, a: 'b.z0 = LZ - LAMP_BACK - Math.abs(Math.sin(a)) * r;', b: 'b.z0 = LZ - LAMP_BACK + Math.sin(a) * r;', check: 'K5' },
+  { name: '夜の床の光だまりを前の z 2.4 に戻す（外の目の13）', file: V, a: 'pool.position.set(0, FY + 0.04, LZ);', b: 'pool.position.set(0, FY + 0.04, 2.4);', check: 'K8' },
+  { name: '風鈴を吊る腕木を外す（外の目の3）', file: V, a: '      if (CHIME_OUT) { box(0.03, 0.03, 0.3,', b: '      if (false) { box(0.03, 0.03, 0.3,', check: 'K9' },
+  { name: '猫が場所を移る時の左の端を前の -0.35 に戻す（ちゃぶ台を動かした分）', file: V, a: 'c.x1 = Math.max(-0.15, Math.min(1.35, c.x0 + Math.cos(ang) * d));', b: 'c.x1 = Math.max(-0.35, Math.min(1.35, c.x0 + Math.cos(ang) * d));', check: 'K17' },
   { name: 'ほこりを光の中だけに置く直しを外す（V5）', file: V, a: 'const DUST_IN_LIGHT = true', b: 'const DUST_IN_LIGHT = false', check: 'K5' },
   { name: '畳の絵を前の 256 に戻す（V7）', file: V, a: 'const tatTex = cv(512, 512,', b: 'const tatTex = cv(256, 256,', check: 'K6' },
   { name: 'カーテンのひだの陰影を外す（V7）', file: V, a: 'const CURT_SHADE = true', b: 'const CURT_SHADE = false', check: 'K7' },
