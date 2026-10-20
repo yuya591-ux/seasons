@@ -11,7 +11,9 @@ const gg = (name, scene) => ({ name: `重さ ${name}（元の形と）`, cmd: 'n
 const steps = [
   { name: 'ビルド', cmd: 'npm', args: ['run', 'build'] },
   { name: 'スモーク', cmd: 'npm', args: ['run', 'smoke'] },
-  ...['G0', 'T1', 'T2', 'T3', 'S1', 'S2', 'S3', 'S4', 'FL', 'G1', 'K5'].map((id) => ({ name: `便6 ${id}`, cmd: 'node', args: ['scripts/qa-bin6.mjs', id], env: { QA_OUT: OUT, QA_BASE: NOW, QA_BASE_BEFORE: ORIG } })),
+  ...['G0', 'T1', 'T2', 'T3', 'S1', 'S2', 'S3', 'S4', 'FL', 'K5'].map((id) => ({ name: `便6 ${id}`, cmd: 'node', args: ['scripts/qa-bin6.mjs', id], env: { QA_OUT: OUT, QA_BASE: NOW, QA_BASE_BEFORE: ORIG } })),
+  // 便6 G1（窓辺の明るさの守り）は、便13 の茶の間の形で撮り直した基準を見る（便13 #1=1・裁定記録 2026-10-20。便6 の基準のファイル docs/qa/2026-10-13_便6/gate-before は書き換えていない）
+  { name: '便6 G1（便13 の基準）', cmd: 'node', args: ['scripts/qa-bin6.mjs', 'G1'], env: { QA_OUT: OUT, QA_BASE: NOW, QA_BASE_BEFORE: ORIG, QA_BEFORE: 'docs/qa/2026-10-20_便13/gate/g1-kijun' } },
   { name: '便11 K1〜K7', cmd: 'node', args: ['scripts/_bin11-kensa.mjs', 'all'], env: { QA_OUT: OUT, B11_PORT: '4982' } },
   { name: '町の乱数の順（茶の間の後まで）', cmd: 'node', args: ['scripts/_bin11-rcheck.mjs', 'kitaterao-window-3d', 'kitaterao-window-3d-rain-night', 'autumn-dusk-corner-room', 'shishigaya-window-3d', 'shishigaya-window-3d-snow'], env: { QA_OUT: OUT } },
   { name: '便13 K1〜K16', cmd: 'node', args: ['scripts/_bin13-kensa.mjs', 'all'], env: { QA_OUT: OUT } },
