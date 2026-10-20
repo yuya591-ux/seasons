@@ -1,0 +1,3 @@
+{"file":"docs/qa/2026-10-20_本番4/01_公開_iphone_雨の夜の茶の間.png","scene":"kitaterao-window-3d-rain-night","view":"still","gpu":"ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)","middleBand":{"mean":70.2,"std":45},"errs":[]}
+{"file":"docs/qa/2026-10-20_本番4/02_公開_iphone_高台の角部屋.png","scene":"autumn-dusk-corner-room","view":"still","gpu":"ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)","middleBand":{"mean":46.5,"std":29},"errs":[]}
+{"file":"docs/qa/2026-10-20_本番4/03_公開_iphone_獅子ヶ谷の窓辺.png","scene":"shishigaya-window-3d","view":"still","gpu":"ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)","middleBand":{"mean":111.4,"std":43},"errs":[]}

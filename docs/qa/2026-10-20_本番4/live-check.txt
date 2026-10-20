@@ -1,0 +1,6 @@
+公開と手元の precache-manifest が同じ: true
+公開の画面のプログラム: assets/index-CQ2x-wYf.js・assets/index-DJSiStur.css
+SHA-256 assets/index-CQ2x-wYf.js 公開・手元 一致 38c19bbe58a02e8db72671ed38ca6d4c9796d16f4902204d3f3d23a774f92d7d
+SHA-256 assets/index-DJSiStur.css 公開・手元 一致 9bce51b2700d48d60ad82b6854095208068376a796ec40983317bb094eeea326
+SHA-256 assets/town3dViewer-CE24RpZc.js 公開・手元 一致 e363cf10ad73761e8772bc774781d41704cc648346f2d11efe3ea8bf9a3bff26
+公開の部品に便13 の印の名前が残っている（縮めると消えてよい・判定に使わない）: NIGHT_LAMP なし・RAIL_ONE なし・CORNER_YAW なし・YATO_SEAT なし
