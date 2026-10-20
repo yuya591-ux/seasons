@@ -16,7 +16,7 @@ const V = 'src/engine/town3dViewer.js'
 const M = [
   { name: '猫の毛の材に部屋の陰影の関数を段の画として渡す（前の形・V8）', file: V, a: 'new THREE.MeshToonMaterial({ color: tint(h), fog: false })', b: 'new THREE.MeshToonMaterial({ color: tint(h), gradientMap: grad, fog: false })', check: 'K1' },
   { name: '猫の自分の明るさを外す', file: V, a: ' m.emissive.copy(m.color).multiplyScalar(CAT_EMI);', b: '', check: 'K2' },
-  { name: '三毛の黒のブチを上げる直しを外す', file: V, a: 'if (coat.n) furL.color.lerp(', b: 'if (false) furL.color.lerp(', check: 'K3' },
+  { name: '三毛の黒のブチを上げる直しを外す', file: V, a: 'if (coat.n) { furL.color.lerp(', b: 'if (false) { furL.color.lerp(', check: 'K3' },
   { name: '猫の置き場を前の 0.5 に戻す（V44）', file: V, a: 'const CAT_X = 0.28', b: 'const CAT_X = 0.5', check: 'K4' },
   { name: '毛糸玉の置き場を前の 0 に戻す（V44）', file: V, a: 'const toyHome = { x: -0.32, z: 1.42 }', b: 'const toyHome = { x: 0.0, z: 1.42 }', check: 'K4' },
   { name: 'ちゃぶ台の一式の置き場を前の -0.72 に戻す（V44）', file: V, a: 'const CHABU_X = -0.52', b: 'const CHABU_X = -0.72', check: 'K4' },
