@@ -1,0 +1,7 @@
+ビルドの終了コード 0
+控えた時刻: 2026-10-20 11:21・手元の HEAD: dfbb002・公開の枝（手元が知る origin/main）: 5811dca
+公開の precache-manifest の SHA-256: 3cd9bb29b9c508e8b9560d187eff6e4c4bb0665ea392698f6cf9d0eaf031cb97
+公開の画面のプログラム: assets/index-D9peF473.js
+手元の画面のプログラム: assets/index-CQ2x-wYf.js
+手元の町の部品: town3dViewer-CE24RpZc.js
+Actions の最新の回: "head_sha": "5811dcac5d327ef629dcc62eac6efa16c8c33306" "conclusion": "success" "created_at": "2026-10-16T06:03:23Z" 
