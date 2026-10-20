@@ -3,6 +3,7 @@
 // 使い方: node scripts/_bin13-shot.mjs <端末 pc|iphone|ipad> <情景ID> <眺め> <名前> [seed=数] [wait=ms] [ui=1] [js=式]
 //   眺め: still＝情景を開いたまま／open＝窓をあける／view=yaw,pitch＝見回しの向き（__town3dSetView）／openview=yaw,pitch＝窓をあけてから向く
 //   seed: Math.random の種（猫の毛色・時々の出来事をそろえる。既定 20261020＝便12 と同じ）
+//   coat=N: 猫の毛色を名指しする（_bin13-vite.config.mjs の口 __b13Coat。三毛＝6。素の vite では効かない）。前と後で同じ毛色にそろえる時に使う
 //   ui=1: 画面のボタンを隠さずに撮る。ボタンは 3.5 秒触らないと消える（ui.js の poke）ので、撮る直前に指の動きを1回送り、
 //         出てくる移ろい（1.2 秒）の後に撮る（便12 の台本は ui=1 でもボタンが消えたまま撮れていた＝便13 で直した欠け）
 import { chromium } from 'playwright'
@@ -21,6 +22,7 @@ const DEV = {
 const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu'] })
 const ctx = await b.newContext(DEV)
 await ctx.addInitScript((seed) => { let a = seed; Math.random = () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }, +(opt.seed || 20261020))
+if (opt.coat != null) await ctx.addInitScript((c) => { window.__b13Coat = c }, +opt.coat)
 const p = await ctx.newPage()
 const errs = []
 p.on('pageerror', (e) => errs.push(e.message))

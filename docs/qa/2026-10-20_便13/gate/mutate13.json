@@ -1,6 +1,6 @@
 {
- "at": "2026-10-19T23:38:37.143Z",
- "commit": "1a4eaf4",
+ "at": "2026-10-20T00:23:00.126Z",
+ "commit": "ec6b38c",
  "all": true,
  "res": [
   {
@@ -18,7 +18,7 @@
    "check": "K2",
    "caught": true,
    "failed": [
-    "K2 不合格 {\"pass\":false,\"day\":[0,0,0,0],\"night\":[0,0,0,0]}"
+    "K2 不合格 {\"pass\":false,\"day\":[0,0,0,0.3],\"night\":[0,0,0,0.317]}"
    ]
   },
   {
@@ -36,7 +36,7 @@
    "check": "K4",
    "caught": true,
    "failed": [
-    "K4 不合格 {\"pass\":false,\"catX\":0.5,\"toyHomeX\":-0.32,\"blanX\":[-0.42,-0.408,-0.396]}"
+    "K4 不合格 {\"pass\":false,\"catX\":0.5,\"toyHomeX\":-0.32,\"chabuX\":-0.52,\"blanX\":[-0.62,-0.608,-0.596]}"
    ]
   },
   {
@@ -45,16 +45,61 @@
    "check": "K4",
    "caught": true,
    "failed": [
-    "K4 不合格 {\"pass\":false,\"catX\":0.28,\"toyHomeX\":0,\"blanX\":[-0.42,-0.408,-0.396]}"
+    "K4 不合格 {\"pass\":false,\"catX\":0.28,\"toyHomeX\":0,\"chabuX\":-0.52,\"blanX\":[-0.62,-0.608,-0.596]}"
    ]
   },
   {
-   "name": "膝掛けの置き場を前の -0.62 に戻す（V44）",
+   "name": "ちゃぶ台の一式の置き場を前の -0.72 に戻す（V44）",
    "file": "src/engine/town3dViewer.js",
    "check": "K4",
    "caught": true,
    "failed": [
-    "K4 不合格 {\"pass\":false,\"catX\":0.28,\"toyHomeX\":-0.32,\"blanX\":[-0.62,-0.608,-0.596]}"
+    "K4 不合格 {\"pass\":false,\"catX\":0.28,\"toyHomeX\":-0.32,\"chabuX\":-0.72,\"blanX\":[-0.62,-0.608,-0.596]}"
+   ]
+  },
+  {
+   "name": "三毛のブチの自分の明るさを、明るくする前の色のままにする（外の目の12）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "K2",
+   "caught": true,
+   "failed": [
+    "K2 不合格 {\"pass\":false,\"day\":[0.3,0.3,0.3,0.119],\"night\":[0.319,0.319,0.311,0.093]}"
+   ]
+  },
+  {
+   "name": "夜のほこりの輪を窓側の半分に限らない（外の目の13）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "K5",
+   "caught": true,
+   "failed": [
+    "K5 不合格 {\"pass\":false,\"n\":46,\"dayOut\":0,\"nightOut\":21}"
+   ]
+  },
+  {
+   "name": "夜の床の光だまりを前の z 2.4 に戻す（外の目の13）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "K8",
+   "caught": true,
+   "failed": [
+    "K8 不合格 {\"pass\":false,\"nightBigSeg\":15,\"ceilWarm\":2.885,\"backWarm\":0.888,\"dayBigSeg\":0,\"poolZ\":2.4}"
+   ]
+  },
+  {
+   "name": "風鈴を吊る腕木を外す（外の目の3）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "K9",
+   "caught": true,
+   "failed": [
+    "K9 不合格 {\"pass\":false,\"chimeX\":1.82,\"chimeArm\":0}"
+   ]
+  },
+  {
+   "name": "猫が場所を移る時の左の端を前の -0.35 に戻す（ちゃぶ台を動かした分）",
+   "file": "src/engine/town3dViewer.js",
+   "check": "K17",
+   "caught": true,
+   "failed": [
+    "K17 不合格 {\"pass\":false,\"relocX1\":-0.35}"
    ]
   },
   {
@@ -63,7 +108,7 @@
    "check": "K5",
    "caught": true,
    "failed": [
-    "K5 不合格 {\"pass\":false,\"n\":46,\"dayOut\":16,\"nightOut\":36}"
+    "K5 不合格 {\"pass\":false,\"n\":46,\"dayOut\":16,\"nightOut\":42}"
    ]
   },
   {
@@ -90,7 +135,7 @@
    "check": "K8",
    "caught": true,
    "failed": [
-    "K8 不合格 {\"pass\":false,\"nightBigSeg\":0,\"ceilWarm\":0,\"backWarm\":0.788,\"dayBigSeg\":0}"
+    "K8 不合格 {\"pass\":false,\"nightBigSeg\":0,\"ceilWarm\":0,\"backWarm\":0.788,\"dayBigSeg\":0,\"poolZ\":2.65}"
    ]
   },
   {
@@ -99,7 +144,7 @@
    "check": "K9",
    "caught": true,
    "failed": [
-    "K9 不合格 {\"pass\":false,\"chimeX\":0.816}"
+    "K9 不合格 {\"pass\":false,\"chimeX\":0.816,\"chimeArm\":0}"
    ]
   },
   {
@@ -153,7 +198,7 @@
    "check": "K15",
    "caught": true,
    "failed": [
-    "K15 不合格 {\"pass\":false,\"eye\":[0,28,27],\"roomY\":26.5,\"roomZ\":23.8,\"open\":{\"lockX\":-1.1,\"camX\":0.553,\"camZ\":25.2,\"eyeZ\":27,\"yaw\":0},\"errs\":[]}"
+    "K15 不合格 {\"pass\":false,\"eye\":[0,28,27],\"roomY\":26.5,\"roomZ\":23.8,\"open\":{\"lockX\":-1.1,\"camX\":0.552,\"camZ\":25.2,\"eyeZ\":27,\"yaw\":0},\"errs\":[]}"
    ]
   },
   {
