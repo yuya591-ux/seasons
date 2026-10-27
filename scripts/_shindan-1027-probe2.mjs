@@ -1,0 +1,27 @@
+// 便14 診断の使い捨て: 情景の一覧から本物の操作で北寺尾を選び、段のボタンが届くか・押すと進むか。角部屋で画面を回した時の向き。本体は変えない
+import { chromium } from 'playwright'
+const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] })
+const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
+const page = await ctx.newPage()
+const errs = []; page.on('pageerror', (e) => errs.push(e.message))
+await page.goto('http://localhost:4951/seasons/?dev=1', { waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(2500); await page.locator('.gate').click().catch(() => {}); await page.waitForTimeout(1500)
+const reach = () => page.evaluate(() => { const s = document.querySelector('.iconbtn--stage'); const rc = s.getBoundingClientRect(); const t = document.elementFromPoint(rc.left + rc.width / 2, rc.top + rc.height / 2); return { text: s.textContent, rect: [rc.left, rc.top, rc.width, rc.height].map(Math.round), reachable: !!t && (t === s || s.contains(t)), dots: !!document.querySelector('.stagedots--on') } })
+await page.locator('.topbar .iconbtn', { hasText: '情景' }).click({ force: true }); await page.waitForTimeout(1000)
+await page.locator('.panel button', { hasText: '北寺尾の坂の街' }).first().click(); await page.waitForTimeout(900)
+await page.screenshot({ path: 'docs/qa/2026-10-27_seasons/shots/probe-iphone-gallery-place.png' })
+const cards = await page.evaluate(() => [...document.querySelectorAll('.scene-card')].filter((e) => e.offsetParent).map((e) => e.textContent.trim().slice(0, 16)))
+console.log('北寺尾のカード', JSON.stringify(cards))
+await page.locator('.scene-card').filter({ hasText: '夏' }).first().click().catch((e) => console.log('card err', String(e).slice(0, 80)))
+await page.waitForTimeout(7000)
+await page.mouse.move(200, 400); await page.mouse.move(210, 410); await page.waitForTimeout(400)
+console.log('選んだ後', JSON.stringify(await reach()))
+for (let i = 0; i < 3; i++) { await page.locator('.iconbtn--stage').click(); await page.waitForTimeout(3000); await page.mouse.move(200, 400 + i); await page.waitForTimeout(300); console.log('押した後', i + 1, JSON.stringify(await reach())) }
+await page.screenshot({ path: 'docs/qa/2026-10-27_seasons/shots/probe-iphone-stage3.png' })
+// 角部屋: 縦で開いてから横へ回す
+await page.evaluate(() => window.__applyScene('autumn-dusk-corner-room')); await page.waitForTimeout(6000)
+await page.screenshot({ path: 'docs/qa/2026-10-27_seasons/shots/probe-corner-portrait.png' })
+await page.setViewportSize({ width: 874, height: 402 }); await page.waitForTimeout(2500)
+await page.screenshot({ path: 'docs/qa/2026-10-27_seasons/shots/probe-corner-rotated.png' })
+console.log('errors', errs)
+await b.close()

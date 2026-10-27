@@ -1,0 +1,1466 @@
+{
+ "ipad": {
+  "device": {
+   "viewport": {
+    "width": 820,
+    "height": 1180
+   },
+   "deviceScaleFactor": 2,
+   "isMobile": true,
+   "hasTouch": true,
+   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+  },
+  "errors": [],
+  "stageBtn": {
+   "found": true,
+   "text": "窓をあける",
+   "rect": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "topIs": "CANVAS.",
+   "reachable": false
+  },
+  "topbarRow": [
+   {
+    "t": "情景",
+    "x": 601,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "設定",
+    "x": 671,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "写真",
+    "x": 742,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   }
+  ],
+  "window": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.57,
+    "ddt": 0.067,
+    "heavy": 0,
+    "light": 1,
+    "frames": 151,
+    "composer": true
+   },
+   "draw": {
+    "calls": 2286,
+    "tris": 781647,
+    "progs": 105,
+    "texMem": 110,
+    "geoMem": 2388,
+    "passes": 3,
+    "px": 2398678
+   },
+   "load": {
+    "jsMs": 1.17,
+    "residents": 66,
+    "critters": 28,
+    "cityWalkers": 25,
+    "birds": 5,
+    "skyDrifters": 33,
+    "balloons": 2,
+    "townSmoke": 1,
+    "senMist": 6,
+    "clouds": 37,
+    "trees": 200,
+    "adBalloons": 2
+   },
+   "canvas": {
+    "w": 1291,
+    "h": 1858,
+    "cssW": 820,
+    "cssH": 1180
+   },
+   "layers": [],
+   "dpr": 2,
+   "quality": "standard"
+  },
+  "qualitySteps": {
+   "こまやか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "ふつう": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "軽やか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   }
+  },
+  "scenes": {
+   "kitaterao-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12610,
+     "pr": 1.57,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2284,
+     "tris": 781659,
+     "progs": 105,
+     "texMem": 110,
+     "geoMem": 2388,
+     "passes": 3,
+     "px": 2398678
+    }
+   },
+   "kitaterao-window-3d-sunset": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 14714,
+     "pr": 1.57,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3249,
+     "tris": 967147,
+     "progs": 120,
+     "texMem": 143,
+     "geoMem": 3347,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "kitaterao-window-3d-rain-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12496,
+     "pr": 1.57,
+     "ddt": 0.683,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2324,
+     "tris": 816897,
+     "progs": 120,
+     "texMem": 120,
+     "geoMem": 2397,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "kitaterao-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12513,
+     "pr": 1.57,
+     "ddt": 0.783,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2222,
+     "tris": 703822,
+     "progs": 120,
+     "texMem": 122,
+     "geoMem": 2331,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "shishigaya-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1282,
+     "pr": 1.57,
+     "ddt": 0.784,
+     "heavy": 0,
+     "light": 2,
+     "frames": 147,
+     "composer": true
+    },
+    "draw": {
+     "calls": 573,
+     "tris": 111418,
+     "progs": 66,
+     "texMem": 40,
+     "geoMem": 549,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "autumn-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10447,
+     "pr": 1.57,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 783,
+     "tris": 647704,
+     "progs": 102,
+     "texMem": 80,
+     "geoMem": 1651,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "summer-rain-dusk": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-dusk-seaside": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-morning-mountains": {
+    "stats": null,
+    "draw": null
+   }
+  },
+  "flyLow": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.18,
+    "ddt": 0.033,
+    "heavy": 0,
+    "light": 0,
+    "frames": 323,
+    "composer": true
+   },
+   "draw": {
+    "calls": 1995,
+    "tris": 732181,
+    "progs": 108,
+    "texMem": 125,
+    "geoMem": 2826,
+    "passes": 3,
+    "px": 1348424
+   }
+  },
+  "walk": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.57,
+    "ddt": 0.6,
+    "heavy": 0,
+    "light": 3,
+    "frames": 495,
+    "composer": true
+   },
+   "draw": {
+    "calls": 545,
+    "tris": 502976,
+    "progs": 117,
+    "texMem": 129,
+    "geoMem": 2943,
+    "passes": 3,
+    "px": 2398678
+   }
+  }
+ },
+ "ipadL": {
+  "device": {
+   "viewport": {
+    "width": 1180,
+    "height": 820
+   },
+   "deviceScaleFactor": 2,
+   "isMobile": true,
+   "hasTouch": true,
+   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+  },
+  "errors": [],
+  "stageBtn": {
+   "found": true,
+   "text": "窓をあける",
+   "rect": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "topIs": "CANVAS.",
+   "reachable": false
+  },
+  "topbarRow": [
+   {
+    "t": "情景",
+    "x": 961,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "設定",
+    "x": 1031,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "写真",
+    "x": 1102,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   }
+  ],
+  "window": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.57,
+    "ddt": 0.933,
+    "heavy": 0,
+    "light": 1,
+    "frames": 152,
+    "composer": true
+   },
+   "draw": {
+    "calls": 2958,
+    "tris": 871727,
+    "progs": 107,
+    "texMem": 125,
+    "geoMem": 2871,
+    "passes": 3,
+    "px": 2398678
+   },
+   "load": {
+    "jsMs": 1.14,
+    "residents": 66,
+    "critters": 28,
+    "cityWalkers": 25,
+    "birds": 5,
+    "skyDrifters": 33,
+    "balloons": 2,
+    "townSmoke": 1,
+    "senMist": 6,
+    "clouds": 37,
+    "trees": 200,
+    "adBalloons": 2
+   },
+   "canvas": {
+    "w": 1858,
+    "h": 1291,
+    "cssW": 1180,
+    "cssH": 820
+   },
+   "layers": [],
+   "dpr": 2,
+   "quality": "standard"
+  },
+  "qualitySteps": {
+   "こまやか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "ふつう": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "軽やか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   }
+  },
+  "scenes": {
+   "kitaterao-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12610,
+     "pr": 1.57,
+     "ddt": 0.883,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2956,
+     "tris": 871631,
+     "progs": 107,
+     "texMem": 125,
+     "geoMem": 2871,
+     "passes": 3,
+     "px": 2398678
+    }
+   },
+   "kitaterao-window-3d-sunset": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 14714,
+     "pr": 1.57,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 4518,
+     "tris": 1172709,
+     "progs": 121,
+     "texMem": 164,
+     "geoMem": 4394,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "kitaterao-window-3d-rain-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12496,
+     "pr": 1.57,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3016,
+     "tris": 910695,
+     "progs": 121,
+     "texMem": 135,
+     "geoMem": 2930,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "kitaterao-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12513,
+     "pr": 1.57,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2880,
+     "tris": 791556,
+     "progs": 121,
+     "texMem": 134,
+     "geoMem": 2788,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "shishigaya-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1282,
+     "pr": 1.57,
+     "ddt": 0.834,
+     "heavy": 0,
+     "light": 2,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 607,
+     "tris": 125940,
+     "progs": 66,
+     "texMem": 40,
+     "geoMem": 577,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "autumn-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10447,
+     "pr": 1.57,
+     "ddt": 0.733,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2647,
+     "tris": 872338,
+     "progs": 107,
+     "texMem": 120,
+     "geoMem": 2639,
+     "passes": 4,
+     "px": 2398678
+    }
+   },
+   "summer-rain-dusk": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-dusk-seaside": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-morning-mountains": {
+    "stats": null,
+    "draw": null
+   }
+  },
+  "flyLow": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.18,
+    "ddt": 0.033,
+    "heavy": 0,
+    "light": 0,
+    "frames": 322,
+    "composer": true
+   },
+   "draw": {
+    "calls": 2563,
+    "tris": 843755,
+    "progs": 109,
+    "texMem": 135,
+    "geoMem": 3214,
+    "passes": 3,
+    "px": 1348424
+   }
+  },
+  "walk": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.57,
+    "ddt": 0.066,
+    "heavy": 0,
+    "light": 3,
+    "frames": 497,
+    "composer": true
+   },
+   "draw": {
+    "calls": 1587,
+    "tris": 873619,
+    "progs": 117,
+    "texMem": 145,
+    "geoMem": 3447,
+    "passes": 3,
+    "px": 2398678
+   }
+  }
+ },
+ "ipad13": {
+  "device": {
+   "viewport": {
+    "width": 1032,
+    "height": 1376
+   },
+   "deviceScaleFactor": 2,
+   "isMobile": true,
+   "hasTouch": true,
+   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+  },
+  "errors": [],
+  "stageBtn": {
+   "found": true,
+   "text": "窓をあける",
+   "rect": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "topIs": "CANVAS.",
+   "reachable": false
+  },
+  "topbarRow": [
+   {
+    "t": "情景",
+    "x": 813,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "設定",
+    "x": 883,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "写真",
+    "x": 954,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   }
+  ],
+  "window": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.3,
+    "ddt": 1.017,
+    "heavy": 0,
+    "light": 1,
+    "frames": 152,
+    "composer": true
+   },
+   "draw": {
+    "calls": 2356,
+    "tris": 787541,
+    "progs": 105,
+    "texMem": 111,
+    "geoMem": 2431,
+    "passes": 3,
+    "px": 2397708
+   },
+   "load": {
+    "jsMs": 1.13,
+    "residents": 66,
+    "critters": 28,
+    "cityWalkers": 25,
+    "birds": 5,
+    "skyDrifters": 33,
+    "balloons": 2,
+    "townSmoke": 1,
+    "senMist": 6,
+    "clouds": 37,
+    "trees": 200,
+    "adBalloons": 2
+   },
+   "canvas": {
+    "w": 1341,
+    "h": 1788,
+    "cssW": 1032,
+    "cssH": 1376
+   },
+   "layers": [],
+   "dpr": 2,
+   "quality": "standard"
+  },
+  "qualitySteps": {
+   "こまやか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "ふつう": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "軽やか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   }
+  },
+  "scenes": {
+   "kitaterao-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12610,
+     "pr": 1.3,
+     "ddt": 1.016,
+     "heavy": 0,
+     "light": 1,
+     "frames": 147,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2349,
+     "tris": 787417,
+     "progs": 105,
+     "texMem": 111,
+     "geoMem": 2431,
+     "passes": 3,
+     "px": 2397708
+    }
+   },
+   "kitaterao-window-3d-sunset": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 14714,
+     "pr": 1.3,
+     "ddt": 0.2,
+     "heavy": 0,
+     "light": 1,
+     "frames": 148,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3341,
+     "tris": 978195,
+     "progs": 120,
+     "texMem": 145,
+     "geoMem": 3399,
+     "passes": 4,
+     "px": 2397708
+    }
+   },
+   "kitaterao-window-3d-rain-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12496,
+     "pr": 1.3,
+     "ddt": 1,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2396,
+     "tris": 828167,
+     "progs": 120,
+     "texMem": 121,
+     "geoMem": 2446,
+     "passes": 4,
+     "px": 2397708
+    }
+   },
+   "kitaterao-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12513,
+     "pr": 1.3,
+     "ddt": 0.166,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2296,
+     "tris": 713236,
+     "progs": 120,
+     "texMem": 123,
+     "geoMem": 2376,
+     "passes": 4,
+     "px": 2397708
+    }
+   },
+   "shishigaya-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1282,
+     "pr": 1.3,
+     "ddt": 0.183,
+     "heavy": 0,
+     "light": 2,
+     "frames": 148,
+     "composer": true
+    },
+    "draw": {
+     "calls": 582,
+     "tris": 114430,
+     "progs": 66,
+     "texMem": 40,
+     "geoMem": 554,
+     "passes": 4,
+     "px": 2397708
+    }
+   },
+   "autumn-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10447,
+     "pr": 1.3,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 834,
+     "tris": 653228,
+     "progs": 102,
+     "texMem": 80,
+     "geoMem": 1693,
+     "passes": 4,
+     "px": 2397708
+    }
+   },
+   "summer-rain-dusk": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-dusk-seaside": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-morning-mountains": {
+    "stats": null,
+    "draw": null
+   }
+  },
+  "flyLow": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 0.97,
+    "ddt": 0.316,
+    "heavy": 0,
+    "light": 0,
+    "frames": 326,
+    "composer": true
+   },
+   "draw": {
+    "calls": 2016,
+    "tris": 735732,
+    "progs": 108,
+    "texMem": 127,
+    "geoMem": 2860,
+    "passes": 3,
+    "px": 1349046
+   }
+  },
+  "walk": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12806,
+    "pr": 1.3,
+    "ddt": 0.067,
+    "heavy": 0,
+    "light": 3,
+    "frames": 502,
+    "composer": true
+   },
+   "draw": {
+    "calls": 1211,
+    "tris": 714420,
+    "progs": 118,
+    "texMem": 156,
+    "geoMem": 3756,
+    "passes": 3,
+    "px": 2397708
+   }
+  }
+ },
+ "pc": {
+  "device": {
+   "viewport": {
+    "width": 1920,
+    "height": 1080
+   },
+   "deviceScaleFactor": 1
+  },
+  "errors": [],
+  "stageBtn": {
+   "found": true,
+   "text": "窓をあける",
+   "rect": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "topIs": "CANVAS.",
+   "reachable": false
+  },
+  "topbarRow": [
+   {
+    "t": "情景",
+    "x": 1659,
+    "y": 19,
+    "w": 74,
+    "h": 53
+   },
+   {
+    "t": "設定",
+    "x": 1742,
+    "y": 19,
+    "w": 74,
+    "h": 53
+   },
+   {
+    "t": "写真",
+    "x": 1826,
+    "y": 19,
+    "w": 74,
+    "h": 53
+   }
+  ],
+  "window": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1,
+    "ddt": 0.067,
+    "heavy": 0,
+    "light": 1,
+    "frames": 158,
+    "composer": true
+   },
+   "draw": {
+    "calls": 3106,
+    "tris": 888361,
+    "progs": 107,
+    "texMem": 125,
+    "geoMem": 2976,
+    "passes": 3,
+    "px": 2073600
+   },
+   "load": {
+    "jsMs": 1.22,
+    "residents": 66,
+    "critters": 28,
+    "cityWalkers": 25,
+    "birds": 5,
+    "skyDrifters": 33,
+    "balloons": 2,
+    "townSmoke": 1,
+    "senMist": 6,
+    "clouds": 37,
+    "trees": 200,
+    "adBalloons": 2
+   },
+   "canvas": {
+    "w": 1920,
+    "h": 1080,
+    "cssW": 1920,
+    "cssH": 1080
+   },
+   "layers": [],
+   "dpr": 1,
+   "quality": "standard"
+  },
+  "qualitySteps": {
+   "こまやか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "ふつう": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "軽やか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   }
+  },
+  "scenes": {
+   "kitaterao-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12610,
+     "pr": 1,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 150,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3106,
+     "tris": 888277,
+     "progs": 107,
+     "texMem": 125,
+     "geoMem": 2976,
+     "passes": 3,
+     "px": 2073600
+    }
+   },
+   "kitaterao-window-3d-sunset": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 14714,
+     "pr": 1,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 147,
+     "composer": true
+    },
+    "draw": {
+     "calls": 4789,
+     "tris": 1210421,
+     "progs": 121,
+     "texMem": 166,
+     "geoMem": 4587,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "kitaterao-window-3d-rain-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12496,
+     "pr": 1,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 148,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3156,
+     "tris": 928757,
+     "progs": 121,
+     "texMem": 135,
+     "geoMem": 3043,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "kitaterao-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12513,
+     "pr": 1,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 0,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3023,
+     "tris": 808802,
+     "progs": 121,
+     "texMem": 134,
+     "geoMem": 2903,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "shishigaya-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1282,
+     "pr": 1,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 2,
+     "frames": 150,
+     "composer": true
+    },
+    "draw": {
+     "calls": 615,
+     "tris": 128844,
+     "progs": 66,
+     "texMem": 40,
+     "geoMem": 584,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "autumn-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10447,
+     "pr": 1,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 149,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2871,
+     "tris": 957714,
+     "progs": 108,
+     "texMem": 133,
+     "geoMem": 2782,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "summer-rain-dusk": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-dusk-seaside": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-morning-mountains": {
+    "stats": null,
+    "draw": null
+   }
+  },
+  "flyLow": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1,
+    "ddt": 0.033,
+    "heavy": 0,
+    "light": 1,
+    "frames": 342,
+    "composer": true
+   },
+   "draw": {
+    "calls": 2874,
+    "tris": 878833,
+    "progs": 110,
+    "texMem": 144,
+    "geoMem": 3311,
+    "passes": 3,
+    "px": 2073600
+   }
+  },
+  "walk": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12614,
+    "pr": 1,
+    "ddt": 0.067,
+    "heavy": 0,
+    "light": 1,
+    "frames": 536,
+    "composer": true
+   },
+   "draw": {
+    "calls": 1912,
+    "tris": 931861,
+    "progs": 121,
+    "texMem": 154,
+    "geoMem": 3500,
+    "passes": 3,
+    "px": 2073600
+   }
+  }
+ },
+ "laptop": {
+  "device": {
+   "viewport": {
+    "width": 1536,
+    "height": 864
+   },
+   "deviceScaleFactor": 1.25
+  },
+  "errors": [],
+  "stageBtn": {
+   "found": true,
+   "text": "窓をあける",
+   "rect": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "topIs": "CANVAS.",
+   "reachable": false
+  },
+  "topbarRow": [
+   {
+    "t": "情景",
+    "x": 1275,
+    "y": 19,
+    "w": 74,
+    "h": 53
+   },
+   {
+    "t": "設定",
+    "x": 1358,
+    "y": 19,
+    "w": 74,
+    "h": 53
+   },
+   {
+    "t": "写真",
+    "x": 1442,
+    "y": 19,
+    "w": 74,
+    "h": 53
+   }
+  ],
+  "window": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.25,
+    "ddt": 0.5,
+    "heavy": 0,
+    "light": 1,
+    "frames": 152,
+    "composer": true
+   },
+   "draw": {
+    "calls": 3105,
+    "tris": 888349,
+    "progs": 107,
+    "texMem": 125,
+    "geoMem": 2976,
+    "passes": 3,
+    "px": 2073600
+   },
+   "load": {
+    "jsMs": 1.11,
+    "residents": 66,
+    "critters": 28,
+    "cityWalkers": 25,
+    "birds": 5,
+    "skyDrifters": 33,
+    "balloons": 2,
+    "townSmoke": 1,
+    "senMist": 6,
+    "clouds": 37,
+    "trees": 200,
+    "adBalloons": 2
+   },
+   "canvas": {
+    "w": 1920,
+    "h": 1080,
+    "cssW": 1536,
+    "cssH": 864
+   },
+   "layers": [],
+   "dpr": 1.25,
+   "quality": "standard"
+  },
+  "qualitySteps": {
+   "こまやか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "ふつう": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "軽やか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   }
+  },
+  "scenes": {
+   "kitaterao-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12610,
+     "pr": 1.25,
+     "ddt": 0.416,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3103,
+     "tris": 888253,
+     "progs": 107,
+     "texMem": 125,
+     "geoMem": 2976,
+     "passes": 3,
+     "px": 2073600
+    }
+   },
+   "kitaterao-window-3d-sunset": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 14714,
+     "pr": 1.25,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 141,
+     "composer": true
+    },
+    "draw": {
+     "calls": 4787,
+     "tris": 1210243,
+     "progs": 121,
+     "texMem": 166,
+     "geoMem": 4587,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "kitaterao-window-3d-rain-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12496,
+     "pr": 1.25,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 0,
+     "frames": 142,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3163,
+     "tris": 928981,
+     "progs": 121,
+     "texMem": 135,
+     "geoMem": 3043,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "kitaterao-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12513,
+     "pr": 1.25,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 144,
+     "composer": true
+    },
+    "draw": {
+     "calls": 3023,
+     "tris": 808802,
+     "progs": 121,
+     "texMem": 134,
+     "geoMem": 2903,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "shishigaya-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1282,
+     "pr": 1.25,
+     "ddt": 0.383,
+     "heavy": 0,
+     "light": 2,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 615,
+     "tris": 128844,
+     "progs": 66,
+     "texMem": 40,
+     "geoMem": 584,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "autumn-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10447,
+     "pr": 1.25,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2874,
+     "tris": 957822,
+     "progs": 108,
+     "texMem": 133,
+     "geoMem": 2782,
+     "passes": 4,
+     "px": 2073600
+    }
+   },
+   "summer-rain-dusk": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-dusk-seaside": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-morning-mountains": {
+    "stats": null,
+    "draw": null
+   }
+  },
+  "flyLow": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.25,
+    "ddt": 0.033,
+    "heavy": 0,
+    "light": 0,
+    "frames": 321,
+    "composer": true
+   },
+   "draw": {
+    "calls": 2734,
+    "tris": 945151,
+    "progs": 110,
+    "texMem": 142,
+    "geoMem": 3303,
+    "passes": 3,
+    "px": 2073600
+   }
+  },
+  "walk": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12858,
+    "pr": 1.25,
+    "ddt": 0.067,
+    "heavy": 0,
+    "light": 3,
+    "frames": 496,
+    "composer": true
+   },
+   "draw": {
+    "calls": 1831,
+    "tris": 921415,
+    "progs": 118,
+    "texMem": 151,
+    "geoMem": 3546,
+    "passes": 3,
+    "px": 2073600
+   }
+  }
+ }
+}

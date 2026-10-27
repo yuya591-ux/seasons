@@ -1,0 +1,594 @@
+{
+ "iphone": {
+  "device": {
+   "viewport": {
+    "width": 402,
+    "height": 874
+   },
+   "deviceScaleFactor": 3,
+   "isMobile": true,
+   "hasTouch": true,
+   "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1"
+  },
+  "errors": [],
+  "stageBtn": {
+   "found": true,
+   "text": "窓をあける",
+   "rect": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "topIs": "CANVAS.",
+   "reachable": false
+  },
+  "topbarRow": [
+   {
+    "t": "情景",
+    "x": 183,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "設定",
+    "x": 253,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   },
+   {
+    "t": "写真",
+    "x": 324,
+    "y": 16,
+    "w": 62,
+    "h": 44
+   }
+  ],
+  "window": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.6,
+    "ddt": 0.684,
+    "heavy": 0,
+    "light": 1,
+    "frames": 152,
+    "composer": true
+   },
+   "draw": {
+    "calls": 1886,
+    "tris": 720631,
+    "progs": 102,
+    "texMem": 103,
+    "geoMem": 2176,
+    "passes": 3,
+    "px": 898914
+   },
+   "load": {
+    "jsMs": 1.08,
+    "residents": 66,
+    "critters": 28,
+    "cityWalkers": 25,
+    "birds": 5,
+    "skyDrifters": 33,
+    "balloons": 2,
+    "townSmoke": 1,
+    "senMist": 6,
+    "clouds": 37,
+    "trees": 200,
+    "adBalloons": 2
+   },
+   "canvas": {
+    "w": 643,
+    "h": 1398,
+    "cssW": 402,
+    "cssH": 874
+   },
+   "layers": [],
+   "dpr": 3,
+   "quality": "standard"
+  },
+  "qualitySteps": {
+   "こまやか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "ふつう": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   },
+   "軽やか": {
+    "err": "Error: page.evaluate: TypeError: Cannot read properties of null (reading 'pr')\n    at eval (eval at evaluate (:303:30), "
+   }
+  },
+  "scenes": {
+   "kitaterao-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12610,
+     "pr": 1.6,
+     "ddt": 0.533,
+     "heavy": 0,
+     "light": 1,
+     "frames": 147,
+     "composer": true
+    },
+    "draw": {
+     "calls": 1880,
+     "tris": 719327,
+     "progs": 102,
+     "texMem": 103,
+     "geoMem": 2176,
+     "passes": 3,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-sunset": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 14714,
+     "pr": 1.6,
+     "ddt": 0.066,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2600,
+     "tris": 860675,
+     "progs": 118,
+     "texMem": 125,
+     "geoMem": 2913,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-rain": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12661,
+     "pr": 1.6,
+     "ddt": 0.517,
+     "heavy": 0,
+     "light": 1,
+     "frames": 147,
+     "composer": true
+    },
+    "draw": {
+     "calls": 1962,
+     "tris": 729528,
+     "progs": 119,
+     "texMem": 114,
+     "geoMem": 2262,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-rain-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12496,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 1965,
+     "tris": 764207,
+     "progs": 119,
+     "texMem": 111,
+     "geoMem": 2198,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 14598,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 2572,
+     "tris": 885755,
+     "progs": 119,
+     "texMem": 124,
+     "geoMem": 2821,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-spring": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12759,
+     "pr": 1.6,
+     "ddt": 0.617,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 1942,
+     "tris": 723716,
+     "progs": 106,
+     "texMem": 96,
+     "geoMem": 2190,
+     "passes": 3,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-autumn": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12767,
+     "pr": 1.6,
+     "ddt": 0.533,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 1936,
+     "tris": 716058,
+     "progs": 119,
+     "texMem": 113,
+     "geoMem": 2246,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12513,
+     "pr": 1.6,
+     "ddt": 0.065,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 1820,
+     "tris": 644322,
+     "progs": 119,
+     "texMem": 113,
+     "geoMem": 2099,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "kitaterao-window-3d-snow-night": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12490,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 1832,
+     "tris": 682922,
+     "progs": 118,
+     "texMem": 111,
+     "geoMem": 2097,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "shishigaya-window-3d": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1282,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 2,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 520,
+     "tris": 103534,
+     "progs": 66,
+     "texMem": 39,
+     "geoMem": 526,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "shishigaya-window-3d-spring": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1329,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 2,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 559,
+     "tris": 105546,
+     "progs": 60,
+     "texMem": 38,
+     "geoMem": 500,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "shishigaya-window-3d-autumn": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1295,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 2,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 543,
+     "tris": 102386,
+     "progs": 61,
+     "texMem": 41,
+     "geoMem": 555,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "shishigaya-window-3d-snow": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 1140,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 2,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 441,
+     "tris": 98186,
+     "progs": 49,
+     "texMem": 36,
+     "geoMem": 473,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "autumn-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10447,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 516,
+     "tris": 578042,
+     "progs": 101,
+     "texMem": 76,
+     "geoMem": 1465,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "autumn-rain-night-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10364,
+     "pr": 1.6,
+     "ddt": 0.517,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 509,
+     "tris": 575644,
+     "progs": 101,
+     "texMem": 75,
+     "geoMem": 1455,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "summer-morning-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 12477,
+     "pr": 1.6,
+     "ddt": 0.6,
+     "heavy": 0,
+     "light": 1,
+     "frames": 146,
+     "composer": true
+    },
+    "draw": {
+     "calls": 529,
+     "tris": 566066,
+     "progs": 99,
+     "texMem": 76,
+     "geoMem": 1606,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "spring-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10518,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 144,
+     "composer": true
+    },
+    "draw": {
+     "calls": 527,
+     "tris": 592954,
+     "progs": 100,
+     "texMem": 73,
+     "geoMem": 1483,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "spring-morning-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10657,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 144,
+     "composer": true
+    },
+    "draw": {
+     "calls": 549,
+     "tris": 557018,
+     "progs": 100,
+     "texMem": 76,
+     "geoMem": 1620,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "winter-snow-dusk-corner-room": {
+    "stats": {
+     "calls": 1,
+     "tris": 1,
+     "objs": 10362,
+     "pr": 1.6,
+     "ddt": 0.067,
+     "heavy": 0,
+     "light": 1,
+     "frames": 145,
+     "composer": true
+    },
+    "draw": {
+     "calls": 526,
+     "tris": 532588,
+     "progs": 97,
+     "texMem": 76,
+     "geoMem": 1466,
+     "passes": 4,
+     "px": 898914
+    }
+   },
+   "summer-rain-dusk": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-rain-morning": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-rain-night": {
+    "stats": null,
+    "draw": null
+   },
+   "autumn-rain-dusk": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-morning-mountains": {
+    "stats": null,
+    "draw": null
+   },
+   "summer-dusk-seaside": {
+    "stats": null,
+    "draw": null
+   }
+  },
+  "flyLow": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12610,
+    "pr": 1.2,
+    "ddt": 0.037,
+    "heavy": 0,
+    "light": 0,
+    "frames": 320,
+    "composer": true
+   },
+   "draw": {
+    "calls": 1664,
+    "tris": 670320,
+    "progs": 108,
+    "texMem": 121,
+    "geoMem": 2640,
+    "passes": 3,
+    "px": 505136
+   }
+  },
+  "walk": {
+   "stats": {
+    "calls": 1,
+    "tris": 1,
+    "objs": 12858,
+    "pr": 1.6,
+    "ddt": 0.383,
+    "heavy": 0,
+    "light": 2,
+    "frames": 491,
+    "composer": true
+   },
+   "draw": {
+    "calls": 909,
+    "tris": 666153,
+    "progs": 117,
+    "texMem": 148,
+    "geoMem": 3491,
+    "passes": 3,
+    "px": 898914
+   }
+  }
+ }
+}

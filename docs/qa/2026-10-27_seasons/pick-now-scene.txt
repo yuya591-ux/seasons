@@ -1,0 +1,13 @@
+1月: 7時=summer-rain-morning(summer) 12時=kitaterao-window-3d(summer) 17時=winter-snow-dusk-corner-room(winter) 21時=kitaterao-window-3d-snow-night(winter)
+2月: 7時=summer-rain-morning(summer) 12時=kitaterao-window-3d(summer) 17時=kitaterao-window-3d-snow(winter) 21時=kitaterao-window-3d-snow-night(winter)
+3月: 7時=spring-morning-corner-room(spring) 12時=kitaterao-window-3d(summer) 17時=spring-dusk-corner-room(spring) 21時=summer-rain-night(summer)
+4月: 7時=shishigaya-window-3d-spring(spring) 12時=kitaterao-window-3d(summer) 17時=kitaterao-window-3d-spring(spring) 21時=summer-rain-night(summer)
+5月: 7時=shishigaya-window-3d-spring(spring) 12時=kitaterao-window-3d(summer) 17時=kitaterao-window-3d-spring(spring) 21時=summer-rain-night(summer)
+6月: 7時=summer-morning-mountains(summer) 12時=kitaterao-window-3d(summer) 17時=summer-dusk-seaside(summer) 21時=summer-rain-night(summer)
+7月: 7時=shishigaya-window-3d(summer) 12時=kitaterao-window-3d(summer) 17時=kitaterao-window-3d-rain(summer) 21時=summer-rain-night(summer)
+8月: 7時=summer-rain-morning(summer) 12時=kitaterao-window-3d(summer) 17時=summer-rain-dusk(summer) 21時=kitaterao-window-3d-night(summer)
+9月: 7時=summer-rain-morning(summer) 12時=autumn-rain-dusk(autumn) 17時=shishigaya-window-3d-autumn(autumn) 21時=autumn-rain-night-corner-room(autumn)
+10月: 7時=summer-rain-morning(summer) 12時=autumn-rain-dusk(autumn) 17時=autumn-dusk-corner-room(autumn) 21時=autumn-rain-night-corner-room(autumn)
+11月: 7時=summer-rain-morning(summer) 12時=autumn-rain-dusk(autumn) 17時=autumn-rain-dusk(autumn) 21時=autumn-rain-night-corner-room(autumn)
+12月: 7時=summer-rain-morning(summer) 12時=kitaterao-window-3d(summer) 17時=kitaterao-window-3d-snow(winter) 21時=kitaterao-window-3d-snow-night(winter)
+{"summer-noon":1,"summer-dusk":4,"summer-night":3,"spring-dusk":2,"autumn-dusk":4,"winter-dusk":3,"winter-night":1,"summer-morning":4,"spring-morning":2,"autumn-night":1}

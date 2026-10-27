@@ -1,0 +1,4 @@
+町A の後 {"add":2,"rem":0,"up":2,"upRem":0,"stages":1}
+連続切替の後 {"add":12,"rem":10,"up":22,"upRem":20,"stages":1}
+角部屋へ替えた直後の口 [{"stats":10447,"draw":525},{"stats":10447,"draw":525},{"stats":10447,"draw":525},{"stats":10447,"draw":525},{"stats":10447,"draw":533},{"stats":10447,"draw":536},{"stats":10447,"draw":531},{"stats":10447,"draw":529},{"stats":10447,"draw":527},{"stats":10447,"draw":527},{"stats":10447,"draw":525},{"stats":10447,"draw":523}]
+errors []
