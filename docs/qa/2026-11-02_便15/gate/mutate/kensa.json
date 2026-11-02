@@ -1,0 +1,158 @@
+{
+ "A1": {
+  "pass": false,
+  "detail": "鳴らす音 11・出典に無い 1（kitaterao-window-3d-night/suzumushi.mp3）",
+  "sec": 0
+ },
+ "_at": "2026-11-02T16:34:28.724Z",
+ "A2": {
+  "pass": false,
+  "detail": "アプリ内 Japanese bush warbler (uguisu) in a city ambiance（ウグイス） https://commons.wikimedia.org/wiki/File:Uguisu5707.ogg",
+  "sec": 0
+ },
+ "A3": {
+  "pass": false,
+  "detail": "使わない音 0・使わない画と道具 1",
+  "sec": 0
+ },
+ "A4": {
+  "pass": false,
+  "detail": "見出し 7・撤去した情景の名の見出し 1・「すべて元は Ogg」なし",
+  "sec": 0
+ },
+ "A5": {
+  "pass": false,
+  "detail": "食い違う書き方のファイル 1",
+  "sec": 0
+ },
+ "A6": {
+  "pass": false,
+  "detail": "足りない 25・古い 30 あまり",
+  "sec": 0
+ },
+ "A7": {
+  "pass": false,
+  "detail": "ACES 1・NoToneMapping 0・古い軽やかの説明 なし",
+  "sec": 0
+ },
+ "B1": {
+  "pass": false,
+  "detail": "押した札「ふつう」・舞台が同じ false・組み直し中（測りが空）の回 2/20",
+  "sec": 34
+ },
+ "B2": {
+  "pass": false,
+  "detail": "段を「こまやか」へ・組み直し あり・組み直した町の段 soft（soft のはず）・音の鳴らし直し 0・ボタン「乗り出す」→「窓をあける」・窓のあき 0",
+  "sec": 39
+ },
+ "B3": {
+  "pass": false,
+  "detail": "断った後の札 点いたまま・保存の値 false",
+  "sec": 17
+ },
+ "B4": {
+  "pass": false,
+  "detail": "左端の差 50.1px・長さの差 0.0px（音 174.4〜 ／ 明るさ 124.3〜）",
+  "sec": 16
+ },
+ "B5": {
+  "pass": false,
+  "detail": "操作のボタン 8・パネルの外に見える 2",
+  "sec": 23
+ },
+ "B6": {
+  "pass": false,
+  "detail": "ボタン 5（地上へ・窓辺へ・情景・設定・写真）・段の数 2",
+  "sec": 35
+ },
+ "C1": {
+  "pass": false,
+  "detail": "見回しの目標 0.000→0.000・色と空気の口 __town3dLookState undefined",
+  "sec": 22
+ },
+ "C2": {
+  "pass": false,
+  "detail": "組み立て中の舞台 2・打ち切った後に残る舞台 1・canvas 2",
+  "sec": 32
+ },
+ "C3": {
+  "pass": true,
+  "detail": "1つ目の町の後の受け口 3・温めの最中に替えた回 4/4・替え終えた後の受け口 3（resize:function resize() {     const  ／ pointerup:(event) => {       var _a;     ／ resize:function resize() { applySize( ／ pointerup:(e) => { if (active && e && e. ／ pointerup:(e) => {\r     pointers.delete(）",
+  "sec": 63
+ },
+ "C4": {
+  "pass": false,
+  "detail": "町を開いた・window の __town3d の口 1（__town3dMerge）",
+  "sec": 18
+ },
+ "C5": {
+  "pass": false,
+  "detail": "前の町の口が値を返した 4（draw attr pick dbg）・今の町の口 true・2Dへ移った後に残る町の口 88（__town3dFigShot __town3dEvent __town3dMerge __town3dFrozen __town3dGp __town3dSetView）",
+  "sec": 38
+ },
+ "D1": {
+  "pass": false,
+  "detail": "雨筋の頂点（作る数・描く数）: 軽やか 1120・1120 ／ ふつう 1120・1120",
+  "sec": 42
+ },
+ "E1": {
+  "pass": false,
+  "detail": "48通りのうち季節の違う情景 15（1月7時=summer-rain-morning 1月12時=kitaterao-window-3d 2月7時=summer-rain-morning）",
+  "sec": 0
+ },
+ "E2": {
+  "pass": false,
+  "detail": "縦で開いた向き -1.12・横へ回した後 -1.12・見回してから縦へ戻した後 -0.90",
+  "sec": 29
+ },
+ "E3": {
+  "pass": false,
+  "detail": "kitaterao/iphone 錠と手すりの縦の離れ -11.2px・shishigaya/iphone 錠と手すりの縦の離れ -13.9px・shishigaya/pc 錠と手すりの縦の離れ -17.1px・kitaterao/pc 錠と手すりの縦の離れ -13.8px",
+  "sec": 67
+ },
+ "E4": {
+  "pass": false,
+  "detail": "kitaterao-spring 粒の群 7・四角のまま 1・shishigaya-snow 粒の群 4・四角のまま 1・kitaterao-autumn 粒の群 7・四角のまま 1",
+  "sec": 54
+ },
+ "E5": {
+  "pass": false,
+  "detail": "茅葺の屋根 2・雪の載る材 0",
+  "sec": 15
+ },
+ "E6": {
+  "pass": false,
+  "detail": "左の長押の手前の端 z -0.45（前の壁の内側 0.15）",
+  "sec": 23
+ },
+ "E7": {
+  "pass": false,
+  "detail": "光る窓の材: 夏の朝 478・春の朝 478・秋の夕 478",
+  "sec": 61
+ },
+ "E8": {
+  "pass": false,
+  "detail": "雨: 円盤 0・光輪 0.92 ／ 晴れ: 円盤 0.95・光輪 0.92",
+  "sec": 42
+ },
+ "E9": {
+  "pass": false,
+  "detail": "iphone 縦の桟から 16px・円盤とまわりの明るさの差 49.4・pc 縦の桟から 13px・円盤とまわりの明るさの差 40.7",
+  "sec": 32
+ },
+ "E10": {
+  "pass": false,
+  "detail": "桟のまわりの暗い画素: 鳥が桟の所にいる時刻 5214・いない時刻 5184",
+  "sec": 18
+ },
+ "E11": {
+  "pass": false,
+  "detail": "円盤の明るい芯の半径 45.6px・円盤の中の輪に沿った 16 本の筋の縞の強さ（明るさの振幅）: 半径の 0.5 倍 0.357・0.85 倍 0.231",
+  "sec": 19
+ },
+ "E12": {
+  "pass": false,
+  "detail": "pc 端と内側の明るさの差 117.18・iphone 端と内側の明るさの差 234.37",
+  "sec": 19
+ }
+}

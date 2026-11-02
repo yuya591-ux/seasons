@@ -1,0 +1,68 @@
+{
+ "E1": {
+  "pass": false,
+  "detail": "48通りのうち季節の違う情景 15（1月7時=summer-rain-morning 1月12時=kitaterao-window-3d 2月7時=summer-rain-morning）",
+  "sec": 0
+ },
+ "E2": {
+  "pass": false,
+  "detail": "縦で開いた向き -1.12・横へ回した後 -1.12・見回してから縦へ戻した後 -0.90",
+  "sec": 36
+ },
+ "E3": {
+  "pass": false,
+  "detail": "kitaterao/iphone 錠と手すりの縦の離れ -11.2px・shishigaya/iphone 錠と手すりの縦の離れ -13.9px・shishigaya/pc 錠と手すりの縦の離れ -17.1px・kitaterao/pc 錠と手すりの縦の離れ -13.8px",
+  "sec": 80
+ },
+ "E4": {
+  "pass": false,
+  "detail": "kitaterao-spring 粒の群 7・四角のまま 1・shishigaya-snow 粒の群 4・四角のまま 1・kitaterao-autumn 粒の群 7・四角のまま 1",
+  "sec": 69
+ },
+ "E5": {
+  "pass": false,
+  "detail": "茅葺の屋根 2・雪の載る材 0",
+  "sec": 17
+ },
+ "E6": {
+  "pass": false,
+  "detail": "部品が見つからない",
+  "sec": 28
+ },
+ "E7": {
+  "pass": false,
+  "detail": "光る窓の材: 夏の朝 478・春の朝 478・秋の夕 478",
+  "sec": 83
+ },
+ "E8": {
+  "pass": false,
+  "detail": "雨: 円盤 0.95・光輪 0.92 ／ 晴れ: 円盤 0.95・光輪 0.92",
+  "sec": 55
+ },
+ "E9": {
+  "pass": false,
+  "detail": "iphone 縦の桟から 42px・円盤とまわりの明るさの差 63・pc 縦の桟から 13px・円盤とまわりの明るさの差 65.2",
+  "sec": 39
+ },
+ "E11": {
+  "pass": false,
+  "detail": "円盤の明るい芯の半径 45.5px・円盤の中の輪に沿った 16 本の筋の縞の強さ（明るさの振幅）: 半径の 0.5 倍 0.369・0.85 倍 0.227",
+  "sec": 19
+ },
+ "E12": {
+  "pass": false,
+  "detail": "pc 端と内側の明るさの差 117.18・iphone 端と内側の明るさの差 234.37",
+  "sec": 25
+ },
+ "E13": {
+  "pass": false,
+  "detail": "撮り直しの台本 なし・角部屋のサムネ 前のまま",
+  "sec": 0
+ },
+ "_at": "2026-11-02T15:46:22.530Z",
+ "E14": {
+  "pass": false,
+  "detail": "autumn-dusk-corner-room 左右の壁 3 枚・いちばん手前の端 z -0.45・kitaterao 左右の壁 2 枚・いちばん手前の端 z -0.45",
+  "sec": 52
+ }
+}

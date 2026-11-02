@@ -1,0 +1,178 @@
+{
+ "F1": {
+  "pass": true,
+  "detail": "残る所 なし",
+  "sec": 0
+ },
+ "F2": {
+  "pass": true,
+  "detail": "bg3d の情景 0・画像 0・コード なし",
+  "sec": 0
+ },
+ "F3": {
+  "pass": true,
+  "detail": "残る印 なし・残る CSS なし",
+  "sec": 0
+ },
+ "F4": {
+  "pass": true,
+  "detail": "残る物 なし",
+  "sec": 0
+ },
+ "F5": {
+  "pass": true,
+  "detail": "残る物 なし",
+  "sec": 0
+ },
+ "F6": {
+  "pass": true,
+  "detail": "引退した名を参照する台本 0",
+  "sec": 0
+ },
+ "F7": {
+  "pass": true,
+  "detail": "本番のビルドで口が残るファイル 0",
+  "sec": 0
+ },
+ "D2": {
+  "pass": true,
+  "detail": "LIGHT_GEN 0",
+  "sec": 0
+ },
+ "A7": {
+  "pass": true,
+  "detail": "ACES 0・NoToneMapping 0・古い軽やかの説明 なし",
+  "sec": 0
+ },
+ "_at": "2026-11-02T16:34:47.845Z",
+ "B1": {
+  "pass": true,
+  "detail": "押した札「ふつう」・舞台が同じ true・組み直し中（測りが空）の回 0/20",
+  "sec": 26
+ },
+ "B3": {
+  "pass": true,
+  "detail": "断った後の札 消えた・保存の値 false",
+  "sec": 15
+ },
+ "B4": {
+  "pass": true,
+  "detail": "左端の差 0.0px・長さの差 0.0px（音 124.3〜 ／ 明るさ 124.3〜）",
+  "sec": 16
+ },
+ "B2": {
+  "pass": true,
+  "detail": "段を「こまやか」へ・組み直し あり・組み直した町の段 soft（soft のはず）・音の鳴らし直し 0・ボタン「乗り出す」→「乗り出す」・窓のあき 1",
+  "sec": 36
+ },
+ "B5": {
+  "pass": true,
+  "detail": "操作のボタン 8・パネルの外に見える 0",
+  "sec": 21
+ },
+ "B6": {
+  "pass": true,
+  "detail": "ボタン 5（地上へ・窓辺へ・情景・設定・写真）・段の数 1",
+  "sec": 43
+ },
+ "C1": {
+  "pass": true,
+  "detail": "見回しの目標 0.000→0.960・色と空気の口 __town3dLookState function",
+  "sec": 23
+ },
+ "C4": {
+  "pass": true,
+  "detail": "町を開いた・window の __town3d の口 0",
+  "sec": 16
+ },
+ "C5": {
+  "pass": true,
+  "detail": "前の町の口が値を返した 0・今の町の口 true・2Dへ移った後に残る町の口 0",
+  "sec": 35
+ },
+ "C2": {
+  "pass": true,
+  "detail": "組み立て中の舞台 1・打ち切った後に残る舞台 0・canvas 1",
+  "sec": 33
+ },
+ "C3": {
+  "pass": true,
+  "detail": "1つ目の町の後の受け口 3・温めの最中に替えた回 4/4・替え終えた後の受け口 3（resize:function resize() {     const  ／ pointerup:(event) => {       var _a;     ／ resize:function resize() { applySize( ／ pointerup:(e) => { if (active && e && e. ／ pointerup:(e) => {\r     pointers.delete(）",
+  "sec": 64
+ },
+ "D1": {
+  "pass": true,
+  "detail": "雨筋の頂点（作る数・描く数）: 軽やか 1120・680 ／ ふつう 1120・1120",
+  "sec": 47
+ },
+ "E12": {
+  "pass": true,
+  "detail": "pc 端と内側の明るさの差 0・iphone 端と内側の明るさの差 0",
+  "sec": 19
+ },
+ "E1": {
+  "pass": true,
+  "detail": "48通りのうち季節の違う情景 0",
+  "sec": 0
+ },
+ "E2": {
+  "pass": true,
+  "detail": "縦で開いた向き -1.12・横へ回した後 -0.60・見回してから縦へ戻した後 -0.90",
+  "sec": 29
+ },
+ "E3": {
+  "pass": true,
+  "detail": "kitaterao/iphone 錠と手すりの縦の離れ 10.6px・shishigaya/iphone 錠と手すりの縦の離れ 46.5px・shishigaya/pc 錠と手すりの縦の離れ 57.5px・kitaterao/pc 錠と手すりの縦の離れ 13.1px",
+  "sec": 65
+ },
+ "E4": {
+  "pass": true,
+  "detail": "kitaterao-spring 粒の群 7・四角のまま 0・shishigaya-snow 粒の群 4・四角のまま 0・kitaterao-autumn 粒の群 7・四角のまま 0",
+  "sec": 51
+ },
+ "E5": {
+  "pass": true,
+  "detail": "茅葺の屋根 2・雪の載る材 2",
+  "sec": 12
+ },
+ "E6": {
+  "pass": true,
+  "detail": "左の長押の手前の端 z 0.15（前の壁の内側 0.15）",
+  "sec": 20
+ },
+ "E7": {
+  "pass": true,
+  "detail": "光る窓の材: 夏の朝 0・春の朝 0・秋の夕 478",
+  "sec": 58
+ },
+ "E8": {
+  "pass": true,
+  "detail": "雨: 円盤 0・光輪 0.2 ／ 晴れ: 円盤 0.95・光輪 0.92",
+  "sec": 39
+ },
+ "E9": {
+  "pass": true,
+  "detail": "iphone 縦の桟から 99px・円盤とまわりの明るさの差 57.7・pc 縦の桟から 291px・円盤とまわりの明るさの差 51.9",
+  "sec": 29
+ },
+ "E10": {
+  "pass": true,
+  "detail": "桟のまわりの暗い画素: 鳥が桟の所にいる時刻 5184・いない時刻 5184",
+  "sec": 18
+ },
+ "E11": {
+  "pass": true,
+  "detail": "円盤の明るい芯の半径 53.5px・円盤の中の輪に沿った 16 本の筋の縞の強さ（明るさの振幅）: 半径の 0.5 倍 0.178・0.85 倍 0.047",
+  "sec": 19
+ },
+ "A6": {
+  "pass": true,
+  "detail": "足りない なし・古い なし",
+  "sec": 0
+ },
+ "E14": {
+  "pass": true,
+  "detail": "autumn-dusk-corner-room 左右の壁 3 枚・いちばん手前の端 z -0.15・kitaterao 左右の壁 2 枚・いちばん手前の端 z -0.15",
+  "sec": 42
+ }
+}

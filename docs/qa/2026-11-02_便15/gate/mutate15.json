@@ -1,0 +1,281 @@
+[
+ {
+  "name": "S1 鈴虫の出典",
+  "file": "src/data/credits.js",
+  "check": "A1",
+  "caught": true,
+  "failed": [
+   "A1 不合格: 鳴らす音 11・出典に無い 1（kitaterao-window-3d-night/suzumushi.mp3）"
+  ]
+ },
+ {
+  "name": "S2 ウグイスの出典",
+  "file": "src/data/credits.js",
+  "check": "A2",
+  "caught": true,
+  "failed": [
+   "A2 不合格: アプリ内 Japanese bush warbler (uguisu) in a city ambiance（ウグイス） https://commons.wikimedia.org/wiki/File:Uguisu5707.ogg"
+  ]
+ },
+ {
+  "name": "S3 使っていない出典の行",
+  "file": "src/data/credits.js",
+  "check": "A3",
+  "caught": true,
+  "failed": [
+   "A3 不合格: 使わない音 0・使わない画と道具 1"
+  ]
+ },
+ {
+  "name": "S4 CREDITS の見出し",
+  "file": "CREDITS.md",
+  "check": "A4",
+  "caught": true,
+  "failed": [
+   "A4 不合格: 見出し 7・撤去した情景の名の見出し 1・「すべて元は Ogg」なし"
+  ]
+ },
+ {
+  "name": "S5 情景データの権利のコメント",
+  "file": "src/data/scenes/summer-rain-morning.js",
+  "check": "A5",
+  "caught": true,
+  "failed": [
+   "A5 不合格: 食い違う書き方のファイル 1"
+  ]
+ },
+ {
+  "name": "S55 README",
+  "file": "README.md",
+  "check": "A6",
+  "caught": true,
+  "failed": [
+   "A6 不合格: 足りない 25・古い 30 あまり"
+  ]
+ },
+ {
+  "name": "S72 古い色の説明",
+  "file": "src/engine/town3dViewer.js",
+  "check": "A7",
+  "caught": true,
+  "failed": [
+   "A7 不合格: ACES 1・NoToneMapping 0・古い軽やかの説明 なし"
+  ]
+ },
+ {
+  "name": "S32 傾きの拒否で札を消す",
+  "file": "src/main.js",
+  "check": "B3",
+  "caught": true,
+  "failed": [
+   "B3 不合格: 断った後の札 点いたまま・保存の値 false"
+  ]
+ },
+ {
+  "name": "V73 右上のボタンを1段に",
+  "file": "src/style.css",
+  "check": "B6",
+  "caught": true,
+  "failed": [
+   "B6 不合格: ボタン 5（地上へ・窓辺へ・情景・設定・写真）・段の数 2"
+  ]
+ },
+ {
+  "name": "S23 見回しの口の上書き",
+  "file": "src/engine/town3dViewer.js",
+  "check": "C1",
+  "caught": true,
+  "failed": [
+   "C1 不合格: 見回しの目標 0.000→0.000・色と空気の口 __town3dLookState undefined"
+  ]
+ },
+ {
+  "name": "S24 打ち切りの片付け",
+  "file": "src/engine/town3dViewer.js",
+  "check": "C2",
+  "caught": true,
+  "failed": [
+   "C2 不合格: 組み立て中の舞台 2・打ち切った後に残る舞台 1・canvas 2"
+  ]
+ },
+ {
+  "name": "S26 本番で口を置かない",
+  "file": "src/engine/town3dViewer.js",
+  "check": "C4",
+  "caught": true,
+  "failed": [
+   "C4 不合格: 町を開いた・window の __town3d の口 1（__town3dMerge）"
+  ]
+ },
+ {
+  "name": "S27・U2 今の町だけで動く包み",
+  "file": "src/engine/town3dViewer.js",
+  "check": "C5",
+  "caught": true,
+  "failed": [
+   "C5 不合格: 前の町の口が値を返した 4（draw attr pick dbg）・今の町の口 true・2Dへ移った後に残る町の口 88（__town3dFigShot __town3dEvent __town3dMerge __town3dFrozen __town3dGp __town3dSetView）"
+  ]
+ },
+ {
+  "name": "S36・U5 軽やかで描く数を減らす",
+  "file": "src/engine/town3dViewer.js",
+  "check": "D1",
+  "caught": true,
+  "failed": [
+   "D1 不合格: 雨筋の頂点（作る数・描く数）: 軽やか 1120・1120 ／ ふつう 1120・1120"
+  ]
+ },
+ {
+  "name": "D1 起動時の情景で季節を先に",
+  "file": "src/data/scenes/index.js",
+  "check": "E1",
+  "caught": true,
+  "failed": [
+   "E1 不合格: 48通りのうち季節の違う情景 15（1月7時=summer-rain-morning 1月12時=kitaterao-window-3d 2月7時=summer-rain-morning）"
+  ]
+ },
+ {
+  "name": "D4 回したら向きを決め直す",
+  "file": "src/engine/town3dViewer.js",
+  "check": "E2",
+  "caught": true,
+  "failed": [
+   "E2 不合格: 縦で開いた向き -1.12・横へ回した後 -1.12・見回してから縦へ戻した後 -0.90"
+  ]
+ },
+ {
+  "name": "V10・V17 錠を下げる",
+  "file": "src/engine/town3dViewer.js",
+  "check": "E3",
+  "caught": true,
+  "failed": [
+   "E3 不合格: kitaterao/iphone 錠と手すりの縦の離れ -11.2px・shishigaya/iphone 錠と手すりの縦の離れ -13.9px・shishigaya/pc 錠と手すりの縦の離れ -17.1px・kitaterao/pc 錠と手すりの縦の離れ -13.8px"
+  ]
+ },
+ {
+  "name": "W2 降る物を丸い粒へ",
+  "file": "src/engine/town3dViewer.js",
+  "check": "E4",
+  "caught": true,
+  "failed": [
+   "E4 不合格: kitaterao-spring 粒の群 7・四角のまま 1・shishigaya-snow 粒の群 4・四角のまま 1・kitaterao-autumn 粒の群 7・四角のまま 1"
+  ]
+ },
+ {
+  "name": "V20 雪の茅葺",
+  "file": "src/engine/town3dViewer.js",
+  "check": "E5",
+  "caught": true,
+  "failed": [
+   "E5 不合格: 茅葺の屋根 2・雪の載る材 0"
+  ]
+ },
+ {
+  "name": "V25 左右の長押の長さ",
+  "file": "src/engine/town3dViewer.js",
+  "check": "E6",
+  "caught": true,
+  "failed": [
+   "E6 不合格: 左の長押の手前の端 z -0.45（前の壁の内側 0.15）"
+  ]
+ },
+ {
+  "name": "V29 朝は窓を灯さない",
+  "file": "src/engine/town3dViewer.js",
+  "check": "E7",
+  "caught": true,
+  "failed": [
+   "E7 不合格: 光る窓の材: 夏の朝 478・春の朝 478・秋の夕 478"
+  ]
+ },
+ {
+  "name": "V39 雨の日の太陽",
+  "file": "src/engine/town3dViewer.js",
+  "check": "E8",
+  "caught": true,
+  "failed": [
+   "E8 不合格: 雨: 円盤 0・光輪 0.92 ／ 晴れ: 円盤 0.95・光輪 0.92"
+  ]
+ },
+ {
+  "name": "V58 海辺の夕日を桟から外す",
+  "file": "src/shaders/windowSea.js",
+  "check": "E9",
+  "caught": true,
+  "failed": [
+   "E9 不合格: iphone 縦の桟から 16px・円盤とまわりの明るさの差 49.4・pc 縦の桟から 13px・円盤とまわりの明るさの差 40.7"
+  ]
+ },
+ {
+  "name": "V63 山あいの太陽に筋を重ねない",
+  "file": "src/shaders/windowMountains.js",
+  "check": "E11",
+  "caught": true,
+  "failed": [
+   "E11 不合格: 円盤の明るい芯の半径 45.6px・円盤の中の輪に沿った 16 本の筋の縞の強さ（明るさの振幅）: 半径の 0.5 倍 0.357・0.85 倍 0.231"
+  ]
+ },
+ {
+  "name": "V79 入口の四辺の縁",
+  "file": "src/style.css",
+  "check": "E12",
+  "caught": true,
+  "failed": [
+   "E12 不合格: pc 端と内側の明るさの差 117.18・iphone 端と内側の明るさの差 234.37"
+  ]
+ },
+ {
+  "name": "S31 今の段を押しても組み直さない",
+  "file": "src/ui/ui.js",
+  "check": "B1",
+  "caught": true,
+  "failed": [
+   "B1 不合格: 押した札「ふつう」・舞台が同じ false・組み直し中（測りが空）の回 2/20"
+  ]
+ },
+ {
+  "name": "S19・U4 段の組み直しで引き継ぐ",
+  "file": "src/main.js",
+  "check": "B2",
+  "caught": true,
+  "failed": [
+   "B2 不合格: 段を「こまやか」へ・組み直し あり・組み直した町の段 soft（soft のはず）・音の鳴らし直し 0・ボタン「乗り出す」→「窓をあける」・窓のあき 0"
+  ]
+ },
+ {
+  "name": "V67 音の線の左端",
+  "file": "src/ui/ui.js",
+  "check": "B4",
+  "caught": true,
+  "failed": [
+   "B4 不合格: 左端の差 50.1px・長さの差 0.0px（音 174.4〜 ／ 明るさ 124.3〜）"
+  ]
+ },
+ {
+  "name": "V68 設定の間は＋−を隠す",
+  "file": "src/style.css",
+  "check": "B5",
+  "caught": true,
+  "failed": [
+   "B5 不合格: 操作のボタン 8・パネルの外に見える 2"
+  ]
+ },
+ {
+  "name": "S25 受け口を外す",
+  "file": "src/engine/town3dViewer.js",
+  "check": "C3",
+  "caught": false,
+  "failed": [
+   "C3 合格: 1つ目の町の後の受け口 3・温めの最中に替えた回 4/4・替え終えた後の受け口 3（resize:function resize() {     const  ／ pointerup:(event) => {       var _a;     ／ resize:function resize() { applySize( ／ pointerup:(e) => { if (active && e && e. ／ pointerup:(e) => {\r     pointers.delete(）"
+  ]
+ },
+ {
+  "name": "V61 かもめを桟から外す",
+  "file": "src/shaders/windowSea.js",
+  "check": "E10",
+  "caught": true,
+  "failed": [
+   "E10 不合格: 桟のまわりの暗い画素: 鳥が桟の所にいる時刻 5214・いない時刻 5184"
+  ]
+ }
+]

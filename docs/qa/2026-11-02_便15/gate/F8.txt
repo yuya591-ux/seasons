@@ -1,0 +1,15 @@
+iphone_kitaterao-window-3d_still: 同じコードの2回 0.033% ／ 前と後 0.033%（上限 0.249%）合格
+iphone_kitaterao-window-3d-rain-night_still: 同じコードの2回 1.734% ／ 前と後 1.921%（上限 2.801%）合格
+iphone_kitaterao-window-3d_open: 同じコードの2回 0.343% ／ 前と後 0.227%（上限 0.715%）合格
+iphone_shishigaya-window-3d-snow_still: 同じコードの2回 0.499% ／ 前と後 0.188%（上限 0.948%）合格
+iphone_autumn-dusk-corner-room_still: 同じコードの2回 0.043% ／ 前と後 0.056%（上限 0.265%）合格
+iphone_summer-rain-dusk_still: 同じコードの2回 0.421% ／ 前と後 0.389%（上限 0.831%）合格
+iphone_summer-dusk-seaside_still: 同じコードの2回 7.76% ／ 前と後 10.236%（上限 11.84%）合格
+iphone_summer-morning-mountains_still: 同じコードの2回 0% ／ 前と後 0%（上限 0.2%）合格
+pc_kitaterao-window-3d-snow_still: 同じコードの2回 0.346% ／ 前と後 0.678%（上限 0.719%）合格
+F8 合格: 消す前と後の眺めの差は、同じコードを2回撮った差の内
+exit=0
+
+記録（便15）:
+- 1回目（before1・before2・after）は、時々の出来事（光芒・霧）と猫の毛色が乱数の順で変わり、比べにならなかった（猫の毛色・霞・窓の光の筋が違った＝消した物とは関係ない）。撮り方を「視差効果を減らす（出来事を止める）・猫は三毛に名指し」にそろえて撮り直した（before1r・before2r・afterr）
+- afterr の北寺尾の昼（iphone_kitaterao-window-3d_still）だけ前と 0.526% 違った。差の画（docs/qa/2026-11-02_便15/crop/f8-kita-diff.png）では、漂う粒・鳥・輪郭の1画素だけが違う（動く物の位置）。同じ後のコードでもう1枚撮る（after2r）と前と 0.033%（同じコードの2回 0.033〜0.086%）で、afterr と after2r の差は 0.507%。afterr の1枚は読み込みの間合いがずれた外れとして、afterr2（afterr の9枚のうち北寺尾の昼を after2r に替えた組）で判定した
