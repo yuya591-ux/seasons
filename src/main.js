@@ -138,15 +138,21 @@ function start() {
       if (gen !== sceneGen) return // 連打されたら新しい切替に任せる
     }
     setScene(next.id)
-    if (!rebuild) recordVisit(next.id) // 通い帳: この窓辺に座った記録（段を変えた組み直しは数えない＝訪問数が増えない）
-    audio.resetPlaces() // 前の町（高く飛んでいた等）が残した音の値を戻してから、新しい情景の音を立ち上げる（D7・S1）
-    audio.setScene(next)
-    events2d.setScene(next) // シェーダー2D情景の定期イベント（流れ星/蛍）。town3dでは内部で無効化
+    // 便15 S19・U4: 段を替えた組み直し（rebuild）では、音を鳴らし直さず、窓・乗り出し・空/地上の段を引き継ぐ（以前は 0.25 秒沈めて全部の音を頭から立ち上げ直し、窓辺へ戻していた）
+    const keep = rebuild && ui && ui.getStage ? ui.getStage() : null
+    if (!rebuild) {
+      recordVisit(next.id) // 通い帳: この窓辺に座った記録（段を変えた組み直しは数えない＝訪問数が増えない）
+      audio.resetPlaces() // 前の町（高く飛んでいた等）が残した音の値を戻してから、新しい情景の音を立ち上げる（D7・S1）
+      audio.setScene(next)
+      events2d.setScene(next) // シェーダー2D情景の定期イベント（流れ星/蛍）。town3dでは内部で無効化
+    }
 
-    // 情景を替えたら窓は閉じた状態から始める（ボタンと描画のズレを防ぐ）
-    renderer.setWindowOpen(false)
-    audio.setWindowOpen(false) // 音も閉じた（こもった）状態へ戻す
-    if (ui && ui.resetWindow) ui.resetWindow()
+    // 情景を替えたら窓は閉じた状態から始める（ボタンと描画のズレを防ぐ）。段を替えた組み直しは、組み終わった後に前の段へ戻す（下）
+    if (!keep) {
+      renderer.setWindowOpen(false)
+      audio.setWindowOpen(false) // 音も閉じた（こもった）状態へ戻す
+      if (ui && ui.resetWindow) ui.resetWindow()
+    }
     if (next.render === 'town3d') {
       // 本物の3Dの街（Three.js）。窓から立体の街を見下ろす。
       town3dMode = true
@@ -195,6 +201,12 @@ function start() {
           onContextRestore: () => { applyScene(next, false) }, // WebGLコンテキスト喪失（実機のバックグラウンド復帰/メモリ逼迫）から復帰したら、同じ情景を組み直して黒画面固定を防ぐ（評価 技術-致命3）
         })
         if (gen !== sceneGen) return // 新しい切替が走っている＝そちらが active を管理する。ここで unmount すると新情景を壊す（連打レース対策）
+        if (keep && _t3d) { // 段を替えた組み直し: 前の段（窓・乗り出し・空/地上）へ戻す
+          if (keep.open) _t3d.setTown3dWindowOpen(true)
+          if (keep.lean) _t3d.setTown3dLean(true)
+          if (keep.aloft) _t3d.setTown3dFly(true)
+          if (keep.aloft === 'walk') _t3d.setTown3dLand(true)
+        }
       } catch (e) {
         console.error('3Dの街 表示失敗→通常情景へ:', e)
         if (gen !== sceneGen) return // 既に次の切替が走っている＝そちらに任せる（古いエラーで新情景を壊さない）
@@ -322,6 +334,7 @@ function start() {
     onSleepTimer,
     getJournal: () => getState().journal, // 通い帳の記録（訪れた窓辺・累計時間・まれな現象）
     onSettings(patch) {
+      const prevQuality = getState().settings.quality
       updateSettings(patch)
       renderer.setSettings(getState().settings)
       // 3Dの街モードでは明るさ・描き込みをtown3dへ反映（シェーダーは一時停止中なので renderer.setSettings は効かない）
@@ -330,11 +343,11 @@ function start() {
       }
       // 描き込みの段を変えたら、同じ情景を組み直す＝影の細かさ・ブルーム・解像度がその場で新しい段になる
       // （以前は解像度とブルームだけが変わり、影や物の数は次に情景を開くまで変わらなかった・S27）。軽やかでも町の配置は同じ（S25）
-      if (town3dMode && patch.quality !== undefined) applyScene(resolveScene(getState().sceneId), true, { rebuild: true })
+      if (town3dMode && patch.quality !== undefined && patch.quality !== prevQuality) applyScene(resolveScene(getState().sceneId), true, { rebuild: true })
       if (patch.tilt !== undefined) {
         if (patch.tilt) {
           tilt.enable().then((ok) => {
-            if (!ok) updateSettings({ tilt: false }) // 許可拒否なら設定を戻す
+            if (!ok) { updateSettings({ tilt: false }); if (ui && ui.setTilt) ui.setTilt(false) } // 許可拒否なら設定を戻し、札も消す（便15 S32: 以前は札が点いたままだった）
           })
         } else {
           tilt.disable()

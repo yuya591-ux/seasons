@@ -635,8 +635,8 @@ export function buildUI(opts) {
     const audioSetRow = h('div', 'setrow')
     audioSetRow.appendChild(h('span', 'setrow__label', '音'))
     const audioCtrls = h('div', 'hud__audio')
+    audioCtrls.appendChild(vol) // 便15 V67: 線を先に置き、「雨脚」「明るさ」の線と左端をそろえる（♪ は線の右）
     audioCtrls.appendChild(muteBtn)
-    audioCtrls.appendChild(vol)
     audioSetRow.appendChild(audioCtrls)
     el.appendChild(audioSetRow)
 
@@ -675,6 +675,7 @@ export function buildUI(opts) {
       const chip = h('button', 'chip', q.label)
       chip.classList.toggle('chip--on', settings.quality === q.id)
       chip.addEventListener('click', () => {
+        if (settings.quality === q.id) { poke(); return } // 便15 S31: 今点いている段を押しても町を組み直さない（暗転・窓辺へ戻る・音の鳴らし直しを起こさない）
         settings.quality = q.id
         qEls.forEach((e) => e.chip.classList.toggle('chip--on', e.id === q.id))
         onSettings({ quality: q.id })
@@ -826,6 +827,10 @@ export function buildUI(opts) {
     // 「傾きで見回す」の点灯を外から合わせる（許可が取れなかった時に消す）。
     setTilt(on) {
       syncTiltChip(on)
+    },
+    // 今の段（窓・乗り出し・空/地上）を読む（便15 U4: 描き込みの段を替えて町を組み直す時に引き継ぐ）
+    getStage() {
+      return { open: windowIsOpen, lean: leanIsOut, aloft }
     },
     // 情景を替えたら窓は閉じた状態から（ボタン表示と描画のズレを防ぐ）。通知はしない。
     resetWindow() {

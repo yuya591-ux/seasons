@@ -1473,3 +1473,20 @@ body.pre-start .stagedots {
 .sleep-overlay--on .sleep-word {
   opacity: 0.66;
 }
+
+/* 便15 V68: 情景の一覧・設定を開いている間は、町の3Dの左下の操作（＋−・トレイ）を隠す（iPhone で設定パネルの下から＋−の頭が覗いていた） */
+body:has(.panel--open) .town3d-zoom,
+body:has(.panel--open) .town3d-pad {
+  visibility: hidden;
+}
+/* 便15 V73: 狭い画面では右上のボタンの間と左右の余白を詰め、飛ぶ時の5つが1段に収まるようにする（「写真」だけ2段目へ折り返していた） */
+@media (max-width: 480px) {
+  .topbar {
+    gap: 0.32rem;
+  }
+  .topbar .iconbtn {
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+    letter-spacing: 0.06em;
+  }
+}
