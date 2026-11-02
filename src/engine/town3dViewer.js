@@ -312,6 +312,8 @@ export async function mountTown3d(parent, opts = {}) {
   const LIGHT = QUAL === 'light'
   // 町の配置に関わる数（町の乱数 R を回して作る物の数）は段で変えない＝軽やかでも家・木・人の配置が同じ（以前は軽やかで R の回る数が変わり、配置そのものが変わった・S25）。
   // 軽やかの軽さは、解像度・影・ブルームと、作った後に町へ足さない人（下の3か所）と、降る粒・雨筋を描く数（作る数は同じ＝lightDraw）で出す
+  // 便15 S36・U5: 軽やかでは、粒や筋を作る数は同じまま（町の乱数 R() の回り方を変えない）、描く数だけ前の軽やかの数へ減らす（以前の軽やかの雨筋 340 本＝雨が重い→画質崩壊の対策）
+  const lightDraw = (geo, nLight, perItem = 1) => { if (LIGHT) geo.setDrawRange(0, nLight * perItem); return geo }
   // 解像度(DPR)の上限。方針=鮮明さ優先: 主力3Dの「額縁外(飛行/歩行)が窓辺より粗い」を解消するため、
   // 旧 standard 1.4 を 1.6 へ引き上げ素のシェーダ情景(1.75)へ寄せる。発熱はピクセル塗りの二乗で効くが、
   // 重い時は自動品質(curPR↓・下のadQ)が実測で天井から下げる安全網に任せる（先回りで眠くしない）。
@@ -7340,7 +7342,7 @@ export async function mountTown3d(parent, opts = {}) {
   // ── 降るもの（雪／桜の花びら）。季節・天気で空に舞う粒子。 ──
   let weatherPts = null
   if (weather === 'snow' || weather === 'petals' || weather === 'leaves') {
-    const N = (weather === 'snow' ? 700 : weather === 'petals' ? 420 : 360) * (1) | 0 // light端末は降る粒子を半減
+    const N = weather === 'snow' ? 700 : weather === 'petals' ? 420 : 360 // 軽やかでは半分だけ描く（下の lightDraw）
     const baseSpd = weather === 'snow' ? 4 : weather === 'petals' ? 2.4 : 2.0
     const pos = new Float32Array(N * 3)
     const spd = new Float32Array(N) // 個別の落下速度
@@ -7353,7 +7355,7 @@ export async function mountTown3d(parent, opts = {}) {
       phs[i] = R() * 6.28
     }
     const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); lightDraw(geo, N >> 1)
     const mat = new THREE.PointsMaterial({
       color: weather === 'snow' ? 0xfdfdff : weather === 'petals' ? 0xf2bcd0 : 0xcf7e38, // 落ち葉=暖色の橙
       size: weather === 'snow' ? 0.5 : weather === 'petals' ? 0.85 : 0.95,
@@ -7373,7 +7375,7 @@ export async function mountTown3d(parent, opts = {}) {
     const bx = PARK.x, bz = PARK.z, R0 = 18, floor = heightAt(PARK.x, PARK.z) - 0.5
     const pos = new Float32Array(N * 3), spd = new Float32Array(N), phs = new Float32Array(N)
     for (let i = 0; i < N; i++) { pos[i * 3] = bx + (R() - 0.5) * R0 * 2; pos[i * 3 + 1] = floor + R() * 20; pos[i * 3 + 2] = bz + (R() - 0.5) * R0 * 2; spd[i] = 0.7 + R() * 0.9; phs[i] = R() * 6.28 }
-    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); lightDraw(geo, 70)
     const mat = new THREE.PointsMaterial({ color: season === 'spring' ? 0xf2bcd0 : 0xd07e2a, size: season === 'spring' ? 0.8 : 0.92, transparent: true, opacity: 0.92, sizeAttenuation: true, fog: true, depthWrite: false })
     const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; scene.add(pts)
     seasonFall = { pts, pos, spd, phs, N, bx, bz, R0, floor, swirl: season === 'spring' ? 2.2 : 2.8 }
@@ -7381,7 +7383,7 @@ export async function mountTown3d(parent, opts = {}) {
     const nN = 60, nHX = 13, nHY = 11
     const npos = new Float32Array(nN * 3), nspd = new Float32Array(nN), nphs = new Float32Array(nN)
     for (let i = 0; i < nN; i++) { npos[i * 3] = (R() - 0.5) * nHX * 2; npos[i * 3 + 1] = R() * nHY; npos[i * 3 + 2] = (R() - 0.5) * nHX * 2; nspd[i] = 0.55 + R() * 0.8; nphs[i] = R() * 6.28 }
-    const ngeo = new THREE.BufferGeometry(); ngeo.setAttribute('position', new THREE.BufferAttribute(npos, 3))
+    const ngeo = new THREE.BufferGeometry(); ngeo.setAttribute('position', new THREE.BufferAttribute(npos, 3)); lightDraw(ngeo, 34)
     const nmat = new THREE.PointsMaterial({ color: season === 'spring' ? 0xf4c2d6 : 0xd8813a, size: season === 'spring' ? 0.5 : 0.58, transparent: true, opacity: 0, sizeAttenuation: true, fog: true, depthWrite: false })
     const npts = new THREE.Points(ngeo, nmat); npts.frustumCulled = false; npts.visible = false; scene.add(npts)
     nearFall = { pts: npts, mat: nmat, pos: npos, spd: nspd, phs: nphs, N: nN, HX: nHX, HY: nHY, swirl: season === 'spring' ? 2.4 : 3.0 }
@@ -8677,7 +8679,7 @@ export async function mountTown3d(parent, opts = {}) {
     const pos = new Float32Array(N * 2 * 3)
     const head = new Float32Array(N * 3); const spd = new Float32Array(N)
     for (let i = 0; i < N; i++) { head[i * 3] = (R() - 0.5) * 150; head[i * 3 + 1] = R() * 92; head[i * 3 + 2] = -100 + R() * 150; spd[i] = 34 * (0.7 + R() * 0.6) } // 範囲を絞って密度を上げる
-    const rgeo = new THREE.BufferGeometry(); rgeo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    const rgeo = new THREE.BufferGeometry(); rgeo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); lightDraw(rgeo, 340, 2) // 軽やかは 340 本（1本＝頂点2つ）
     const rmat = new THREE.LineBasicMaterial({ color: 0xc8d6e4, transparent: true, opacity: 0.6, fog: true, depthWrite: false })
     const rseg = new THREE.LineSegments(rgeo, rmat); rseg.frustumCulled = false; scene.add(rseg)
     scene.fog.far *= 0.88 // 雨で奥がけむる
@@ -8699,7 +8701,7 @@ export async function mountTown3d(parent, opts = {}) {
     const wloc = new Float32Array(M * 2) // ローカルのばらまき(x,z)＝自機を中心に追従
     const wpos = new Float32Array(M * 3); const waph = new Float32Array(M)
     for (let i = 0; i < M; i++) { wloc[i * 2] = (R() - 0.5) * 30; wloc[i * 2 + 1] = (R() - 0.5) * 34; wpos[i * 3 + 1] = 0.12; waph[i] = R() * 6.28 }
-    const wgeo = new THREE.BufferGeometry(); wgeo.setAttribute('position', new THREE.BufferAttribute(wpos, 3)); wgeo.setAttribute('aph', new THREE.BufferAttribute(waph, 1))
+    const wgeo = new THREE.BufferGeometry(); wgeo.setAttribute('position', new THREE.BufferAttribute(wpos, 3)); wgeo.setAttribute('aph', new THREE.BufferAttribute(waph, 1)); lightDraw(wgeo, 90)
     const wmat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       uniforms: { uT: { value: 0 }, uOp: { value: 0.5 }, uCol: { value: new THREE.Color(isNight ? 0xffd6a0 : 0xcfe4f2) } },
@@ -8910,7 +8912,7 @@ export async function mountTown3d(parent, opts = {}) {
   const moteN = 90
   const motePos = new Float32Array(moteN * 3)
   for (let i = 0; i < moteN; i++) { motePos[i * 3] = (R() - 0.5) * 72; motePos[i * 3 + 1] = (R() - 0.5) * 46; motePos[i * 3 + 2] = (R() - 0.5) * 72 }
-  const moteGeo = new THREE.BufferGeometry(); moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3))
+  const moteGeo = new THREE.BufferGeometry(); moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3)); lightDraw(moteGeo, 50)
   const moteTex = (() => {
     const s = 32, c = document.createElement('canvas'); c.width = c.height = s
     const g = c.getContext('2d'); const gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2)
