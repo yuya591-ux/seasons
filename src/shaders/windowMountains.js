@@ -184,6 +184,7 @@ const FRAGMENT_BODY = /* glsl */ `
     col = mix(col, vec3(1.0, 0.97, 0.9), smoothstep(0.05, 0.04, sunDist) * 0.7);
     vec2 sd = vec2(ax, vp.y) - sunC;
     float rays = (0.5 + 0.5 * sin(atan(sd.y, sd.x) * 16.0 + uTime * 0.08)) * exp(-length(sd) * 1.3);
+    rays *= smoothstep(0.05, 0.085, length(sd)); // 便15 V63: 円盤の上には光の筋を重ねない（円盤が放射の筋で「割れた皿」に見えた）
     col += uSunGlow * rays * 0.05;
 
     float mistAmt = mix(0.25, 0.7, uIntensity);

@@ -1,10 +1,11 @@
-// 各公開情景の実描画から、ギャラリー用サムネを生成して public/thumbs/<id>.jpg に保存する。
-// 使い方: プレビュー(4790, dev hooks入りビルド)起動中に node scripts/gen-thumbs.mjs
+// 情景の一覧のサムネを、今の描画から撮り直して public/thumbs/<id>.jpg に保存する（便15 W7: 情景の作りを変えた便では、この台本で撮り直す。
+//   便13 で角部屋を茶の間の3Dへ変えた後も、角部屋のサムネが昔の画のままだった＝V70）。前の gen-thumbs.mjs と gen-thumbs-some.mjs を1本にまとめた
+// 使い方: 開発サーバーかプレビュー（?dev=1 の口が使える物）を起動してから  PORT=<番号> node scripts/make-thumbs.mjs [情景ID…]（ID を書かなければ全部）
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 mkdirSync('public/thumbs', { recursive: true })
 
-const port = process.env.PORT || '4790'
+const port = process.env.PORT || '4985'
 const browser = await chromium.launch({ args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] }) // GPU で描く（ソフトの描画では町の3Dの色と霧が本物と違う）
 const page = await browser.newPage({ viewport: { width: 900, height: 600 }, deviceScaleFactor: 1 })
 await page.goto(`http://localhost:${port}/seasons/?dev=1`, { waitUntil: 'networkidle' })
@@ -15,7 +16,9 @@ await page.waitForTimeout(400)
 // UIを隠してから撮る（サムネに操作UIを写さない）。起動の案内が残っていても写さない（便2 で案内が重なって写った回があった）
 await page.addStyleTag({ content: '.ui, .gate{display:none !important}' })
 
-const ids = await page.evaluate(() => window.__sceneIds || [])
+const all = await page.evaluate(() => window.__sceneIds || [])
+const want = process.argv.slice(2)
+const ids = want.length ? all.filter((i) => want.includes(i)) : all
 console.log('情景:', ids.join(', '))
 for (const id of ids) {
   await page.evaluate((sid) => window.__applyScene(sid), id)

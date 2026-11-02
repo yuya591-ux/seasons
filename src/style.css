@@ -726,7 +726,8 @@ body.idle .topbar button {
 /* 起動ゲート */
 .gate {
   position: fixed;
-  inset: 0;
+  /* 便15 V79: 背景のぼかし（backdrop-filter）は画面の端で外の明るさを拾い、四辺に明るい細い縁が出た。層を画面の外まで 8px 広げて、縁を画面の外へ出す */
+  inset: -8px;
   z-index: 60; /* UI(topbar/音量)より前面に＝起動前にUIが透けて散らからない静かな入口 */
   pointer-events: auto;
   display: flex;

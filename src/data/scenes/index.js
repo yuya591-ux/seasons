@@ -115,9 +115,10 @@ export function pickNowScene(date = new Date()) {
     const dayIdx = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000)
     return fit[dayIdx % fit.length]
   }
-  // 季節も時間帯も合う公開情景が無い時間帯は、最も近い一枚（従来どおりの最高スコア）。
+  // 季節も時間帯も合う公開情景が無い時間帯は、最も近い一枚。季節が合う情景があれば、旗艦の加点より季節を先に見る
+  // （便15 D1: 以前は旗艦の窓の加点 +3 が季節の一致 +2 より重く、冬や秋の朝に夏の「梅雨の朝」、冬と春の昼に夏の坂の街が出た）
   let best = DEFAULT_SCENE
   let bestScore = -1
-  for (const s of candidates) { const v = score(s); if (v > bestScore) { bestScore = v; best = s } }
+  for (const s of candidates) { const v = score(s) + (s.axes.season === season ? 10 : 0); if (v > bestScore) { bestScore = v; best = s } }
   return best
 }

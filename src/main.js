@@ -162,6 +162,7 @@ function start() {
         await (await loadTown3d()).mountTown3d(document.body, {
           palette: (next.palette && next.palette.early) || null,
           season: (next.axes && next.axes.season) || 'summer',
+          time: (next.axes && next.axes.time) || null, // 時間帯（朝は窓の灯りを消す・便15 V29）
           weather: next.town3dWeather || null, // 'snow' | 'petals' | 'leaves'（降るもの）
           kind: next.town3dKind || 'town', // 'town'（坂の街）| 'yato'（谷戸）
           mist: mistFor(next), // 低く溜まる霧の濃さ（時間帯・天気・場所の既定＋情景の mist の上書き）

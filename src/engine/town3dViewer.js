@@ -362,6 +362,7 @@ export async function mountTown3d(parent, opts = {}) {
   const pal = opts.palette || {}
   const season = opts.season || 'summer' // 季節で地面・木の色を替える
   const weather = opts.weather || null    // 'snow' | 'petals' | 'leaves' | null（降るもの）
+  const MORNING = opts.time === 'morning' // 情景の時間帯が朝（便15 V29: 朝は窓の灯りを消す。空の明るさだけでは朝の淡い空が夕と同じに読まれた）
   const kind = opts.kind || 'town'        // 'town'（坂の街）| 'yato'（谷戸＝棚田と茅葺の屋敷）
   const bound = kind === 'yato' ? FLY.yatoBound : FLY.bound // 飛べる箱は情景ごと（谷戸は谷筋に沿う狭め）
   const onEvent = typeof opts.onEvent === 'function' ? opts.onEvent : () => {} // 定期イベント発火を外へ伝える（音の結線）
@@ -529,8 +530,9 @@ export async function mountTown3d(parent, opts = {}) {
     sgr.addColorStop(0.47, 'rgba(176,198,255,0.10)'); sgr.addColorStop(0.53, 'rgba(188,236,200,0.11)') // 彩雲リング（青→緑）
     sgr.addColorStop(0.59, 'rgba(255,226,168,0.12)'); sgr.addColorStop(0.65, 'rgba(255,184,172,0.10)') // 黄→赤
     sgr.addColorStop(0.76, 'rgba(255,184,172,0)'); sgx.fillStyle = sgr; sgx.fillRect(0, 0, 128, 128)
-    sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(scv), transparent: true, opacity: weather === 'snow' ? 0.2 : 0.92, depthWrite: false, fog: false })) // 雪は窓ごしに白飛びしやすい＝光輪を弱め小さく（暖かいにじみは残す）
-    { const sgS = weather === 'snow' ? 124 : 155; sunGlow.scale.set(sgS, sgS, 1); scene.add(sunGlow) }
+    const overcast = weather === 'snow' || weather === 'rain' // 便15 V39: 雨の日も雪と同じく、太陽は雲の奥（光輪を弱く小さく・雨は円盤を出さない＝下）
+    sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(scv), transparent: true, opacity: overcast ? 0.2 : 0.92, depthWrite: false, fog: false })) // 雪は窓ごしに白飛びしやすい＝光輪を弱め小さく（暖かいにじみは残す）
+    { const sgS = overcast ? 124 : 155; sunGlow.scale.set(sgS, sgS, 1); scene.add(sunGlow) }
     // 太陽の本体（円盤）は duskAmt 定義後（L667付近）でまとめて作る＝TDZ回避。下の「太陽の本体」ブロック参照。
     // 一番星のスプライト（昼ドリフトが深まると上空にひとつ灯る）。夜情景では既存の星空があるので作らない。
     if (!isNight) { const stc = document.createElement('canvas'); stc.width = stc.height = 32; const stx = stc.getContext('2d'); const stg = stx.createRadialGradient(16, 16, 0.4, 16, 16, 10); stg.addColorStop(0, 'rgba(255,255,250,1)'); stg.addColorStop(0.3, 'rgba(232,240,255,0.45)'); stg.addColorStop(1, 'rgba(232,240,255,0)'); stx.fillStyle = stg; stx.fillRect(0, 0, 32, 32)
@@ -693,6 +695,7 @@ export async function mountTown3d(parent, opts = {}) {
   // 灯り度（空の明るさで決める。明るい昼=窓は灯らない／夕暮れ=ほのか／夜=煌々と）
   const skyBright = (skyTop.r + skyTop.g + skyTop.b) / 3
   const duskAmt = Math.min(1, Math.max(0, (0.56 - skyBright) * 2.4))
+  const winLitDusk = duskAmt > 0.25 && !MORNING // 夕方の窓の灯り（便15 V29: 朝は灯さない＝便1 の「昼は窓の灯りを消す」と同じ扱い）
   // 太陽の本体＝くっきりした円盤（空の主役）。加算で芯が明るく、Bloomで発光する。夕は橙金に大きく（地平に近い夕陽）。
   // 光輪 sunGlow は上で作成済み。ここで夕の暖色・拡大を足し、本体の円盤を中心に重ねる（duskAmt 定義後＝TDZ回避）。
   if (!isNight && sunGlow) {
@@ -703,6 +706,7 @@ export async function mountTown3d(parent, opts = {}) {
     const diskCol = new THREE.Color(0xfffaf0).lerp(new THREE.Color(0xffaa55), duskAmt) // 夕は橙金へ
     sunDisk = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(dcv), color: diskCol, transparent: true, opacity: weather === 'snow' ? 0.28 : 0.95, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })) // 雪の日は雲の奥の淡い円盤（白飛びさせない・V10）
     const dS = (weather === 'snow' ? 15 : 19) + duskAmt * 17; sunDisk.scale.set(dS, dS, 1); scene.add(sunDisk)
+    if (weather === 'rain') sunDisk.visible = false // 便15 V39: 雨の日は太陽の円盤を出さない（雨の筋と晴れの太陽が同時に出ていた）
   }
   const rng = (seed) => { let s = seed * 9301 + 49297; const f = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }; f.state = () => s; return f }
   let R = rng(7) // 町の乱数。消費の順番が町の配置を決める（家・木・人）。一時的な差し替えは下の withLocalR だけで行う
@@ -1239,7 +1243,7 @@ export async function mountTown3d(parent, opts = {}) {
     for (let i = 0; i <= 5; i++) { g.beginPath(); g.moveTo(wx, wy + wh * i / 5); g.lineTo(wx + ww, wy + wh * i / 5); g.stroke() }
     const t = new THREE.CanvasTexture(c); t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; machiyaGlowTex = t; return t }
   // 町家の壁材（夕夜は障子が行灯で灯る＝城下町の夜が生きる）。
-  const machiyaMat = (baseHex) => { const m = facadeMat('machiya', baseHex); if (duskAmt > 0.25) { m.emissiveMap = getMachiyaGlow(); m.emissive = new THREE.Color(isNight ? 0xffb45a : 0xffc684); m.emissiveIntensity = 0.22 + duskAmt * (isNight ? 0.6 : 0.34) } return m }
+  const machiyaMat = (baseHex) => { const m = facadeMat('machiya', baseHex); if (winLitDusk) { m.emissiveMap = getMachiyaGlow(); m.emissive = new THREE.Color(isNight ? 0xffb45a : 0xffc684); m.emissiveIntensity = 0.22 + duskAmt * (isNight ? 0.6 : 0.34) } return m }
   // 侍屋敷の連子窓の夜の灯り（格子の奥の行灯）。連子の面を暖色＋縦格子を影で抜く emissiveMap。R()不使用。
   let samaGlowTex = null
   const getSamaGlow = () => { if (samaGlowTex) return samaGlowTex
@@ -1249,7 +1253,7 @@ export async function mountTown3d(parent, opts = {}) {
     g.strokeStyle = 'rgba(40,26,10,0.7)'; g.lineWidth = 2.4
     for (let i = 0; i <= 8; i++) { g.beginPath(); g.moveTo(30 + 68 * i / 8, 28); g.lineTo(30 + 68 * i / 8, 68); g.stroke() } // 縦格子の影
     const t = new THREE.CanvasTexture(c); t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping; samaGlowTex = t; return t }
-  const samaMat = (baseHex) => { const m = facadeMat('sama', baseHex); if (duskAmt > 0.25) { m.emissiveMap = getSamaGlow(); m.emissive = new THREE.Color(isNight ? 0xffac52 : 0xffc079); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.56 : 0.3) } return m }
+  const samaMat = (baseHex) => { const m = facadeMat('sama', baseHex); if (winLitDusk) { m.emissiveMap = getSamaGlow(); m.emissive = new THREE.Color(isNight ? 0xffac52 : 0xffc079); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.56 : 0.3) } return m }
   // 大正の洋風窓の夜の灯り（上げ下げ窓＋1階の店の硝子が灯る＝ハイカラな港町の夜景）。R()不使用。
   let yofuGlowTex = null
   const getYofuGlow = () => { if (yofuGlowTex) return yofuGlowTex
@@ -1934,7 +1938,7 @@ export async function mountTown3d(parent, opts = {}) {
     if (duskAmt > 0.12) { // 夕方は窓が灯る（昼と同じ窓割りの灯り＝wviで揃える）
       R() // 旧来ここで窓種をR()で選んでいた＝乱数列を保ち街の生成（建物分布/描画コール）を不変に保つ
       const e = winEmis[wvi].clone(); e.repeat.set(rep, repV); e.needsUpdate = true
-      wm.emissiveMap = e; wm.emissive = new THREE.Color(isNight ? 0xffbe82 : 0xffcaa0); wm.emissiveIntensity = (isNight || duskAmt > 0.25) ? 0.3 + duskAmt * (isNight ? 0.95 : 0.62) : 0 // 昼は灯さない（はっきりした夕方と夜だけ。昼の情景の夕方の度合いは約0.15。以前は昼も 0.3 で、ビルも家も窓が全部だいだいに灯っていた・V15） // 夜は窓灯りを強めて瞬かせる（夕は控えめで貼り絵感を防ぐ）
+      wm.emissiveMap = e; wm.emissive = new THREE.Color(isNight ? 0xffbe82 : 0xffcaa0); wm.emissiveIntensity = (isNight || winLitDusk) ? 0.3 + duskAmt * (isNight ? 0.95 : 0.62) : 0 // 昼は灯さない（はっきりした夕方と夜だけ。昼の情景の夕方の度合いは約0.15。以前は昼も 0.3 で、ビルも家も窓が全部だいだいに灯っていた・V15） // 夜は窓灯りを強めて瞬かせる（夕は控えめで貼り絵感を防ぐ）
     }
     // 近景の建物だけ角を面取りして「低ポリの箱」の鋭い角を脱す（奥は霞むので箱のまま＝軽量）。
     const near = z > -12
@@ -3084,7 +3088,7 @@ export async function mountTown3d(parent, opts = {}) {
     const nm = winMapBase.clone(); nm.repeat.set(rep, rep * 1.5); nm.needsUpdate = true; nwMat.map = nm
     if (duskAmt > 0.12) { // 夕/夜は隣室の窓も灯る（窓割りはwinMapBase=種類0に揃える）
       const ne = winEmis[0].clone(); ne.repeat.set(rep, rep * 1.5); ne.needsUpdate = true
-      nwMat.emissiveMap = ne; nwMat.emissive = new THREE.Color(0xffcaa0); nwMat.emissiveIntensity = (isNight || duskAmt > 0.25) ? 0.3 + duskAmt * 0.6 : 0 // 昼は灯さない（V15）
+      nwMat.emissiveMap = ne; nwMat.emissive = new THREE.Color(0xffcaa0); nwMat.emissiveIntensity = (isNight || winLitDusk) ? 0.3 + duskAmt * 0.6 : 0 // 昼は灯さない（V15）
     }
     const wall = new THREE.Mesh(new THREE.BoxGeometry(3.5, 58, 44), nwMat)
     wall.position.set(15.5, 18, 9); wall.castShadow = true; wall.receiveShadow = true; scene.add(wall)
@@ -4665,7 +4669,7 @@ export async function mountTown3d(parent, opts = {}) {
         // 港町の家々（看板建築＝和洋折衷。煉瓦/クリームの壁＋陸屋根/寄棟。格子の町割り。メッシュ統合で軽く）
         // 壁色のパレット（大正ハイカラ＝クリーム/淡い若草/淡い黄土/淡い青鼠）。建物ごとに振り分けて単調なクリーム一色を脱す。
         const tWallPal = season === 'winter' ? [0xd8d2c4, 0xd2d6cc, 0xdcd4c0, 0xcdd2d4] : [0xcfc3ab, 0xb9c0a6, 0xd6c49a, 0xb7c1c4]
-        const tWallMats = tWallPal.map((c) => { const m = facadeMat('yofu', c); m.vertexColors = true; if (duskAmt > 0.25) { m.emissiveMap = getYofuGlow(); m.emissive = new THREE.Color(isNight ? 0xffc878 : 0xffd49a); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.58 : 0.32) } return m }) // 接地AO（頂点色）＋夕夜は洋風窓が灯る
+        const tWallMats = tWallPal.map((c) => { const m = facadeMat('yofu', c); m.vertexColors = true; if (winLitDusk) { m.emissiveMap = getYofuGlow(); m.emissive = new THREE.Color(isNight ? 0xffc878 : 0xffd49a); m.emissiveIntensity = 0.2 + duskAmt * (isNight ? 0.58 : 0.32) } return m }) // 接地AO（頂点色）＋夕夜は洋風窓が灯る
         // 屋根色のパレット（瓦の赤茶/いぶし茶/スレート青鼠）。俯瞰で一色だった屋根に多様さを。
         const tRoofPal = isNight ? [0x4a3832, 0x423a32, 0x3e444a] : [0x9a5642, 0x6e5a48, 0x5d666e]
         const tRoofMats = tRoofPal.map((c, i) => i < 2 ? tileMat(c, 2, 2, true) : mottleMat(c, 150, 0.12, [1.8, 1.8])) // 瓦色(赤茶/いぶし)は瓦テクスチャ＝見上げで瓦の筋が出る／青鼠スレートは平滑なまま
@@ -5425,7 +5429,7 @@ export async function mountTown3d(parent, opts = {}) {
       for (let i = 0; i < 120; i++) { const col = tb.clone().offsetHSL((R() - 0.5) * 0.02, (R() - 0.5) * 0.06, (R() - 0.5) * 0.26); tcx.strokeStyle = '#' + col.getHexString(); tcx.lineWidth = 0.5 + R() * 1.3; tcx.globalAlpha = 0.42; const lx = R() * 64; tcx.beginPath(); tcx.moveTo(lx, 0); tcx.lineTo(lx + (R() - 0.5) * 4, 64); tcx.stroke() }
       tcx.globalAlpha = 1
       const thatchTex = new THREE.CanvasTexture(tc); thatchTex.wrapS = thatchTex.wrapT = THREE.RepeatWrapping; thatchTex.repeat.set(3, 2)
-      const thatchMat = new THREE.MeshLambertMaterial({ color: 0xffffff, map: thatchTex, vertexColors: true })
+      const thatchMat = snowify(new THREE.MeshLambertMaterial({ color: 0xffffff, map: thatchTex, vertexColors: true })) // 便15 V20: 雪の日は茅葺の上面にも雪が載る（周りが雪なのに屋根だけ茶色のままだった）
       // 茅葺の寄棟屋根: 水平の大棟＋四方の勾配＋深い軒。四角錐の「段ボール箱」を本物の寄棟へ作り直す（評価指摘）。
       const roof = new THREE.Mesh(makeHipRoof(10.8, 8.2, 5.6, 3.5), thatchMat)
       roof.position.y = 2.7; roof.castShadow = true; roof.receiveShadow = true; g.add(roof) // 軒を壁の上端(3.2)より下げ＝深い軒の量感
@@ -7340,6 +7344,10 @@ export async function mountTown3d(parent, opts = {}) {
   } // ← 車・住民（街のみ）ここまで
 
   // ── 降るもの（雪／桜の花びら）。季節・天気で空に舞う粒子。 ──
+  // 便15 W2（V14・V21）: 降る物の粒は、ふちのぼけた丸い絵で描く（絵の無い点は四角い板になり、ドット絵の雪や花びらに見えた）。
+  // 縁がぼける分だけ見かけが小さくなるので、大きさを 1.3 倍にして前の見え方に寄せる
+  const fallDot = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'); const gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c) })()
+  const FALL_K = 1.3
   let weatherPts = null
   if (weather === 'snow' || weather === 'petals' || weather === 'leaves') {
     const N = weather === 'snow' ? 700 : weather === 'petals' ? 420 : 360 // 軽やかでは半分だけ描く（下の lightDraw）
@@ -7357,8 +7365,9 @@ export async function mountTown3d(parent, opts = {}) {
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); lightDraw(geo, N >> 1)
     const mat = new THREE.PointsMaterial({
+      map: fallDot,
       color: weather === 'snow' ? 0xfdfdff : weather === 'petals' ? 0xf2bcd0 : 0xcf7e38, // 落ち葉=暖色の橙
-      size: weather === 'snow' ? 0.5 : weather === 'petals' ? 0.85 : 0.95,
+      size: (weather === 'snow' ? 0.5 : weather === 'petals' ? 0.85 : 0.95) * FALL_K,
       transparent: true, opacity: weather === 'snow' ? 0.92 : 0.85,
       sizeAttenuation: true, fog: true, depthWrite: false,
     })
@@ -7376,7 +7385,7 @@ export async function mountTown3d(parent, opts = {}) {
     const pos = new Float32Array(N * 3), spd = new Float32Array(N), phs = new Float32Array(N)
     for (let i = 0; i < N; i++) { pos[i * 3] = bx + (R() - 0.5) * R0 * 2; pos[i * 3 + 1] = floor + R() * 20; pos[i * 3 + 2] = bz + (R() - 0.5) * R0 * 2; spd[i] = 0.7 + R() * 0.9; phs[i] = R() * 6.28 }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); lightDraw(geo, 70)
-    const mat = new THREE.PointsMaterial({ color: season === 'spring' ? 0xf2bcd0 : 0xd07e2a, size: season === 'spring' ? 0.8 : 0.92, transparent: true, opacity: 0.92, sizeAttenuation: true, fog: true, depthWrite: false })
+    const mat = new THREE.PointsMaterial({ map: fallDot, color: season === 'spring' ? 0xf2bcd0 : 0xd07e2a, size: (season === 'spring' ? 0.8 : 0.92) * FALL_K, transparent: true, opacity: 0.92, sizeAttenuation: true, fog: true, depthWrite: false })
     const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; scene.add(pts)
     seasonFall = { pts, pos, spd, phs, N, bx, bz, R0, floor, swirl: season === 'spring' ? 2.2 : 2.8 }
     // 歩く人に追従する近景の層（カメラ周りの箱で循環。降り立つとどこでも花びら/落ち葉が舞う＝散歩の没入）。
@@ -7384,7 +7393,7 @@ export async function mountTown3d(parent, opts = {}) {
     const npos = new Float32Array(nN * 3), nspd = new Float32Array(nN), nphs = new Float32Array(nN)
     for (let i = 0; i < nN; i++) { npos[i * 3] = (R() - 0.5) * nHX * 2; npos[i * 3 + 1] = R() * nHY; npos[i * 3 + 2] = (R() - 0.5) * nHX * 2; nspd[i] = 0.55 + R() * 0.8; nphs[i] = R() * 6.28 }
     const ngeo = new THREE.BufferGeometry(); ngeo.setAttribute('position', new THREE.BufferAttribute(npos, 3)); lightDraw(ngeo, 34)
-    const nmat = new THREE.PointsMaterial({ color: season === 'spring' ? 0xf4c2d6 : 0xd8813a, size: season === 'spring' ? 0.5 : 0.58, transparent: true, opacity: 0, sizeAttenuation: true, fog: true, depthWrite: false })
+    const nmat = new THREE.PointsMaterial({ map: fallDot, color: season === 'spring' ? 0xf4c2d6 : 0xd8813a, size: (season === 'spring' ? 0.5 : 0.58) * FALL_K, transparent: true, opacity: 0, sizeAttenuation: true, fog: true, depthWrite: false })
     const npts = new THREE.Points(ngeo, nmat); npts.frustumCulled = false; npts.visible = false; scene.add(npts)
     nearFall = { pts: npts, mat: nmat, pos: npos, spd: nspd, phs: nphs, N: nN, HX: nHX, HY: nHY, swirl: season === 'spring' ? 2.4 : 3.0 }
   }
@@ -7669,7 +7678,7 @@ export async function mountTown3d(parent, opts = {}) {
     box(owW + 0.2, 0.1, 0.1, 0, oT, 0.25, alMat); box(owW + 0.2, 0.1, 0.1, 0, oB + 0.06, 0.25, alMat)             // 上下の横桟（壁より手前・窓台の上）
     box(0.1, owH + 0.2, 0.1, -owW / 2 - 0.05, WINCY, 0.29, alMat); box(0.1, owH + 0.2, 0.1, owW / 2 + 0.05, WINCY, 0.29, alMat) // 左右の縦桟（さらに手前）
     box(0.06, owH, 0.06, 0, WINCY, 0.32, alMat) // 中央の召し合わせ（最前）
-    const winLock = box(0.14, 0.06, 0.08, 0.1, WINCY - 0.06, 0.31, alMat) // クレセント錠（便13 #2=2: 窓をあけると右の障子と一緒にすべる＝毎こまの所で動かす）
+    const winLock = box(0.14, 0.06, 0.08, 0.1, WINCY - 0.18, 0.31, alMat) // 便15 V10・V17: 錠を 0.12 下げた（外の手すりと画面で同じ高さに重なり、手すりが錠の所で一段太く折れて見えた）。クレセント錠（便13 #2=2: 窓をあけると右の障子と一緒にすべる＝毎こまの所で動かす）
     // 引き違いのガラス障子（2枚）。閉=開口を覆う／窓をあけると右の障子が左へすべって右半分が開く（実際の窓の開閉）。
     // ガラスは“ごく淡い映り込み”だけ（景色を曇らせない）。斜めの細い光の筋を1本＋極薄の地色。端はパネルを枠の内側に隠す。
     const glassTex = cv(64, 64, (x) => { x.fillStyle = 'rgba(210,222,234,0.02)'; x.fillRect(0, 0, 64, 64); x.strokeStyle = 'rgba(255,255,255,0.12)'; x.lineWidth = 3.5; x.beginPath(); x.moveTo(12, 64); x.lineTo(46, 0); x.stroke(); x.strokeStyle = 'rgba(255,255,255,0.06)'; x.lineWidth = 2; x.beginPath(); x.moveTo(40, 64); x.lineTo(56, 0); x.stroke() })
@@ -7751,7 +7760,7 @@ export async function mountTown3d(parent, opts = {}) {
     for (const [px, pz] of [[-SX + 0.11, 0.22], [SX - 0.11, 0.22], [-SX + 0.11, BZ - 0.22], [SX - 0.11, BZ - 0.22]]) box(0.17, WT - FY, 0.17, px, (WT + FY) / 2, pz, postMat) // 四隅の柱
     const ngY = oT + 0.5 // 長押の高さ（窓・鴨居の上）
     box(RW, 0.1, 0.06, 0, ngY, 0.05, postMat); box(RW, 0.1, 0.06, 0, ngY, BZ - 0.05, postMat) // 前後の長押
-    box(0.06, 0.1, RD, -SX + 0.04, ngY, BZ / 2, postMat); box(0.06, 0.1, RD, SX - 0.04, ngY, BZ / 2, postMat) // 左右の長押
+    box(0.06, 0.1, BZ - 0.3, -SX + 0.04, ngY, BZ / 2, postMat); box(0.06, 0.1, BZ - 0.3, SX - 0.04, ngY, BZ / 2, postMat) // 左右の長押（便15 V25: 前後の壁の内側〈z 0.15〜BZ-0.15〉の間だけ。部屋の奥行き RD で作ると前の壁を越えて窓の外へ 0.6 突き出し、角部屋の左の窓の上で柱を越えて見えた）
     // ── 右壁＝居間の顔: ブラウン管テレビ＋木の台＋柱時計＋カレンダー ──
     box(1.5, 0.66, 0.7, SX - 0.42, FY + 0.33, 3.0, woodMat)        // テレビ台
     box(1.04, 0.78, 0.66, SX - 0.5, FY + 1.05, 3.0, tvMat)         // テレビ筐体
@@ -8165,13 +8174,17 @@ export async function mountTown3d(parent, opts = {}) {
   }
   // 便13 #3=1: 角部屋は、開いた最初の向きを左の角へ振る（前は北寺尾の窓辺と同じ正面で、同じ部屋に見えた＝V58）。
   //   横長（PC・iPad の横）は二つの窓が角で並ぶ向き、縦長（iPhone・iPad の縦）は左の窓が正面に来る向き
-  if (kind === 'corner') active.yaw = active.yawTarget = W / H >= 1 ? -0.6 : -1.12
+  const cornerYaw0 = (w, h) => (w / h >= 1 ? -0.6 : -1.12)
+  let cornerYawSet = kind === 'corner' ? cornerYaw0(W, H) : null // 便15 D4: 最後に決めた最初の向き（見回す前に画面を回したら、その向きの最初の向きに決め直す）
+  if (kind === 'corner') active.yaw = active.yawTarget = cornerYawSet
 
   // 解像度/サイズを変える時は必ずここを通す＝camera.aspect も同時に更新（更新漏れが「横に伸びる」バグの元）。
   function applySize() {
     const w = stage.clientWidth, h = stage.clientHeight
     if (!w || !h) return
     if (w !== lastStageW || h !== lastStageH) { // 画面の大きさが変わったら（回転など）総画素数の上限を引き直す
+      // 便15 D4・V32・S53: 角部屋を縦で開いてから横へ回すと、縦の向きのまま（左の窓が真ん中）だった。窓辺にいて、まだ見回していない（目標が最初の向きのまま）なら、回した後の最初の向きに決め直す
+      if (cornerYawSet !== null && active && active.mode === 'window' && Math.abs(active.yawTarget - cornerYawSet) < 1e-6) { const y = cornerYaw0(w, h); if (y !== cornerYawSet) { cornerYawSet = y; active.yaw = active.yawTarget = y } }
       plan = qualityPlan('3d', curQual, { dpr: window.devicePixelRatio || 1, cssW: w, cssH: h }); qCap = plan.cap; prFloor = plan.floor
       curPR = Math.max(prFloor, Math.min(curPR, prFly ? plan.fly : qCap))
     }
@@ -8769,7 +8782,7 @@ export async function mountTown3d(parent, opts = {}) {
     const geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 3), seed = new Array(N)
     for (let i = 0; i < N; i++) { const lx = (R() - 0.5) * 72, ly = 2 + R() * 26, lz = -4 - R() * 60; pos[i * 3] = lx; pos[i * 3 + 1] = ly; pos[i * 3 + 2] = lz; seed[i] = { lx, ly, lz, ph: R() * 6.28, sp: 0.7 + R() * 0.8, sw: 0.6 + R() * 1.2 } }
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    const mat = new THREE.PointsMaterial({ color: cfg.col, size: cfg.sz, transparent: true, opacity: 0, depthWrite: false, fog: true, sizeAttenuation: true })
+    const mat = new THREE.PointsMaterial({ map: fallDot.clone(), color: cfg.col, size: cfg.sz * FALL_K, transparent: true, opacity: 0, depthWrite: false, fog: true, sizeAttenuation: true }) // 便15 W2: 丸い粒（出来事の片付けで絵を破棄するので写しを渡す）
     const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 2; scene.add(pts)
     const dur = 26, wind = (R() < 0.5 ? 1 : -1) * (2.2 + R() * 1.0), peak = season === 'winter' ? 0.85 : 0.78
     addFx({

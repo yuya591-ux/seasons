@@ -66,7 +66,7 @@ const FRAGMENT_BODY = /* glsl */ `
     vec2 vp = vec2(p.x, p.y - pitch + curve);
 
     float horizon = 0.60; // 窓の横桟（0.52）より上＝夕日の円盤が桟の裏に隠れない（以前は 0.52 で桟と重なっていた・V33）
-    float sunAz = -0.05;                  // 世界に固定した夕陽の方位
+    float sunAz = -0.24 * min(asp, 1.0);  // 世界に固定した夕陽の方位（便15 V58: 縦の桟〈画面の真ん中〉から外し、窓の左の枠の内に置く。以前の -0.05 は PC で円盤が桟の左に隠れた）
     float sunScreenX = sunAz - yaw * 0.55; // 見回すと夕陽も視界の中を移動する
 
     // ── 空（夕暮れ・水平線に沈む夕陽・層雲・地平の霞） ──
@@ -260,7 +260,8 @@ const FRAGMENT_BODY = /* glsl */ `
 
 
     // 海鳥（はばたきながら弧を描いて海の空を渡る）
-    col = flyingBirds(col, vec2(ax + yaw * 0.5, vp.y), t, 1.0);
+    // 便15 V61: かもめは縦の桟（画面の真ん中）の手前で消え、過ぎてから現れる（桟にかかって半分に切れて見えた）
+    col = flyingBirdsAvoid(col, vec2(ax + yaw * 0.5, vp.y), t, 1.0, yaw * 0.5, 0.011 * asp / max(asp, 1.0) + 0.03);
 
     // ガラス現象
     col = applyGlass(col, p, t, uGlass);
