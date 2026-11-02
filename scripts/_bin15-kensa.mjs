@@ -375,13 +375,13 @@ const CHECKS = {
     let r = null
     if (has) {
       const shot = async (t, name) => { await p.evaluate((t) => window.__b15SetTime(t), t); await p.waitForTimeout(500); const f = `${SHOTS}/e10-${name}.png`; await p.screenshot({ path: f }); return f }
-      const fOn = await shot(0.5 / 0.017, 'gull-on-bar'), fOff = await shot(0.5 / 0.017 + 9, 'gull-off-bar')
+      const fOn = await shot((0.5 + 0.03 / 3.2) / 0.017, 'gull-on-bar'), fOff = await shot(0.5 / 0.017 + 9, 'gull-off-bar') // 鳥の真ん中が桟の右脇（翼が桟に半分かかる所）にいる時刻
       const W = 1920, H = 1080
       const dark = async (f) => lumStats(p, f, [W / 2 - 60, Math.round(H * 0.20), 120, Math.round(H * 0.20)], `let n = 0; for (let i = 0; i < px.length; i += 4) { const l = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]; if (l < 120) n++ } return n`)
       r = { on: await dark(fOn), off: await dark(fOff) }
     }
     await ctx.close()
-    return { pass: !!r && Math.abs(r.on - r.off) <= 30, detail: r ? `桟のまわりの暗い画素: 鳥が桟の所にいる時刻 ${r.on}・いない時刻 ${r.off}` : '時刻を上書きする口が無い（_bin15-vite.config.mjs）' }
+    return { pass: !!r && Math.abs(r.on - r.off) <= 10, detail: r ? `桟のまわりの暗い画素: 鳥が桟の所にいる時刻 ${r.on}・いない時刻 ${r.off}` : '時刻を上書きする口が無い（_bin15-vite.config.mjs）' }
   },
   async E11() { // V63: 山あいの太陽の円盤の中に光の筋が透けない（円盤の中の明るさのむらが小さい）
     const { p, ctx } = await open('summer-morning-mountains', { dev: 'pc' })
