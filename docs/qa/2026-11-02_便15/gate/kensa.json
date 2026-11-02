@@ -135,11 +135,6 @@
   "detail": "茅葺の屋根 2・雪の載る材 2",
   "sec": 12
  },
- "E6": {
-  "pass": true,
-  "detail": "左の長押の手前の端 z 0.15（前の壁の内側 0.15）",
-  "sec": 20
- },
  "E7": {
   "pass": true,
   "detail": "光る窓の材: 夏の朝 0・春の朝 0・秋の夕 478",
@@ -169,10 +164,5 @@
   "pass": true,
   "detail": "足りない なし・古い なし",
   "sec": 0
- },
- "E14": {
-  "pass": true,
-  "detail": "autumn-dusk-corner-room 左右の壁 3 枚・いちばん手前の端 z -0.15・kitaterao 左右の壁 2 枚・いちばん手前の端 z -0.15",
-  "sec": 42
  }
 }

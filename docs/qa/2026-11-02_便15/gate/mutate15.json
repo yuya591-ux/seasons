@@ -171,15 +171,6 @@
   ]
  },
  {
-  "name": "V25 左右の長押の長さ",
-  "file": "src/engine/town3dViewer.js",
-  "check": "E6",
-  "caught": true,
-  "failed": [
-   "E6 不合格: 左の長押の手前の端 z -0.45（前の壁の内側 0.15）"
-  ]
- },
- {
   "name": "V29 朝は窓を灯さない",
   "file": "src/engine/town3dViewer.js",
   "check": "E7",

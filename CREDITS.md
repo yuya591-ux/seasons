@@ -99,6 +99,14 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 - 生成ツール: `scripts/gen-bg.mjs`（Flux固定・無料・トークン任意）。プロンプト定義は `scripts/bg-jobs.json`。各情景も `bgPrompt` を携帯し、季節×天気×時間帯ごとに量産しやすい形。
 - dev用ライブラリ `sharp`／`playwright` は本番ビルド(Vite)に不要なため、本番の依存（dependencies）には含めない。
 
+## 共有の時の絵（og.jpg）
+
+- `public/og.jpg` は、前の「実写の窓、夕暮れの町」の生成画像（Pollinations.AI / Flux＋Real-ESRGAN 超解像・上の表と同じ生成の扱い）から作った物。情景は撤去したが、共有の時の絵として今も配っている（作品名が前の「窓辺」のまま。作り直しは後の便）。Real-ESRGAN（https://github.com/xinntao/Real-ESRGAN ・BSD-3-Clause）は開発時の道具で、配る物には入れていない。
+
+## 描画のライブラリ
+
+- three.js（MIT・https://threejs.org/ ）— 立体の街の描画。アプリ内の出典（設定 → この作品について）にも載せている。
+
 ## 情景の一覧の小さな絵（サムネ）
 
 - `public/thumbs/*.jpg` は、このアプリ自身の画面を撮って縮めた物（第三者の素材ではない）。撮り直しは `scripts/make-thumbs.mjs`。

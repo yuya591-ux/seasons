@@ -1,0 +1,73 @@
+{
+ "at": "2026-11-02T17:16:35.162Z",
+ "port": "4982",
+ "pass": true,
+ "K1": {
+  "pass": true,
+  "sheet": 1,
+  "blobs": 0,
+  "depth": 1,
+  "sheetWarm": true,
+  "errs": []
+ },
+ "K2": {
+  "pass": true,
+  "glory": 1,
+  "sheetOrder": 0
+ },
+ "K3": {
+  "pass": true,
+  "cone48": 36,
+  "cone6big": 0
+ },
+ "K4": {
+  "pass": true,
+  "sprites": 12,
+  "smokeSpheres": 0
+ },
+ "K5": {
+  "pass": true,
+  "frags": 2,
+  "lens": true,
+  "trail": true,
+  "blurTex": true,
+  "canvasTex": [
+   [
+    496,
+    297
+   ]
+  ],
+  "errs": []
+ },
+ "K6": {
+  "pass": true,
+  "detail": true,
+  "errs": []
+ },
+ "K7": {
+  "pass": true,
+  "detail": true,
+  "errs": []
+ },
+ "A1": {
+  "pass": true,
+  "detail": "鳴らす音 11・出典に無い 0",
+  "sec": 0
+ },
+ "A2": {
+  "pass": true,
+  "detail": "アプリ内 Japanese bush warbler (uguisu) in a city ambiance（ウグイス） https://freesound.org/people/warukunai/sounds/524526/",
+  "sec": 0
+ },
+ "A3": {
+  "pass": true,
+  "detail": "使わない音 0・使わない画と道具 0",
+  "sec": 0
+ },
+ "A4": {
+  "pass": true,
+  "detail": "見出し 7・撤去した情景の名の見出し 0・「すべて元は Ogg」なし",
+  "sec": 0
+ },
+ "_at": "2026-11-02T17:29:20.454Z"
+}
