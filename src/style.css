@@ -677,69 +677,7 @@ body.idle .town3d-stick {
     linear-gradient(118deg, transparent 62%, rgba(255, 255, 255, 0.06) 71%, transparent 80%),
     linear-gradient(160deg, rgba(200, 218, 236, 0.06), transparent 45%);
 }
-/* 大気のトーン（空のほのかな光のにじみ＋周辺減光）。シネマ調の奥行きで低ポリを格上げ。
-   グロー/翳りの色は情景ごとに --t3d-glow（太陽の光）/ --t3d-shade（空色を沈めた冷色の影）で同調。 */
-.town3d-atmo {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    radial-gradient(118% 72% at 50% 6%, rgba(var(--t3d-glow, 255, 246, 228), 0.17), transparent 54%),
-    radial-gradient(146% 130% at 50% 42%, transparent 50%, rgba(var(--t3d-shade, 14, 11, 20), 0.42));
-}
-/* 情景の光で全体を一枚の空気に統一する淡いウォッシュ（ソフトライトで局所色をまとめる＝水彩の色の調和）。
-   濃さは情景ごとに --t3d-wash-a（昼は強め・夜/雪は弱め）。 */
-.town3d-wash {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  mix-blend-mode: soft-light;
-  opacity: var(--t3d-wash-a, 0.18);
-  background: rgb(var(--t3d-glow, 255, 246, 228));
-}
-/* 紙・水彩のトーン（薄い紙目を乗算で重ね、3Dを他情景と同じ手触りに） */
-.town3d-paper {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  mix-blend-mode: multiply;
-  /* 高周波の紙目を乗算で強く重ねると等倍ディスプレイで「汚れ/ザラつき」に見える（grade.jsで一度撤去した轍）。
-     opacityを0.4→0.2へ控えめにし、粒も少し粗く（170→205px）して点状のノイズ感を和らげる（評価アート指摘）。 */
-  opacity: 0.2;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.62' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 205px 205px;
-}
-/* 紙目2層め: 粗い斑(にじみ)をソフトライトで重ね、絵具が紙に染みた有機的なムラを足す＝水彩の深み */
-.town3d-paper2 {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  mix-blend-mode: soft-light;
-  opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.013' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23b)'/%3E%3C/svg%3E");
-  background-size: 560px 560px;
-}
-/* 縁のにじみ: 画面の四隅へ向けて紙色がふわりと滲む＝水彩を一枚の絵として縁取る（ノスタルジー） */
-.town3d-bleed {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  mix-blend-mode: soft-light;
-  background: radial-gradient(128% 116% at 50% 46%, transparent 56%, rgba(250, 244, 230, 0.5));
-}
-/* 軽量品質（非力端末）では全画面 mix-blend-mode の合成レイヤーを畳む＝iOS等のコンポジタGPU負荷を下げる。
-   soft-light の3枚(wash/paper2/bleed)を止め、紙目(paper=乗算1枚)とatmo(素のグラデ)だけ残し手触りは保つ。
-   standard以上では全層を保つ＝水彩の見た目は不変（鮮明さ優先）。 */
-.town3d-stage--light .town3d-wash,
-.town3d-stage--light .town3d-paper2,
-.town3d-stage--light .town3d-bleed {
-  display: none;
-}
+/* 便15 #1=1: 前の CSS の水彩の層（大気・ウォッシュ・紙目2枚・縁のにじみ）と軽やかでそれを畳む規則は、描画の中の水彩の仕上げに置き換え済みで使っていなかったので消した */
 
 /* 情景切替のなめらかな暗転（情景の空色へ一瞬沈み、静かに戻る） */
 .scene-fade {

@@ -1,27 +1,16 @@
 // シェーダー登録簿。情景の render 種別から、対応するシェーダーを引く。
 // 新しい現象（雪など）を足すときは、ここに1行 import で追加する。
+// 便15 #1=1: どの情景からも呼ばれていなかった6本（晴天・窓辺の下町・立体パノラマ・谷戸・屋上・実写の窓）は消した（戻す時は git の履歴から）
 
 import * as rainGlass from './rainGlass.js'
-import * as clearSky from './clearSky.js'
-import * as windowTown from './windowTown.js'
 import * as windowMountains from './windowMountains.js'
 import * as windowSea from './windowSea.js'
-import * as windowPano from './windowPano.js'
-import * as shishigaya from './shishigaya.js'
-import * as kitateraoRooftop from './kitateraoRooftop.js'
-import * as photoWindow from './photoWindow.js'
 
 export const SHADERS = {
   rainGlass, // 窓ガラスの雨
-  clearSky, // 晴天・入道雲・陽炎
-  windowTown, // 窓辺の下町（多層パララックス・見回し）
   windowMountains, // 窓辺の山あい
   windowSea, // 窓辺の海辺
-  windowPano, // 立体パノラマの窓（360°写真＋深度視差）
-  // cornerRoom は立体の街エンジン(town3dKind:'corner')へ載せ替え済み＝旧シェーダーは廃止（最重シェーダーを撤去・発熱/バンドル減）
-  shishigaya, // 鶴見・獅子ヶ谷の谷戸（出身地の再現）
-  kitateraoRooftop, // 北寺尾の屋上パノラマ（馴染みの一望風景）
-  photoWindow, // 実写の窓（Flux生成の写真を主役にした窓辺）
+  // 角部屋・谷戸・北寺尾は立体の街エンジン（town3dViewer.js）
 }
 
 /** render 種別からシェーダーを引く（未知なら雨ガラスにフォールバック）。 */

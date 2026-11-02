@@ -11,7 +11,6 @@ export default {
   desc: '本物の3Dで組んだ坂の街を、窓から見下ろす。電柱が遠近に伸び、雲が流れる立体の眺め。',
   status: 'ready',
   render: 'town3d', // Three.js ビューア（src/engine/town3dViewer.js）
-  bg3d: 'bg/town3d-day.jpg', // 奥に敷く実写背景（Flux生成・霞の里山住宅地）＝遠景を写真級に
 
   palette: {
     early: {

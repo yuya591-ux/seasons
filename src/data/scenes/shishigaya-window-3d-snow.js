@@ -12,7 +12,6 @@ export default {
   render: 'town3d', // Three.js ビューア（src/engine/town3dViewer.js）
   town3dKind: 'yato', // 谷戸（棚田・茅葺の屋敷・里山）。季節=winter・天気=snowで雪景色に
   town3dWeather: 'snow', // 粉雪を降らせる＋全トゥーン材に雪冠（snowify）
-  bg3d: 'bg/town3d-yato.jpg', // 奥に敷く実写の里山（現状 town3d は手前の低ポリ遠山を使用＝任意層）
 
   palette: {
     early: {

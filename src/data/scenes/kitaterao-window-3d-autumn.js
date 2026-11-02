@@ -10,7 +10,6 @@ export default {
   status: 'ready',
   render: 'town3d', // Three.js ビューア（src/engine/town3dViewer.js）
   town3dWeather: 'leaves', // 落ち葉を降らせる
-  bg3d: 'bg/town3d-autumn.jpg', // 奥に敷く実写の紅葉の里山（遠景を写真級に）
 
   palette: {
     early: {

@@ -9,7 +9,7 @@ await page.evaluate(() => document.fonts.ready)
 await page.locator('.gate').click().catch(() => {})
 await page.waitForTimeout(600)
 await page.addStyleTag({ content: '.ui{display:none !important}' })
-await page.evaluate(() => window.__applyScene && window.__applyScene('photo-window-dusk'))
+await page.evaluate(() => window.__applyScene && window.__applyScene('summer-rain-dusk'))
 await page.waitForTimeout(4000) // Flux写真の読み込み待ち
 // 上品な作品名の印（左下・明朝・暖色の白・控えめ）
 await page.evaluate(() => {

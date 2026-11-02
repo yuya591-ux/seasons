@@ -26,7 +26,7 @@ fs.rmSync(OUT, { recursive: true, force: true })
 fs.mkdirSync(OUT, { recursive: true })
 
 const scenes = SCENES.filter((s) => s.status === 'ready' && s.public !== false)
-const is3dScene = (s) => s.render === 'town3d' || s.render === 'cornerRoom'
+const is3dScene = (s) => s.render === 'town3d'
 
 // ── PNGを解いて輝度の平均・標準偏差を出す（黒画面=分散ほぼ0／白飛び=平均が高い、で識別）。qa-imgdiffと同じ手書きデコーダ。
 function pngLumaStat(buf) {

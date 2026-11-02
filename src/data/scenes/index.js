@@ -102,9 +102,8 @@ export function pickNowScene(date = new Date()) {
     let v = 0
     if (s.axes.season === season) v += 2
     if (s.axes.time === time) v += 2
-    if (s.render === 'photoWindow' || s.render === 'rainGlass') v += 3 // 旗艦の窓（実写・雨ガラス）
-    else if (s.render === 'town3d') v += 2 // 本物の3Dの街（その季節の立体の街）
-    else if (s.render === 'cornerRoom') v += 2 // 角部屋の見回し
+    if (s.render === 'rainGlass') v += 3 // 旗艦の窓（雨ガラス）
+    else if (s.render === 'town3d') v += 2 // 本物の3Dの街（その季節の立体の街・角部屋）
     return v
   }
   // 「いま」の季節も時間帯も合う情景たちは“日替わりで巡回”＝同じ軸に複数あっても日が変われば別の一枚に

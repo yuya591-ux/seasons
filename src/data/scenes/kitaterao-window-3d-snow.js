@@ -10,7 +10,6 @@ export default {
   status: 'ready',
   render: 'town3d', // Three.js ビューア（src/engine/town3dViewer.js）
   town3dWeather: 'snow', // 雪を降らせる
-  // bg3d は敢えて置かない: 明るい雪景色の実写を奥に敷くと、街が霧で白い写真に溶けて全体が白飛びした。
   // 雨シーン同様に空ドームのみにし、雪雲の鈍色の地平に街の階調を残す（眺める対象の街を見えるように）。
 
   palette: {

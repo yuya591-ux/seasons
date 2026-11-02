@@ -1,7 +1,7 @@
 // 2D（シェーダー）情景の静かな定期イベント。レンダラ非依存のDOMオーバーレイ層。
 // 澄んだ夜・夕暮れの空に、ふと流れ星がすっと流れて消える（音＝きらめき）。
 // 雨/雪の情景には既存の遠雷フラッシュ（onCue→renderer.triggerFlash）があるのでここでは扱わない。
-// town3d/splat は各々の現象系（evRain/evShootingStar 等）を持つため、シェーダー2D情景専用。
+// town3d は自分の現象系（evRain/evShootingStar 等）を持つため、シェーダー2D情景専用。
 
 let styleInjected = false
 function injectStyle() {
@@ -60,7 +60,7 @@ export function createEvents2d({ onStar, isLive, reduceMotion } = {}) {
 
   function setScene(scene) {
     clearTimeout(starTimer); starTimer = null
-    if (reduceMotion || !scene || scene.render === 'town3d' || scene.render === 'splat') { starEnabled = false; return }
+    if (reduceMotion || !scene || scene.render === 'town3d') { starEnabled = false; return }
     const ax = scene.axes || {}
     const nightish = ax.time === 'night' || ax.time === 'dusk'
     const clearSky = !ax.weather || ax.weather === 'clear' // 流れ星は澄んだ空のときだけ（曇/雨/雪は出さない）

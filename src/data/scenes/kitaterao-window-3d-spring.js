@@ -10,7 +10,6 @@ export default {
   status: 'ready',
   render: 'town3d', // Three.js ビューア（src/engine/town3dViewer.js）
   town3dWeather: 'petals', // 桜の花びらを降らせる
-  bg3d: 'bg/town3d-spring.jpg', // 奥に敷く実写の春の里山（桜・若草／遠景を写真級に）
 
   palette: {
     early: {

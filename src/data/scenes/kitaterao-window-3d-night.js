@@ -8,7 +8,6 @@ export default {
   desc: '本物の3Dの坂の街を窓から見下ろす夜景。灯る窓・ネオン・車のライトが闇に瞬く。',
   status: 'ready',
   render: 'town3d',
-  bg3d: 'bg/town3d-night.jpg', // 奥に敷く実写の夜の里山（灯りの滲む遠景を写真級に）
 
   palette: {
     early: {

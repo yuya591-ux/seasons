@@ -11,7 +11,6 @@ export default {
   status: 'ready',
   render: 'town3d', // Three.js ビューア（src/engine/town3dViewer.js）
   town3dKind: 'yato', // 谷戸（棚田・茅葺の屋敷・里山）。季節=autumn で刈田・稲架掛け・紅葉に
-  bg3d: 'bg/town3d-yato.jpg', // 奥に敷く実写の里山（現状 town3d は手前の低ポリ遠山を使用＝任意層）
 
   palette: {
     early: {

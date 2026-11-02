@@ -9,13 +9,11 @@ import { createAudio } from './audio/audio.js'
 import { buildUI } from './ui/ui.js'
 import { attachLookAround } from './ui/lookAround.js'
 import { createTilt, tiltAxes } from './ui/tilt.js'
-// 立体の街エンジン(town3dViewer)とスプラットビューア(splatViewer)はどちらも重い（8千行超の造形コードや Three.js を含む）。
+// 立体の街エンジン(town3dViewer)は重い（1万行超の造形コードや Three.js を含む）。
 // 窓辺(2D)の起動時には読み込まず、その情景に入る瞬間だけ動的importで取り寄せる＝最初の表示を軽くする（評価エンジニア・初期チャンク削減）。
-// メイン描画は素のWebGL（renderer.js）なので、これらは3D/スプラット情景に入るまで一切ダウンロードされない。
+// メイン描画は素のWebGL（renderer.js）なので、町の3Dの情景に入るまで一切ダウンロードされない（スプラットの表示は便15 #1=1 で消した）。
 let _t3d = null // 読み込み済みの town3dViewer モジュール（未読み込みなら null）
-let _splat = null // 読み込み済みの splatViewer モジュール（未読み込みなら null）
 const loadTown3d = async () => (_t3d ||= await import('./engine/town3dViewer.js'))
-const loadSplat = async () => (_splat ||= await import('./engine/splatViewer.js'))
 
 const BASE = import.meta.env.BASE_URL || '/'
 
@@ -89,24 +87,21 @@ function start() {
       if (def.cue === 'thunder') { renderer.triggerFlash(0.6); if (town3dMode) _t3d?.triggerTown3dFlash(0.6) } // 遠雷はひかえめに
     },
   })
-  // シェーダー2D情景の静かな定期イベント（澄んだ夜＝流れ星／夏の宵＝蛍）。town3d/splatは各自の現象系を持つので除外。
+  // シェーダー2D情景の静かな定期イベント（澄んだ夜＝流れ星／夏の宵＝蛍）。town3dは自分の現象系を持つので除外。
   const events2d = createEvents2d({
     onStar: () => { if (!sleepFading) audio.playEvent('star') }, // 流れ星のきらめき音
     isLive: () => !sleepFading && !document.hidden, // おやすみ中・非表示では出さない
     reduceMotion: !!(mqReduce && mqReduce.matches),
   })
   if (/[?&]dev=1/.test(location.search)) { window.__events2d = events2d; window.__audio = audio } // dev: 流れ星の手動発火・音の高度ダック確認(__audio._dbg())
-  let splatMode = false
   let town3dMode = false
-  // 端末の傾き: スプラット情景は3Dの見回し、それ以外はシェーダーの視差に振り分ける
+  // 端末の傾き: 町の3Dは窓辺の見回し、それ以外はシェーダーの視差に振り分ける
   const tilt = createTilt({
     onTilt: (nx, ny) => {
-      if (splatMode) _splat?.applySplatTilt(nx, ny)
-      else if (town3dMode) _t3d?.applyTown3dTilt?.(nx, ny) // 町の3Dは窓辺の見回しに足す（以前は隠れた2Dへ流れて効かなかった・S50）
+      if (town3dMode) _t3d?.applyTown3dTilt?.(nx, ny) // 町の3Dは窓辺の見回しに足す（以前は隠れた2Dへ流れて効かなかった・S50）
       else renderer.applyTilt(nx, ny)
     },
     onDisable: () => {
-      if (splatMode) _splat?.resetSplatTilt()
       _t3d?.applyTown3dTilt?.(0, 0)
       renderer.clearTilt()
     },
@@ -115,7 +110,7 @@ function start() {
   audio.setVolume(settings.volume)
 
   // シェーダー描画は非スプラット情景で起動する（スプラットは別ビューアで表示）
-  const firstShaderScene = (scene.render === 'splat' || scene.render === 'town3d') ? DEFAULT_SCENE : scene
+  const firstShaderScene = scene.render === 'town3d' ? DEFAULT_SCENE : scene
   const ok = renderer.start(firstShaderScene, settings)
   if (!ok) {
     canvas.hidden = true
@@ -146,40 +141,17 @@ function start() {
     if (!rebuild) recordVisit(next.id) // 通い帳: この窓辺に座った記録（段を変えた組み直しは数えない＝訪問数が増えない）
     audio.resetPlaces() // 前の町（高く飛んでいた等）が残した音の値を戻してから、新しい情景の音を立ち上げる（D7・S1）
     audio.setScene(next)
-    events2d.setScene(next) // シェーダー2D情景の定期イベント（流れ星/蛍）。town3d/splatでは内部で無効化
+    events2d.setScene(next) // シェーダー2D情景の定期イベント（流れ星/蛍）。town3dでは内部で無効化
 
-    if (next.render !== 'town3d') audio.setMusicBed({ off: true }) // 3Dの街以外ではBGMの下地を静かに引く（3Dではエンジンのonsceneが鳴らす）
     // 情景を替えたら窓は閉じた状態から始める（ボタンと描画のズレを防ぐ）
     renderer.setWindowOpen(false)
     audio.setWindowOpen(false) // 音も閉じた（こもった）状態へ戻す
     if (ui && ui.resetWindow) ui.resetWindow()
-    if (next.render === 'splat') {
-      splatMode = true
-      canvas.style.display = 'none'
-      renderer.pause(); if (renderer.freeFBO) renderer.freeFBO() // 別エンジン描画中はメインのGPUメモリを解放（コンテキスト枯渇の緩和）
-      if (town3dMode) { town3dMode = false; if (_t3d) await _t3d.unmountTown3d() }
-      try {
-        // 読み込み中の下地は情景の空色に（黒からの唐突な切替を避ける）
-        const bg = (next.palette && next.palette.early && next.palette.early.skyMid) || null
-        await (await loadSplat()).mountSplat(document.body, BASE + next.splatUrl, next.splatMode || 'orbit', bg)
-        // 読み込み中に新しい情景へ切替わっていたら、何もせず譲る（後始末は新しい切替が行う＝ここで unmount すると新情景を壊す・連打レース対策）
-        if (gen !== sceneGen) return
-      } catch (e) {
-        console.error('スプラット読み込み失敗→通常情景へ:', e)
-        if (gen !== sceneGen) return // 既に次の切替が走っている＝そちらに任せる（古いエラーで新情景を壊さない）
-        if (_splat) await _splat.unmountSplat()
-        if (gen !== sceneGen) return
-        splatMode = false
-        canvas.style.display = ''
-        renderer.resume()
-        renderer.setScene(DEFAULT_SCENE)
-      }
-    } else if (next.render === 'town3d') {
+    if (next.render === 'town3d') {
       // 本物の3Dの街（Three.js）。窓から立体の街を見下ろす。
       town3dMode = true
       canvas.style.display = 'none'
       renderer.pause(); if (renderer.freeFBO) renderer.freeFBO() // 立体の街の描画中はメインのGPUメモリを解放（コンテキスト枯渇の緩和・評価エンジニア）
-      if (splatMode) { splatMode = false; if (_splat) await _splat.unmountSplat() }
       try {
         await (await loadTown3d()).mountTown3d(document.body, {
           palette: (next.palette && next.palette.early) || null,
@@ -187,7 +159,6 @@ function start() {
           weather: next.town3dWeather || null, // 'snow' | 'petals' | 'leaves'（降るもの）
           kind: next.town3dKind || 'town', // 'town'（坂の街）| 'yato'（谷戸）
           mist: mistFor(next), // 低く溜まる霧の濃さ（時間帯・天気・場所の既定＋情景の mist の上書き）
-          bg3d: next.bg3d || null, // 奥に敷く実写背景（Flux生成）。遠景を写真級にする任意の格上げ層
           quality: getState().settings.quality, // 描き込み品質＝low端末の発熱/カクつきを抑える（town3dにも効かせる）
           brightness: getState().settings.brightness, // 明るさ設定を3Dにも反映
           timeStay: getState().settings.timeStay, // 「時間をとどめる」＝日の傾きのドリフトを凍結（3Dにも反映）
@@ -210,7 +181,6 @@ function start() {
           onBirdFlush: () => { if (!sleepFading) audio.birdFlush() }, // 鳥が驚いて飛び立つ羽音
           onAltitude: (v) => audio.setAltitudeDuck(v), // 高空で街の環境音をしぼる（風だけの静けさへ）
           onAmbience: (sea, river, crowd, fest, sta, festPan, staPan) => { if (!sleepFading) audio.setAmbience(sea, river, crowd, fest, sta, festPan, staPan) }, // 場所に応じた音（海＝波／川＝せせらぎ／人だまり＝ざわめき／夏祭り＝囃子／駅＝発車ベル）が満ち引き＋祭/駅は方角へ定位（空間音）
-          onScene: (c) => { if (!sleepFading) audio.setMusicBed(c) }, // 場面に応じて生成BGMの下地を静かに変える
           onSeaBird: () => { if (!sleepFading) audio.seaBird() }, // 海の上で時々かもめが鳴く
           onPurr: (v) => { if (!sleepFading) audio.setPurr(v) }, // 窓辺の猫を撫でるとゴロゴロ鳴る
           onMeow: (pitch, kind) => { if (!sleepFading) audio.meow(pitch, kind) }, // 窓辺の猫がタップ反応で鳴く（にゃーん）
@@ -236,13 +206,6 @@ function start() {
         renderer.setScene(DEFAULT_SCENE)
       }
     } else {
-      if (splatMode) {
-        splatMode = false
-        if (_splat) await _splat.unmountSplat()
-        if (gen !== sceneGen) return
-        canvas.style.display = ''
-        renderer.resume()
-      }
       if (town3dMode) {
         town3dMode = false
         if (_t3d) await _t3d.unmountTown3d()
@@ -324,7 +287,7 @@ function start() {
       localStorage.setItem('seasons_look_demo', '1')
     } catch { return }
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    if (town3dMode || splatMode) return // 3Dの街/スプラットは別系統の見回し＝対象外
+    if (town3dMode) return // 3Dの街は別系統の見回し＝対象外
     let cancelled = false
     const cancel = () => { cancelled = true }
     window.addEventListener('pointerdown', cancel, { once: true })
@@ -347,7 +310,7 @@ function start() {
   // 見回しに連動して音場が左右に動く（聴覚の没入）。シェーダー情景のみ（3Dの街/スプラットは別系統＝中央）。
   setInterval(() => {
     if (!audio.isStarted()) return
-    audio.setLookPan(town3dMode || splatMode ? 0 : renderer.getPan().x)
+    audio.setLookPan(town3dMode ? 0 : renderer.getPan().x)
   }, 130)
 
   const ui = buildUI({

@@ -38,9 +38,9 @@ export function buildUI(opts) {
   let currentScene = initialScene
   let intensityLabelEl = null // 設定の「強さ」スライダーの名前（情景で変わる）
   let intensityRowEl = null // 「強さ」行（town3d等では効かないので隠す＝評価UX-H4）
-  // 「強さ」が効くのは uIntensity を使うシェーダー情景（雨脚・陽炎・雲など）。3Dの街と実写の窓(photoWindow)は
-  // uIntensity を持たず効かない＝隠す。特に実写の窓では「明るさ」という名で出ていて全体の「明るさ」と二重で紛らわしかった（評価UX-U5）。
-  const intensityApplies = (s) => s && s.render !== 'town3d' && s.render !== 'photoWindow'
+  // 「強さ」が効くのは uIntensity を使うシェーダー情景（雨脚・霧など）。3Dの街は
+  // uIntensity を持たず効かない＝隠す（評価UX-U5）。
+  const intensityApplies = (s) => s && s.render !== 'town3d'
   function syncIntensityRow() {
     if (intensityRowEl) intensityRowEl.style.display = intensityApplies(currentScene) ? '' : 'none'
   }
@@ -82,7 +82,7 @@ export function buildUI(opts) {
   requestAnimationFrame(() => gate.focus())
 
   // 見回せる情景（窓辺シリーズ）だけでヒントを出す
-  const LOOKABLE = ['cornerRoom', 'windowTown', 'windowMountains', 'windowSea', 'windowPano', 'town3d', 'photoWindow']
+  const LOOKABLE = ['windowMountains', 'windowSea', 'town3d'] // 今ある描画の種類だけ（撤去した種類の名は便15 #1=1 で外した）
   // 初回のみ: 「見回せる」ことをそっと伝える（localStorageで2回目以降は出さない）
   function maybeShowLookHint(force) {
     if (!LOOKABLE.includes(currentScene.render)) return // 見回せない情景では出さない
@@ -175,7 +175,7 @@ export function buildUI(opts) {
   })
 
   // ── 窓をあける/しめる＋身を乗り出す（窓辺の情景でだけ） ──
-  const WINDOW_SCENES = ['cornerRoom', 'windowTown', 'shishigaya', 'windowSea', 'windowMountains', 'kitateraoRooftop', 'town3d', 'photoWindow']
+  const WINDOW_SCENES = ['windowSea', 'windowMountains', 'town3d'] // 今ある描画の種類だけ（撤去した種類の名は便15 #1=1 で外した）
   // 主ボタンを段階化: 「次の一歩」(stageBtn)＋「もどる」(backBtn)の2つに集約。
   // 窓をあける → 乗り出す → 空へ → おりる(歩く) と一歩ずつ前進。逆はもどるで一歩ずつ。
   const stageBtn = h('button', 'iconbtn iconbtn--stage', '窓をあける') // 次の一歩（前進）
@@ -195,19 +195,15 @@ export function buildUI(opts) {
   let leanIsOut = false
   let aloft = null // null=窓辺 / 'fly'=空を飛ぶ / 'walk'=地上を歩く
   let currentLoc = '' // いまの居場所（現代の街/江戸の城下町/雲海 等）＝飛行中に迷子にならない
-  function isRoof() {
-    return currentScene.render === 'kitateraoRooftop'
-  }
   function canFly() {
     return !!(isFlyable && isFlyable())
   }
-  // 屋上（開けた眺め）は「かすみを払う/戻す」、窓辺は「窓をあける/しめる」
-  const openLabel = () => (isRoof() ? 'かすみを払う' : '窓をあける')
-  const closeLabel = () => (isRoof() ? 'かすみへ戻す' : '窓をしめる')
+  const openLabel = () => '窓をあける'
+  const closeLabel = () => '窓をしめる'
   // 次の前進ステップのラベル（null=これ以上は進めない＝ボタンを隠す）
   function stageLabel() {
     if (!windowIsOpen) return openLabel()
-    if (!isRoof() && !leanIsOut && !aloft) return '乗り出す'
+    if (!leanIsOut && !aloft) return '乗り出す'
     if (canFly() && !aloft) return '空へ'
     if (aloft === 'fly') return '地上へ' // 飛行→着地して歩く（「おりる」は窓を閉じると紛らわしい→「空へ」と対称に・評価UX）
     if (aloft === 'walk') return '空へ' // 歩行→また飛ぶ
@@ -243,8 +239,8 @@ export function buildUI(opts) {
     const mode = aloft === 'fly' ? '空を飛ぶ' : aloft === 'walk' ? '地上を歩く' : ''
     modePill.textContent = mode + (mode && currentLoc ? '　' + currentLoc : '')
     modePill.classList.toggle('modepill--on', !!mode)
-    // 段階表示（●○○○）: 空まで飛べる立体の街でだけ、旅の進み具合を点で示す。屋上/非対応情景では隠す。
-    const journey = show && canFly() && !isRoof()
+    // 段階表示（●○○○）: 空まで飛べる立体の街でだけ、旅の進み具合を点で示す。非対応の情景では隠す。
+    const journey = show && canFly()
     stageDots.classList.toggle('stagedots--on', journey)
     if (journey) {
       const pos = aloft ? 3 : leanIsOut ? 2 : windowIsOpen ? 1 : 0 // 窓辺→窓あけ→乗り出し→空/地上
@@ -254,7 +250,7 @@ export function buildUI(opts) {
   }
   function advance() {
     if (!windowIsOpen) { windowIsOpen = true; onToggleWindow && onToggleWindow(true) }
-    else if (!isRoof() && !leanIsOut && !aloft) { leanIsOut = true; onToggleLean && onToggleLean(true) }
+    else if (!leanIsOut && !aloft) { leanIsOut = true; onToggleLean && onToggleLean(true) }
     else if (canFly() && !aloft) { aloft = 'fly'; windowIsOpen = true; leanIsOut = true; onToggleFly && onToggleFly(true) } // 操作案内はエンジン側ctrlHintが出す（一本化）
     else if (aloft === 'fly') { aloft = 'walk'; onToggleLand && onToggleLand(true) }
     else if (aloft === 'walk') { aloft = 'fly'; onToggleLand && onToggleLand(false) }
@@ -509,8 +505,6 @@ export function buildUI(opts) {
         flagship: 'summer-rain-dusk', test: (s) => s.render === 'rainGlass' },
       { key: 'nature', label: '海辺と山あい', desc: '波の音、朝もやの谷。旅先の窓辺',
         flagship: 'summer-dusk-seaside', test: (s) => s.render === 'windowSea' || s.render === 'windowMountains' },
-      { key: 'photo', label: '実写の窓', desc: '写真が主役の、いちばん本物に近い窓',
-        flagship: 'photo-window-town', test: (s) => s.render === 'photoWindow' },
       { key: 'etc', label: 'その他の窓辺', desc: '実証・開発用', test: () => true }, // 上のどれにも入らない残り（通常は空。dev時のみ）
     ]
     // 各場所に属する情景を集める（1情景は最初に一致した場所へ）。旗艦を先頭に。

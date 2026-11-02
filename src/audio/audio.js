@@ -598,101 +598,6 @@ export function createAudio(opts) {
     waterState.sea = s; waterState.river = r; waterState.crowd = cw
   }
 
-  // ── 生成的なBGMの下地（素材ゼロ・合成パッド）。CC0/オフライン原則と完全整合。
-  // 【作り直しの要点（実機FB「終始ぶーぶぶぶの電子ノイズで不快」）】
-  //  ・低音ドローンを廃止＝和音を中高域(165〜660Hz)へ。スマホのスピーカーは低音(80〜220Hz)を歪ませ
-  //    「うなり/ぶーぶー」になる。中高域の純正弦なら柔らかいパッドとして澄んで鳴る。
-  //  ・三角波をやめ全て正弦波（倍音の刺さりを排除）。ローパスも高め(柔らかいが曇らない)。
-  //  ・カットオフのLFO(うねり)を廃止＝脈打つ「ワウ」感を消す。揺らぎは音量のごく微かな呼吸のみ。
-  //  ・部屋では完全に無音（gain 0）＝室内は自然音だけ。空へ出てそっと滲み出る。
-  // 和音は全て A マイナー・ペンタトニック（A C D E G）内＝どの場面へ移っても濁らない。
-  // master 経由なので音量/ミュート/おやすみに自動追従。ピークでもごく小さく自然音を邪魔しない。
-  let bedNodes = null
-  const bedState = { gain: 0, cut: 1500, voice: [220, 329.6, 440] } // 今の目標値（細かな変化を無視する基準）
-  // 場面ごとの和音の声部（Hz）。全て中高域の A マイナー・ペンタトニック内（低音ドローンにしない）。
-  const VOICE = {
-    home: [220, 329.6, 440],    // A3 E4 A4＝開いた五度。穏やかで素直な基調
-    sea: [329.6, 440, 659.3],   // E4 A4 E5＝高く広い。海上の開放感
-    mountain: [220, 261.6, 329.6], // A3 C4 E4＝マイナーの色。山の静けさ
-    edo: [220, 293.7, 440],     // A3 D4 A4＝温かなsus。箏のような和の響き
-    sengoku: [164.8, 220, 261.6], // E3 A3 C4＝やや低く翳る。戦国の張りつめた静けさ
-    taisho: [261.6, 392, 523.3], // C4 G4 C5＝明るくほのかに切ない。大正の港の郷愁
-    cloud: [440, 659.3, 880],    // A4 E5 A5＝高く開いた澄んだ響き。雲海の上の夢見心地（山のマイナーの翳り＝不気味を脱し、心地よい開放感へ）
-  }
-  function startMusicBed() {
-    if (!ctx || bedNodes || !ctx.createBiquadFilter) return
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = bedState.cut; lp.Q.value = 0.3
-    const bedGain = ctx.createGain(); bedGain.gain.value = 0.0001
-    lp.connect(bedGain).connect(master)
-    const oscs = []
-    const vmix = [0.5, 0.6, 0.42] // 各声部の音量比（中声部を芯に・上声部は控えめ＝柔らかいパッド）
-    for (let i = 0; i < 3; i++) {
-      const o = ctx.createOscillator(); o.type = 'sine' // 全て正弦＝倍音の刺さりなし
-      o.frequency.value = bedState.voice[i]
-      o.detune.value = (i - 1) * 3 // ごく僅かなデチューン＝ゆっくりしたうねりで生命感（中高域なので濁らない）
-      const og = ctx.createGain(); og.gain.value = vmix[i]
-      o.connect(og).connect(lp)
-      try { o.start() } catch { /* 無視 */ }
-      oscs.push(o)
-    }
-    // ごくゆっくりした音量の呼吸（カットオフのうねりは廃止＝脈打つワウ感を出さない）。
-    // 重要: 呼吸LFOの深さ(lfo2G)は「現在の音量に比例」させる＝無音時(gain≈0)は呼吸も0で完全に消える。
-    // 固定深さだと無音化しても±が残り、録画のAGCで微小な正弦和音が「機械音」に増幅されてしまう（実機FB）。
-    let lfo2G = null
-    try {
-      const lfo2 = ctx.createOscillator(); lfo2.frequency.value = 0.05
-      lfo2G = ctx.createGain(); lfo2G.gain.value = 0.0; lfo2.connect(lfo2G).connect(bedGain.gain); lfo2.start() // 深さは setMusicBed で gain*0.3 に追従（無音時は0）
-    } catch { /* LFO非対応でも下地は鳴る */ }
-    bedNodes = { lp, bedGain, oscs, lfo2G }
-  }
-  // 場面（ctx）からBGMの目標（音量・音色・和音）を決め、数秒かけて滑らかに移す。
-  // ctx = { off?, mode:'window'|'fly'|'walk', flyAmt, speed, altitude, terrain:'sea'|'mountain'|'land', edoP, senP, taiP, night }
-  function setMusicBed(c) {
-    if (!ctx || !bedNodes) return
-    const t = now()
-    let gain, cut, voice
-    if (!c || c.off || muted) {
-      gain = 0.0001; cut = bedState.cut; voice = bedState.voice // 3Dを離れる/消音中は静かに引く
-    } else {
-      const fly = Math.max(0, Math.min(1, c.flyAmt || 0))
-      const spd = Math.max(0, Math.min(1, c.speed || 0))
-      const eMax = Math.max(c.edoP || 0, c.senP || 0, c.taiP || 0)
-      // 和音の選択: 時代の近さが勝てばその時代、次に地形(海/山)、なければ基調。
-      if (eMax > 0.2) voice = (c.edoP >= c.senP && c.edoP >= c.taiP) ? VOICE.edo : (c.senP >= c.taiP ? VOICE.sengoku : VOICE.taisho)
-      else if (c.terrain === 'cloud') voice = VOICE.cloud // 雲海の上＝高く開いた澄んだ響き（心地よい夢見心地）
-      else if (c.terrain === 'sea') voice = VOICE.sea
-      else if (c.terrain === 'mountain') voice = VOICE.mountain
-      else voice = VOICE.home
-      // 音量: 部屋＝無音(自然音だけ)。空へ出てから fly でそっと滲み出し、速度と時代の近さで僅かに満ちる。
-      // 中高域は同じ振幅でも大きく聞こえる(等ラウドネス)ので、低音時代よりピークを下げる。
-      if (c.mode === 'window' && fly < 0.2) gain = 0.0001 // 部屋では鳴らさない
-      else if (c.mode === 'walk') gain = 0.012 * fly
-      else gain = (0.013 + spd * 0.009 + eMax * 0.012) * Math.min(1, fly * 1.3)
-      gain = Math.min(0.036, gain)
-      // 音色（明るさ）: 海/速度で開け、山/戦国で翳り、大正は華やぎ、夜は全体に落ち着ける。高めの帯で柔らかく。
-      cut = 1400 + spd * 600 + eMax * 300
-      if (voice === VOICE.cloud) cut = 2600        // 雲海＝高く澄んで開ける（柔らかく明るい・夢見心地）
-      else if (voice === VOICE.sea) cut += 500
-      else if (voice === VOICE.mountain) cut = 1150
-      else if (voice === VOICE.sengoku) cut = 1050
-      else if (voice === VOICE.taisho) cut = 2200
-      else if (voice === VOICE.edo) cut = 1650
-      if (c.night) cut *= 0.86
-    }
-    // 【実機FB2回目（2026-06-21）「空中/着地後もブーーーと鳴り続けて不快」】＝持続するシンセのパッド(正弦の和音)
-    // がドローンに聞こえる。ユーザーが繰り返し嫌うため、当面は完全無音化＝自然音(風・鳥・虫・波)だけにする。
-    // 【画面録画FB（2026-06-23）「録画で変な機械音」】＝0.0001でも残響＋呼吸LFOの±が録画のAGCで増幅されていた。
-    // 真の0にして、呼吸LFOの深さもgainに比例(=0)させ、合成パッドを完全に止める。
-    gain = (voice === VOICE.cloud) ? 0.014 * Math.min(1, (c.flyAmt || 0) * 1.3) : 0.0 // 雲海の上だけ、高く澄んだ和音をそっと添える（夢見心地）。他は完全無音のまま＝繰り返し嫌われた持続ドローンは出さない
-    // 細かな変化は無視（無駄なスケジューリングを抑える）。
-    if (Math.abs(gain - bedState.gain) > 0.0008) { bedState.gain = gain; try { bedNodes.bedGain.gain.setTargetAtTime(gain, t, 1.8); if (bedNodes.lfo2G) bedNodes.lfo2G.gain.setTargetAtTime(gain * 0.3, t, 1.8) } catch { /* 無視 */ } }
-    if (Math.abs(cut - bedState.cut) > 24) { bedState.cut = cut; try { bedNodes.lp.frequency.setTargetAtTime(cut, t, 2.4) } catch { /* 無視 */ } }
-    if (voice !== bedState.voice) {
-      bedState.voice = voice
-      for (let i = 0; i < 3; i++) { try { bedNodes.oscs[i].frequency.setTargetAtTime(voice[i], t, 3.6) } catch { /* 無視 */ } } // 和音はゆっくり滑らせて移す＝場面が静かに移ろう
-    }
-  }
-
   // ── イベント連動の合成音（素材ゼロ）。現実に音のある現象だけ鳴らす（花火・流れ星）。
   // 気球/飛行機雲/雲影/宵の灯り/オーロラ/虹は現実に無音なので鳴らさない。
   function boom(at, amp) {
@@ -774,15 +679,11 @@ export function createAudio(opts) {
     startWater() // 場所に応じた水の音（波/せせらぎ）の源を立ち上げる（音量0＝setAmbienceが近さで満ち引き）
     startFestival() // 夏祭りの囃子の源を立ち上げる（音量0＝祭りに近づくと満ちる。離れている間は音符を作らない）
     startStation() // 駅の音の源を立ち上げる（音量0＝駅に近づくと遠い電車の音がたまに。ベルは廃止）
-    // 生成BGMの下地(合成パッド)は実機で終始「ぶー」というドローンに聞こえ、ユーザーが繰り返し強く嫌う。
-    // 根本対策として下地そのものを起動しない＝oscillatorを生成せずドローン源を消す。自然音(風・鳥・虫・波)だけにする。
-    // （startMusicBed/setMusicBed は将来用に残すが呼ばない。bedNodesがnullのままなのでsetMusicBedは何もしない）
+    // 生成BGMの下地（合成パッド）は実機で「ぶー」というドローンに聞こえ嫌われたので、自然音（風・鳥・虫・波）だけにする（便15 #1=1 でコードごと消した。戻す時は git の履歴から）
     if (currentScene) await playScene(currentScene, false)
   }
 
-  return {
-    /** 検証用(dev): 高度ダック量・生きているループ音の実ゲイン・夕方の高音しぼり・飛行の風・解読した音の控え・タイマーの数・起動の鈴。 */
-    _dbg() { return { altDuck: +altDuckV.toFixed(3), loops: layers.filter((l) => !l.stopped).map((l) => +l.layerGain.gain.value.toFixed(4)), duskShelf: duskShelf ? +duskShelf.gain.value.toFixed(2) : null, flyWind: flyWindV, cache: [...bufferCache.keys()], timers: timers.length, timersFired, chime: chimeDbg, started } },
+  const api = {
     /** 最初のユーザー操作で呼ぶ。音脈を起こし、現在の情景の音を静かに立ち上げる。 */
     start: startAudio,
     /** 情景を替える時、前の情景（立体の街）が残した場所の音の値を戻す（高さのしぼり・飛行の風・水/祭り/駅のざわめき・猫）。
@@ -799,9 +700,6 @@ export function createAudio(opts) {
     },
     /** 画面の現象に音を結ぶ（花火の遠い破裂・流れ星のきらめき）。無音の現象は鳴らさない。 */
     playEvent,
-    /** 3Dの街の場面（部屋/窓辺/飛び始め/巡航/速度/山/海/各時代の近さ）でBGMの下地を静かに変える。
-     *  3Dを離れる時は {off:true} で静かに引く。素材ゼロの合成パッドなのでオフライン/CC0原則と整合。 */
-    setMusicBed,
     /** 場所に応じた水の音（波/せせらぎ）の満ち引き。sea=海の近さ・river=川/運河の近さ・crowd=人混み・fest=夏祭りの近さ(各0..1)。 */
     setAmbience,
     /** 夏祭りの囃子の満ち引き（遠くでほんのり→近づくと大きく・澄む）。amt=最寄りの開催中の祭りへの近さ(0..1)。 */
@@ -1053,10 +951,17 @@ export function createAudio(opts) {
         try { l.panner.pan.setTargetAtTime(target, t, 0.12) } catch { l.panner.pan.value = target } // なめらかに移す（クリック音を避ける）
       }
     },
-    getLookPan() { return lookPan }, // 検証/連携用
-    getDebug() { return { state: ctx ? ctx.state : 'none', bedReady: !!bedNodes, bedGain: bedState.gain, bedCut: bedState.cut, bedVoice: bedState.voice.join('/'), water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2) } }, // 検証用: BGM下地＋水音/ざわめき/祭り囃子/駅の状態
     isStarted() {
       return started
     },
   }
+  // 検証用の口（便15 S71: 本番のビルドに入れない＝開発サーバーの時だけ足す。vite が本番では消す）。生きているループ音の実ゲイン・高度ダック量・見回しの音場・水音/祭り/駅の状態
+  if (import.meta.env.DEV) {
+    Object.assign(api, {
+      _dbg() { return { altDuck: +altDuckV.toFixed(3), loops: layers.filter((l) => !l.stopped).map((l) => +l.layerGain.gain.value.toFixed(4)), duskShelf: duskShelf ? +duskShelf.gain.value.toFixed(2) : null, flyWind: flyWindV, cache: [...bufferCache.keys()], timers: timers.length, timersFired, chime: chimeDbg, started } },
+      getLookPan() { return lookPan },
+      getDebug() { return { state: ctx ? ctx.state : 'none', water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2) } },
+    })
+  }
+  return api
 }
