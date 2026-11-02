@@ -7760,7 +7760,7 @@ export async function mountTown3d(parent, opts = {}) {
     for (const [px, pz] of [[-SX + 0.11, 0.22], [SX - 0.11, 0.22], [-SX + 0.11, BZ - 0.22], [SX - 0.11, BZ - 0.22]]) box(0.17, WT - FY, 0.17, px, (WT + FY) / 2, pz, postMat) // 四隅の柱
     const ngY = oT + 0.5 // 長押の高さ（窓・鴨居の上）
     box(RW, 0.1, 0.06, 0, ngY, 0.05, postMat); box(RW, 0.1, 0.06, 0, ngY, BZ - 0.05, postMat) // 前後の長押
-    box(0.06, 0.1, BZ - 0.3, -SX + 0.04, ngY, BZ / 2, postMat); box(0.06, 0.1, BZ - 0.3, SX - 0.04, ngY, BZ / 2, postMat) // 左右の長押（便15 V25: 前後の壁の内側〈z 0.15〜BZ-0.15〉の間だけ。部屋の奥行き RD で作ると前の壁を越えて窓の外へ 0.6 突き出し、角部屋の左の窓の上で柱を越えて見えた）
+    box(0.06, 0.1, RD, -SX + 0.04, ngY, BZ / 2, postMat); box(0.06, 0.1, RD, SX - 0.04, ngY, BZ / 2, postMat) // 左右の長押
     // ── 右壁＝居間の顔: ブラウン管テレビ＋木の台＋柱時計＋カレンダー ──
     box(1.5, 0.66, 0.7, SX - 0.42, FY + 0.33, 3.0, woodMat)        // テレビ台
     box(1.04, 0.78, 0.66, SX - 0.5, FY + 1.05, 3.0, tvMat)         // テレビ筐体

@@ -95,6 +95,7 @@ function start() {
   })
   if (/[?&]dev=1/.test(location.search)) { window.__events2d = events2d; window.__audio = audio } // dev: 流れ星の手動発火・音の高度ダック確認(__audio._dbg())
   let town3dMode = false
+  let town3dQuality = null // 今の町を組んだ時の描き込みの段（便15 S31: 設定の画面は保存の値と同じ入れ物を書き換えるので、変わったかはこれと比べる）
   // 端末の傾き: 町の3Dは窓辺の見回し、それ以外はシェーダーの視差に振り分ける
   const tilt = createTilt({
     onTilt: (nx, ny) => {
@@ -166,7 +167,7 @@ function start() {
           weather: next.town3dWeather || null, // 'snow' | 'petals' | 'leaves'（降るもの）
           kind: next.town3dKind || 'town', // 'town'（坂の街）| 'yato'（谷戸）
           mist: mistFor(next), // 低く溜まる霧の濃さ（時間帯・天気・場所の既定＋情景の mist の上書き）
-          quality: getState().settings.quality, // 描き込み品質＝low端末の発熱/カクつきを抑える（town3dにも効かせる）
+          quality: (town3dQuality = getState().settings.quality), // 描き込み品質＝low端末の発熱/カクつきを抑える（town3dにも効かせる）
           brightness: getState().settings.brightness, // 明るさ設定を3Dにも反映
           timeStay: getState().settings.timeStay, // 「時間をとどめる」＝日の傾きのドリフトを凍結（3Dにも反映）
           reduceMotion: !!(mqReduce && mqReduce.matches), // 視差軽減: 定期イベントを止める
@@ -335,7 +336,6 @@ function start() {
     onSleepTimer,
     getJournal: () => getState().journal, // 通い帳の記録（訪れた窓辺・累計時間・まれな現象）
     onSettings(patch) {
-      const prevQuality = getState().settings.quality
       updateSettings(patch)
       renderer.setSettings(getState().settings)
       // 3Dの街モードでは明るさ・描き込みをtown3dへ反映（シェーダーは一時停止中なので renderer.setSettings は効かない）
@@ -344,7 +344,7 @@ function start() {
       }
       // 描き込みの段を変えたら、同じ情景を組み直す＝影の細かさ・ブルーム・解像度がその場で新しい段になる
       // （以前は解像度とブルームだけが変わり、影や物の数は次に情景を開くまで変わらなかった・S27）。軽やかでも町の配置は同じ（S25）
-      if (town3dMode && patch.quality !== undefined && patch.quality !== prevQuality) applyScene(resolveScene(getState().sceneId), true, { rebuild: true })
+      if (town3dMode && patch.quality !== undefined && patch.quality !== town3dQuality) applyScene(resolveScene(getState().sceneId), true, { rebuild: true })
       if (patch.tilt !== undefined) {
         if (patch.tilt) {
           tilt.enable().then((ok) => {

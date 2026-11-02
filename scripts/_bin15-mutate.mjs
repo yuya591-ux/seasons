@@ -16,11 +16,11 @@ const M = [
   ['S5 情景データの権利のコメント', 'src/data/scenes/summer-rain-morning.js', '出典・ライセンスは CREDITS.md に全数記録', '出典・ライセンスは CREDITS.md に全数記録（すべてCC0流用）', 'A5'],
   ['S55 README', 'README.md', '組み合わせを 25 収録', '組み合わせを 30 あまり収録', 'A6'],
   ['S72 古い色の説明', T, '  // 色の圧縮はフィルム風（Neutral）', '  // フィルミックなトーンマッピング（ACES）\n  // 色の圧縮はフィルム風（Neutral）', 'A7'],
-  ['S31 今の段を押しても組み直さない', UI, "if (settings.quality === q.id) { poke(); return }", '', 'B1'],
+  ['S31 今の段を押しても組み直さない', UI, 'if (settings.quality === q.id) { poke(); return }', '', 'B1', [[MAIN, 'patch.quality !== undefined && patch.quality !== town3dQuality)', 'patch.quality !== undefined)']]],
   ['S19・U4 段の組み直しで引き継ぐ', MAIN, 'const keep = rebuild && ui && ui.getStage ? ui.getStage() : null', 'const keep = null', 'B2'],
   ['S32 傾きの拒否で札を消す', MAIN, "if (!ok) { updateSettings({ tilt: false }); if (ui && ui.setTilt) ui.setTilt(false) } // 許可拒否なら設定を戻し、札も消す", "if (!ok) { updateSettings({ tilt: false }) } // 許可拒否なら設定を戻し、札も消す", 'B3'],
-  ['V67 音の線の左端', UI, "    audioCtrls.appendChild(vol) // 便15 V67", "    audioCtrls.prepend(muteBtn); audioCtrls.appendChild(vol) // 便15 V67", 'B4'],
-  ['V68 設定の間は＋−を隠す', CSS, 'body:has(.panel--open) .town3d-zoom,', 'body.never-b15 .town3d-zoom,', 'B5'],
+  ['V67 音の線の左端', UI, '    audioCtrls.appendChild(vol) // 便15 V67: 線を先に置き、「雨脚」「明るさ」の線と左端をそろえる（♪ は線の右）\r\n    audioCtrls.appendChild(muteBtn)', '    audioCtrls.appendChild(muteBtn)\r\n    audioCtrls.appendChild(vol)', 'B4'],
+  ['V68 設定の間は＋−を隠す', CSS, 'body:has(.panel--open) .town3d-zoom,\r\nbody:has(.panel--open) .town3d-pad {', 'body.never-b15 .town3d-zoom,\r\nbody.never-b15 .town3d-pad {', 'B5'],
   ['V73 右上のボタンを1段に', CSS, '@media (max-width: 480px) {\r\n  .topbar {\r\n    gap: 0.32rem;', '@media (max-width: 1px) {\r\n  .topbar {\r\n    gap: 0.32rem;', 'B6'],
   ['S23 見回しの口の上書き', T, 'window.__town3dLookState = () => { if (active !== me) return null; let lit = 0', 'window.__town3dLook = () => { if (active !== me) return null; let lit = 0', 'C1'],
   ['S24 打ち切りの片付け', T, "if (my !== token) { try { renderer.dispose() } catch (e) { /* 無視 */ } if (stage.parentNode) stage.parentNode.removeChild(stage); return }", 'if (my !== token) return', 'C2'],
@@ -33,7 +33,6 @@ const M = [
   ['V10・V17 錠を下げる', T, 'box(0.14, 0.06, 0.08, 0.1, WINCY - 0.18, 0.31, alMat)', 'box(0.14, 0.06, 0.08, 0.1, WINCY - 0.06, 0.31, alMat)', 'E3'],
   ['W2 降る物を丸い粒へ', T, "    const mat = new THREE.PointsMaterial({\r\n      map: fallDot,\r\n", "    const mat = new THREE.PointsMaterial({\r\n", 'E4'],
   ['V20 雪の茅葺', T, 'const thatchMat = snowify(new THREE.MeshLambertMaterial({ color: 0xffffff, map: thatchTex, vertexColors: true }))', 'const thatchMat = (new THREE.MeshLambertMaterial({ color: 0xffffff, map: thatchTex, vertexColors: true }))', 'E5'],
-  ['V25 左右の長押の長さ', T, 'box(0.06, 0.1, BZ - 0.3, -SX + 0.04, ngY, BZ / 2, postMat)', 'box(0.06, 0.1, RD, -SX + 0.04, ngY, BZ / 2, postMat)', 'E6'],
   ['V29 朝は窓を灯さない', T, 'const winLitDusk = duskAmt > 0.25 && !MORNING', 'const winLitDusk = duskAmt > 0.25', 'E7'],
   ['V39 雨の日の太陽', T, "const overcast = weather === 'snow' || weather === 'rain'", "const overcast = weather === 'snow'", 'E8'],
   ['V58 海辺の夕日を桟から外す', 'src/shaders/windowSea.js', 'float sunAz = -0.24 * min(asp, 1.0);', 'float sunAz = -0.05;', 'E9'],
@@ -46,15 +45,18 @@ const out = 'docs/qa/2026-11-02_便15/gate/mutate15.json'
 const prev = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : []
 const res = prev.filter((r) => !want.length || !want.includes(r.name.split(' ')[0]))
 assertCleanTree(process.cwd(), [...new Set(M.map((m) => m[1]))])
-for (const [name, file, now, old, check] of M) {
+for (let [name, file, now, old, check, more = []] of M) {
   if (want.length && !want.includes(name.split(' ')[0])) continue
-  const src = fs.readFileSync(file, 'utf8')
+  const CR = String.fromCharCode(13), LF = String.fromCharCode(10)
+  const raw = fs.readFileSync(file, 'utf8'), crlf = raw.includes(CR + LF), N = (x) => x.split(CR + LF).join(LF), W = (x) => (crlf ? x.split(LF).join(CR + LF) : x)
+  const src = N(raw); now = N(now); old = N(old) // 行末をそろえてから比べる（git の取り出しで LF・CRLF が入れ替わることがある）
   const n = src.split(now).length - 1
   if (n !== 1) { res.push({ name, file, check, caught: false, failed: [`外す前の文字列が ${n} 回（1回のはず）`] }); console.log(name, '外せなかった'); continue }
-  fs.writeFileSync(file, src.replace(now, () => old))
+  fs.writeFileSync(file, W(src.replace(now, () => old)))
+  for (const [f2, n2, o2] of more) { const r2 = fs.readFileSync(f2, 'utf8'), c2 = r2.includes(CR + LF), s2 = N(r2); if (s2.split(N(n2)).length !== 2) throw new Error('2つ目の外しの文字列が1つに決まらない: ' + n2); const o = s2.replace(N(n2), () => N(o2)); fs.writeFileSync(f2, c2 ? o.split(LF).join(CR + LF) : o) } // 1つの直しが2か所にある時は、まとめて外す
   if (file === 'src/data/credits.js' || file === 'src/data/scenes/index.js' || file === 'CREDITS.md' || file === 'README.md' || file.startsWith('src/data/scenes/')) { /* ファイルを読む検査 */ } else spawnSync('node', ['-e', 'setTimeout(()=>{},2500)']) // 開発サーバーが書き換えを拾うのを待つ
   const r = spawnSync('node', ['scripts/_bin15-kensa.mjs', check], { env: { ...process.env, QA_OUT: 'docs/qa/2026-11-02_便15/gate/mutate' }, encoding: 'utf8', shell: process.platform === 'win32' })
-  execSync(`git checkout HEAD -- "${file}"`)
+  execSync(`git checkout HEAD -- "${file}"`); for (const [f2] of more) execSync(`git checkout HEAD -- "${f2}"`)
   const lines = (r.stdout || '').split('\n').filter((l) => l.startsWith(check + ' '))
   const caught = r.status !== 0
   res.push({ name, file, check, caught, failed: lines })

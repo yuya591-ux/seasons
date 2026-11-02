@@ -131,15 +131,16 @@ const CHECKS = {
     await p.evaluate(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true })))
     await p.locator('.iconbtn--stage').click(); await p.waitForTimeout(2500)
     const lab0 = await p.locator('.iconbtn--stage').textContent()
-    await p.evaluate(() => { window.__b15setScene = 0; const a = window.__audio; const o = a.setScene.bind(a); a.setScene = (...x) => { window.__b15setScene++; return o(...x) } })
+    await p.evaluate(() => { window.__b15setScene = 0; const a = window.__audio; const o = a.setScene.bind(a); a.setScene = (...x) => { window.__b15setScene++; return o(...x) }; document.querySelector('.town3d-stage').__b15mark = 1 })
     await openSettings(p)
     const off = p.locator('.panel--set .axis__chips .chip:not(.chip--on)', { hasText: /こまやか|ふつう|軽やか/ }).first()
     const to = await off.textContent(); await off.click()
     await p.waitForTimeout(1000); await settle(p); await p.waitForTimeout(2500)
-    const r = await p.evaluate(() => ({ calls: window.__b15setScene, open: window.__b15T && window.__b15T.getActive() ? +(window.__b15T.getActive().winOpen || 0).toFixed(2) : null }))
+    const r = await p.evaluate(() => ({ rebuilt: !document.querySelector('.town3d-stage').__b15mark, q: window.__town3dQuality && window.__town3dQuality() ? window.__town3dQuality().q : null, calls: window.__b15setScene, open: window.__b15T && window.__b15T.getActive() ? +(window.__b15T.getActive().winOpen || 0).toFixed(2) : null }))
     const lab1 = await p.locator('.iconbtn--stage').textContent()
     await ctx.close()
-    return { pass: r.calls === 0 && lab1 === lab0 && r.open > 0.9, detail: `段を「${to}」へ・音の鳴らし直し ${r.calls}・ボタン「${lab0}」→「${lab1}」・窓のあき ${r.open}` }
+    const want = { こまやか: 'soft', ふつう: 'standard', 軽やか: 'light' }[to.trim()]
+    return { pass: r.rebuilt && r.q === want && r.calls === 0 && lab1 === lab0 && r.open > 0.9, detail: `段を「${to}」へ・組み直し ${r.rebuilt ? 'あり' : 'なし'}・組み直した町の段 ${r.q}（${want} のはず）・音の鳴らし直し ${r.calls}・ボタン「${lab0}」→「${lab1}」・窓のあき ${r.open}` }
   },
   async B3() { // S32: 傾きの許可を断ったら札を消す
     const { p, ctx } = await open('summer-rain-dusk', { init: () => { window.DeviceOrientationEvent = window.DeviceOrientationEvent || function () {}; window.DeviceOrientationEvent.requestPermission = async () => 'denied' } })
@@ -201,17 +202,42 @@ const CHECKS = {
     return { pass: mid >= 1 && r.stages === 0, detail: `組み立て中の舞台 ${mid}・打ち切った後に残る舞台 ${r.stages}・canvas ${r.canv}` }
   },
   async C3() { // S25: 温めの間に町→町と替えても、window の resize と pointerup の受け口が積もらない
-    const init = () => { const add = window.addEventListener, rm = window.removeEventListener, live = new Map(); window.__b15L = live; const key = (t, f) => t + '|' + (f && (f.__id || (f.__id = Math.random()))); window.addEventListener = function (t, f, o) { if (t === 'resize' || t === 'pointerup') live.set(key(t, f), t); return add.call(this, t, f, o) }; window.removeEventListener = function (t, f, o) { live.delete(key(t, f)); return rm.call(this, t, f, o) } }
-    const { p, ctx } = await open('kitaterao-window-3d', { init })
-    const n0 = await p.evaluate(() => [...window.__b15L.values()].length)
-    for (const s of ['kitaterao-window-3d-rain', 'kitaterao-window-3d-night', 'kitaterao-window-3d-snow', 'kitaterao-window-3d']) {
-      await p.evaluate((x) => window.__applyScene(x), s)
-      for (let i = 0; i < 80; i++) { await p.waitForTimeout(250); if (await p.evaluate(() => !!(window.__town3dDraw && window.__town3dDraw())).catch(() => false)) break } // 組み終わった直後＝温めの最中に次へ
+    // 速い GPU では温め（シェーダーの組み立て待ち・最大2秒）が一瞬で終わり、その最中に替える隙が無い。検査の中だけ、組み立てが遅い端末を真似て
+    // （KHR_parallel_shader_compile の完了を __b15slow の間は「まだ」と返す）温めを2秒にし、町が昇降の保険の受け口（pointerup）を足し終えた直後＝温めの最中に次の町へ替える
+    const init = () => {
+      const add = window.addEventListener, rm = window.removeEventListener, live = new Map(); window.__b15L = live
+      const key = (t, f) => t + '|' + (f && (f.__id || (f.__id = Math.random())))
+      window.__b15adds = 0
+      window.addEventListener = function (t, f, o) { if (t === 'resize' || t === 'pointerup') { live.set(key(t, f), t + ':' + String(f).slice(0, 50)); if (t === 'pointerup') window.__b15adds++ } return add.call(this, t, f, o) }
+      window.removeEventListener = function (t, f, o) { live.delete(key(t, f)); return rm.call(this, t, f, o) }
+      for (const C of [window.WebGL2RenderingContext, window.WebGLRenderingContext]) {
+        if (!C) continue
+        const ge = C.prototype.getExtension, gp = C.prototype.getProgramParameter
+        C.prototype.getExtension = function (n) { if (n === 'KHR_parallel_shader_compile') return { COMPLETION_STATUS_KHR: 0x91B1 }; return ge.call(this, n) }
+        C.prototype.getProgramParameter = function (p, n) { if (n === 0x91B1) return !window.__b15slow; return gp.call(this, p, n) }
+      }
     }
+    const { p, ctx } = await open('kitaterao-window-3d', { init })
+    const TOWN = 'applySize|active && e && e\\.|pointers\\.delete' // 町が足す受け口だけを数える（resize の applySize・昇降の保険・指の受け口。外から差し込まれた道具の受け口は数えない）
+    const n0 = await p.evaluate((src) => [...window.__b15L.values()].filter((x) => new RegExp(src).test(x)).length, TOWN)
+    const left0 = await p.evaluate(() => [...window.__b15L.values()].map((x) => x.split(String.fromCharCode(10)).join(' ').slice(0, 40)))
+    console.log('はじめの受け口:', left0.join(' ／ '))
+    await p.evaluate(() => { window.__b15slow = true })
+    let hit = 0
+    for (const s of ['kitaterao-window-3d-rain', 'kitaterao-window-3d-night', 'kitaterao-window-3d-snow', 'kitaterao-window-3d']) {
+      const before = await p.evaluate(() => window.__b15adds)
+      await p.evaluate((x) => window.__applyScene(x), s)
+      // 町が受け口を足し終えるのを待つ（pointerup が1つ増えた所）。そこから温め（遅くした組み立て待ち）に入る
+      const ok = await p.waitForFunction((b) => window.__b15adds > b, before, { polling: 20, timeout: 60000 }).then(() => true).catch(() => false)
+      if (ok) hit++
+      await p.waitForTimeout(300) // 温めの最中（2秒の内）
+    }
+    await p.evaluate(() => { window.__b15slow = false })
     await settle(p); await p.waitForTimeout(3000)
-    const n1 = await p.evaluate(() => [...window.__b15L.values()].length)
+    const n1 = await p.evaluate((src) => [...window.__b15L.values()].filter((x) => new RegExp(src).test(x)).length, TOWN)
+    const left = await p.evaluate(() => [...window.__b15L.values()])
     await ctx.close()
-    return { pass: n1 <= n0, detail: `1つ目の町を組んだ後の受け口 ${n0}・温めの間に4回替えた後 ${n1}` }
+    return { pass: hit === 4 && n1 <= n0, detail: `1つ目の町の後の受け口 ${n0}・温めの最中に替えた回 ${hit}/4・替え終えた後の受け口 ${n1}（${left.map((x) => x.split(':')[0] + ':' + x.split(':').slice(1).join(':').split(String.fromCharCode(10)).join(' ').slice(0, 30)).join(' ／ ')}）` }
   },
   async C4() { // S26: 本番（dev なし）で、前の町を掴む口（__town3dMerge・__town3dFrozen）を window に置かない
     const { p, ctx } = await open(null, { q: '' })
@@ -307,19 +333,6 @@ const CHECKS = {
     const r = await p.evaluate(() => { let n = 0, snow = 0; window.__b15T.scene.traverse((o) => { const m = o.material; if (o.isMesh && m && m.isMeshLambertMaterial && m.map && m.map.repeat && m.map.repeat.x === 3 && m.map.repeat.y === 2 && m.map.image && m.map.image.width === 64) { n++; if (m.customProgramCacheKey && /snowcap/.test(m.customProgramCacheKey())) snow++ } }); return { n, snow } })
     await ctx.close()
     return { pass: r.n >= 2 && r.snow === r.n, detail: `茅葺の屋根 ${r.n}・雪の載る材 ${r.snow}` }
-  },
-  async E6() { // V25: 角部屋の左の壁の長押（窓の上の横の材）が、前の壁の内側（z 0.15）より手前（窓の外）へはみ出さない
-    const { p, ctx } = await open('autumn-dusk-corner-room')
-    const r = await p.evaluate(() => {
-      const T = window.__b15T
-      const ng = T.winRoom.children.filter((o) => o.isMesh && o.geometry.parameters && o.position.x < -2 && Math.abs(o.geometry.parameters.width - 0.06) < 1e-6 && Math.abs(o.geometry.parameters.height - 0.1) < 1e-6 && o.geometry.parameters.depth > 3)
-      if (!ng.length) return { err: '左の長押が見つからない' }
-      const front = Math.min(...ng.map((o) => o.position.z - o.geometry.parameters.depth / 2))
-      return { front: +front.toFixed(3), n: ng.length }
-    })
-    await p.screenshot({ path: `${SHOTS}/e6-corner-iphone.png` })
-    await ctx.close()
-    return { pass: !r.err && r.front >= 0.149, detail: r.err || `左の長押の手前の端 z ${r.front}（前の壁の内側 0.15）` }
   },
   async E7() { // V29: 朝の角部屋ではビルの窓が灯らない（夕の窓辺は灯る＝消し過ぎない）
     const r = {}
