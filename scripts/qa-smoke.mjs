@@ -5,6 +5,9 @@ import { chromium } from 'playwright'
 import { spawn } from 'node:child_process'
 import { SCENES } from '../src/data/scenes/index.js'
 
+// 便15 U1: 出典の照らし（アプリ内の出典と情景データ・CREDITS.md）を最初に回す。外れたら開かずに止める
+{ const { spawnSync } = await import('node:child_process'); const r = spawnSync(process.execPath, ['scripts/qa-credits.mjs'], { encoding: 'utf8' }); process.stdout.write(r.stdout || ''); if (r.status !== 0) { process.stderr.write(r.stderr || ''); console.error('SMOKE FAIL: 出典の照らしが外れた'); process.exit(1) } }
+
 const PORT = process.env.PORT || 4938
 const BASE = `http://localhost:${PORT}/seasons/`
 const ids = SCENES.filter((s) => s.status === 'ready' && s.public !== false).map((s) => s.id)
@@ -48,6 +51,8 @@ async function settle(id) {
   }
 }
 let scanned = 0
+const stageCount = () => page.evaluate(() => document.querySelectorAll('.town3d-stage').length)
+let stageBad = 0
 for (const id of ids) {
   curId = id
   await page.evaluate((i) => window.__applyScene(i), id)
@@ -55,6 +60,40 @@ for (const id of ids) {
   await page.evaluate((i) => window.__applyScene(i), id) // 二度当て＝確実に切替（verify-sceneと同方式）
   await page.waitForTimeout(1500)
   await settle(id)
+  // 便15 U3: 町の3Dは舞台が1枚だけ・2D は舞台が0枚（組み立ての打ち切りや片付けの漏れで舞台が残らない）
+  const scene = SCENES.find((s) => s.id === id), want = scene && scene.render === 'town3d' ? 1 : 0, got = await stageCount()
+  if (got !== want) { stageBad++; bad.push({ id, msg: `舞台の数 ${got}（${want} のはず）` }) }
+  scanned++
+}
+console.log(`舞台の数: ${ids.length} 情景で外れ ${stageBad}`)
+// 便15 U3: 町→町を組み終わる前に続けて替え（温めの最中を含む）、最後の町で舞台が1枚・検証の口が今の町を返す
+{
+  const towns = ids.filter((i) => (SCENES.find((s) => s.id === i) || {}).render === 'town3d').slice(0, 4)
+  curId = '町→町の連続切替'
+  for (const id of towns) { await page.evaluate((i) => window.__applyScene(i), id); await page.waitForTimeout(900) }
+  await settle(towns[towns.length - 1])
+  const n = await stageCount(), ok = await page.evaluate(() => !!(window.__town3dDraw && window.__town3dDraw()))
+  if (n !== 1 || !ok) bad.push({ id: curId, msg: `舞台 ${n}・今の町の口 ${ok}` })
+  console.log(`町→町の連続切替: ${towns.length} 町・最後の舞台 ${n}・今の町の口 ${ok}`)
+  scanned++
+}
+// 便15 S28: 情景パネル経由の本物の操作（場所→その場所の先頭の情景）で、町→雨の窓→町と替え、画面の部品（窓をあけるボタン・強さの行）が情景に合う
+{
+  curId = '情景パネル'
+  const pickPlace = async (place) => {
+    await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true })))
+    await page.locator('.topbar .iconbtn', { hasText: '情景' }).first().click(); await page.waitForTimeout(600)
+    await page.locator('.panel--open .scene-card', { hasText: place }).first().click(); await page.waitForTimeout(600)
+    await page.locator('.panel--open .scene-card').first().click(); await page.waitForTimeout(1800)
+  }
+  const state = () => page.evaluate(() => { const st = document.querySelector('.iconbtn--stage'); const row = [...document.querySelectorAll('.panel--set .setrow')].find((r) => r.querySelector('input[type=range]') && !/音|明るさ/.test(r.querySelector('.setrow__label')?.textContent || '')); return { stage: !!st && getComputedStyle(st).display !== 'none', inten: !!row && row.style.display !== 'none' } })
+  await pickPlace('雨の窓'); await page.waitForTimeout(2000)
+  const rain = await state()
+  await pickPlace('北寺尾の坂の街'); await settle('kitaterao-window-3d')
+  await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true }))); await page.waitForTimeout(600)
+  const town = await state()
+  if (rain.stage || !rain.inten || !town.stage || town.inten) bad.push({ id: curId, msg: `雨の窓 ボタン ${rain.stage}・強さの行 ${rain.inten} ／ 町 ボタン ${town.stage}・強さの行 ${town.inten}` })
+  console.log(`情景パネル: 雨の窓（窓をあける ${rain.stage ? 'あり' : 'なし'}・強さの行 ${rain.inten ? 'あり' : 'なし'}）→ 町（窓をあける ${town.stage ? 'あり' : 'なし'}・強さの行 ${town.inten ? 'あり' : 'なし'}）`)
   scanned++
 }
 // 横長の画面（iPad 横の大きさ）と「軽やか」の段でも、代表の情景を開いてエラーが無いか（以前は縦長・既定の段だけだった・S44）

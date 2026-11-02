@@ -833,7 +833,7 @@ def('g4', 'U13', async () => {
 // 「前」の記録の置き場は台本の場所から決める（以前は出力先の隣を見ていたので、外し回しの出力先では前が読めず、外さなくても落ちる形になっていた）
 const BEFORE_DIR = process.env.QA_BEFORE || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'qa', '2026-10-12_便2', 'gate-before')
 const beforeOf = (id) => { try { return JSON.parse(fs.readFileSync(path.join(BEFORE_DIR, id + '.json'), 'utf8')) } catch { return null } }
-const look = (page) => ev(page, () => window.__town3dLook && window.__town3dLook())
+const look = (page) => ev(page, () => window.__town3dLookState && window.__town3dLookState())
 def('g5', 'U9', async () => {
   // 雨の夜の窓辺（PC）の窓の中の暗い側1%点の明るさ＝黒の締まり。前の値（gate-before）より下がり、色の圧縮が Neutral（7）であること
   const { page, errs } = await open('pc')

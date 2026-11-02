@@ -7514,7 +7514,7 @@ export async function mountTown3d(parent, opts = {}) {
       import('three/examples/jsm/shaders/FXAAShader.js'),
       LIGHT ? Promise.resolve(null) : import('three/examples/jsm/postprocessing/UnrealBloomPass.js').catch(() => null), // 灯りのブルーム（非力端末は読み込まず＝発熱回避）
     ])
-    if (my !== token) return
+    if (my !== token) { try { renderer.dispose() } catch (e) { /* 無視 */ } if (stage.parentNode) stage.parentNode.removeChild(stage); return } // 便15 S24: 打ち切りで舞台と描画器を画面に残さない（見えない全画面の層が指を奪い、WebGL の文脈も漏れていた）
     const crt = new THREE.WebGLRenderTarget(W, H, { samples: 0 }) // MSAAは切りFXAA一本化＝中間RTの多重サンプルバッファ(帯域/メモリ)を省く。輪郭はFXAAが担い実機で差はごく僅か（2026-07 発熱対策・AB検証済）
     composer = new EffectComposer(renderer, crt)
     composer.addPass(new RenderPass(scene, camera))
@@ -8128,6 +8128,11 @@ export async function mountTown3d(parent, opts = {}) {
     landDustT: 0, dipT: 0,        // 砂ぼこり/カメラ沈み込みの残り時間(秒)
     winLook: new THREE.Vector3(), // 窓ビューの注視点（飛び立つ瞬間の視線引き継ぎ用に毎フレーム保持）
     dispose() {
+      // 便15 S25: window の resize と昇降の保険の pointerup は、組み立てのどこで片付けても外す（まだ足していない時は何もしない）
+      try { window.removeEventListener('resize', resize) } catch (e) { /* 無視 */ }
+      try { window.removeEventListener('pointerup', winClimbUp) } catch (e) { /* 無視 */ }
+      // 便15 U2・S26: この町が window に置いた検証の口を外す（前の町を掴み続けない・次の町で前の町を測らない）
+      try { for (const k of myHooks) if (window[k] && window[k].__t3dMe === me) delete window[k] } catch (e) { /* 無視 */ }
       // シーングラフ全体の geometry/material/texture を解放（連打切替でのGPUメモリ蓄積＝コンテキストロストを防ぐ）
       try {
         scene.traverse((o) => {
@@ -8319,6 +8324,18 @@ export async function mountTown3d(parent, opts = {}) {
   active.setBrightness = (b) => { userBright = b || 1; applyStageFilter() }
   active.setStay = (v) => { drift.stay = !!v } // 「時間をとどめる」：日の傾きのドリフトを今の時刻で凍結／解除
   const me = active // この町の active（測りの口が、町を出た後や次の町で前の町の数を返さないように見る）
+  // 便15 U2: この町が window に置いた検証の口（__town3d…）の一覧。main.js が置く4つは町の外の口なので包まない
+  const MAIN_HOOKS = new Set(['__town3dWindow', '__town3dLean', '__town3dFlyToggle', '__town3dLandToggle'])
+  const myHooks = []
+  const guardDevHooks = () => {
+    for (const k of Object.keys(window)) {
+      if (!k.startsWith('__town3d') || MAIN_HOOKS.has(k)) continue
+      const f = window[k]
+      if (typeof f !== 'function' || f.__t3dMe) continue
+      const g = function (...a) { return active === me ? f.apply(this, a) : null }
+      g.__t3dMe = me; window[k] = g; myHooks.push(k)
+    }
+  }
 
   // ════════════════════════════════════════════════════════════════════════
   // 「いつもと違う光景」定期イベント（ぼーっと眺めていると時々おきる小さな驚き）。
@@ -9159,9 +9176,9 @@ export async function mountTown3d(parent, opts = {}) {
     // 中身が全部統合された棟は、毎フレームの走査対象から降ろす（データは homeBldgs に温存＝消していない）
     for (const b of homeBldgs) { let live = false; b.traverse((o) => { if (o.isMesh && o.visible) live = true }); if (!live) { b.userData.mergedAway = true; town.remove(b) } }
   }
-  window.__town3dMerge = () => ({ ...mergeInfo, 区画: bldgTiles.length, 削減: mergeInfo.元メッシュ - mergeInfo.区画メッシュ }) // 検証用: 建物統合の効き
+  if (/[?&]dev=1/.test(location.search)) window.__town3dMerge = () => ({ ...mergeInfo, 区画: bldgTiles.length, 削減: mergeInfo.元メッシュ - mergeInfo.区画メッシュ }) // 検証用: 建物統合の効き
   for (const w of cityWalkers) if (w.g) w.g.userData.walker = true // 動く旅人は近接微揺れの対象外（自前で動くため）
-  window.__town3dFrozen = () => frozenStatic // 検証用: 凍結した静的ノード数
+  if (/[?&]dev=1/.test(location.search)) window.__town3dFrozen = () => frozenStatic // 検証用: 凍結した静的ノード数
 
   // ── ゲームパッド対応A（Backbone One 第2世代＝標準ゲームパッド）。navigator.getGamepads() を frame 先頭で毎フレーム読み、
   //    スティック/ボタンを既存アクションへ合流（非破壊＝タッチ操作はそのまま）。接続中はオンスクリーン操作を薄く退避し、画面に触れると数秒だけ戻す。──
@@ -10971,7 +10988,7 @@ export async function mountTown3d(parent, opts = {}) {
     window.__town3dThrowFrames = (n) => { if (active) active.throwN = n || 1 } // 検証用: 描画ループの更新で n フレーム続けて例外を起こす（S38）
     window.__town3dQuality = () => (active === me ? { q: curQual, cap: qCap, floor: prFloor, fly: plan.fly, pr: +curPR.toFixed(3), shadow: sun.shadow.mapSize.x, bloom: !!(bloomPass && bloomPass.enabled), p75: +adP75.toFixed(4), changes: prChanges, failedCap, compiled: compiledBy } : null) // 検証用: 段の中身と自動調整の状態（D1・D2・U1・S27・U13）
     window.__town3dSimLoad = (fn) => { simLoad = typeof fn === 'function' ? fn : null } // 検証用: 毎フレームに重さ（ミリ秒）を足す。fn(今の倍率)（U1）
-    window.__town3dLook = () => { if (active !== me) return null; let lit = 0, maxI = 0; scene.traverse((o) => { const ms = o.isMesh ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) if (m && m.emissiveMap && m.emissive && m.emissiveIntensity * Math.max(m.emissive.r, m.emissive.g, m.emissive.b) > 0.001) { lit++; maxI = Math.max(maxI, m.emissiveIntensity) } }) // 実際に光る窓の材（光の色が黒の材は数えない）
+    window.__town3dLookState = () => { if (active !== me) return null; let lit = 0, maxI = 0; scene.traverse((o) => { const ms = o.isMesh ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) if (m && m.emissiveMap && m.emissive && m.emissiveIntensity * Math.max(m.emissive.r, m.emissive.g, m.emissive.b) > 0.001) { lit++; maxI = Math.max(maxI, m.emissiveIntensity) } }) // 実際に光る窓の材（光の色が黒の材は数えない）
       return { toneMapping: renderer.toneMapping, exposure: renderer.toneMappingExposure, fogNear: +FOG.near.toFixed(1), fogFar: +FOG.far.toFixed(1), litWinMats: lit, maxEmissive: +maxI.toFixed(3), glassOpacity: winGlassMat ? winGlassMat.opacity : null, duskAmt: +duskAmt.toFixed(3), grade: !!outPass, gBright: outPass ? +outPass.uniforms.gBright.value.toFixed(3) : null, passes: composer ? composer.passes.map((p) => p.constructor.name + (p === outPass ? '+水彩' : '')) : [] } } // 検証用: 色と空気の状態（群5）
     window.__town3dComposerThrow = () => { composerThrowOnce = true } // 検証用: 後処理で1回だけ例外を起こす（S38）
     window.__town3dTilt = () => (active ? { x: +active.tiltX.toFixed(3), y: +active.tiltY.toFixed(3), yaw: +active.tiltYaw.toFixed(3) } : null) // 検証用: 傾きの見回し（S50）
@@ -11276,6 +11293,7 @@ export async function mountTown3d(parent, opts = {}) {
   window.addEventListener('pointerup', onUp)
   window.addEventListener('pointercancel', onUp)
   // dispose に後始末を足す
+  guardDevHooks() // 便15 U2・S27: この町の検証の口を、今の町の時だけ動く包みにする（片付けで外す）
   const baseDispose = active.dispose
   active.dispose = () => {
     dom.removeEventListener('pointerdown', onDown)
