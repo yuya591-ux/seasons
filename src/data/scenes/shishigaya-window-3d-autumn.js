@@ -32,7 +32,7 @@ export default {
   driftPeriod: 320,
   phenomena: {},
 
-  // 秋夕の谷戸＝秋の虫の音（鈴虫/コオロギ）＋せせらぎ（既存のCC0素材を再利用）。
+  // 秋夕の谷戸＝秋の虫の音（鈴虫/コオロギ）＋せせらぎ（既存の素材を再利用。出典とライセンスは CREDITS.md）。
   // 夏朝のウグイスでなく、秋夕に合う虫の音へ（情景に合うBGM）。出典は CREDITS.md に記録済み。
   sounds: [
     { id: 'crickets', label: '虫の音', src: 'audio/autumn-dusk-corner-room/crickets.mp3', gain: 0.4, loop: true },

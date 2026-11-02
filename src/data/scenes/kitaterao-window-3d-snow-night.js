@@ -31,7 +31,7 @@ export default {
   driftPeriod: 330,
   phenomena: {},
 
-  // 冬の夜＝雪が音を吸う静けさ＝ごく淡い夜風だけ。既存CC0素材を再利用。
+  // 冬の夜＝雪が音を吸う静けさ＝ごく淡い夜風だけ。既存の素材を再利用。
   sounds: [
     { id: 'wind', label: '夜風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.13, loop: true },
   ],

@@ -33,7 +33,7 @@ export default {
   driftPeriod: 280,
   phenomena: {},
 
-  // 春の朝の気配: うぐいすと渡る風をうっすら（既存のCC0/CC-BY素材を再利用。CREDITS.md記録済み）
+  // 春の朝の気配: うぐいすと渡る風をうっすら（既存の素材を再利用。CREDITS.md記録済み）
   sounds: [
     { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.12, loop: true },
     // ウグイスは春の朝の主役。ゆらぎのある間隔でそっと（cueなし＝自然な高域）。

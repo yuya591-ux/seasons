@@ -33,7 +33,7 @@ export default {
   phenomena: {},
 
   // 夏の夕暮れの街。日が暮れていくにつれ、夕のヒグラシが退き、宵の鈴虫が満ちる＝同じ情景の中で時間が動く
-  // （眺めるが「過ごす」へ）。日の傾き(dayFade)で交代。立体の街だけ実際にドリフトする（既存のCC0素材を再利用）。
+  // （眺めるが「過ごす」へ）。日の傾き(dayFade)で交代。立体の街だけ実際にドリフトする（既存の素材を再利用。出典とライセンスは CREDITS.md）。
   sounds: [
     { id: 'higurashi', label: 'ヒグラシ', src: 'audio/summer-rain-dusk/higurashi.mp3', gain: 0.4, loop: true, dayFade: 'out' },
     { id: 'suzumushi', label: '鈴虫', src: 'audio/kitaterao-window-3d-night/suzumushi.mp3', gain: 0.26, loop: true, swell: true, dayFade: 'in' },

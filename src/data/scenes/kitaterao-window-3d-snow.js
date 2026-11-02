@@ -32,7 +32,7 @@ export default {
   driftPeriod: 320,
   phenomena: {},
 
-  // 冬の窓辺の風（既存のCC0素材を再利用）。
+  // 冬の窓辺の風（既存の素材を再利用。出典とライセンスは CREDITS.md）。
   sounds: [
     { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.16, loop: true },
   ],

@@ -41,7 +41,7 @@ export default {
     rain: { intensity: 0.6 },
   },
 
-  // 音セット。すべて既存のCC素材を再利用（CREDITS.md に記録済み・新規ライセンス不要）。
+  // 音セット。すべて既存の素材を再利用（出典とライセンスは CREDITS.md）。
   sounds: [
     { id: 'rain', label: '雨音', src: 'audio/summer-rain-dusk/rain.mp3', gain: 0.85, loop: true },
     { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.08, loop: true },

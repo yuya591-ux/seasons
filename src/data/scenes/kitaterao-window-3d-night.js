@@ -31,7 +31,7 @@ export default {
 
   // 夏の夜の街＝虫が鳴き交わす夜（コオロギ＋鈴虫）＋ごく淡い夜風。
   // 2種の虫は swell で独立にゆっくり満ち引きし、左右に振り分ける＝鳴き交わし・静かになる間が生まれ、
-  // 「一種がずっと同じ音量で鳴り続ける」違和感を解消（自然な夜の移ろい）。鈴虫はCC0系の新規素材。
+  // 「一種がずっと同じ音量で鳴り続ける」違和感を解消（自然な夜の移ろい）。鈴虫は CC BY-SA 3.0 の素材（CREDITS.md）。
   sounds: [
     { id: 'mushi', label: '虫の音', src: 'audio/autumn-dusk-corner-room/crickets.mp3', gain: 0.34, loop: true, swell: true, pan: -0.26 },
     { id: 'suzumushi', label: '鈴虫', src: 'audio/kitaterao-window-3d-night/suzumushi.mp3', gain: 0.26, loop: true, swell: true, pan: 0.3 },

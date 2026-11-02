@@ -41,7 +41,7 @@ export default {
     rain: { intensity: 0.5 }, // 梅雨のしとしと（旗艦の夕立より控えめ）
   },
 
-  // 音セット。出典・ライセンスは CREDITS.md に全数記録（すべてCC0流用）。
+  // 音セット。出典・ライセンスは CREDITS.md に全数記録。
   sounds: [
     { id: 'rain', label: '雨音', src: 'audio/summer-rain-dusk/rain.mp3', gain: 0.8, loop: true },
     { id: 'frogs', label: '蛙', src: 'audio/spring-dusk-corner-room/frogs.mp3', gain: 0.3, loop: true },

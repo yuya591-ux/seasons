@@ -33,7 +33,7 @@ export default {
   driftPeriod: 300,
   phenomena: {},
 
-  // 夏の雨の夕暮れ＝雨音（主）＋遠くのヒグラシ（夕方の蝉）。既存CC0素材（summer-rain-dusk）を再利用。
+  // 夏の雨の夕暮れ＝雨音（主）＋遠くのヒグラシ（夕方の蝉）。既存の素材（summer-rain-dusk）を再利用。
   sounds: [
     { id: 'rain', label: '雨', src: 'audio/summer-rain-dusk/rain.mp3', gain: 0.5, loop: true },
     { id: 'higurashi', label: 'ヒグラシ', src: 'audio/summer-rain-dusk/higurashi.mp3', gain: 0.28, loop: true },

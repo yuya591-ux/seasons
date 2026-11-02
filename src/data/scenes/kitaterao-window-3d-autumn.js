@@ -31,7 +31,7 @@ export default {
   driftPeriod: 300,
   phenomena: {},
 
-  // 秋の夕の虫の音＋やわらかな風（既存のCC0素材を再利用）。
+  // 秋の夕の虫の音＋やわらかな風（既存の素材を再利用。出典とライセンスは CREDITS.md）。
   sounds: [
     { id: 'mushi', label: '虫の音', src: 'audio/autumn-dusk-corner-room/crickets.mp3', gain: 0.42, loop: true },
     { id: 'suzumushi', label: '鈴虫', src: 'audio/kitaterao-window-3d-night/suzumushi.mp3', gain: 0.24, loop: true },

@@ -33,7 +33,7 @@ export default {
   driftPeriod: 320,
   phenomena: {},
 
-  // 朝の谷戸＝ウグイスとせせらぎ（出身地の既存CC0素材を再利用）。
+  // 朝の谷戸＝ウグイスとせせらぎ（出身地の既存の素材を再利用。出典とライセンスは CREDITS.md）。
   sounds: [
     { id: 'uguisu', label: '鶯', src: 'audio/shishigaya-morning-yato/uguisu.mp3', gain: 0.5, loop: false, interval: [6, 16] },
     { id: 'stream', label: 'せせらぎ', src: 'audio/shishigaya-morning-yato/stream.mp3', gain: 0.3, loop: true },

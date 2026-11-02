@@ -40,7 +40,7 @@ export default {
     rain: { intensity: 0.6 },
   },
 
-  // 音セット（CC0/既存流用）。出典・ライセンスは CREDITS.md に記録済み。遠雷はランダム間隔で時々。
+  // 音セット（既存の素材を再利用）。出典・ライセンスは CREDITS.md に記録済み。遠雷はランダム間隔で時々。
   sounds: [
     { id: 'rain', label: '雨音', src: 'audio/summer-rain-dusk/rain.mp3', gain: 0.85, loop: true },
     { id: 'crickets', label: '虫の音', src: 'audio/autumn-dusk-corner-room/crickets.mp3', gain: 0.4, loop: true },

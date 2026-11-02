@@ -33,7 +33,7 @@ export default {
   driftPeriod: 320,
   phenomena: {},
 
-  // 冬の谷戸の気配＝渡る風（既存のCC0素材を再利用）。せせらぎは凍てて控えめに。CREDITS.md記録済み。
+  // 冬の谷戸の気配＝渡る風（既存の素材を再利用。出典とライセンスは CREDITS.md）。せせらぎは凍てて控えめに。CREDITS.md記録済み。
   sounds: [
     { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.17, loop: true },
     { id: 'stream', label: 'せせらぎ', src: 'audio/shishigaya-morning-yato/stream.mp3', gain: 0.12, loop: true },

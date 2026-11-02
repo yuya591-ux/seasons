@@ -31,7 +31,7 @@ export default {
   driftPeriod: 320,
   phenomena: {},
 
-  // 夏の夜雨＝雨音（主）＋遠雷（時々ピカッと光る・cue:thunder）＋ごく淡い夜風。既存CC0素材を再利用。
+  // 夏の夜雨＝雨音（主）＋遠雷（時々ピカッと光る・cue:thunder）＋ごく淡い夜風。既存の素材を再利用。
   sounds: [
     { id: 'rain', label: '雨音', src: 'audio/summer-rain-dusk/rain.mp3', gain: 0.6, loop: true },
     { id: 'thunder', label: '遠雷', src: 'audio/summer-rain-dusk/thunder.mp3', gain: 0.4, loop: false, interval: [26, 60], cue: 'thunder' },
