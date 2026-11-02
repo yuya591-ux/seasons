@@ -9,6 +9,9 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
 import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js'
+import { planShops } from './_bin16-shops.js'
+import { makeTexKit } from './_bin16-tex.js'
 
 const Q = new URLSearchParams(location.search)
 const V = Q.get('v') || 'A', T = Q.get('t') || 'dusk', S = Q.get('s') || 'autumn', W = Q.get('w') || 'clear'
@@ -66,6 +69,7 @@ renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 document.body.appendChild(renderer.domElement)
 renderer.info.autoReset = false
+const TEX = Q.has('tex') && !LOW ? makeTexKit(THREE, renderer) : null // 写真から作った CC0 の質感の素材（見本）
 const scene = new THREE.Scene()
 scene.fog = new THREE.FogExp2(TIME.fog, TIME.fogD)
 const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 1, 9000)
@@ -112,7 +116,8 @@ scene.add(new THREE.HemisphereLight(...TIME.hemi))
     col.set([c.r, c.g, c.b], i * 3)
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals()
-  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0 }))
+  const gm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0 }); if (TEX) TEX.ground(gm, { a: 'concrete_pavement', b: 'grass_path_2', tile: 4, tileB: 3.5 })
+  const m = new THREE.Mesh(g, gm)
   m.receiveShadow = true; scene.add(m)
 }
 
@@ -165,6 +170,7 @@ for (let z = -2150; z <= 300;) { roadZs.push({ v: z, wide: R() < 0.2 }); z += 42
 const rw = (r) => (r.wide ? 11 : 6.5)
 const stX = RIVER.cx(BZ) + RIVER.hw(BZ) + LEVEE_D + 140, stZ = BZ + 30 // 駅前（高い建物が集まる）
 const isTown = (x, z, m = 0) => zoneOf(x, z) === 'town' && zoneOf(x + m, z) === 'town' && zoneOf(x - m, z) === 'town' && zoneOf(x, z + m) === 'town' && zoneOf(x, z - m) === 'town' && !(SEA_Z != null && z < SEA_Z + 40)
+const SHOPS = planShops({ THREE, BGU, scene, groundH, R, stX, stZ, TIME, W, isTown })
 const nearLevee = (x, z) => Math.abs(x - RIVER.cx(z)) - RIVER.hw(z) < LEVEE_D + 50
 for (let i = 0; i < roadXs.length - 1; i++) for (let j = 0; j < roadZs.length - 1; j++) {
   const x0 = roadXs[i].v + rw(roadXs[i]) / 2 + 0.8, x1 = roadXs[i + 1].v - rw(roadXs[i + 1]) / 2 - 0.8
@@ -173,14 +179,15 @@ for (let i = 0; i < roadXs.length - 1; i++) for (let j = 0; j < roadZs.length - 
   for (const [rz0, rz1, front] of [[z0, mid, z0], [mid, z1, z1]]) { // 背中合わせの2列。道に面する側へ建てる
     let x = x0
     while (x < x1 - 6) {
+      if (SHOPS.inRect(x + 4, (rz0 + rz1) / 2, 6)) { x += 6; continue }
       const dist = Math.hypot(x - stX, front - stZ), tall = Math.exp(-dist / 380), lv = nearLevee(x, (rz0 + rz1) / 2)
-      const r = R(), pM = 0.04 + tall * 0.35 + (lv ? 0.2 : 0)
+      const r = R(), pM = 0.03 + tall * 0.16 + (lv ? 0.14 : 0)
       if (r < pM && x1 - x > 22) { // マンション（レンガ調タイル・ベージュ・白／階段状／駅前のタワー）
         const w = Math.min(x1 - x, 20 + R() * 32), d = Math.max(9, Math.min(rz1 - rz0 - 2, 10 + R() * 5)), xc = x + w / 2, zc = (rz0 + rz1) / 2
         if (isTown(xc, zc, w / 2) && Math.hypot(xc - camX, zc - camZ) > 45) {
           const sr = R(), style = sr < 0.4 ? 'brick' : sr < 0.72 ? 'beige' : 'white'
-          let fl = 4 + Math.floor(R() * 8 + tall * 10)
-          if (tall > 0.5 && R() < 0.3) fl = 20 + Math.floor(R() * 14)
+          let fl = 4 + Math.floor(R() * 6 + tall * 4)
+          if (tall > 0.75 && R() < 0.15) fl = 18 + Math.floor(R() * 10)
           flats.push({ x: xc, z: zc, w, d, fl, style, step: fl < 18 && R() < 0.45, back: front === z0 ? 1 : -1, rot: (R() - 0.5) * 0.04 })
         }
         x += w + 2 + R() * 3; continue
@@ -195,6 +202,7 @@ for (let i = 0; i < roadXs.length - 1; i++) for (let j = 0; j < roadZs.length - 
       const dmax = rz1 - rz0 - 1.5, hd = Math.min(dmax, 7 + R() * 4), sb = 1 + R() * Math.max(0.2, dmax - hd - 1)
       const zc = front === z0 ? rz0 + sb + hd / 2 : rz1 - sb - hd / 2, xc = x + lw / 2
       if (isTown(xc, zc, 4) && Math.hypot(xc - camX, zc - camZ) > 26) {
+        if (R() < 0.012 && Math.hypot(xc - stX, zc - stZ) < 900) { SHOPS.dagashi(xc, zc); x += lw; continue } // 駄菓子屋
         const k = R(), three = k < 0.16 // 3階建ての細い家（2000年代の建売）
         houses.push({ x: xc, z: zc, w: lw - 1.2 - R() * 1.2, d: hd, h: three ? 8.6 : k < 0.3 ? 3.2 : 5.8 + R() * 0.8, rot: (R() - 0.5) * 0.05, flat: three ? R() < 0.7 : R() < 0.15, ridgeX: R() < 0.5 })
         if (R() < 0.3) trees.push({ x: xc + (R() - 0.5) * lw * 0.6, z: front === z0 ? rz0 + 0.8 : rz1 - 0.8, s: 1.5 + R() * 1.4 })
@@ -213,13 +221,17 @@ for (let z = -1800; z <= 240; z += 9 + R() * 4) for (const sgn of [-1, 1]) {
 // 壁の窓・屋根の瓦・マンションのベランダとタイルを、束ねた建物の1つずつの大きさから計算で描く（図を引き伸ばさない）
 const windU = []
 function facadeShader(mat, mode, opt = {}) {
+  const tx = TEX ? ({ wall: ['grey_plaster_02', 2.4, false, 0.7], roof: ['grey_roof_tiles', 2.0, false, 1.0], flat: opt.brick ? ['brown_brick_02', 1.5, true, 1.0] : ['concrete_wall_004', 3.0, false, 0.6] })[mode] : null
+  mat.customProgramCacheKey = () => 'fac:' + mode + (opt.brick ? ':b' : '') + (tx ? ':t' : '')
   mat.onBeforeCompile = (sh) => {
-    sh.uniforms.uLit = { value: TIME.lit }; sh.uniforms.uBrick = { value: opt.brick ? 1 : 0 }
+    sh.uniforms.uLit = { value: TIME.lit }; sh.uniforms.uBrick = { value: opt.brick && !tx ? 1 : 0 }
+    if (tx) TEX.uniforms(sh, tx[0], tx[2], tx[3])
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vFP; varying vec3 vFN; varying vec3 vFS; varying float vFId;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         vec3 fsc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
         vFP = position * fsc; vFN = normal; vFS = fsc; vFId = fract(instanceMatrix[3].x * 0.1307 + instanceMatrix[3].z * 0.7113);`)
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vFP; varying vec3 vFN; varying vec3 vFS; varying float vFId; uniform float uLit; uniform float uBrick;\nfloat fh(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vFP; varying vec3 vFN; varying vec3 vFS; varying float vFId; uniform float uLit; uniform float uBrick;\nfloat fh(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }' + (tx ? TEX.PARS : ''))
+    const tuvC = mode === 'roof' ? `vec2 tuv = vec2(abs(vFN.z) > 0.5 ? vFP.x : vFP.z, vFP.y * 1.7) / ${tx ? tx[1].toFixed(2) : '1.0'};` : `vec2 tuv = vec2(abs(vFN.x) > 0.5 ? vFP.z : vFP.x, vFP.y) / ${tx ? tx[1].toFixed(2) : '1.0'};`
     let body = ''
     if (mode === 'wall') body = `
         float side = step(abs(vFN.y), 0.5);
@@ -250,11 +262,14 @@ function facadeShader(mat, mode, opt = {}) {
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.84, 0.8), slab * 0.8);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.5, 0.5), 1.0 - side);
         float bLit = bWin * step(0.48, fh(vec2(fl, floor(u / unit)) + vFId * 7.0)) * uLit;`
+    else if (tx) body = `
+        float bWin = 0.0, bLit = 0.0;`
     else body = `
         float t1 = fract(vFP.y / 0.32); diffuseColor.rgb *= 0.72 + 0.28 * smoothstep(0.0, 0.18, t1);
         diffuseColor.rgb *= 0.9 + 0.1 * fh(floor(vec2(vFP.z / 0.3, vFP.y / 0.32)) + vFId); float bWin = 0.0, bLit = 0.0;`
-    sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>' + body)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.1, bWin);')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + (tx ? tuvC + TEX.COLOR : '') + body)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n' + (tx ? TEX.ROUGH : '') + '\nroughnessFactor = mix(roughnessFactor, 0.1, bWin);')
+      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>' + (tx ? '\nif (bWin < 0.5) ' + TEX.NORMAL : ''))
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += bLit * vec3(1.0, 0.74, 0.46) * 1.8;')
   }
   return mat
@@ -328,7 +343,8 @@ const ROOF = [0x4a4f57, 0x5a6878, 0x4e463e, 0x6a5444, 0x3e444c, 0x7a6a5a, 0x2e32
   }
   const crown = new THREE.InstancedMesh(cardGeo, leafMat, trees.length)
   const core = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.72, 1), new THREE.MeshStandardMaterial({ roughness: 1 }), trees.length)
-  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.1, 0.18, 1, 6).translate(0, 0.5, 0), new THREE.MeshStandardMaterial({ color: 0x4a3a2c, roughness: 1 }), trees.length)
+  const trunkMat = new THREE.MeshStandardMaterial({ color: TEX ? 0xffffff : 0x4a3a2c, roughness: 1 }); if (TEX) { const k = TEX.get('japanese_zelkova_bark'); trunkMat.map = k.d; trunkMat.normalMap = k.n; k.d.repeat.set(1, 2); k.n.repeat.set(1, 2) }
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.1, 0.18, 1, 8).translate(0, 0.5, 0), trunkMat, trees.length)
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(), up = new THREE.Vector3(0, 1, 0)
   trees.forEach((t, i) => {
     const y = groundH(t.x, t.z); q.setFromAxisAngle(up, R() * 6.283)
@@ -375,12 +391,14 @@ const train = new THREE.Group()
   roadXs.forEach((r, ix) => { for (let z = -2150; z <= 300; z += 12) { if (!isTown(r.v, z)) continue; const y = groundH(r.v, z) + 0.06
     const g = new THREE.PlaneGeometry(rw(r), 12.2); g.rotateX(-Math.PI / 2); g.translate(r.v, y, z); roads.push(g)
     if (r.wide) { const l = new THREE.PlaneGeometry(0.18, 6); l.rotateX(-Math.PI / 2); l.translate(r.v, y + 0.02, z); lines.push(l) }
-    if (near(r.v, z) && Math.round(z / 12) % 3 === 0) poles.push([r.v + rw(r) / 2 + 0.6, y, z, 'x', ix]) } })
+    if (near(r.v, z) && Math.round(z / 12) % 3 === 0) poles.push([r.v + rw(r) / 2 + 0.6, y, z, 'x', ix])
+    if (r.wide && near(r.v, z) && R() < 0.45) SHOPS.streetCars([[r.v + (R() < 0.5 ? -2.2 : 2.2), y, z + (R() - 0.5) * 6, 0]]) } })
   roadZs.forEach((r, iz) => { for (let x = -980; x <= 980; x += 12) { if (!isTown(x, r.v)) continue; const y = groundH(x, r.v) + 0.07
     const g = new THREE.PlaneGeometry(12.2, rw(r)); g.rotateX(-Math.PI / 2); g.translate(x, y, r.v); roads.push(g)
     if (r.wide) { const l = new THREE.PlaneGeometry(6, 0.18); l.rotateX(-Math.PI / 2); l.translate(x, y + 0.02, r.v); lines.push(l) }
-    if (near(x, r.v) && Math.round(x / 12) % 3 === 0) poles.push([x, y, r.v + rw(r) / 2 + 0.6, 'z', iz]) } })
-  if (roads.length) { const m = new THREE.Mesh(BGU.mergeGeometries(roads), new THREE.MeshStandardMaterial({ color: W === 'rain' ? 0x3a3c40 : 0x5a5a5c, roughness: W === 'rain' ? 0.25 : 0.92, metalness: 0 })); m.receiveShadow = true; scene.add(m) }
+    if (near(x, r.v) && Math.round(x / 12) % 3 === 0) poles.push([x, y, r.v + rw(r) / 2 + 0.6, 'z', iz])
+    if (r.wide && near(x, r.v) && R() < 0.45) SHOPS.streetCars([[x + (R() - 0.5) * 6, y, r.v + (R() < 0.5 ? -2.2 : 2.2), Math.PI / 2]]) } })
+  if (roads.length) { const rmat = new THREE.MeshStandardMaterial({ color: W === 'rain' ? 0x3a3c40 : 0x5a5a5c, roughness: W === 'rain' ? 0.25 : 0.92, metalness: 0 }); if (TEX) TEX.ground(rmat, { a: 'asphalt_02', tile: 5 }); const m = new THREE.Mesh(BGU.mergeGeometries(roads), rmat); m.receiveShadow = true; scene.add(m) }
   if (lines.length) scene.add(new THREE.Mesh(BGU.mergeGeometries(lines), new THREE.MeshStandardMaterial({ color: 0xe8e6e0, roughness: 0.8 })))
   // 電柱（コンクリートの柱＋腕木）と、隣の柱へ垂れる電線3本
   const pg = new THREE.CylinderGeometry(0.16, 0.22, 11, 6).translate(0, 5.5, 0), ag = new THREE.BoxGeometry(1.8, 0.12, 0.12).translate(0, 9.6, 0)
@@ -412,6 +430,8 @@ const train = new THREE.Group()
   rm.receiveShadow = true; scene.add(rm)
 }
 
+SHOPS.build()
+
 // ── 夜と夕方の灯り（街灯と窓の灯りの粒） ──
 if (TIME.lit > 0.3) {
   const pts = []
@@ -442,6 +462,8 @@ if (W === 'rain') {
 const look = { yaw: +(Q.get('yaw') || 0), pitch: +(Q.get('pitch') || 0) }
 const eye = new THREE.Vector3(camX - (Q.has('eh') ? 70 : 0), +(Q.get('eh') || 54), camZ - (Q.has('eh') ? 60 : 0))
 const tgt0 = new THREE.Vector3(RIVER.cx(-260) - (V === 'B' ? 40 : 20), 4, -260)
+if (Q.get('cam') === 'shop') { eye.set(stX + 150, 34, stZ + 200); tgt0.set(stX + 110, 10, stZ - 20) }
+if (Q.get('cam') === 'street') { eye.set(stX - 40, groundH(stX - 40, stZ + 125) + 1.6, stZ + 125); tgt0.set(stX - 40, groundH(stX - 40, stZ) + 2.6, stZ - 60) }
 camera.position.copy(eye)
 function aim() { const dir = tgt0.clone().sub(eye).normalize(); const yaw0 = Math.atan2(dir.x, -dir.z), pitch0 = Math.asin(dir.y)
   const y = yaw0 + look.yaw, p = pitch0 + look.pitch; camera.lookAt(eye.x + Math.sin(y) * Math.cos(p), eye.y + Math.sin(p), eye.z - Math.cos(y) * Math.cos(p)) }
@@ -451,16 +473,18 @@ sunL.target.position.set(eye.x - 100, 0, eye.z - 250); sunL.position.copy(sunL.t
 // ── 後処理（明るい所のにじみを少し・最後に色の出力） ──
 const composer = new EffectComposer(renderer)
 composer.addPass(new RenderPass(scene, camera))
+if (!LOW && !Q.has('noao')) { const ao = new GTAOPass(scene, camera, innerWidth, innerHeight); ao.blendIntensity = 0.85; ao.updateGtaoMaterial({ radius: 2.5, distanceExponent: 1.5, scale: 1.2 }); composer.addPass(ao) } // 物の接する所の陰り
 if (!LOW && T === 'night' && !Q.has('nb')) composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), T === 'night' ? 0.55 : 0.14, 0.5, T === 'night' ? 0.6 : 0.97))
 composer.addPass(new OutputPass())
 
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight) })
 let last = performance.now(), frames = 0, t0 = performance.now()
-window.__b16 = { renderer, scene, camera, ready: false, fps: 0, counts: { houses: houses.length, flats: flats.length, trees: trees.length } }
+window.__b16 = { renderer, scene, camera, ready: false, fps: 0, counts: { houses: houses.length, flats: flats.length, trees: trees.length, shops: SHOPS.rects.map((r) => r.k).join(",") } }
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now
   water.material.uniforms.time.value += dt * 0.35
   for (const u of windU) u.value = now / 1000
+  SHOPS.update(now / 1000)
   const { cx, span } = train.userData; const tt = ((now / 1000) * 14) % (span * 2.6) - span * 1.3 - 160; train.position.x = cx + tt
   if (rain) { rain.position.copy(camera.position).add(new THREE.Vector3(0, -40, 0)); rain.position.y -= ((now / 1000) * 60) % 4 }
   renderer.info.reset(); composer.render()
