@@ -45,7 +45,7 @@ const want = process.argv.slice(2)
 const out = 'docs/qa/2026-11-02_便15/gate/mutate15.json'
 const prev = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : []
 const res = prev.filter((r) => !want.length || !want.includes(r.name.split(' ')[0]))
-assertCleanTree(M.map((m) => m[1]))
+assertCleanTree(process.cwd(), [...new Set(M.map((m) => m[1]))])
 for (const [name, file, now, old, check] of M) {
   if (want.length && !want.includes(name.split(' ')[0])) continue
   const src = fs.readFileSync(file, 'utf8')
