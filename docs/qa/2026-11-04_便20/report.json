@@ -1,0 +1,24 @@
+{
+ "project": "seasons",
+ "bin": 20,
+ "title": "窓のむこう 便20 報告（作る便: 鴨川の音と時々の出来事・森見登美彦さんの作品の舞台・五山の送り火）",
+ "baseDir": "C:\\Users\\yuya.satake\\ClaudeCode\\seasons",
+ "conclusion": [
+  "（あとで書く）",
+  "（あとで書く）",
+  "（あとで書く）"
+ ],
+ "decisions": [],
+ "answerForm": "",
+ "kimeta": [],
+ "checks": [],
+ "humanOps": [],
+ "outOfScope": [],
+ "zentest": { "pass": 0, "total": 0 },
+ "kensa": { "mutate": "docs/qa/2026-11-04_便20/gate/mutate20-final.json", "yowai": [] },
+ "evidence": [],
+ "appendix": [],
+ "genzaichi": { "flow": "作る＋検収", "at": "次" },
+ "kazu": { "aibo": 0, "yuya": 2, "tomatta": 1 },
+ "nextSession": { "dir": "C:\\Users\\yuya.satake\\ClaudeCode\\seasons", "line": "/bin", "flow": "作る＋検収", "next": "（あとで書く）" }
+}

@@ -1,0 +1,16 @@
+// 便20: K2 が前の版でも外れる理由を見る（開いた直後の画面・釦の上に重なる物・押した後の釦の字）
+import { chromium } from 'playwright'
+const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist'] })
+const p = await (await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' })).newPage()
+await p.goto(`http://localhost:${process.env.PORT || 4981}/seasons/?dev=1`, { waitUntil: 'domcontentloaded' })
+await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(800)
+await p.evaluate(() => window.__applyScene('autumn-dusk-corner-room'))
+await p.waitForFunction(() => window.__town3dStats && window.__town3dStats() && window.__town3dStats().frames > 3, null, { timeout: 120000 })
+await p.waitForTimeout(1500)
+const info = await p.evaluate(() => { const e = document.querySelector('.iconbtn--stage'); if (!e) return 'no-btn'; const r = e.getBoundingClientRect(); const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return { label: e.textContent, rect: [r.x, r.y, r.width, r.height].map(Math.round), disp: getComputedStyle(e).display, vis: getComputedStyle(e).visibility, op: getComputedStyle(e).opacity, pe: getComputedStyle(e).pointerEvents, top: top ? top.className + ' ' + top.tagName : null, same: top === e || e.contains(top) } })
+console.log(JSON.stringify(info))
+await p.screenshot({ path: 'docs/qa/2026-11-04_便20/shots/k2-open.png' })
+await p.locator('.iconbtn--stage').click({ force: true }).catch((e) => console.log('click err', e.message)); await p.waitForTimeout(1800)
+console.log('押した後', await p.evaluate(() => (document.querySelector('.iconbtn--stage') || {}).textContent), JSON.stringify(await p.evaluate(() => window.__town3dNav && window.__town3dNav() && window.__town3dNav().mode)))
+await p.screenshot({ path: 'docs/qa/2026-11-04_便20/shots/k2-after.png' })
+await b.close()

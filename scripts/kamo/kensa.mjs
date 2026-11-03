@@ -44,6 +44,9 @@ async function open(scene, { q = '', block = false, view = null, win = null, dev
   p.on('pageerror', (e) => errs.push('PE ' + e.message))
   p.on('console', (m) => { const t = m.text(); if (m.type() === 'error') errs.push(t.slice(0, 200)); if (/GL_INVALID|INVALID_OPERATION/.test(t)) gl.push(t.slice(0, 160)) })
   if (block) await ctx.route('**/kamo/**', (r) => r.abort())
+  // 【便20】起動時の情景を、開く情景にそろえる（3時間以内に居た情景から開く作り＝main.js の start）。画面の釦（窓をあける・空へ）は起動時の情景で出し分けるので、
+  //   検証の口（__applyScene）だけで替えると、起動時の情景が「今の季節と時刻」で窓の無い情景になった日（2026-11-04 の朝）に釦が隠れ、K2 が前の版でも外れた
+  await ctx.addInitScript((id) => { try { if (!localStorage.getItem('seasons.state.v1')) localStorage.setItem('seasons.state.v1', JSON.stringify({ version: 2, sceneId: id, sceneAt: Date.now() })) } catch (e) { /* 無視 */ } }, scene)
   await p.goto(`${BASE}?dev=1${q ? '&' + q : ''}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
   await p.locator('.gate').click().catch(() => {})
   await p.waitForTimeout(800)
