@@ -1,0 +1,56 @@
+## 波及の照らし・呼ぶ所の一覧（_shared/hakyu.mjs --yobu・2026/11/3 21:02:41・878d274 からの差分 59 個）
+
+直す関数・部品ごとに、呼ぶ所を並べた。呼ぶ所の画面・場面を、直す前と後で同じ撮り方で比べた画か検査の名を右の列に書く（比べない所は理由）。
+
+| 関数・部品 | 定義の所 | 呼ぶ所（頭の8つ） | 前後で比べた画・検査 |
+|---|---|---|---|
+| `btn` | scripts/kamo/kensa.mjs:57 | scripts/kamo/kensa.mjs:58・scripts/kamo/kensa.mjs:59・scripts/kamo/shot.mjs:46・scripts/qa-gamepad.mjs:84・scripts/qa-gamepad.mjs:86・scripts/qa-settings.mjs:10・scripts/qa-settings.mjs:11・src/engine/town3dViewer.js:9118 ほか 12 | |
+| `sampleWhile` | scripts/kamo/kensa.mjs:103 | scripts/kamo/kensa.mjs:116・scripts/kamo/kensa.mjs:128・scripts/kamo/kensa.mjs:143・scripts/kamo/kensa.mjs:155 | |
+| `addKey` | src/engine/kamoTown.js:151 | scripts/_bin17-kamo.js:81・scripts/_bin17-kamo.js:129・scripts/_bin17-kamo.js:156・src/engine/kamoTown.js:171・src/engine/kamoTown.js:209・src/engine/kamoTown.js:235・src/engine/kamoTown.js:492 | |
+| `useBake` | src/engine/kamoTown.js:167 | scripts/_bin17-kamo.js:181・scripts/_bin17-kamo.js:211・scripts/_bin17-kamo.js:263・src/engine/kamoTown.js:282・src/engine/kamoTown.js:320・src/engine/kamoTown.js:399 | |
+| `paint` | src/engine/kamoTown.js:291 | scripts/qa-paint.mjs:10・src/engine/kamoTown.js:242・src/engine/kamoTown.js:254・src/engine/kamoTown.js:284・src/engine/kamoTown.js:297・src/engine/town3dViewer.js:1583・src/engine/town3dViewer.js:1584・src/engine/town3dViewer.js:1585 ほか 11 | |
+| `waterNormals` | src/engine/kamoTown.js:329 | scripts/_bin16-river.js:138・scripts/_bin17-kamo.js:230・src/engine/kamoTown.js:350 | |
+| `toK` | src/engine/kamoTown.js:380 | src/engine/kamoTown.js:381・src/engine/kamoTown.js:432・src/engine/kamoTown.js:447 | |
+| `key` | src/engine/kamoTown.js:411 | scripts/_bin10-measure3d.mjs:134・scripts/_bin10-measure3d.mjs:399・scripts/_bin12-measure3d.mjs:135・scripts/_bin12-measure3d.mjs:400・scripts/_bin13-kensa.mjs:69・scripts/_bin13-kensa.mjs:70・scripts/_bin13-kensa.mjs:88・scripts/_bin15-kensa.mjs:211 ほか 140 | |
+| `cards` | src/engine/kamoTown.js:467 | scripts/_bin10-measure3d.mjs:37・scripts/_bin10-measure3d.mjs:196・scripts/_bin10-measure3d.mjs:197・scripts/_bin12-measure3d.mjs:38・scripts/_bin12-measure3d.mjs:197・scripts/_bin12-measure3d.mjs:198・scripts/_shindan-1027-probe2.mjs:13・scripts/_shindan-1027-probe2.mjs:14 ほか 35 | |
+| `gridAt` | src/engine/kamoTown.js:558 | src/engine/kamoTown.js:569 | |
+| `terrK` | src/engine/kamoTown.js:564 | src/engine/kamoTown.js:571・src/engine/kamoTown.js:600・src/engine/kamoTown.js:640・src/engine/kamoTown.js:648・src/engine/kamoTown.js:652 | |
+| `wetK` | src/engine/kamoTown.js:569 | src/engine/kamoTown.js:571・src/engine/kamoTown.js:644・src/engine/kamoTown.js:650・src/engine/kamoTown.js:654 | |
+| `zoneK` | src/engine/kamoTown.js:570 | src/engine/kamoTown.js:645・src/engine/kamoTown.js:654 | |
+| `floorK` | src/engine/kamoTown.js:571 | src/engine/kamoTown.js:617・src/engine/kamoTown.js:641・src/engine/kamoTown.js:642 | |
+| `ensureNav` | src/engine/kamoTown.js:575 | src/engine/kamoTown.js:629・src/engine/kamoTown.js:631・src/engine/kamoTown.js:632・src/engine/kamoTown.js:633・src/engine/kamoTown.js:642・src/engine/kamoTown.js:656 | |
+| `tri` | src/engine/kamoTown.js:581 | scripts/_bin17-kamo.js:106・scripts/_bin17-kamo.js:114・scripts/_bin17-kamo.js:264・scripts/_bin17-kamo.js:325・src/engine/kamoTown.js:186・src/engine/kamoTown.js:194・src/engine/kamoTown.js:400・src/engine/kamoTown.js:444 ほか 8 | |
+| `den` | src/engine/kamoTown.js:584 | src/engine/kamoTown.js:588 | |
+| `mark` | src/engine/kamoTown.js:596 | scripts/qa-bin2.mjs:297・scripts/qa-bin2.mjs:300・scripts/qa-bin6-mutate.mjs:38・scripts/qa-bin6-mutate.mjs:39・scripts/qa-bin6-mutate.mjs:43・src/engine/kamoTown.js:597・src/engine/kamoTown.js:605 | |
+| `cellK` | src/engine/kamoTown.js:628 | src/engine/kamoTown.js:632・src/engine/kamoTown.js:633・src/engine/kamoTown.js:642・src/engine/kamoTown.js:656 | |
+| `softK` | src/engine/kamoTown.js:629 | src/engine/kamoTown.js:643 | |
+| `trunkK` | src/engine/kamoTown.js:631 | src/engine/kamoTown.js:632 | |
+| `blockedK` | src/engine/kamoTown.js:632 | src/engine/kamoTown.js:646・src/engine/kamoTown.js:650 | |
+| `deckOk` | src/engine/kamoTown.js:633 | src/engine/kamoTown.js:648・src/engine/kamoTown.js:650 | |
+| `renderDirect` | src/engine/kamoTown.js:715 | src/engine/kamoTown.js:737・src/engine/town3dViewer.js:10813 | |
+| `lightDraw` | src/engine/town3dViewer.js:316 | scripts/_bin15-mutate.mjs:30・src/engine/town3dViewer.js:314・src/engine/town3dViewer.js:7353・src/engine/town3dViewer.js:7366・src/engine/town3dViewer.js:7388・src/engine/town3dViewer.js:7396・src/engine/town3dViewer.js:8746・src/engine/town3dViewer.js:8768 ほか 1 | |
+| `cornerYaw0` | src/engine/town3dViewer.js:8207 | src/engine/town3dViewer.js:8208・src/engine/town3dViewer.js:8219 | |
+| `resize` | src/engine/town3dViewer.js:8228 | scripts/_bin15-kensa.mjs:204・scripts/_bin15-kensa.mjs:211・scripts/_bin15-kensa.mjs:221・scripts/_bin15-kensa.mjs:295・scripts/_bin15-mutate.mjs:27・scripts/_bin16-river.js:484・scripts/_bin17-kamo.js:346・scripts/_shindan-1027-probe3.mjs:1 ほか 11 | |
+| `wetAt` | src/engine/town3dViewer.js:8238 | src/engine/town3dViewer.js:8244・src/engine/town3dViewer.js:8245 | |
+| `tryWalk` | src/engine/town3dViewer.js:8239 | src/engine/town3dViewer.js:10082 | |
+| `spawnBad` | src/engine/town3dViewer.js:8248 | src/engine/town3dViewer.js:8272 | |
+| `maxClearAt` | src/engine/town3dViewer.js:8263 | src/engine/town3dViewer.js:8273 | |
+| `consider` | src/engine/town3dViewer.js:8271 | src/engine/town3dViewer.js:8285・src/engine/town3dViewer.js:8289 | |
+| `flyHintHtml` | src/engine/town3dViewer.js:8360 | scripts/qa-bin2-mutants.mjs:67・src/engine/town3dViewer.js:8364 | |
+| `thr` | src/engine/town3dViewer.js:9811 | scripts/qa-imgdiff.mjs:43・scripts/qa-imgdiff.mjs:53・scripts/qa-imgdiff.mjs:57・scripts/qa-threshold.mjs:14・scripts/qa-threshold.mjs:16・scripts/qa-threshold.mjs:17・scripts/qa-threshold.mjs:18・scripts/qa-threshold.mjs:19 ほか 3 | |
+| `best` | src/engine/town3dViewer.js:10029 | scripts/_bin13-kensa.mjs:43・scripts/kamo/build.mjs:299・scripts/kamo/build.mjs:300・scripts/kamo/build.mjs:301・scripts/kamo/kensa.mjs:137・scripts/kamo/kensa.mjs:138・scripts/qa-liveliness.mjs:107・scripts/qa-liveliness.mjs:108 ほか 36 | |
+| `cruiseS` | src/engine/town3dViewer.js:10045 | src/engine/town3dViewer.js:10047・src/engine/town3dViewer.js:10050 | |
+| `yawV` | src/engine/town3dViewer.js:10059 | src/engine/town3dViewer.js:10124・src/engine/town3dViewer.js:10128 | |
+| `grounded` | src/engine/town3dViewer.js:10085 | src/engine/town3dViewer.js:10086 | |
+| `upOff` | src/engine/town3dViewer.js:10143 | src/engine/town3dViewer.js:10165・src/engine/town3dViewer.js:10174・src/engine/town3dViewer.js:11215・src/engine/town3dViewer.js:11218 | |
+| `camFloor` | src/engine/town3dViewer.js:10176 | src/engine/town3dViewer.js:10177 | |
+| `aloftFov` | src/engine/town3dViewer.js:10193 | src/engine/town3dViewer.js:10194 | |
+| `vig` | src/engine/town3dViewer.js:10223 | scripts/_bin10-variants.js:109・scripts/_bin10-variants.js:110・scripts/_bin11-old/rainGlass.js:227・scripts/_bin11-old/rainGlass.js:228・src/engine/town3dViewer.js:10224・src/shaders/rainGlass.js:238・src/shaders/rainGlass.js:239・src/shaders/rainGlass.js:346 ほか 1 | |
+| `gOp` | src/engine/town3dViewer.js:10273 | src/engine/town3dViewer.js:10274・src/engine/town3dViewer.js:10275 | |
+| `bearingPan` | src/engine/town3dViewer.js:10411 | src/engine/town3dViewer.js:10418・src/engine/town3dViewer.js:10427・src/engine/town3dViewer.js:10434 | |
+| `progs` | src/engine/town3dViewer.js:10868 | scripts/qa-leak2.mjs:14・scripts/qa-leak3.mjs:15・scripts/qa-leak4.mjs:16・scripts/qa-mergeleak.mjs:31・scripts/qa-perf-survey.mjs:11・scripts/qa-perf7.mjs:20・src/engine/town3dViewer.js:10826・src/engine/town3dViewer.js:10873 ほか 1 | |
+
+- 2字以下の名は数えていない: S・st・KX・TX・h・ci・w1・t・tt・gh・op（中の小さな関数の見込み。直すなら --funcs で名指す）
+
+- 呼ぶ所が150を超える名は一般的すぎて並べていない: check（182）・pass（248）・dispose（210）（直すなら呼ぶ所をファイルで絞って見る）
+
