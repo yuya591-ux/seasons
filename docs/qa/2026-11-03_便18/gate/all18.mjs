@@ -17,7 +17,8 @@ const steps = [
 let pass = 0, n = 0
 for (const s of steps) {
   const t0 = Date.now()
-  const r = spawnSync(s.cmd, s.args, { env: { ...process.env, ...(s.env || {}) }, encoding: 'utf8', shell: process.platform === 'win32', maxBuffer: 256 * 1024 * 1024 })
+  // node は shell を通さない（Windows で shell を通すと空の引数 '' が落ち、撮る段の窓と kamo=0 の引数がずれた＝便18 の1回目の全テスト）
+  const r = spawnSync(s.cmd, s.args, { env: { ...process.env, ...(s.env || {}) }, encoding: 'utf8', shell: process.platform === 'win32' && s.cmd === 'npm', maxBuffer: 256 * 1024 * 1024 })
   const out = (r.stdout || '') + (r.stderr || '')
   const ok = r.status === 0 && (!s.check || s.check(out))
   if (!s.name.startsWith('撮る ')) { n++; if (ok) pass++ } else if (!ok) n++ // 撮るだけの段は、落ちた時だけ数える
