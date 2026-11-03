@@ -419,6 +419,7 @@ export function createAudio(opts) {
   // ── 場所に応じた水の音（波／川のせせらぎ）。合成（フィルタしたノイズ）＝CC0/オフライン原則と整合。
   //  海の近く・低空で「波」が、川/運河の近くで「せせらぎ」が満ちる。setAmbience(海,川) が近さで音量を上下する。
   //  未使用時は完全に 0（録音のAGCで増幅されるノイズ漏れを断つ＝以前の機械音の教訓）。低音の唸りはハイパスで断つ。
+  const evDbg = { tobi: 0, eiden: 0 } // 検証用（便20）: 鴨川の町の出来事の音を鳴らした数
   let waterNode = null
   const waterState = { sea: 0, river: 0, crowd: 0 }
   function startWater() {
@@ -640,9 +641,54 @@ export function createAudio(opts) {
     if (pan) { pan.pan.value = (Math.random() - 0.5) * 0.7; o.connect(g).connect(pan).connect(master) } else o.connect(g).connect(master)
     try { o.start(at); o.stop(at + 0.36) } catch { /* 無視 */ }
   }
-  function playEvent(kind) {
+  // ── 便20: 鴨川の町の出来事の音（素材なし・合成）。o＝{ amt: 近さ 0..1, pan: 左右 -1..1, dep: 出る時か }
+  let evNoise = null
+  const evOut = (pan) => { const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (p) { p.pan.value = Number.isFinite(pan) ? Math.max(-0.9, Math.min(0.9, pan)) : 0; p.connect(master); return p } return master }
+  function tobiCall(at, amt, pan) {
+    // トビの「ピーー、ヒョロロロ」: 高い笛のような声が少し上がって下がり、続けて細かく震えながら下がる
+    if (!ctx.createOscillator) return
+    const out = evOut(pan), A = 0.02 * Math.max(0.15, Math.min(1, amt))
+    const o = ctx.createOscillator(); o.type = 'sine'
+    o.frequency.setValueAtTime(2250, at); o.frequency.linearRampToValueAtTime(2620, at + 0.32); o.frequency.linearRampToValueAtTime(2180, at + 0.78)
+    const vib = ctx.createOscillator(); vib.frequency.value = 6.5; const vg = ctx.createGain(); vg.gain.value = 26; vib.connect(vg).connect(o.frequency)
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(A, at + 0.06); g.gain.setValueAtTime(A, at + 0.62); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.82)
+    o.connect(g).connect(out)
+    try { o.start(at); o.stop(at + 0.86); vib.start(at); vib.stop(at + 0.86) } catch { /* 無視 */ }
+    for (let k = 0; k < 4; k++) {
+      const t0 = at + 0.98 + k * 0.15, o2 = ctx.createOscillator(); o2.type = 'sine'
+      o2.frequency.setValueAtTime(2320 - k * 95, t0); o2.frequency.exponentialRampToValueAtTime(1980 - k * 110, t0 + 0.13)
+      const g2 = ctx.createGain(), a2 = A * (0.8 - k * 0.12); g2.gain.setValueAtTime(0.0001, t0); g2.gain.linearRampToValueAtTime(a2, t0 + 0.025); g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14)
+      o2.connect(g2).connect(out); try { o2.start(t0); o2.stop(t0 + 0.16) } catch { /* 無視 */ }
+    }
+  }
+  function eidenPass(at, amt, pan, dep) {
+    // 叡山電車: 低い走る音（ゴー）と、レールの継ぎ目（カタン・コトン）と、モーターの音（出る時は上がり、着く時は下がる）
+    if (!ctx.createBufferSource) return
+    if (!evNoise) { const len = Math.floor(4 * ctx.sampleRate); evNoise = ctx.createBuffer(1, len, ctx.sampleRate); const d = evNoise.getChannelData(0); let b = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b = 0.92 * b + w * 0.08; d[i] = (b * 0.85 + w * 0.15) * 0.5 } }
+    const out = evOut(pan), A = Math.max(0.08, Math.min(1, amt)), DUR = 11
+    const src = ctx.createBufferSource(); src.buffer = evNoise; src.loop = true
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 240; bp.Q.value = 0.7
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.16 * A, at + 3); g.gain.setValueAtTime(0.16 * A, at + 6); g.gain.linearRampToValueAtTime(0.0001, at + DUR)
+    src.connect(hp).connect(bp).connect(g).connect(out); try { src.start(at); src.stop(at + DUR + 0.1) } catch { /* 無視 */ }
+    for (let k = 0; k < 7; k++) for (const off of [0, 0.16]) { // カタン・コトン（2つ1組）
+      const ct = at + 1.4 + k * (dep ? 1.25 - k * 0.08 : 0.9 + k * 0.1) + off, env = Math.sin(((k + 0.5) / 7) * Math.PI)
+      const cg = ctx.createGain(); cg.gain.setValueAtTime(0.001, ct); cg.gain.exponentialRampToValueAtTime(0.07 * A * env + 0.002, ct + 0.005); cg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.07)
+      const cl = ctx.createBiquadFilter(); cl.type = 'bandpass'; cl.frequency.value = off ? 520 : 640; cl.Q.value = 1.1
+      const nb = ctx.createBufferSource(); nb.buffer = evNoise; nb.connect(cl).connect(cg).connect(out); try { nb.start(ct, Math.random() * 3); nb.stop(ct + 0.09) } catch { /* 無視 */ }
+    }
+    if (ctx.createOscillator) { // モーター（中高域の細い音・控えめ）
+      const m = ctx.createOscillator(); m.type = 'sine'
+      if (dep) { m.frequency.setValueAtTime(330, at + 0.5); m.frequency.linearRampToValueAtTime(860, at + 7.5) } else { m.frequency.setValueAtTime(820, at + 0.5); m.frequency.linearRampToValueAtTime(300, at + 8) }
+      const mg = ctx.createGain(); mg.gain.setValueAtTime(0.0001, at + 0.5); mg.gain.linearRampToValueAtTime(0.008 * A, at + 2); mg.gain.linearRampToValueAtTime(0.0001, at + 8.5)
+      m.connect(mg).connect(out); try { m.start(at + 0.5); m.stop(at + 8.6) } catch { /* 無視 */ }
+    }
+  }
+  function playEvent(kind, o) {
     if (!started || !ctx || muted) return
     const T = now() + 0.02
+    if (kind === 'tobi') { tobiCall(T, (o && o.amt) || 0.3, o && o.pan); evDbg.tobi++; return }
+    if (kind === 'eiden') { eidenPass(T, (o && o.amt) || 0.3, o && o.pan, !!(o && o.dep)); evDbg.eiden++; return }
     if (kind === 'fireworks') {
       const shots = 2 + ((Math.random() * 3) | 0)
       for (let i = 0; i < shots; i++) { const bt = T + 0.35 + i * (0.22 + Math.random() * 0.5); whistle(bt - 0.32); boom(bt, 0.5 + Math.random() * 0.34) } // 打ち上げの笛→光→一拍おいて遠い破裂＋連発
@@ -960,7 +1006,7 @@ export function createAudio(opts) {
     Object.assign(api, {
       _dbg() { return { altDuck: +altDuckV.toFixed(3), loops: layers.filter((l) => !l.stopped).map((l) => +l.layerGain.gain.value.toFixed(4)), duskShelf: duskShelf ? +duskShelf.gain.value.toFixed(2) : null, flyWind: flyWindV, cache: [...bufferCache.keys()], timers: timers.length, timersFired, chime: chimeDbg, started } },
       getLookPan() { return lookPan },
-      getDebug() { return { state: ctx ? ctx.state : 'none', water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2) } },
+      getDebug() { return { state: ctx ? ctx.state : 'none', water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2), ev: { ...evDbg } } },
     })
   }
   return api

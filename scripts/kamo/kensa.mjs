@@ -21,6 +21,13 @@
 //   ~~K17 空から部屋の建物を見ると、部屋の窓の所が外壁で塞がる（塞ぐ壁を止めた画と 0.2% 以上の画素が違う）~~（【便19】揺れだけで合格したので下の形に替えた）
 //   K17 部屋の窓の所を塞ぐ壁が、窓辺では出ず、空と地上では出て、窓辺へもどると消える（便19）
 //   K18 北寺尾の時代の島の縁（霞の帯が一番濃い所）と同じ所を鴨川の町で飛んでも、霞の帯・色の膜・雲の白い包み・虹の層が出ず、居場所が鴨川の名（便19）
+//   K19 春の夕の鴨川に、座る人（20 人以上）・飛び石の列（5 石以上が 2 列以上）・叡山電車・トビ 2 羽・アオサギが居て、?kamolife=0 では動く物を組まない（便20）
+//   K20 夏の夜の角部屋の五山の送り火: 並びが 大文字→妙→法→船形→左大文字→鳥居形、火床が 75・103・63・79・53・108、点く時刻が本物の順（5分＝25秒おき）で、点けて 12 秒の所で大文字だけが灯る（便20）
+//   K21 夏の夜でない角部屋（秋の夕）には送り火を組まない（便20）
+//   K22 飛ぶ・歩く時の音の近さ: 水の上の低い所で川の瀬音、出町桝形商店街でまちの気配、出町柳駅で駅の音が満ち、高い空では川の音が消える（便20）
+//   K23 鴨川の出来事の音（トビの声・叡山電車）を鳴らしてもエラーが無く、出来事を起こすと鳴らした数が増える（便20）
+//   K24 視差軽減（動きを減らす設定）では、送り火も時々の出来事も起きない（座る人と電車はいつもの景色として居る）（便20）
+//   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
 import { chromium } from 'playwright'
 const PORT = process.env.PORT || 4961, BASE = `http://localhost:${PORT}/seasons/`
@@ -212,6 +219,68 @@ if (run('K18')) { // 北寺尾の時代の島（江戸・大正・戦国）と�
   const bad = res.filter((r) => Math.max(r.veil, r.era, r.haze, r.rainbow) > 0.01 || /城下町|港町|雲海|海の上/.test(r.place + r.pill))
   check('K18', bad.length === 0, res.map((r) => `${r.nm}の所: 層 ${Math.max(r.veil, r.era, r.haze, r.rainbow)}・居場所 ${r.place}`).join('／') + '（層 0.01 以下・居場所が鴨川の名で合格）')
   await o.ctx.close()
+}
+// ── 便20 ──
+const life = (p) => p.evaluate(() => (window.__town3dKamoLife ? window.__town3dKamoLife() : 'no-hook'))
+if (run('K19')) {
+  const o = await open('spring-dusk-corner-room')
+  const l = await life(o.p), k = await kamoInfo(o.p)
+  const o2 = await open('spring-dusk-corner-room', { q: 'kamolife=0' }), l2 = await life(o2.p), k2 = await kamoInfo(o2.p)
+  const chains = l && l.chains ? l.chains.filter((n) => n >= 5).length : 0
+  check('K19', !!l && l !== 'no-hook' && l.sitters >= 20 && chains >= 2 && !!l.train && l.kites === 2 && l.herons >= 1 && l2 === null && !o.errs.length && !o2.errs.length, `座る人 ${l && l.sitters}・飛び石の列 ${l && JSON.stringify(l.chains)}・電車 ${l && l.train ? l.train.mode : '無し'}・トビ ${l && l.kites}・アオサギ ${l && l.herons}・組むまで ${k && k.lifeMs}ms・描く呼び出し ${k && k.calls}（kamolife=0 は ${k2 && k2.calls}・動く物 ${JSON.stringify(l2)}）・エラー ${o.errs.length + o2.errs.length}`)
+  await o.ctx.close(); await o2.ctx.close()
+}
+if (run('K20') || run('K21')) {
+  if (run('K20')) {
+    const o = await open('summer-night-corner-room')
+    const l0 = await life(o.p), ok = l0 && l0.okuribi
+    const names = ok ? ok.names.join(',') : '', beds = ok ? ok.orderBy.map((r) => r[2]).join(',') : '', mins = ok ? ok.orderBy.map((r) => r[0]) : []
+    const seq = mins.length === 6 && mins[0] < 5 && mins[1] >= 25 && mins[2] >= 25 && mins[3] >= 50 && mins[4] >= 75 && mins[5] >= 100 && mins[3] > Math.max(mins[1], mins[2]) && mins[4] > mins[3] && mins[5] > mins[4]
+    await o.p.evaluate(() => window.__town3dKamoEv('okuribi'))
+    await o.p.waitForFunction(() => { const x = window.__town3dKamoLife(); return x && x.okuribi && x.okuribi.t >= 12 }, null, { timeout: 90000 }).catch(() => {})
+    const l1 = await life(o.p), lb = l1 && l1.okuribi ? l1.okuribi.litBy : []
+    check('K20', names === 'daimonji,myo,ho,funa,hidari,torii' && beds === '75,103,63,79,53,108' && seq && lb[0] > 10 && lb.slice(1).every((v) => v === 0) && !o.errs.length, `並び ${names}・火床 ${beds}・点く時刻の早い所 ${mins.join(',')} 秒・点けて ${l1 && l1.okuribi && l1.okuribi.t} 秒の灯り ${JSON.stringify(lb)}・エラー ${o.errs.length}`)
+    await o.ctx.close()
+  }
+  if (run('K21')) { const o = await open('autumn-dusk-corner-room'); const l = await life(o.p); check('K21', !!l && l !== 'no-hook' && l.okuribi === null, `秋の夕の送り火 ${l && JSON.stringify(l.okuribi)}（null で合格）`); await o.ctx.close() }
+}
+if (run('K22')) {
+  const o = await open('summer-night-corner-room')
+  await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
+  const at = async (X, Y, Z) => { await o.p.evaluate(([X, Y, Z]) => { const e = window.__town3dKamoTown(X, Z, Y); window.__town3dFlyPose(e.x, e.y, e.z, 0, 0) }, [X, Y, Z]); await o.p.waitForTimeout(2500); return (await life(o.p)).amb }
+  const L = await o.p.evaluate(() => fetch('kamo/life.json').then((r) => r.json()))
+  const water = await at(-60, -2, 40), masu = await at(L.masugata[4], 1.5, L.masugata[5]), sta = await at(L.eiden.sta.x, 2, L.eiden.sta.z), high = await at(-60, 160, 40)
+  check('K22', water.river >= 0.3 && masu.crowd >= 0.3 && sta.sta >= 0.3 && high.river < 0.05, `水の上 川 ${water.river}・商店街 気配 ${masu.crowd}・駅 駅 ${sta.sta}（それぞれ 0.3 以上）・高い空 川 ${high.river}（0.05 未満）`)
+  await o.ctx.close()
+}
+if (run('K23')) {
+  const o = await open('spring-dusk-corner-room')
+  const before = (await life(o.p)).sounds || 0
+  const r = await o.p.evaluate(() => { const out = []; try { window.__audio.playEvent('tobi', { amt: 1, pan: 0.4 }); window.__audio.playEvent('eiden', { amt: 1, pan: -0.3, dep: true }); window.__audio.playEvent('eiden', { amt: 0.2 }); out.push('ok') } catch (e) { out.push('ERR ' + e.message) } out.push(window.__town3dKamoEv('tobi')); return out })
+  await o.p.waitForTimeout(1500)
+  const after = (await life(o.p)).sounds || 0
+  check('K23', r[0] === 'ok' && r[1] === 'ok' && after > before && !o.errs.length, `音を鳴らす ${r[0]}・トビを起こす ${r[1]}・鳴らした数 ${before} → ${after}・エラー ${o.errs.length}`)
+  await o.ctx.close()
+}
+if (run('K24')) {
+  const o = await open('summer-night-corner-room', { dev: { viewport: { width: 1280, height: 720 }, reducedMotion: 'reduce' } })
+  await o.p.waitForFunction(() => { const s = window.__town3dStats && window.__town3dStats(); return s && s.frames > 600 }, null, { timeout: 120000 }).catch(() => {})
+  const l = await life(o.p)
+  check('K24', !!l && l !== 'no-hook' && l.okuribi && l.okuribi.t < 0 && Object.keys(l.ev).filter((k2) => k2 !== 'eiden').length === 0 && l.sitters > 0, `動きを減らす: 送り火 t ${l && l.okuribi && l.okuribi.t}（-1 のまま）・待ち ${l && l.okuribi && l.okuribi.wait}・起きた出来事 ${l && JSON.stringify(l.ev)}・座る人 ${l && l.sitters}`)
+  await o.ctx.close()
+}
+if (run('K25')) {
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' }), p = await ctx.newPage(), errs = []
+  p.on('pageerror', (e) => errs.push('PE ' + e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)) })
+  await ctx.route('**/kamo/life.json', (r) => r.abort())
+  await p.goto(`${BASE}?dev=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }); await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(800)
+  await p.evaluate(() => window.__applyScene('summer-night-corner-room'))
+  await p.waitForFunction(() => window.__town3dStats && window.__town3dStats() && window.__town3dStats().frames > 3, null, { timeout: 120000 }).catch(() => {})
+  await p.waitForTimeout(1500)
+  const k = await p.evaluate(() => window.__town3dKamo && window.__town3dKamo()), l = await p.evaluate(() => window.__town3dKamoLife && window.__town3dKamoLife())
+  const real = errs.filter((e) => !/life.json|ERR_FAILED|net::/.test(e))
+  check('K25', !!k && l === null && !real.length, `鴨川の町 ${k ? '有り' : '無し'}・動く物 ${JSON.stringify(l)}・エラー ${real.length}（読めなかった知らせ ${errs.length - real.length} は除く）`)
+  await ctx.close()
 }
 await b.close()
 const bad = results.filter((r) => !r.pass)

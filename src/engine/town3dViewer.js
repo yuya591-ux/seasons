@@ -8111,7 +8111,7 @@ export async function mountTown3d(parent, opts = {}) {
             .multiply(new THREE.Matrix4().makeRotationY(-B)) // 部屋の正面（-z）→ 鴨川の窓の向き（北から東回り B 度）
             .multiply(new THREE.Matrix4().makeTranslation(-o.x, -o.y, -o.z))
           const roomBox = new THREE.Box3(new THREE.Vector3(-SX - 0.4, FY - 0.3, -0.4), new THREE.Vector3(SX + 0.4, CY + 0.5, BZ + 1.0)).translate(o) // 部屋の箱（この中に入る建物は描かない）
-          kamo = got.m.buildKamo(got.d, { renderer, toKamo, roomBox, season, time: opts.time, sky: opts.sky, shadowSize: KAMO_LOW ? 0 : Math.max(SHADOW_SIZE || 0, 4096) })
+          kamo = got.m.buildKamo(got.d, { renderer, toKamo, roomBox, season, time: opts.time, sky: opts.sky, shadowSize: KAMO_LOW ? 0 : Math.max(SHADOW_SIZE || 0, 4096), reduceMotion, onSound: (k, o) => { if (k === 'okuribi' && winCat) winCat.noticeT = 0.8; onEvent(k, o) } }) // 便20: 鴨川の町の出来事の音（トビ・叡山電車）と、まれな景色の記録（送り火）
           if (composer) {
             if (!/[?&]kamopass=0/.test(location.search)) composer.insertPass(kamo.makePass(camera), 0) // 1枚目＝鴨川の舞台（ACES の色の圧縮まで済ませて書く）。kamopass=0 は測る用（1枚目を抜く）
             const rp = composer.passes.find((p) => p.scene === scene)
@@ -10435,7 +10435,8 @@ export async function mountTown3d(parent, opts = {}) {
           else if (n.kind === 'paddy' || n.kind === 'ruin' || n.kind === 'onsen' || n.kind === 'well') riverAmt = Math.max(riverAmt, near * 0.42) // 水のある島＝せせらぎ/水滴
         }
       }
-      if (kamo) onAmbience(0, 0, 0, 0, 0, 0, 0) // 便18: 海・川・人だまり・祭り・駅の音の近さは北寺尾の町の場所から測る物なので、鴨川の町では鳴らさない
+      // ~~便18: 海・川・人だまり・祭り・駅の音の近さは北寺尾の町の場所から測る物なので、鴨川の町では鳴らさない~~（【便20】鴨川の町の場所から測る＝川の瀬音・まちの気配・叡山電車の駅。外に出ている時だけ）
+      if (kamo) { const a = kamo.life ? kamo.life.ambience() : null; if (a) onAmbience(0, a.river * outAmt, a.crowd * outAmt, 0, a.sta * outAmt, 0, a.staPan); else onAmbience(0, 0, 0, 0, 0, 0, 0) }
       else onAmbience(seaAmt, riverAmt, crowdAmt, festAmt, staAmt, festPan, staPan) }
     // 夜の灯りの息づき（篝火/松明＝炎の揺らぎ・ガス灯＝穏やかな明滅）。二重サインで不規則に。
     for (const g of nightGlows) g.m.opacity = Math.max(0, g.base * (1 + g.amp * (Math.sin(t * g.sp + g.ph) * 0.6 + Math.sin(t * g.sp * 1.73 + g.ph * 1.3) * 0.4)))
@@ -10894,6 +10895,9 @@ export async function mountTown3d(parent, opts = {}) {
     window.__town3dNavAt = (x, z, feet) => (KN ? { ground: KN.ground(x, z), floor: KN.floor(x, z), top: KN.top(x, z), soft: KN.topSoft(x, z), wet: KN.wet(x, z), zone: KN.zone(x, z), blocked: KN.blocked(x, z), deck: KN.deck(x, z), step: feet === undefined ? null : KN.canStep(x, z, feet), at: feet === undefined ? null : KN.groundAt(x, z, feet), place: KN.place(x, z, KN.ground(x, z) + 1.6) } : null) // 検証用（便19）: 道案内に任意の所を聞く
     window.__town3dKamoPlug = (v) => { if (kamo) kamo.forcePlug(v) } // 検証用（便19）: 部屋の窓の所を塞ぐ壁を決め打ち（null で戻す）
     window.__town3dKamo = () => (kamo ? kamo.info() : null) // 検証用（便18）: 鴨川の町の段・時刻・空・影・部屋の箱で外した建物の数
+    window.__town3dKamoLife = () => (kamo && kamo.life ? kamo.life.info() : null) // 検証用（便20）: 鴨川の町の動く物（座る人・電車・鳥・送り火）と音の近さ
+    window.__town3dKamoTown = (X, Z, Y) => (kamo ? kamo.townOf(X, Z, Y) : null) // 検証用（便20）: 鴨川の座標を町の3Dの座標へ
+    window.__town3dKamoEv = (n) => (kamo && kamo.life ? kamo.life.trigger(n) : 'no-life') // 検証用（便20）: 鴨川の町の出来事を今すぐ起こす（hop・tobi・gulls・okuribi・eiden）
     window.__town3dBloomInfo = () => bloomPass ? { enabled: bloomPass.enabled, strength: +bloomPass.strength.toFixed(3), wanted: bloomWanted } : null // 検証用: 現情景のブルーム状態
     window.__town3dFrame = () => renderer.info.render.frame // 検証用: 実描画したフレーム総数（停止中は増えない＝停止の確認に使う）
     window.__town3dFly = (b) => setTown3dFly(!!b) // 検証用: 空へ飛び立つ/窓へもどる

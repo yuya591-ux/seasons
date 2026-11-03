@@ -110,6 +110,7 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 | 川の水面・道・橋・線路・森と公園・木の点・飛び石 | `public/kamo/roads.bin`・`public/kamo/misc.bin` | © OpenStreetMap contributors https://www.openstreetmap.org/copyright | ODbL 1.0（出典の記載） | 道は幅をつけた帯、飛び石は石の並び、森と公園は木を散らした |
 | 光の回り方（地形・建物） | `public/kamo/lm_terrain.jpg`・`public/kamo/lm_terrain_s.jpg`・`public/kamo/lm_bldg.jpg`・`public/kamo/lm_bldg_s.jpg` | 上の地形（地理院・OpenStreetMap）と建物（PLATEAU）と木（OpenStreetMap）から、Blender（https://www.blender.org/ ・pip の bpy・開発の時だけ使う道具）で焼いた自前の図 | 自前で作った図 | 灰色の JPEG（PC と iPad は 4096・iPhone は 2048） |
 | 数・刻み・窓の位置・水面の高さ | `public/kamo/kamo.json` | 上のデータ（地理院・PLATEAU・OpenStreetMap）から作った | — | 経緯度は入れていない |
+| 叡山電鉄の線路・出町柳駅・出町桝形商店街・河合神社・糺の森・五山の送り火の位置（便20） | `public/kamo/life.json` | © OpenStreetMap contributors https://www.openstreetmap.org/copyright（`scripts/kamo/life.mjs` に元の番号を書いた） | ODbL 1.0（出典の記載） | 原点からのメートルだけ（経緯度は入れていない）。五山の字の寸法と火床の数は、京都の案内の数（五山送り火の各保存会の公表の数・ウィキペディア「五山送り火」で確かめた）から自前で並べた。電車の車体・人・鳥の形は計算で作り、実在の車両の塗り分けは写していない |
 | 質感（地面の砂利） | `public/kamo/tex/gravel_road_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「gravel_road」 https://polyhaven.com/a/gravel_road | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
 | 質感（河川敷の草） | `public/kamo/tex/grass_path_2_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「grass_path_2」 https://polyhaven.com/a/grass_path_2 | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
 | 質感（道） | `public/kamo/tex/asphalt_02_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「asphalt_02」 https://polyhaven.com/a/asphalt_02 | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
@@ -120,7 +121,8 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 
 - アプリ内の出典（設定 → この作品について）の「窓の外の町（鴨川）」にも同じ出典を載せている（`src/data/credits.js` の `CREDIT_MAPS`）
 - OpenStreetMap から作った川・道・木・水面の範囲と高さのデータ（`public/kamo/roads.bin`・`public/kamo/misc.bin`・`public/kamo/terrain.bin`・`public/kamo/kamo.json`）は、元のデータと同じ ODbL 1.0 で提供する（LICENSE にも書いた）（作り方は `scripts/kamo/build.mjs`・`scripts/kamo/pack.mjs`）
-- 実在の店の名前・看板・意匠は使っていない（建物は PLATEAU の形と高さだけ）
+- 実在の店の名前・看板・意匠は使っていない（建物は PLATEAU の形と高さだけ。便20 の出町桝形商店街のアーケードも、屋根と骨と提灯の形だけで、看板と文字は置いていない）
+- 便20 の鴨川の町の場所（鴨川デルタと飛び石・糺の森・叡山電車・出町桝形商店街・大文字）は、森見登美彦さんの作品の舞台として知られる実在の場所。作品の人物・名前・作中の物は使っていない
 
 ## 共有の時の絵（og.jpg）
 

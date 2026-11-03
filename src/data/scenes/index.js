@@ -19,6 +19,7 @@ import summerMorningCornerRoom from './summer-morning-corner-room.js'
 import springDuskCornerRoom from './spring-dusk-corner-room.js'
 import springMorningCornerRoom from './spring-morning-corner-room.js'
 import winterSnowDuskCornerRoom from './winter-snow-dusk-corner-room.js'
+import summerNightCornerRoom from './summer-night-corner-room.js'
 import kitateraoWindow3d from './kitaterao-window-3d.js'
 import kitateraoWindow3dSunset from './kitaterao-window-3d-sunset.js'
 import kitateraoWindow3dRain from './kitaterao-window-3d-rain.js'
@@ -55,6 +56,7 @@ export const SCENES = [
   springDuskCornerRoom,
   springMorningCornerRoom,
   winterSnowDuskCornerRoom,
+  summerNightCornerRoom, // 便20: 夏の夜の角部屋（鴨川・送り火の夜）
   // 雨の窓（旗艦rainGlass）と、旅先の窓（海辺・山あい）
   summerRainDusk,
   summerRainMorning,

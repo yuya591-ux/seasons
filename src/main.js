@@ -172,15 +172,15 @@ function start() {
           brightness: getState().settings.brightness, // 明るさ設定を3Dにも反映
           timeStay: getState().settings.timeStay, // 「時間をとどめる」＝日の傾きのドリフトを凍結（3Dにも反映）
           reduceMotion: !!(mqReduce && mqReduce.matches), // 視差軽減: 定期イベントを止める
-          onEvent: (kind) => {
+          onEvent: (kind, o) => {
             const k2 = kind === 'fireworksFinale' ? 'fireworks' : kind // 花火大会フィナーレも花火の音
-            if (!sleepFading) audio.playEvent(k2) // 画面の現象に音を結ぶ（おやすみ中は鳴らさない）
+            if (!sleepFading) audio.playEvent(k2, o) // 画面の現象に音を結ぶ（おやすみ中は鳴らさない）。o＝鴨川の町の出来事の近さと左右（便20）
             // 無音だった「空のご褒美」（虹・オーロラ・天の川）に、やわらかな鈴をそっと添える＝静かな立ち会いの一拍。
-            if (!sleepFading && (kind === 'rainbowSolo' || kind === 'aurora' || kind === 'milkyway')) audio.chime()
-            const rare = { rainbowSolo: 'rainbow', rain: 'rainbow', fireworks: 'fireworks', fireworksFinale: 'fireworks', aurora: 'aurora', star: 'star' }[kind]
+            if (!sleepFading && (kind === 'rainbowSolo' || kind === 'aurora' || kind === 'milkyway' || kind === 'okuribi')) audio.chime() // 便20: 大文字の送り火も、遠い火なので音は無く、鈴だけ
+            const rare = { rainbowSolo: 'rainbow', rain: 'rainbow', fireworks: 'fireworks', fireworksFinale: 'fireworks', aurora: 'aurora', star: 'star', okuribi: 'okuribi' }[kind]
             if (rare && recordEvent(rare)) { // 通い帳: まれな景色に立ち会った記録。初めて立ち会った時だけ、絵日記にその日の一行を綴る（連打で埋めない）
               const dt = new Date(), md = `${dt.getMonth() + 1}月${dt.getDate()}日`
-              const line = { rainbow: '虹がでた。', fireworks: '遠くで花火があがった。', aurora: '空に光のカーテンが揺れた。', star: '流れ星がながれた。' }[rare]
+              const line = { rainbow: '虹がでた。', fireworks: '遠くで花火があがった。', aurora: '空に光のカーテンが揺れた。', star: '流れ星がながれた。', okuribi: '東の山に、大文字の送り火が灯った。' }[rare]
               if (line) addJournalEntry(`${md}、${line}`)
             }
           },

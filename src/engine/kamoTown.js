@@ -12,6 +12,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js'
 import { Water } from 'three/examples/jsm/objects/Water.js'
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { buildLife } from './kamoLife.js'
 
 // ── 時刻（便17 の試作と同じ値。京都の向き: x 東・z 南。太陽の向きは three の角度で 0＝南） ──
 const TIMES = {
@@ -47,6 +48,8 @@ export async function loadKamo(base, { low = false } = {}) {
   const loader = new THREE.TextureLoader()
   const sfx = low ? '_s' : ''
   const img = (p) => loader.loadAsync(base + p)
+  // 便20: 人や電車が動く所と名所の位置（life.json・小さい）。読めなくても町は開く（動く物と時々の出来事が無いだけ）
+  const lifeP = fetch(base + 'life.json').then((r) => (r.ok ? r.json() : null)).catch(() => null)
   const [terrain, bldg, roads, misc, lmT, lmB, ...tex] = await Promise.all([
     gunzip(base + F.terrain.file), gunzip(base + F.bldg.file), gunzip(base + F.roads.file), gunzip(base + F.misc.file),
     img(`lm_terrain${sfx}.jpg`), img(`lm_bldg${sfx}.jpg`),
@@ -54,7 +57,7 @@ export async function loadKamo(base, { low = false } = {}) {
   ])
   const texMap = {}
   meta.tex.forEach((n, i) => { texMap[n] = { d: tex[i * 2], n: tex[i * 2 + 1] } })
-  return { meta, low, buf: { terrain, bldg, roads, misc }, lm: { terrain: lmT, bldg: lmB }, tex: texMap }
+  return { meta, low, buf: { terrain, bldg, roads, misc }, lm: { terrain: lmT, bldg: lmB }, tex: texMap, life: await lifeP }
 }
 
 /**
@@ -62,7 +65,7 @@ export async function loadKamo(base, { low = false } = {}) {
  * data: loadKamo の返り値／toKamo: 町の3Dの座標 → 鴨川の座標（部屋の窓を鴨川の窓の位置と向きへ写す行列）
  * roomBox: 町の3Dの座標での部屋の箱（この中に入る建物は描かない＝部屋が建っている建物と、部屋に食い込む隣の建物）
  */
-export function buildKamo(data, { renderer, toKamo, roomBox, season = 'autumn', time = null, sky = 'clear', shadowSize = 0 }) {
+export function buildKamo(data, { renderer, toKamo, roomBox, season = 'autumn', time = null, sky = 'clear', shadowSize = 0, onSound = null, reduceMotion = false }) {
   const { meta, low } = data
   const TK = timeKey(time), SK = SKIES[sky] || SKIES.clear
   const T = { ...TIMES[TK] }
@@ -657,10 +660,25 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     info: () => (G ? { ms: G.ms, cells: GN * GN } : null),
   }
 
+  // ── 便20: 人や電車や鳥が動く所と、時々の出来事（kamoLife.js）。置く高さは間引かない網で読む（iPhone の段でも人が地面に埋まらない） ──
+  const terrFull = (X, Z) => gridAt(X, Z, (k) => terrain[k] * nQ)
+  const fN = meta.far.n, fR = meta.far.R, fS = meta.far.step, fQ = meta.far.hStep
+  const farK = (X, Z) => { const u = Math.min(fN - 1.001, Math.max(0, (X + fR) / fS)), v = Math.min(fN - 1.001, Math.max(0, (Z + fR) / fS)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * fN + i
+    return ((farH[k] * (1 - fu) + farH[k + 1] * fu) * (1 - fv) + (farH[k + fN] * (1 - fu) + farH[k + fN + 1] * fu) * fv) * fQ }
+  let life = null, lifeMs = null
+  try {
+    const tL0 = performance.now()
+    if (data.life && !/[?&]kamolife=0/.test(location.search)) life = buildLife({ scene, camera, renderer, life: data.life, terrK: terrFull, farK, wetK, zoneK, WY, stones: view(data.buf.misc, meta.files.misc.secs.stones), S, TK, sky, low, reduceMotion, onSound, keep })
+    lifeMs = Math.round(performance.now() - tL0)
+  } catch (e) { console.warn('鴨川の町の動く物を組めなかったので、動く物なしで開きます:', e && e.message); life = null }
+
   // ── 目: 部屋の目（町の3Dの camera）を鴨川の座標へ写す ──
   const tmp = new THREE.Matrix4()
   let lastFov = -1, lastAspect = -1, lastZoom = -1
+  const DEVCAM = /[?&]dev=1/.test(location.search)
   function sync(main) {
+    // 検証用（便20・?dev=1 の時だけ）: window.__kamoCam = { p:[x,y,z], l:[x,y,z], fov } で鴨川の目を決め打ちする（鴨川の座標）。空・地上で部屋が隠れている時に使う
+    if (DEVCAM && window.__kamoCam) { const c = window.__kamoCam; camera.fov = c.fov || 30; camera.aspect = main.aspect; camera.zoom = 1; camera.updateProjectionMatrix(); camera.position.set(...c.p); camera.up.set(0, 1, 0); camera.lookAt(...c.l); camera.updateMatrix(); camera.updateMatrixWorld(true); lastFov = -1; return }
     if (main.fov !== lastFov || main.aspect !== lastAspect || main.zoom !== lastZoom) {
       lastFov = camera.fov = main.fov; lastAspect = camera.aspect = main.aspect; lastZoom = camera.zoom = main.zoom; camera.updateProjectionMatrix()
     }
@@ -673,6 +691,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     tAcc += dt
     water.material.uniforms.time.value += dt * 0.35
     for (const u of windU) u.value = tAcc
+    if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null } }
   }
 
   // ── 後処理の1枚目: 鴨川の舞台を描き、この町の明るさで ACES の色の圧縮をかけて書く（部屋はこの上に重ねる） ──
@@ -735,10 +754,12 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
   })
   return {
     scene, camera, sync, update, makePass, renderDirect, removed, nav,
+    get life() { return life }, // 便20: 動く物と時々の出来事（組めなかった時は null）
+    townOf: (X, Z, Y = 0) => ({ x: TX(X, Z), y: Y - dY, z: TZ(X, Z) }), // 検証用（便20）: 鴨川の座標 → 町の3Dの座標
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, navDec, plugShown: !!(plug && plug.visible) } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {
