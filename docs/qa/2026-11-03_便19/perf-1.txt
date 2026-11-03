@@ -1,0 +1,2 @@
+pc {"window":{"ms":5.2,"tris":1296023,"calls":159,"low":false},"fly":{"ms":5.08,"tris":1316858,"calls":154,"low":false},"walk":{"ms":4.41,"tris":1353985,"calls":173,"low":false},"walkTown":{"ms":4.21,"tris":1316431,"calls":160,"low":false},"navMs":110}
+iphone {"window":{"ms":5.21,"tris":527539,"calls":106,"low":true},"fly":{"ms":3.99,"tris":563221,"calls":113,"low":true},"walk":{"ms":3.8,"tris":574827,"calls":124,"low":true},"walkTown":{"ms":3.98,"tris":530299,"calls":105,"low":true},"navMs":114}

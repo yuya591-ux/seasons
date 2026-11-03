@@ -17,6 +17,9 @@
 //   K13 iPhone の縦で開くと正面の窓（東＝鴨川）が正面（見回しの横 0）。PC は今のまま -0.6、?kamo=0 の iPhone は -1.12（便19・便18 #1=1）
 //   K14 乗り出して見下ろした画の真っ黒（RGB の最大 3 以下）の画素が 0.5% 未満（建物の焼けていない面の黒・前は 3.4%）（便19）
 //   K15 水面の凹凸の図で、上位 20 本の波に入る力が 40% 以下（前は 18 本だけ＝100%・格子の干渉）（便19）
+//   K16 窓から空へ出てすぐ地上へ降りると、開けた所（8方位の抜けの平均 15m 以上・水と建物でない）に降りる（便19）
+//   K17 空から部屋の建物を見ると、部屋の窓の所が外壁で塞がる（塞ぐ壁を止めた画と 0.2% 以上の画素が違う）（便19）
+//   K18 北寺尾の時代の島と同じ所を鴨川の町で飛んでも、霞の帯・色の膜・雲の白い包み・虹の層が出ず、居場所が鴨川の名（便19）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
 import { chromium } from 'playwright'
 const PORT = process.env.PORT || 4961, BASE = `http://localhost:${PORT}/seasons/`
@@ -174,6 +177,38 @@ if (run('K15')) {
   const o = await open('summer-morning-corner-room')
   const k = await kamoInfo(o.p)
   check('K15', !!k && k !== 'no-hook' && k.waveTop20 !== null && k.waveTop20 <= 40, `水面の凹凸の図の上位 20 本の波の力 ${k && k.waveTop20}%（40% 以下で合格・前は 100%）`)
+  await o.ctx.close()
+}
+if (run('K16')) { // 窓から空へ出てすぐ地上へ降りる（今の真下に降りる）
+  const o = await open('autumn-dusk-corner-room')
+  await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
+  await o.p.evaluate(() => window.__town3dLand(true)); await o.p.waitForTimeout(2500)
+  const r = await o.p.evaluate(() => { const n = window.__town3dNav(), A = window.__town3dNavAt; let sum = 0; for (let a = 0; a < 8; a++) { const yaw = a / 8 * 6.2832, hx = Math.sin(yaw), hz = -Math.cos(yaw); let d = 1.0; for (; d < 24; d += 1.6) { const q = A(n.x + hx * d, n.z + hz * d); if (q.blocked || q.wet) break } sum += d } const q = A(n.x, n.z); return { mode: n.mode, avg: sum / 8, wet: q.wet, blocked: q.blocked, x: n.x, z: n.z } })
+  check('K16', r.mode === 'walk' && r.avg >= 15 && !r.wet && !r.blocked, `降りた所 (${r.x}, ${r.z})・8方位の抜けの平均 ${r.avg.toFixed(1)}m（15m 以上で合格・前は窓の真下の路地 6.8〜11m）・水 ${r.wet}・建物 ${r.blocked}`)
+  await o.ctx.close()
+}
+if (run('K17')) { // 部屋の窓の真正面・同じ高さから、空から部屋の建物を見る。塞ぐ壁を止めた画と比べて、窓の所が変わる（塞がる）
+  const o = await open('summer-morning-corner-room', { dev: { viewport: { width: 1280, height: 720 } } })
+  await o.p.evaluate(() => { window.__town3dFly(true) }); await o.p.waitForTimeout(2600)
+  await o.p.evaluate(() => { window.__town3dZoom(0.4); window.__town3dFlyPose(-0.1, 30.6, 2, Math.PI, 0) }); await o.p.waitForTimeout(1500)
+  const a = await o.p.screenshot()
+  await o.p.evaluate(() => window.__town3dKamoPlug(false)); await o.p.waitForTimeout(600)
+  const bb = await o.p.screenshot()
+  await o.p.evaluate(() => window.__town3dKamoPlug(null))
+  const pct = await o.p.evaluate(async ([x1, x2]) => { const load = async (b64) => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0); return x.getImageData(0, 0, c.width, c.height).data }; const d1 = await load(x1), d2 = await load(x2); let k = 0; for (let i = 0; i < d1.length; i += 4) if (Math.abs(d1[i] - d2[i]) + Math.abs(d1[i + 1] - d2[i + 1]) + Math.abs(d1[i + 2] - d2[i + 2]) > 48) k++; return k / (d1.length / 4) * 100 }, [a.toString('base64'), bb.toString('base64')])
+  check('K17', pct >= 0.2, `塞ぐ壁を止めた画との差 ${pct.toFixed(2)}% の画素（0.2% 以上で合格＝窓の所に壁が描かれている）`)
+  await o.ctx.close()
+}
+if (run('K18')) { // 北寺尾の時代の島（江戸・大正・戦国）と同じ所を鴨川の町で飛ぶ
+  const o = await open('autumn-dusk-corner-room')
+  await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
+  const res = []
+  for (const [nm, x, z] of [['江戸', 640, -46], ['大正', -640, -30], ['戦国', 140, -640]]) {
+    await o.p.evaluate(([px, pz]) => window.__town3dFlyPose(px, 60, pz, 0, 0), [x, z]); await o.p.waitForTimeout(3000)
+    res.push(await o.p.evaluate((nm2) => { const op = (c) => { const e = document.querySelector('.' + c); return e ? +(+getComputedStyle(e).opacity).toFixed(3) : 0 }; return { nm: nm2, veil: op('town3d-veil'), era: op('town3d-era'), haze: op('town3d-cloudhaze'), rainbow: op('town3d-rainbow'), pill: (document.querySelector('.modepill') || {}).textContent || '', place: window.__town3dNav().place } }, nm))
+  }
+  const bad = res.filter((r) => Math.max(r.veil, r.era, r.haze, r.rainbow) > 0.01 || /城下町|港町|雲海|海の上/.test(r.place + r.pill))
+  check('K18', bad.length === 0, res.map((r) => `${r.nm}の所: 層 ${Math.max(r.veil, r.era, r.haze, r.rainbow)}・居場所 ${r.place}`).join('／') + '（層 0.01 以下・居場所が鴨川の名で合格）')
   await o.ctx.close()
 }
 await b.close()

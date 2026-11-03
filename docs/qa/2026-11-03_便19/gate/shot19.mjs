@@ -48,6 +48,7 @@ for (const s of steps.split(',').filter(Boolean)) {
   else if (k === 'walk') { await p.evaluate((v) => window.__town3dWalkPose(+v[0], +v[1], +v[2], v[3] === undefined ? undefined : +v[3]), a); await p.waitForTimeout(1500) }
   else if (k === 'cruise') await p.evaluate(() => window.__town3dCruise(true))
   else if (k === 'zoom') await p.evaluate((v) => window.__town3dZoom(+v), a[0])
+  else if (k === 'plug') { await p.evaluate((v) => window.__town3dKamoPlug(v === '0' ? false : v === '1' ? true : null), a[0]); await p.waitForTimeout(500) }
   else if (k === 'wait') await p.waitForTimeout(+a[0] || 1000)
   else if (k === 'poke') poke = true
 }

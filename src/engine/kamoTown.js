@@ -367,7 +367,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   //   部屋のあるマンションの外壁（窓の下と横・屋上）を足し、その中に入る PLATEAU の建物は描かない（重なる面のちらつきも出さない）
   const fromKamo = toKamo.clone().invert()
   const removed = []
-  let plug = null // 便19: 部屋の窓の所を塞ぐ壁（部屋が隠れている間だけ出す）
+  let plug = null, plugForce = null // 便19: 部屋の窓の所を塞ぐ壁（部屋が隠れている間だけ出す）・検証で決め打ちする値
   // 部屋の原点（町の3Dの座標）と、部屋の箱の部屋の座標（窓の中心が原点・正面 -z・左 -x）での広がり
   const roomO = new THREE.Vector3().setFromMatrixPosition(fromKamo.clone().multiply(new THREE.Matrix4().makeTranslation(meta.view.x - 0.6, meta.view.y - 1.5, meta.view.z)))
   const rb = { x0: roomBox.min.x - roomO.x, x1: roomBox.max.x - roomO.x, y0: roomBox.min.y - roomO.y, y1: roomBox.max.y - roomO.y, z0: roomBox.min.z - roomO.z, z1: roomBox.max.z - roomO.z }
@@ -722,7 +722,8 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
   return {
     scene, camera, sync, update, makePass, renderDirect, removed, nav,
     setBright(b) { state.bright = b || 1 },
-    setRoomShown(b) { if (plug) plug.visible = !b }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
+    setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
+    forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
     info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20 } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
