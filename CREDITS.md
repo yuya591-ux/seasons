@@ -120,7 +120,7 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 | 質感（木の皮（ケヤキ）） | `public/kamo/tex/japanese_zelkova_bark_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「japanese_zelkova_bark」 https://polyhaven.com/a/japanese_zelkova_bark | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
 
 - アプリ内の出典（設定 → この作品について）の「窓の外の町（鴨川）」にも同じ出典を載せている（`src/data/credits.js` の `CREDIT_MAPS`）
-- OpenStreetMap から作った川・道・木・水面の範囲と高さのデータ（`public/kamo/roads.bin`・`public/kamo/misc.bin`・`public/kamo/terrain.bin`・`public/kamo/kamo.json`）は、元のデータと同じ ODbL 1.0 で提供する（LICENSE にも書いた）（作り方は `scripts/kamo/build.mjs`・`scripts/kamo/pack.mjs`）
+- OpenStreetMap から作った川・道・木・水面の範囲と高さのデータ（`public/kamo/roads.bin`・`public/kamo/misc.bin`・`public/kamo/terrain.bin`・`public/kamo/kamo.json`・便20 の `public/kamo/life.json`）は、元のデータと同じ ODbL 1.0 で提供する（LICENSE にも書いた）（作り方は `scripts/kamo/build.mjs`・`scripts/kamo/pack.mjs`）
 - 実在の店の名前・看板・意匠は使っていない（建物は PLATEAU の形と高さだけ。便20 の出町桝形商店街のアーケードも、屋根と骨と提灯の形だけで、看板と文字は置いていない）
 - 便20 の鴨川の町の場所（鴨川デルタと飛び石・糺の森・叡山電車・出町桝形商店街・大文字）は、森見登美彦さんの作品の舞台として知られる実在の場所。作品の人物・名前・作中の物は使っていない
 

@@ -691,7 +691,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     tAcc += dt
     water.material.uniforms.time.value += dt * 0.35
     for (const u of windU) u.value = tAcc
-    if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null } }
+    if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null; scene.traverse((o) => { if (o.userData && /^(people|birds|train|okuribi)$/.test(o.userData.part)) o.visible = false }) } } // 【便20・外の目】止めた時は、動く物をその場で固まらせずに隠す
   }
 
   // ── 後処理の1枚目: 鴨川の舞台を描き、この町の明るさで ACES の色の圧縮をかけて書く（部屋はこの上に重ねる） ──

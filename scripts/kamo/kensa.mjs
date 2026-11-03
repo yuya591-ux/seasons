@@ -26,7 +26,8 @@
 //   K21 夏の夜でない角部屋（秋の夕）には送り火を組まない（便20）
 //   K22 飛ぶ・歩く時の音の近さ: 水の上の低い所で川の瀬音、出町桝形商店街でまちの気配、出町柳駅で駅の音が満ち、高い空では川の音が消える（便20）
 //   K23 鴨川の出来事の音（トビの声・叡山電車）を鳴らしてもエラーが無く、出来事を起こすと鳴らした数が増える（便20）
-//   K24 視差軽減（動きを減らす設定）では、送り火も時々の出来事も起きない（座る人と電車はいつもの景色として居る）（便20）
+//   ~~K24 視差軽減（動きを減らす設定）では、送り火も時々の出来事も起きない（座る人と電車はいつもの景色として居る）（便20）~~（【便20・外の目】下の形に替えた）
+//   K24 視差軽減（動きを減らす設定）では、時々の出来事の帯（飛び石を渡る人・トビの声・ユリカモメ）の時計が進まず、出来事が起きない。送り火（ゆっくり点く遠い火）は灯るまでの待ちが進む（便20）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
 import { chromium } from 'playwright'
@@ -227,7 +228,7 @@ if (run('K19')) {
   const l = await life(o.p), k = await kamoInfo(o.p)
   const o2 = await open('spring-dusk-corner-room', { q: 'kamolife=0' }), l2 = await life(o2.p), k2 = await kamoInfo(o2.p)
   const chains = l && l.chains ? l.chains.filter((n) => n >= 5).length : 0
-  check('K19', !!l && l !== 'no-hook' && l.sitters >= 20 && chains >= 2 && !!l.train && l.kites === 2 && l.herons >= 1 && l2 === null && !o.errs.length && !o2.errs.length, `座る人 ${l && l.sitters}・飛び石の列 ${l && JSON.stringify(l.chains)}・電車 ${l && l.train ? l.train.mode : '無し'}・トビ ${l && l.kites}・アオサギ ${l && l.herons}・組むまで ${k && k.lifeMs}ms・描く呼び出し ${k && k.calls}（kamolife=0 は ${k2 && k2.calls}・動く物 ${JSON.stringify(l2)}）・エラー ${o.errs.length + o2.errs.length}`)
+  check('K19', !!l && l !== 'no-hook' && l.sitters >= 20 && chains >= 2 && !!l.train && l.kites === 2 && l.herons >= 1 && !!k2 && k2 !== 'no-hook' && l2 === null && (k.lifeMs || 0) <= 200 && !o.errs.length && !o2.errs.length, `座る人 ${l && l.sitters}・飛び石の列 ${l && JSON.stringify(l.chains)}・電車 ${l && l.train ? l.train.mode : '無し'}・トビ ${l && l.kites}・アオサギ ${l && l.herons}・組むまで ${k && k.lifeMs}ms・描く呼び出し ${k && k.calls}（kamolife=0 は ${k2 && k2.calls}・動く物 ${JSON.stringify(l2)}）・エラー ${o.errs.length + o2.errs.length}`)
   await o.ctx.close(); await o2.ctx.close()
 }
 if (run('K20') || run('K21')) {
@@ -247,27 +248,37 @@ if (run('K20') || run('K21')) {
 if (run('K22')) {
   const o = await open('summer-night-corner-room')
   await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
-  const at = async (X, Y, Z) => { await o.p.evaluate(([X, Y, Z]) => { const e = window.__town3dKamoTown(X, Z, Y); window.__town3dFlyPose(e.x, e.y, e.z, 0, 0) }, [X, Y, Z]); await o.p.waitForTimeout(2500); return (await life(o.p)).amb }
+  const at = async (X, Y, Z) => { try { return await at0(X, Y, Z) } catch (e) { return { river: -1, crowd: -1, sta: -1, sent: null, err: e.message } } } // 【便20・外の目】口が無い時も「×」の行を残す
+  const at0 = async (X, Y, Z) => { await o.p.evaluate(([X, Y, Z]) => { const e = window.__town3dKamoTown(X, Z, Y); window.__town3dFlyPose(e.x, e.y, e.z, 0, 0) }, [X, Y, Z]); await o.p.waitForTimeout(2500); const a = (await life(o.p)).amb, s = await o.p.evaluate(() => window.__town3dAmb()); return { ...a, sent: s } }
   const L = await o.p.evaluate(() => fetch('kamo/life.json').then((r) => r.json()))
   const water = await at(-60, -2, 40), masu = await at(L.masugata[4], 1.5, L.masugata[5]), sta = await at(L.eiden.sta.x, 2, L.eiden.sta.z), high = await at(-60, 160, 40)
-  check('K22', water.river >= 0.3 && masu.crowd >= 0.3 && sta.sta >= 0.3 && high.river < 0.05, `水の上 川 ${water.river}・商店街 気配 ${masu.crowd}・駅 駅 ${sta.sta}（それぞれ 0.3 以上）・高い空 川 ${high.river}（0.05 未満）`)
+  // 音の部品へ流した値（海・川・人だまり・祭り・駅…）も同じ所で見る（動く物の側で測れていても、町の3Dが流していなければ鳴らない）
+  const sentOk = water.sent && water.sent[1] >= 0.3 && masu.sent && masu.sent[2] >= 0.3 && sta.sent && sta.sent[4] >= 0.3 && high.sent && high.sent[1] < 0.05
+  check('K22', water.river >= 0.3 && masu.crowd >= 0.3 && sta.sta >= 0.3 && high.river < 0.05 && sentOk, `水の上 川 ${water.river}（流した ${water.sent && water.sent[1]}）・商店街 気配 ${masu.crowd}（${masu.sent && masu.sent[2]}）・駅 駅 ${sta.sta}（${sta.sent && sta.sent[4]}）（それぞれ 0.3 以上）・高い空 川 ${high.river}（${high.sent && high.sent[1]}・0.05 未満）`)
   await o.ctx.close()
 }
 if (run('K23')) {
   const o = await open('spring-dusk-corner-room')
-  const before = (await life(o.p)).sounds || 0
+  const before = (await life(o.p)).sounds || 0, sent0 = await o.p.evaluate(() => (window.__town3dKamoSounds ? window.__town3dKamoSounds().tobi || 0 : -1))
   const r = await o.p.evaluate(() => { const out = []; try { window.__audio.playEvent('tobi', { amt: 1, pan: 0.4 }); window.__audio.playEvent('eiden', { amt: 1, pan: -0.3, dep: true }); window.__audio.playEvent('eiden', { amt: 0.2 }); out.push('ok') } catch (e) { out.push('ERR ' + e.message) } out.push(window.__town3dKamoEv('tobi')); return out })
   await o.p.waitForTimeout(1500)
-  const after = (await life(o.p)).sounds || 0
-  check('K23', r[0] === 'ok' && r[1] === 'ok' && after > before && !o.errs.length, `音を鳴らす ${r[0]}・トビを起こす ${r[1]}・鳴らした数 ${before} → ${after}・エラー ${o.errs.length}`)
+  const after = (await life(o.p)).sounds || 0, sent1 = await o.p.evaluate(() => (window.__town3dKamoSounds ? window.__town3dKamoSounds().tobi || 0 : -1))
+  // 【便20・外の目】動く物の側で数えた数だけでなく、町の3Dが音の部品の口（onEvent）へ流した数も見る
+  check('K23', r[0] === 'ok' && r[1] === 'ok' && after > before && sent0 >= 0 && sent1 > sent0 && !o.errs.length, `音を鳴らす ${r[0]}・トビを起こす ${r[1]}・鳴らした数 ${before} → ${after}・音の部品へ流した数 ${sent0} → ${sent1}・エラー ${o.errs.length}`)
   await o.ctx.close()
 }
 if (run('K24')) {
-  const o = await open('summer-night-corner-room', { dev: { viewport: { width: 1280, height: 720 }, reducedMotion: 'reduce' } })
+  // 【便20・外の目】夏の夜は帯の出来事がもともと起きない（昼の物・冬の物）ので、帯の時計が進まないことを春の夕で見る。送り火の待ちが進むことは夏の夜で見る
+  const o = await open('spring-dusk-corner-room', { dev: { viewport: { width: 1280, height: 720 }, reducedMotion: 'reduce' } })
+  const n1 = await o.p.evaluate(() => { const x = window.__town3dKamoLife(); return x ? x.bandNext : null })
   await o.p.waitForFunction(() => { const s = window.__town3dStats && window.__town3dStats(); return s && s.frames > 600 }, null, { timeout: 120000 }).catch(() => {})
   const l = await life(o.p)
-  check('K24', !!l && l !== 'no-hook' && l.okuribi && l.okuribi.t < 0 && Object.keys(l.ev).filter((k2) => k2 !== 'eiden').length === 0 && l.sitters > 0, `動きを減らす: 送り火 t ${l && l.okuribi && l.okuribi.t}（-1 のまま）・待ち ${l && l.okuribi && l.okuribi.wait}・起きた出来事 ${l && JSON.stringify(l.ev)}・座る人 ${l && l.sitters}`)
-  await o.ctx.close()
+  const o2 = await open('summer-night-corner-room', { dev: { viewport: { width: 1280, height: 720 }, reducedMotion: 'reduce' } })
+  const w1 = await o2.p.evaluate(() => { const x = window.__town3dKamoLife(); return x && x.okuribi ? x.okuribi.wait : null }); await o2.p.waitForTimeout(4000)
+  const w2 = await o2.p.evaluate(() => { const x = window.__town3dKamoLife(); return x && x.okuribi ? x.okuribi.wait : null })
+  const same = !!n1 && !!l && l !== 'no-hook' && JSON.stringify(l.bandNext) === JSON.stringify(n1)
+  check('K24', same && Object.keys(l.ev).filter((k2) => k2 !== 'eiden').length === 0 && l.sitters > 0 && w1 !== null && w2 < w1, `動きを減らす: 帯の時計 ${JSON.stringify(n1)} → ${l && JSON.stringify(l.bandNext)}（進まない）・起きた出来事 ${l && JSON.stringify(l.ev)}・座る人 ${l && l.sitters}・夏の夜の送り火の待ち ${w1} → ${w2}（進む）`)
+  await o.ctx.close(); await o2.ctx.close()
 }
 if (run('K25')) {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' }), p = await ctx.newPage(), errs = []

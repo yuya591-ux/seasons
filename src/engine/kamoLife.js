@@ -21,7 +21,6 @@ export function buildLife(ctx) {
   let rs = 20261104
   const rnd = () => { rs |= 0; rs = (rs + 0x6d2b79f5) | 0; let t = Math.imul(rs ^ (rs >>> 15), 1 | rs); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 }
   const pick = (a) => a[Math.floor(rnd() * a.length)]
-  const parts = {} // 描く三角形の内訳（info 用）
   const add = (o, part) => { o.userData.part = part; scene.add(o); return o }
   const info = { sitters: 0, herons: 0, kites: 0, ev: {}, last: null }
   const CLOTH = [0xe8e4da, 0x2c3446, 0xb8a888, 0x6a6e74, 0x5a6448, 0x8a3a34, 0x1e1e22, 0x9aa8b8, 0xc89a5a, 0x46586a]
@@ -52,7 +51,8 @@ export function buildLife(ctx) {
     const want = Math.round((low ? 36 : 72) * ({ spring: 0.9, summer: 1, autumn: 0.75, winter: 0.25 }[S] || 0.7) * ({ dusk: 1, night: 0.7, noon: 0.5, morning: 0.2 }[TK] || 0.5) * (sky === 'cloudy' ? 0.7 : 1))
     if (want > 0) {
       const tS0 = performance.now()
-      for (let Z = -260; Z <= 520; Z += 3) for (let X = -260; X <= 260; X += 3) {
+      const STEP = low ? 4.5 : 3 // 【便20・外の目】軽い段（iPhone）は候補探しの刻みを粗くする（開く時に主の糸を止めない）
+      for (let Z = -260; Z <= 520; Z += STEP) for (let X = -260; X <= 260; X += STEP) {
         if (zoneK(X, Z) !== 1 || wetK(X, Z) > 0.05) continue
         const h = terrK(X, Z); if (h - WY < 0.35 || h - WY > 3.2) continue
         if (Math.abs(terrK(X + 2, Z) - h) > 0.35 || Math.abs(terrK(X, Z + 2) - h) > 0.35) continue // 平らな所だけ（護岸の斜面に座らせない）
@@ -150,20 +150,22 @@ export function buildLife(ctx) {
     info.kites = kites.length
   }
   const gulls = [] // ユリカモメの群れ（冬の出来事）
+  const bE = new THREE.Euler(0, 0, 0, 'YXZ'), wE = new THREE.Euler(), wq = new THREE.Quaternion(), qq = new THREE.Quaternion(), bS = new THREE.Vector3() // 【便20・外の目】毎こまの割り当てを使い回す
   function drawBirds(t) {
     let n = 0
     for (const b of birds) {
       if (b.hidden || n >= MAXB) continue
-      q.setFromEuler(new THREE.Euler(0, b.yaw, b.bank, 'YXZ'))
-      m4.compose(v3.set(b.x, b.y, b.z), q, new THREE.Vector3(b.sc, b.sc, b.sc)); bBody.setMatrixAt(n, m4); bBody.setColorAt(n, col.setHex(b.color))
+      q.setFromEuler(bE.set(0, b.yaw, b.bank, 'YXZ'))
+      m4.compose(v3.set(b.x, b.y, b.z), q, bS.set(b.sc, b.sc, b.sc)); bBody.setMatrixAt(n, m4); bBody.setColorAt(n, col.setHex(b.color))
       const fl = b.flap * Math.sin(t * (b.kind === 'gull' ? 15 : 7) + b.ph) * 0.75 + (b.kind === 'tobi' ? 0.08 : 0.15) // 翼の上げ下げ（トビは浅い上反角で滑る）
       for (const s of [1, -1]) {
-        const wq = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, s * fl)), qq = q.clone().multiply(wq)
-        m4.compose(v3.set(b.x, b.y, b.z), qq, new THREE.Vector3(s * b.sc, b.sc, b.sc)); bWing.setMatrixAt(n * 2 + (s > 0 ? 0 : 1), m4); bWing.setColorAt(n * 2 + (s > 0 ? 0 : 1), col.setHex(b.wing || b.color))
+        wq.setFromEuler(wE.set(0, 0, s * fl)); qq.copy(q).multiply(wq)
+        m4.compose(v3.set(b.x, b.y, b.z), qq, bS.set(s * b.sc, b.sc, b.sc)); bWing.setMatrixAt(n * 2 + (s > 0 ? 0 : 1), m4); bWing.setColorAt(n * 2 + (s > 0 ? 0 : 1), col.setHex(b.wing || b.color))
       }
       n++
     }
     bBody.count = n; bWing.count = n * 2
+    bBody.visible = bWing.visible = n > 0; if (!n) return // 居ない時は描かない（夜は鳥が居ない）
     bBody.instanceMatrix.needsUpdate = bWing.instanceMatrix.needsUpdate = true
     if (bBody.instanceColor) bBody.instanceColor.needsUpdate = true
     if (bWing.instanceColor) bWing.instanceColor.needsUpdate = true
@@ -215,6 +217,7 @@ export function buildLife(ctx) {
     }
     for (let i = walkers.length - 1; i >= 0; i--) if (walkers[i].done) walkers.splice(i, 1)
     wBody.count = wHead.count = n
+    wBody.visible = wHead.visible = n > 0; if (!n) return
     wBody.instanceMatrix.needsUpdate = wHead.instanceMatrix.needsUpdate = true
     if (wBody.instanceColor) wBody.instanceColor.needsUpdate = true
     if (wHead.instanceColor) wHead.instanceColor.needsUpdate = true
@@ -223,11 +226,13 @@ export function buildLife(ctx) {
   // ── 叡山電車（2両・出町柳駅に着いて、しばらく停まって、また出る）。線路は OpenStreetMap の叡山電鉄の2本 ──
   // 車体は特定の車両の塗り分けにせず、アイボリーに深緑の帯（どの車両の写しでもない色）
   let train = null
-  if (life && life.eiden && life.eiden.a && life.eiden.a.length > 8) {
+  const CAR0 = 15.6, LONG = 6 + 2 * CAR0 + 0.7 + 4 // 【便20・外の目】2両が駅の所で重ならず、線路の上に全部載る長さ
+  const trackOk = (arr) => { if (!Array.isArray(arr) || arr.length < 4) return false; let L = 0; for (let i = 2; i < arr.length; i += 2) L += Math.hypot(arr[i] - arr[i - 2], arr[i + 1] - arr[i - 1]); return L > LONG + 40 }
+  if (life && life.eiden && trackOk(life.eiden.a)) {
     const mk = (arr) => { const p = []; for (let i = 0; i < arr.length; i += 2) p.push([arr[i], arr[i + 1]]); const s = [0]; for (let i = 1; i < p.length; i++) s.push(s[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1])); return { p, s, L: s[s.length - 1] } }
-    const tracks = [mk(life.eiden.a), mk(life.eiden.b || life.eiden.a)]
+    const tracks = [mk(life.eiden.a), mk(trackOk(life.eiden.b) ? life.eiden.b : life.eiden.a)] // b が短い・無い時は a で代える
     const at = (tr, s) => { s = Math.max(0, Math.min(tr.L, s)); let i = 1; while (i < tr.s.length - 1 && tr.s[i] < s) i++; const u = (s - tr.s[i - 1]) / Math.max(1e-6, tr.s[i] - tr.s[i - 1]), a = tr.p[i - 1], b = tr.p[i]; return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u] }
-    const CAR = 15.6, GAP = 0.7
+    const CAR = CAR0, GAP = 0.7
     const carGeo = (() => {
       const pc = (g, hex) => { const c = new THREE.Color(hex), n = g.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); g.setAttribute('color', new THREE.BufferAttribute(a, 3)); return g }
       const gs = [
@@ -256,7 +261,7 @@ export function buildLife(ctx) {
   const tY = (x, z) => terrK(x, z) + 0.22
   function placeTrain() {
     const T = train, tr = T.tracks[T.tr]
-    const show = T.mode !== 'away' && T.s0 < tr.L - 2
+    const show = T.mode !== 'away' && T.s0 <= tr.L - (2 * T.CAR + T.GAP) // 【便20・外の目】2両とも線路の上にある時だけ（端で2両目が潰れて立たない）
     T.cars.visible = T.wins.visible = T.lamps.visible = show
     if (!show) return
     for (let k = 0; k < 2; k++) {
@@ -277,7 +282,7 @@ export function buildLife(ctx) {
     const tr = T.tracks[T.tr], VMAX = 11, DEC = 0.55, ACC = 0.6
     if (T.mode === 'away') {
       T.wait -= dt
-      if (T.wait <= 0) { T.tr = rnd() < 0.5 ? 0 : 1; T.mode = 'arrive'; T.s0 = T.tracks[T.tr].L; T.v = VMAX; T.sound = false; info.ev.eiden = (info.ev.eiden || 0) + 1; info.last = 'eiden' }
+      if (T.wait <= 0) { T.tr = rnd() < 0.5 ? 0 : 1; T.mode = 'arrive'; T.s0 = T.tracks[T.tr].L - (2 * T.CAR + T.GAP); T.v = VMAX; T.sound = false; info.ev.eiden = (info.ev.eiden || 0) + 1; info.last = 'eiden' }
     } else if (T.mode === 'arrive') {
       const left = T.s0 - T.STOP
       const vWant = Math.min(VMAX, Math.sqrt(Math.max(0, 2 * DEC * left)) + 0.15)
@@ -289,7 +294,7 @@ export function buildLife(ctx) {
       if (T.wait <= 0) { T.mode = 'depart'; T.v = 0; sound('eiden', T.at(tr, T.s0), { dep: true }) }
     } else if (T.mode === 'depart') {
       T.v = Math.min(VMAX, T.v + ACC * dt); T.s0 += T.v * dt
-      if (T.s0 >= tr.L - 1) { T.mode = 'away'; T.wait = 150 + rnd() * 110 }
+      if (T.s0 >= tr.L - (2 * T.CAR + T.GAP)) { T.mode = 'away'; T.wait = 150 + rnd() * 110 }
     }
     placeTrain()
   }
@@ -319,13 +324,14 @@ export function buildLife(ctx) {
     const ri = new THREE.InstancedMesh(ribG, ribM, ribs.length)
     ribs.forEach(([x, y, z, yaw], k) => { q.setFromAxisAngle(up, yaw + Math.PI / 2); m4.compose(v3.set(x, y, z), q, one); ri.setMatrixAt(k, m4) })
     add(ri, 'arcade')
-    const lg = keep(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 8)), lm = keep(new THREE.MeshStandardMaterial({ roughness: 0.7, emissive: 0xffffff, emissiveIntensity: NIGHT ? 1.4 : DUSK ? 0.8 : 0.1 }))
+    // 【便20・外の目】前は emissive が白で、夜は赤と白の提灯がどちらも白く光った＝夕と夜は灯った色（インスタンスの色×明るさ）で描く
+    const lg = keep(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 8)), lm = keep(NIGHT || DUSK ? new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(NIGHT ? 1.6 : 1.1) }) : new THREE.MeshStandardMaterial({ roughness: 0.7 }))
     const li = new THREE.InstancedMesh(lg, lm, lant.length)
     lant.forEach(([x, y, z], k) => { m4.compose(v3.set(x, y, z), q.identity(), one); li.setMatrixAt(k, m4); const red = k % 4 < 2; li.setColorAt(k, col.setHex(red ? 0xc8382c : 0xf0e8d8)) })
     add(li, 'arcade')
   }
 
-  // ── 五山の送り火（夏の夜・時々の大当たり）。本物と同じ順に、大文字 → 妙法 → 船形 → 左大文字 → 鳥居形 と一つずつ灯り、点いた順に消えていく ──
+  // ── 五山の送り火（夏の夜。開いて 22〜36 秒で1回目・その後は 10〜16 分おき）。本物と同じ順に、大文字 → 妙法 → 船形 → 左大文字 → 鳥居形 と一つずつ灯り、点いた順に消えていく ──
   // 本物は 20時から5分おき・それぞれ30分ほど。眺める長さに合わせて、5分を 25 秒に縮め、燃える長さを約2分半にした。
   // 位置は OpenStreetMap の五山の点（life.json の gozan）。字の寸法と火床の数は京都の案内の数（大文字 一画 80m・二画 160m・三画 120m・75 床／妙 100m 弱・103 床／
   // 法 80m 弱・63 床／船形 縦 130m・横 200m・79 床／左大文字 一画 48m・二画 68m・三画 59m・53 床／鳥居形 縦 76m・横 72m・108 床）。
@@ -396,7 +402,8 @@ void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float fl = 0.78 +
   function stepOkuribi(dt, t) {
     const O = okuribi; if (!O) return
     for (const m of O.mats) { m.uniforms.uT.value = t; m.uniforms.uScale.value = ((renderer && renderer.domElement.height) || 800) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov || 60) / 2)) * (camera.zoom || 1) }
-    if (O.t < 0) { if (!reduceMotion) { O.wait -= dt; if (O.wait <= 0) startOkuribi() } return }
+    // ~~視差軽減では点かない~~（【便20・外の目】ゆっくり点く遠い火で大きな動きは無く、この情景の見どころなので、視差軽減でも灯す。止めるのは帯の突発だけ）
+    if (O.t < 0) { O.wait -= dt; if (O.wait <= 0) startOkuribi(); return }
     O.t += dt
     const T = O.t
     O.beds.forEach((b, i) => { // 点く（7秒で燃え上がる）→ 燃える（約2分半）→ 点いた順に、火床ごとに少しずつずれて消えていく
@@ -498,7 +505,7 @@ void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float fl = 0.78 +
       return {
         ...info, chains: chains.map((c) => c.length), train: train ? { mode: train.mode, s0: +Math.min(train.s0, 9999).toFixed(1), v: +train.v.toFixed(2), track: train.tr, wait: +train.wait.toFixed(1), shown: train.cars.visible } : null,
         okuribi: okuribi ? { orderBy: okuribi.names.map((_, gi) => { const o = okuribi.beds.filter((b) => b.g === gi).map((b) => b.order); return [+Math.min(...o).toFixed(1), +Math.max(...o).toFixed(1), o.length] }), names: okuribi.names, lastOn: +okuribi.lastOn.toFixed(1), dur: +okuribi.dur.toFixed(0), litBy: okuribi.names.map((_, gi) => +okuribi.beds.reduce((a, b, i) => a + (b.g === gi ? okuribi.lit[i] : 0), 0).toFixed(1)), t: +okuribi.t.toFixed(1), wait: +okuribi.wait.toFixed(1), lit: +(okuribi.lit.reduce((a, b) => a + b, 0)).toFixed(1), beds: okuribi.beds.length, y: [Math.round(Math.min(...okuribi.beds.map((b) => b.y))), Math.round(Math.max(...okuribi.beds.map((b) => b.y)))] } : null,
-        walkers: walkers.length, gulls: gulls.length, amb: { river: +amb.river.toFixed(2), crowd: +amb.crowd.toFixed(2), sta: +amb.sta.toFixed(2), staPan: +amb.staPan.toFixed(2) }, parts,
+        walkers: walkers.length, gulls: gulls.length, amb: { river: +amb.river.toFixed(2), crowd: +amb.crowd.toFixed(2), sta: +amb.sta.toFixed(2), staPan: +amb.staPan.toFixed(2) }, bandNext: bands.map((b) => +b.next.toFixed(2)),
       }
     },
   }

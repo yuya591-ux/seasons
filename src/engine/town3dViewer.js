@@ -385,7 +385,10 @@ export async function mountTown3d(parent, opts = {}) {
   const onBirdFlush = typeof opts.onBirdFlush === 'function' ? opts.onBirdFlush : () => {} // 鳥が驚いて飛び立つ（羽音）
   const onAltitude = typeof opts.onAltitude === 'function' ? opts.onAltitude : () => {} // 飛行高度(0..1)を外へ伝える（高空で環境音をしぼる）
   const onSeaBird = typeof opts.onSeaBird === 'function' ? opts.onSeaBird : () => {} // 海の上で時々かもめが鳴く（海らしさ＋渡りの退屈しのぎ）
-  const onAmbience = typeof opts.onAmbience === 'function' ? opts.onAmbience : () => {} // 場所に応じた水の音(海=波/川=せせらぎ)の近さ(0..1)を外へ伝える
+  const onAmbience0 = typeof opts.onAmbience === 'function' ? opts.onAmbience : () => {} // 場所に応じた水の音(海=波/川=せせらぎ)の近さ(0..1)を外へ伝える
+  let lastAmb = null // 検証用（便20）: 最後に音の部品へ流した近さ
+  const kamoSoundN = {} // 検証用（便20）: 鴨川の町の出来事の音を音の部品へ流した数
+  const onAmbience = (...a) => { lastAmb = a; onAmbience0(...a) }
   const onPurr = typeof opts.onPurr === 'function' ? opts.onPurr : () => {} // 窓辺の猫を撫でるとゴロゴロ鳴る（0..1）
   const onMeow = typeof opts.onMeow === 'function' ? opts.onMeow : () => {} // 窓辺の猫がタップ反応で鳴く（pitch, kind）
   const onFlockWing = typeof opts.onFlockWing === 'function' ? opts.onFlockWing : () => {} // 渡りの群れに近づいて飛ぶと羽音
@@ -8111,7 +8114,7 @@ export async function mountTown3d(parent, opts = {}) {
             .multiply(new THREE.Matrix4().makeRotationY(-B)) // 部屋の正面（-z）→ 鴨川の窓の向き（北から東回り B 度）
             .multiply(new THREE.Matrix4().makeTranslation(-o.x, -o.y, -o.z))
           const roomBox = new THREE.Box3(new THREE.Vector3(-SX - 0.4, FY - 0.3, -0.4), new THREE.Vector3(SX + 0.4, CY + 0.5, BZ + 1.0)).translate(o) // 部屋の箱（この中に入る建物は描かない）
-          kamo = got.m.buildKamo(got.d, { renderer, toKamo, roomBox, season, time: opts.time, sky: opts.sky, shadowSize: KAMO_LOW ? 0 : Math.max(SHADOW_SIZE || 0, 4096), reduceMotion, onSound: (k, o) => { if (k === 'okuribi' && winCat) winCat.noticeT = 0.8; onEvent(k, o) } }) // 便20: 鴨川の町の出来事の音（トビ・叡山電車）と、まれな景色の記録（送り火）
+          kamo = got.m.buildKamo(got.d, { renderer, toKamo, roomBox, season, time: opts.time, sky: opts.sky, shadowSize: KAMO_LOW ? 0 : Math.max(SHADOW_SIZE || 0, 4096), reduceMotion, onSound: (k, o) => { if (k === 'okuribi' && winCat) winCat.noticeT = 0.8; onEvent(k, o); kamoSoundN[k] = (kamoSoundN[k] || 0) + 1 } }) // 便20: 鴨川の町の出来事の音（トビ・叡山電車）と、まれな景色の記録（送り火）
           if (composer) {
             if (!/[?&]kamopass=0/.test(location.search)) composer.insertPass(kamo.makePass(camera), 0) // 1枚目＝鴨川の舞台（ACES の色の圧縮まで済ませて書く）。kamopass=0 は測る用（1枚目を抜く）
             const rp = composer.passes.find((p) => p.scene === scene)
@@ -10896,6 +10899,8 @@ export async function mountTown3d(parent, opts = {}) {
     window.__town3dKamoPlug = (v) => { if (kamo) kamo.forcePlug(v) } // 検証用（便19）: 部屋の窓の所を塞ぐ壁を決め打ち（null で戻す）
     window.__town3dKamo = () => (kamo ? kamo.info() : null) // 検証用（便18）: 鴨川の町の段・時刻・空・影・部屋の箱で外した建物の数
     window.__town3dKamoLife = () => (kamo && kamo.life ? kamo.life.info() : null) // 検証用（便20）: 鴨川の町の動く物（座る人・電車・鳥・送り火）と音の近さ
+    window.__town3dKamoSounds = () => ({ ...kamoSoundN }) // 検証用（便20）: 鴨川の町の出来事の音を流した数
+    window.__town3dAmb = () => (lastAmb ? lastAmb.map((v) => +(+v || 0).toFixed(2)) : null) // 検証用（便20）: 最後に音の部品へ流した近さ（海・川・人だまり・祭り・駅・祭りの左右・駅の左右）
     window.__town3dKamoTown = (X, Z, Y) => (kamo ? kamo.townOf(X, Z, Y) : null) // 検証用（便20）: 鴨川の座標を町の3Dの座標へ
     window.__town3dKamoEv = (n) => (kamo && kamo.life ? kamo.life.trigger(n) : 'no-life') // 検証用（便20）: 鴨川の町の出来事を今すぐ起こす（hop・tobi・gulls・okuribi・eiden）
     window.__town3dBloomInfo = () => bloomPass ? { enabled: bloomPass.enabled, strength: +bloomPass.strength.toFixed(3), wanted: bloomWanted } : null // 検証用: 現情景のブルーム状態
