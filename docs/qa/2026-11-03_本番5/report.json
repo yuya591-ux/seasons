@@ -18,7 +18,8 @@
   "申し送り K1・K2: 済にした。K1 の CLAUDE.md の差分は a14da9a で既にコミットされていたので、申し送りが書く別のコミットは作らない",
   "裁定記録: 起動文の push の運用の行（本人回答の原文つき）を最初に足し、本番5 の確定事実・決めた事・便の数を足した",
   "記録の置き場: 前の本番と同じく docs/qa/2026-11-03_本番5/ に置いた",
-  "気づき台帳: 動かさない（K6 は便15 の会話で直したにしてある。K7 は便16〜の鴨川の町で受ける）"
+  "気づき台帳: 動かさない（K6 は便15 の会話で直したにしてある。K7 は便16〜の鴨川の町で受ける）",
+  "報告の頭の自動コンパクトの行: 本番5 の前半の会話（12:17・点検の台本を直した会話）で走った物を雛形が記録から拾った。この仕上げの会話（12:53〜）ではコンパクトは走っていない"
  ],
  "checks": [
   {
@@ -40,13 +41,34 @@
  "humanOps": [],
  "outOfScope": [],
  "evidence": [
-  { "path": "docs/qa/2026-11-03_本番5/本番の出し方.log", "what": "本番の出し方の手順1〜10の記録（控え・push・一度目の失敗と点検の台本の直し・二度目の Actions・照らし・全情景・撮影・戻し方）" },
-  { "path": "docs/qa/2026-11-03_本番5/actions-run-a14da9a.json・actions-jobs-a14da9a.json", "what": "GitHub Actions の結果（run 41574792887・build と deploy が success）" },
-  { "path": "docs/qa/2026-11-03_本番5/build-a14da9a.txt", "what": "照らしの元にした手元のビルド（a14da9a・終了コード 0）" },
-  { "path": "docs/qa/2026-11-03_本番5/live-check.txt・live-smoke.txt", "what": "公開と手元の SHA-256 の照らし・消した素材 35/35 の 404・公開のページで33情景を開いた結果" },
-  { "path": "docs/qa/2026-11-03_本番5/live-shot.txt", "what": "公開のページを本物の GPU で撮った2枚の数" },
-  { "path": "scripts/_honban5-live.mjs", "what": "公開のページの照らしと撮影の台本" },
-  { "path": "docs/qa/裁定記録.md", "what": "push の運用の裁定・本番5 の確定事実・決めた事・便の数" }
+  {
+   "path": "docs/qa/2026-11-03_本番5/本番の出し方.log",
+   "what": "本番の出し方の手順1〜10の記録（控え・push・一度目の失敗と点検の台本の直し・二度目の Actions・照らし・全情景・撮影・戻し方）"
+  },
+  {
+   "path": "docs/qa/2026-11-03_本番5/actions-run-a14da9a.json・actions-jobs-a14da9a.json",
+   "what": "GitHub Actions の結果（run 41574792887・build と deploy が success）"
+  },
+  {
+   "path": "docs/qa/2026-11-03_本番5/build-a14da9a.txt",
+   "what": "照らしの元にした手元のビルド（a14da9a・終了コード 0）"
+  },
+  {
+   "path": "docs/qa/2026-11-03_本番5/live-check.txt・live-smoke.txt",
+   "what": "公開と手元の SHA-256 の照らし・消した素材 35/35 の 404・公開のページで33情景を開いた結果"
+  },
+  {
+   "path": "docs/qa/2026-11-03_本番5/live-shot.txt",
+   "what": "公開のページを本物の GPU で撮った2枚の数"
+  },
+  {
+   "path": "scripts/_honban5-live.mjs",
+   "what": "公開のページの照らしと撮影の台本"
+  },
+  {
+   "path": "docs/qa/裁定記録.md",
+   "what": "push の運用の裁定・本番5 の確定事実・決めた事・便の数"
+  }
  ],
  "appendix": [
   {
@@ -57,8 +79,15 @@
    ]
   }
  ],
- "genzaichi": { "flow": "診断＋本番", "at": "次" },
- "kazu": { "aibo": 0, "yuya": 0, "tomatta": 0 },
+ "genzaichi": {
+  "flow": "診断＋本番",
+  "at": "次"
+ },
+ "kazu": {
+  "aibo": 0,
+  "yuya": 0,
+  "tomatta": 0
+ },
  "nextSession": {
   "dir": "C:\\Users\\yuya.satake\\ClaudeCode\\seasons",
   "line": "/bin",
