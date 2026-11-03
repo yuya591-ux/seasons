@@ -19,7 +19,8 @@ const M = [
   { name: 'M11 時代の粒子と霞の帯を鴨川でも出す', file: V, a: '    if (flyAmt > 0.02 && !kamo) { // 便19: 鴨川の町では時代の粒子', b: '    if (flyAmt > 0.02) { // 便19: 鴨川の町では時代の粒子', test: 'K18' },
 ]
 const out = []
-for (const m of M) {
+const only = process.argv.slice(2) // 名前の頭（例 M10 M11）を渡すと、その外し方だけを回す（記録は mutate19-<名前>.json）
+for (const m of M.filter((x) => !only.length || only.some((o) => x.name.startsWith(o + ' ')))) {
   const src = fs.readFileSync(m.file, 'utf8'), n = src.split(m.a).length - 1
   if (n !== 1) { out.push({ name: m.name, caught: false, failed: [`外す所が ${n} か所（外せなかった）`] }); console.log(`× ${m.name}: 外す所が ${n} か所`); continue }
   fs.writeFileSync(m.file, src.replace(m.a, () => m.b))
@@ -33,6 +34,6 @@ for (const m of M) {
   console.log(`${failed.length ? '落ちた' : '落ちない'} ${m.name}: ${(failed[0] || lines[0] || '').slice(0, 200)}`)
 }
 const bd = spawnSync('npm', ['run', 'build'], { shell: true, encoding: 'utf8' }) // 戻した形でビルドし直す
-fs.writeFileSync('docs/qa/2026-11-03_便19/gate/mutate19.json', JSON.stringify(out, null, 1))
+fs.writeFileSync(only.length ? `docs/qa/2026-11-03_便19/gate/mutate19-${only.join('-')}.json` : 'docs/qa/2026-11-03_便19/gate/mutate19.json', JSON.stringify(out, null, 1))
 const diff = spawnSync('git', ['diff', '--stat'], { encoding: 'utf8' }).stdout.trim()
 console.log(`外し回し ${out.length} 通り・落ちた ${out.filter((o) => o.caught).length}・戻した後の差 ${diff ? diff : '0 行'}・戻した形のビルド ${bd.status === 0 ? '通った' : '落ちた'}`)
