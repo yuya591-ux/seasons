@@ -1,5 +1,5 @@
-// 便17（鴨川の質の見本）: 取ってきた地図のデータ（_bin17-fetch.mjs）を、原点（鴨川デルタ）からのメートルだけの形に組む。
-// 出る物（scripts/_bin17-data/geo/ ・git に入れない）:
+// 便17（鴨川の質の見本）: 取ってきた地図のデータ（scripts/kamo/fetch.mjs）を、原点（鴨川デルタ）からのメートルだけの形に組む。
+// 出る物（scripts/kamo/_data/geo/ ・git に入れない）:
 //   near.bin  … 近くの地形の網（±NEAR_R m・NEAR_STEP m 間隔・5m の標高。無い所は 10m の標高）
 //   far.bin   … 遠くの山の網（±FAR_R m・FAR_STEP m 間隔・10m の標高）
 //   bldg.bin  … PLATEAU の建物（LOD2）を1つにまとめた三角形（建物ごとの番号つき）
@@ -8,12 +8,12 @@
 //   trees.bin … 木（OpenStreetMap の森・公園・川岸に並べた位置と大きさ）
 //   geo.json  … それぞれの数・長さ・目の位置の候補・地面の高さの基準（★経緯度は書かない）
 // 座標: x＝東へ（m）・y＝上へ（m・基準の高さ H0 から）・z＝南へ（m）。three.js の向きのまま使える。
-// 使い方: node scripts/_bin17-build.mjs
+// 使い方: node scripts/kamo/build.mjs
 import fs from 'node:fs'
 import zlib from 'node:zlib'
 import { ShapeUtils, Vector2 } from 'three'
 
-const D = 'scripts/_bin17-data', OUT = D + '/geo'
+const D = process.env.KAMO_DATA || 'scripts/kamo/_data', OUT = D + '/geo'
 fs.mkdirSync(OUT, { recursive: true })
 const LAT0 = 35.0300, LON0 = 135.7725
 const phi = (LAT0 * Math.PI) / 180

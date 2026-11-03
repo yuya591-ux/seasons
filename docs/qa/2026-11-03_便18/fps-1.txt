@@ -1,0 +1,12 @@
+fps-pc-kamo pc autumn-dusk-corner-room 組むまで 9742ms fps 88 {"kamo":{"calls":23,"tris":2832417,"removed":0,"low":false,"time":"dusk","sky":"cloudy","shadow":true,"exposure":0.41600000000000004},"pr":1,"q":"standard"} エラー無し
+
+fps-pc-old pc autumn-dusk-corner-room 組むまで 8636ms fps 245 {"kamo":null,"pr":1,"q":"standard"} エラー無し
+
+fps-ipad-kamo ipad autumn-dusk-corner-room 組むまで 9825ms fps 92 {"kamo":{"calls":23,"tris":2832417,"removed":0,"low":false,"time":"dusk","sky":"cloudy","shadow":true,"exposure":0.41600000000000004},"pr":1.575,"q":"standard"} エラー無し
+
+fps-ipad-old ipad autumn-dusk-corner-room 組むまで 8726ms fps 245 {"kamo":null,"pr":1.575,"q":"standard"} エラー無し
+
+fps-iphone-kamo iphone autumn-dusk-corner-room 組むまで 9628ms fps 94 {"kamo":{"calls":23,"tris":2419809,"removed":0,"low":true,"time":"dusk","sky":"cloudy","shadow":false,"exposure":0.41600000000000004},"pr":1.6,"q":"standard"} エラー無し
+
+fps-iphone-old iphone autumn-dusk-corner-room 組むまで 8256ms fps 224 {"kamo":null,"pr":1.6,"q":"standard"} エラー無し
+

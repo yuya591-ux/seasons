@@ -99,6 +99,29 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 - 生成ツール: `scripts/gen-bg.mjs`（Flux固定・無料・トークン任意）。プロンプト定義は `scripts/bg-jobs.json`。各情景も `bgPrompt` を携帯し、季節×天気×時間帯ごとに量産しやすい形。
 - dev用ライブラリ `sharp`／`playwright` は本番ビルド(Vite)に不要なため、本番の依存（dependencies）には含めない。
 
+## 鴨川の町（角部屋の窓の外）の地図のデータ・質感の素材 — `public/kamo/`
+
+便18 で角部屋の窓の外に組んだ。作る道具は `scripts/kamo/`（取る `fetch.mjs` → 組む `build.mjs` → 焼く `bake.py` → 詰める `pack.mjs`）。配る形はどれも原点（出町柳の合流）からのメートルだけで、経緯度は持たせていない（国土地理院「申請不要となる範囲の拡大について」の「経緯度等の位置座標のない成果品」に当たる・裁定記録 2026-11-03 の測量法の確かめ）。
+
+| 何に | ファイル | 出典 | 決まり | 加工 |
+| --- | --- | --- | --- | --- |
+| 地形と山（近く ±800m・遠く ±11km） | `public/kamo/terrain.bin` | 国土地理院 地理院タイル 標高タイル（基盤地図情報数値標高モデル）DEM5A・DEM10B https://maps.gsi.go.jp/development/ichiran.html | 国土地理院コンテンツ利用規約 https://www.gsi.go.jp/kikakuchousei/kikakuchousei40182.html （出典の記載・加工した旨の記載） | 「地理院タイル（標高タイル）を加工して作成」。4m・50m 間隔の網の高さにし、川の水面の内側を下げ、16 ビットの整数に詰めた |
+| 建物の形と高さ（4,967 棟） | `public/kamo/bldg.bin` | 国土交通省 Project PLATEAU 京都市 建築物モデル LOD2（2025年度・上京区・左京区） https://www.mlit.go.jp/plateau/ | PLATEAU のサイトポリシー（CC BY 4.0 と互換・出典の記載） | 段の重なりを除き、地面の高さに合わせ、2.5cm 刻みの整数に詰めた。部屋のある建物の所は外して、部屋のあるマンションの外壁を足した（便18） |
+| 川の水面・道・橋・線路・森と公園・木の点・飛び石 | `public/kamo/roads.bin`・`public/kamo/misc.bin` | © OpenStreetMap contributors https://www.openstreetmap.org/copyright | ODbL 1.0（出典の記載） | 道は幅をつけた帯、飛び石は石の並び、森と公園は木を散らした |
+| 光の回り方（地形・建物） | `public/kamo/lm_terrain.jpg`・`public/kamo/lm_terrain_s.jpg`・`public/kamo/lm_bldg.jpg`・`public/kamo/lm_bldg_s.jpg` | 上の地形と建物と木から、Blender（https://www.blender.org/ ・pip の bpy・開発の時だけ使う道具）で焼いた自前の図 | 自前で作った図 | 灰色の JPEG（PC と iPad は 4096・iPhone は 2048） |
+| 数・刻み・窓の位置 | `public/kamo/kamo.json` | 上のデータから作った | — | 経緯度は入れていない |
+| 質感（地面の砂利） | `public/kamo/tex/gravel_road_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「gravel_road」 https://polyhaven.com/a/gravel_road | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
+| 質感（河川敷の草） | `public/kamo/tex/grass_path_2_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「grass_path_2」 https://polyhaven.com/a/grass_path_2 | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
+| 質感（道） | `public/kamo/tex/asphalt_02_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「asphalt_02」 https://polyhaven.com/a/asphalt_02 | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
+| 質感（瓦屋根） | `public/kamo/tex/grey_roof_tiles_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「grey_roof_tiles」 https://polyhaven.com/a/grey_roof_tiles | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
+| 質感（コンクリートの壁と屋上・飛び石） | `public/kamo/tex/concrete_wall_004_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「concrete_wall_004」 https://polyhaven.com/a/concrete_wall_004 | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
+| 質感（しっくいの壁） | `public/kamo/tex/grey_plaster_02_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「grey_plaster_02」 https://polyhaven.com/a/grey_plaster_02 | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
+| 質感（木の皮（ケヤキ）） | `public/kamo/tex/japanese_zelkova_bark_d.jpg`・`_n.jpg`（iPhone 向けは `_s` 付き） | Poly Haven「japanese_zelkova_bark」 https://polyhaven.com/a/japanese_zelkova_bark | CC0 https://polyhaven.com/license | 色の図と凹凸の図（1024）をそのまま。iPhone 向けは縦横を半分にした |
+
+- アプリ内の出典（設定 → この作品について）の「窓の外の町（鴨川）」にも同じ出典を載せている（`src/data/credits.js` の `CREDIT_MAPS`）
+- OpenStreetMap から作った川・道・木のデータ（`public/kamo/roads.bin`・`public/kamo/misc.bin`）は、元のデータと同じ ODbL 1.0 で提供する（作り方は `scripts/kamo/build.mjs`・`scripts/kamo/pack.mjs`）
+- 実在の店の名前・看板・意匠は使っていない（建物は PLATEAU の形と高さだけ）
+
 ## 共有の時の絵（og.jpg）
 
 - `public/og.jpg` は、前の「実写の窓、夕暮れの町」の生成画像（Pollinations.AI / Flux＋Real-ESRGAN 超解像・上の表と同じ生成の扱い）から作った物。情景は撤去したが、共有の時の絵として今も配っている（作品名が前の「窓辺」のまま。作り直しは後の便）。Real-ESRGAN（https://github.com/xinntao/Real-ESRGAN ・BSD-3-Clause）は開発時の道具で、配る物には入れていない。
@@ -113,5 +136,6 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 
 ## フォント
 
-- 情景の描画は基本シェーダー計算と three.js の立体。写真は上の雨の窓の外の景色だけで使う。
+- 情景の描画は基本シェーダー計算と three.js の立体。~~写真は上の雨の窓の外の景色だけで使う。~~（【便18】下の行に改めた）
+- 写真は、上の雨の窓の外の景色と、鴨川の町の質感の素材（Poly Haven・CC0）で使う。
 - フォントは OS 標準（system-ui 等）のみ。同梱しない。

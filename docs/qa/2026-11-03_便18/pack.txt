@@ -1,0 +1,8 @@
+terrain.bin: 0.87MB → gzip 0.48MB
+bldg.bin: 4.12MB → gzip 1.51MB
+roads.bin: 0.73MB → gzip 0.59MB
+misc.bin: 0.09MB → gzip 0.07MB
+lm_terrain.jpg: 1.34MB・lm_terrain_s.jpg: 0.57MB
+lm_bldg.jpg: 3.07MB・lm_bldg_s.jpg: 1.38MB
+質感の素材 7 種: PC と iPad 11.34MB・iPhone 1.12MB
+public/kamo（素材を除く）: 9.03MB

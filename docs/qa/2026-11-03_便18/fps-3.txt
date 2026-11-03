@@ -1,0 +1,6 @@
+kamo pc: fps 14
+kamo ipad: fps 14
+kamo iphone: fps 15
+old pc: fps 13
+old ipad: fps 13
+old iphone: fps 14

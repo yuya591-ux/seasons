@@ -3,10 +3,11 @@
 //   2. アプリ内の出典に、どの情景も鳴らさない音が無い（S3 使っていない油蝉・カラス）
 //   3. アプリ内の出典の各行の出典URLが、CREDITS.md のそのファイルの行の出典URLと同じ（S2 差し替え前のウグイス）
 //   4. 情景で使う背景の画像（bg）が CREDITS.md にあり、CREDITS.md に載る public/ のファイルが実在する
+//   5.（便18）鴨川の町の public/kamo/ の全ファイルが CREDITS.md にあり（質感の写真は素材の名前で）、アプリ内の出典（CREDIT_MAPS）の出典URLが CREDITS.md にある
 // 使い方: node scripts/qa-credits.mjs   （npm run smoke の頭でも回る）。1つでも外れたら exit 1
 import fs from 'node:fs'
 import { SCENES } from '../src/data/scenes/index.js'
-import { CREDIT_SOUNDS } from '../src/data/credits.js'
+import { CREDIT_SOUNDS, CREDIT_MAPS } from '../src/data/credits.js'
 
 const md = fs.readFileSync(new URL('../CREDITS.md', import.meta.url), 'utf8')
 const bad = []
@@ -40,9 +41,19 @@ for (const m of md.matchAll(/`public\/((?:bg|audio)\/[^`]+\.(?:jpg|png|mp3))`/g)
 }
 for (const [k] of mdRows) if (!fs.existsSync(new URL('../public/audio/' + k, import.meta.url))) bad.push(`CREDITS.md に載るのに無い音: public/audio/${k}`)
 
+// 5. 鴨川の町（便18）
+let kamoN = 0
+const kamoDir = new URL('../public/kamo/', import.meta.url)
+if (fs.existsSync(kamoDir)) {
+  for (const e of fs.readdirSync(kamoDir, { withFileTypes: true })) {
+    if (e.isFile()) { kamoN++; if (!md.includes('`public/kamo/' + e.name + '`')) bad.push(`CREDITS.md に無い鴨川の町のファイル: public/kamo/${e.name}`) }
+    else if (e.name === 'tex') for (const t of fs.readdirSync(new URL('tex/', kamoDir))) { kamoN++; const name = t.replace(/_(d|n)(_s)?.jpg$/, ''); if (!md.includes('https://polyhaven.com/a/' + name)) bad.push(`CREDITS.md に出典の無い質感の写真: public/kamo/tex/${t}`) }
+  }
+  for (const c of CREDIT_MAPS) if (!md.includes(c.url)) bad.push(`アプリ内の出典の URL が CREDITS.md に無い: ${c.url}`)
+}
 if (bad.length) {
   console.error(`出典の照らし: 外れ ${bad.length} 件`)
   for (const b of bad) console.error('  ' + b)
   process.exit(1)
 }
-console.log(`出典の照らし OK: 鳴らす音 ${used.size}・アプリ内の出典 ${credited.size}・CREDITS.md の音の行 ${mdRows.size}・背景の画像 ${usedBg.size}`)
+console.log(`出典の照らし OK: 鳴らす音 ${used.size}・アプリ内の出典 ${credited.size}・CREDITS.md の音の行 ${mdRows.size}・背景の画像 ${usedBg.size}・鴨川の町のファイル ${kamoN}`)

@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import zlib from 'node:zlib'
 import { chromium } from 'playwright'
-const D = 'scripts/_bin17-data', geo = JSON.parse(fs.readFileSync(`${D}/geo/geo.json`, 'utf8'))
+const D = 'scripts/kamo/_data', geo = JSON.parse(fs.readFileSync(`${D}/geo/geo.json`, 'utf8'))
 const gz = (b) => zlib.gzipSync(b, { level: 9 }).length
 const MB = (n) => (n / 1e6).toFixed(2) + 'MB'
 const rows = []

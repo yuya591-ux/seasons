@@ -33,6 +33,7 @@
 - **描画（窓辺シーン）**: 生 WebGL のフルスクリーン・シェーダー（GLSL ES 1.00）。後処理に FXAA（輪郭の平滑化）。
   雨粒の屈折・水面・雲影・霧・粒子等を、画像を使わず計算で出す。
 - **描画（立体の街・谷戸）**: **Three.js**（トゥーン／水彩調のセル表現＋静的影＋大気遠近）。窓辺・上空・地上の3視点で眺める。
+- **角部屋の窓の外（鴨川の町・便18）**: 京都の鴨川デルタ（出町柳）を地図のデータで組んだ町（`src/engine/kamoTown.js`）。形は国土地理院の標高（5m・10m）・PLATEAU 京都市 LOD2・OpenStreetMap を原点からのメートルに加工した物（経緯度は持たせない＝測量法の申請不要の条件）。光は Blender で焼いた空の光の回り方、地面・壁・屋根・木の皮は写真から作った CC0 の質感の素材。色の出し方は空と同じ ACES（水彩の層は掛けない）。部屋はこの上に重ねて描く。読めない端末では前の角部屋（北寺尾の町）のまま開く。iPhone と「軽やか」は軽い段（光の図 2048・素材の写真は縦横半分・影なし・映り込み 512・地形の網と木を間引く）。データの作り直しは `scripts/kamo/`（`fetch.mjs` 取る → `build.mjs` 組む → `bake.py` 焼く〈pip の bpy〉→ `pack.mjs` 詰めて `public/kamo/` へ）
 - **窓の外の格上げ**: 雨の窓のシーンは窓の外に**生成画像**を重ねる。**画像は開発時に一度だけ生成して `public/bg/` に保存し、本番は保存画像を表示するだけ**（実行時に外部 API は叩かない）。出典は `CREDITS.md` と**アプリ内「設定 → この作品について」**に記録。
 - **音**: Web Audio API。素材はライセンスが明確なフリー素材（CC0 / パブリックドメイン優先）のみ。出典は `CREDITS.md` に全数記録。
 - **ビルド**: Vite ／ **ホスティング**: GitHub Pages（`main` への push で自動デプロイ）。
@@ -66,6 +67,9 @@ public/                     manifest / icons / sw.js（オフライン）/ audio
 src/main.js                 結線（情景データ＋レンダラ＋音＋UI＋おやすみ＋PWA登録）
 src/engine/renderer.js      窓辺シーンの WebGL レンダラ（情景ごとのシェーダー・自動品質・FXAA）
 src/engine/town3dViewer.js  立体の街・谷戸・角部屋の Three.js ビューア（窓辺／飛行／歩行の3視点）
+src/engine/kamoTown.js      角部屋の窓の外の鴨川の町（地図のデータ＋焼いた光＋CC0 の質感の素材。角部屋を開いた時だけ読み込む）
+public/kamo/                鴨川の町のデータ（scripts/kamo/pack.mjs が詰めた物・経緯度なし）・焼いた光の図・質感の素材の写真
+scripts/kamo/               鴨川の町の作る道具（取る・組む・焼く・詰める・撮る。取ってきた生のデータは scripts/kamo/_data/＝git に入れない）
 src/engine/heightFog.js     低く溜まる霧（高さで濃さが変わる霧の層）
 src/engine/treeCrown.js     木の樹冠（樹種の形と色の振れ・葉の模様）
 src/engine/surfacePattern.js 屋根・壁・地面・通りの質感の模様（位置から描く）

@@ -1,16 +1,16 @@
-// 便17（鴨川の質の見本）: 地図のデータを取ってくる。置き場は scripts/_bin17-data/（git に入れない・.git/info/exclude）。
+// 便17（鴨川の質の見本）: 地図のデータを取ってくる。置き場は scripts/kamo/_data/（git に入れない・.gitignore）。
 // 取る物（どれも登録なし・無料）:
 //   1. 国土地理院の標高タイル（dem5a_png＝5m の細かさ・z15 を出町柳のまわり／dem_png＝10m の細かさ・z13 を遠くの山まで）
 //      出典: 国土地理院 地理院タイル（標高タイル（基盤地図情報数値標高モデル））https://maps.gsi.go.jp/development/ichiran.html
 //   2. PLATEAU 京都市 建築物モデル LOD2（模様なし・2025年度・3D Tiles）の、範囲に掛かるタイルだけ（左京区・上京区・北区）
 //      出典: 国土交通省 Project PLATEAU（https://www.mlit.go.jp/plateau/）・データ目録 https://api.plateau.reearth.io/datacatalog/plateau-datasets
 //   3. OpenStreetMap（川の水面・道・線路・橋・森）を Overpass API で範囲だけ。© OpenStreetMap contributors（ODbL）
-// 使い方: node scripts/_bin17-fetch.mjs
-// ★経緯度はこの台本と作る台本（_bin17-build.mjs）の中だけに置く。アプリへ渡す形は原点からのメートルだけ（測量法の申請不要の条件・裁定記録）。
+// 使い方: node scripts/kamo/fetch.mjs
+// ★経緯度はこの台本と作る台本（scripts/kamo/build.mjs）の中だけに置く。アプリへ渡す形は原点からのメートルだけ（測量法の申請不要の条件・裁定記録）。
 import fs from 'node:fs'
 import path from 'node:path'
 
-const OUT = 'scripts/_bin17-data'
+const OUT = process.env.KAMO_DATA || 'scripts/kamo/_data'
 const LAT0 = 35.0300, LON0 = 135.7725 // 鴨川デルタ（賀茂川と高野川の合流）の南の先のあたり
 const NEAR = 900 // 5m の標高と建物と OSM を取る半径の目安（m）
 const FAR = 11000 // 遠くの山（比叡山・大文字山・北山・東山）まで

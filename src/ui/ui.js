@@ -2,7 +2,7 @@
 // 文言は静かで上質に。システム用語は出さない。
 
 import { SCENES, pickNowScene } from '../data/scenes/index.js'
-import { CREDIT_INTRO, CREDIT_SOUNDS, CREDIT_IMAGES, CREDIT_TOOLS, CREDIT_OUTRO } from '../data/credits.js'
+import { CREDIT_INTRO, CREDIT_SOUNDS, CREDIT_IMAGES, CREDIT_MAPS, CREDIT_TOOLS, CREDIT_OUTRO } from '../data/credits.js'
 
 const h = (tag, cls, text) => {
   const el = document.createElement(tag)
@@ -437,6 +437,7 @@ export function buildUI(opts) {
     }
     section('環境音', CREDIT_SOUNDS)
     section('窓の外の絵', CREDIT_IMAGES)
+    section('窓の外の町（鴨川）', CREDIT_MAPS)
     section('描画・道具', CREDIT_TOOLS)
     bodyEl.appendChild(h('p', 'credits__outro', CREDIT_OUTRO))
 

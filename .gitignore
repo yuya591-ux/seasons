@@ -18,3 +18,6 @@ scripts/_eval-ux
 scripts/_eval-tech
 # 検収スクショは容量が大きいのでローカル保管（計画・ログのmd/jsonのみ追跡）
 docs/qa/**/*.png
+
+# 鴨川の町の作る道具が取ってくる地図のデータ・焼いた図・素材の写真（大きい・取り直せる。公開へ出すのは scripts/kamo/pack.mjs が詰めた public/kamo/ だけ）
+scripts/kamo/_data/

@@ -365,6 +365,18 @@ export async function mountTown3d(parent, opts = {}) {
   const MORNING = opts.time === 'morning' // 情景の時間帯が朝（便15 V29: 朝は窓の灯りを消す。空の明るさだけでは朝の淡い空が夕と同じに読まれた）
   const kind = opts.kind || 'town'        // 'town'（坂の街）| 'yato'（谷戸＝棚田と茅葺の屋敷）
   const bound = kind === 'yato' ? FLY.yatoBound : FLY.bound // 飛べる箱は情景ごと（谷戸は谷筋に沿う狭め）
+  // 便18（便17 #3・#4・#5=1）: 角部屋の窓の外を鴨川の町（kamoTown.js・地図のデータ＋焼いた光＋CC0 の質感の素材）にする。
+  //   データは町を組んでいる間に裏で取る。読めなかった時は前の角部屋（北寺尾の町）のまま開く。?kamo=0 で前の角部屋に戻せる（比べる用）
+  //   iPhone（小さい画面で指で触る端末）と「軽やか」は軽い段（光の図 2048・素材の写真は縦横半分・影なし・映り込み 512）。?kamoq=low|high で決め打ちできる（測る用）
+  const KAMO_WANT = kind === 'corner' && !/[?&]kamo=0(&|$)/.test(location.search)
+  const KAMO_LOW = /[?&]kamoq=low/.test(location.search) || (!/[?&]kamoq=high/.test(location.search) && (LIGHT || (Math.min(screen.width, screen.height) < 600 && !!(window.matchMedia && matchMedia('(pointer: coarse)').matches))))
+  const kamoP = KAMO_WANT
+    ? import('./kamoTown.js').then((m) => m.loadKamo(import.meta.env.BASE_URL + 'kamo/', { low: KAMO_LOW }).then((d) => ({ m, d })))
+      .catch((e) => { console.warn('鴨川の町を読めなかったので、前の角部屋で開きます:', e && e.message); return null })
+    : null
+  let kamo = null // 鴨川の町（読めて組めた時だけ）
+  let kamoLastT = -1 // 鴨川の水面と木の揺れを進める前の時刻（秒）
+  const kamoRoomExp = { value: 1 } // 鴨川の町の時の部屋の色の圧縮の明るさ（前と同じ Neutral を部屋の材の中でかける）
   const onEvent = typeof opts.onEvent === 'function' ? opts.onEvent : () => {} // 定期イベント発火を外へ伝える（音の結線）
   const onSpeed = typeof opts.onSpeed === 'function' ? opts.onSpeed : () => {} // 飛行速度(0..1)を外へ伝える（風音の膨らみ）
   const onFoot = typeof opts.onFoot === 'function' ? opts.onFoot : () => {} // 歩行で一歩ごとに伝える（足音）
@@ -7361,6 +7373,7 @@ export async function mountTown3d(parent, opts = {}) {
     })
     const pts = new THREE.Points(geo, mat)
     pts.frustumCulled = false
+    pts.userData.kamoKeep = true // 鴨川の町でも描く（窓の外に舞う雪・花びら・落ち葉）
     scene.add(pts)
     // 落ち葉・花びらは大きく舞う（横揺れを強く）。雪はまっすぐ静かに落ちる。
     weatherPts = { pts, pos, spd, phs, N, swirl: weather === 'snow' ? 0.9 : weather === 'petals' ? 2.6 : 3.0 }
@@ -7468,9 +7481,10 @@ export async function mountTown3d(parent, opts = {}) {
   const GRADE_UNIFORMS = () => ({
     gOn: { value: 1 }, gGlow: { value: sRGBc(sunCol) }, gShade: { value: sRGBc(gradeShade) }, gWashA: { value: gradeWashA }, gPaperA: { value: 0.18 * PAPER_IN },
     gSat: { value: 0.88 }, gSepia: { value: 0.05 }, gBright: { value: 1.04 }, gContrast: { value: 0.985 }, gPx: { value: 1 },
+    gAtm: { value: 1 }, // 周辺の翳りと空のにじみの強さ（便18: 鴨川の町は水彩の層を掛けないので 0）
   })
   const GRADE_PARS = `
-    uniform float gOn, gWashA, gPaperA, gSat, gSepia, gBright, gContrast, gPx;
+    uniform float gOn, gWashA, gPaperA, gSat, gSepia, gBright, gContrast, gPx, gAtm;
     uniform vec3 gGlow, gShade;
     float gH(vec2 p) { p = fract(p * vec2(234.34, 435.345)); p += dot(p, p + 34.23); return fract(p.x * p.y); }
     float gN(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(gH(i), gH(i + vec2(1.0, 0.0)), f.x), mix(gH(i + vec2(0.0, 1.0)), gH(i + vec2(1.0, 1.0)), f.x), f.y); }
@@ -7482,9 +7496,9 @@ export async function mountTown3d(parent, opts = {}) {
       vec2 uv = vec2(vUv.x, 1.0 - vUv.y); // CSS と同じ向き（上が 0）
       // 大気: 周辺の翳り（中心やや上から外へ）→ 空のほのかな光のにじみ（上の中央）
       float d2 = length((uv - vec2(0.5, 0.42)) / vec2(1.46, 1.30));
-      c = mix(c, gShade, 0.42 * clamp((d2 - 0.5) / 0.5, 0.0, 1.0));
+      c = mix(c, gShade, 0.42 * gAtm * clamp((d2 - 0.5) / 0.5, 0.0, 1.0));
       float d1 = length((uv - vec2(0.5, 0.06)) / vec2(1.18, 0.72));
-      c = mix(c, gGlow, 0.17 * clamp(1.0 - d1 / 0.54, 0.0, 1.0));
+      c = mix(c, gGlow, 0.17 * gAtm * clamp(1.0 - d1 / 0.54, 0.0, 1.0));
       // 情景の光で全体を一枚の空気にまとめる暖色のソフトライト（薄く）
       c = mix(c, gSoftLight(c, gGlow), gWashA);
       // 紙の粒（画面に固定・CSS の画素で約2px の粒）。乗算で控えめに
@@ -7514,7 +7528,7 @@ export async function mountTown3d(parent, opts = {}) {
       LIGHT ? Promise.resolve(null) : import('three/examples/jsm/postprocessing/UnrealBloomPass.js').catch(() => null), // 灯りのブルーム（非力端末は読み込まず＝発熱回避）
     ])
     if (my !== token) { try { renderer.dispose() } catch (e) { /* 無視 */ } if (stage.parentNode) stage.parentNode.removeChild(stage); return } // 便15 S24: 打ち切りで舞台と描画器を画面に残さない（見えない全画面の層が指を奪い、WebGL の文脈も漏れていた）
-    const crt = new THREE.WebGLRenderTarget(W, H, { samples: 0 }) // MSAAは切りFXAA一本化＝中間RTの多重サンプルバッファ(帯域/メモリ)を省く。輪郭はFXAAが担い実機で差はごく僅か（2026-07 発熱対策・AB検証済）
+    const crt = new THREE.WebGLRenderTarget(W, H, KAMO_WANT && !/[?&]kamohf=0/.test(location.search) ? { samples: 0, type: THREE.HalfFloatType } : { samples: 0 }) // 便18: 鴨川の町は空の明るさの幅が広いので、途中の絵を 16 ビットで持つ（8 ビットだと夜と夕の空に段が出る）。MSAAは切りFXAA一本化＝中間RTの多重サンプルバッファ(帯域/メモリ)を省く。輪郭はFXAAが担い実機で差はごく僅か（2026-07 発熱対策・AB検証済）
     composer = new EffectComposer(renderer, crt)
     composer.addPass(new RenderPass(scene, camera))
     // 夕夜の灯り（窓/街灯/提灯/自販機）がふわっと滲んで光るブルーム。ハーフ解像度＋高しきい値で「灯りだけ」を控えめに。昼/非力端末はstrength0で無効化＝負荷ゼロ。
@@ -8084,6 +8098,32 @@ export async function mountTown3d(parent, opts = {}) {
     }
     winRoom.position.set(0, roomEye.y - 1.5, roomEye.z - dWall)
     scene.add(winRoom)
+    // ── 便18: 鴨川の町を組む。部屋の窓（winRoom の原点＝窓の中心・正面の窓は -z・左の窓は -x）を、鴨川の窓（西岸の建物の東の壁の上の階・
+    //    便17 #5=1 の東）の位置と向きへ写す。北寺尾の町は今までどおり組むが描かない（部屋と、窓の外に降る物だけを描く＝下の「描き始める前」）
+    if (kamoP) {
+      const got = await kamoP
+      if (my !== token) { try { renderer.dispose() } catch (e) { /* 無視 */ } if (stage.parentNode) stage.parentNode.removeChild(stage); return }
+      if (got) {
+        try {
+          const v = got.d.meta.view, B = THREE.MathUtils.degToRad(v.yawDeg), o = winRoom.position
+          // 鴨川の窓の目（build.mjs）は東の壁の 0.6m 外・目の高さ。部屋の窓の面を壁の面に、部屋の目（窓の中心の 1.5m 上）を同じ高さに合わせる
+          const toKamo = new THREE.Matrix4().makeTranslation(v.x - 0.6, v.y - 1.5, v.z)
+            .multiply(new THREE.Matrix4().makeRotationY(-B)) // 部屋の正面（-z）→ 鴨川の窓の向き（北から東回り B 度）
+            .multiply(new THREE.Matrix4().makeTranslation(-o.x, -o.y, -o.z))
+          const roomBox = new THREE.Box3(new THREE.Vector3(-SX - 0.4, FY - 0.3, -0.4), new THREE.Vector3(SX + 0.4, CY + 0.5, BZ + 1.0)).translate(o) // 部屋の箱（この中に入る建物は描かない）
+          kamo = got.m.buildKamo(got.d, { renderer, toKamo, roomBox, season, time: opts.time, sky: opts.sky, shadowSize: KAMO_LOW ? 0 : Math.max(SHADOW_SIZE || 0, 4096) })
+          if (composer) {
+            if (!/[?&]kamopass=0/.test(location.search)) composer.insertPass(kamo.makePass(camera), 0) // 1枚目＝鴨川の舞台（ACES の色の圧縮まで済ませて書く）。kamopass=0 は測る用（1枚目を抜く）
+            const rp = composer.passes.find((p) => p.scene === scene)
+            if (rp) { rp.clear = false; rp.clearDepth = true } // 2枚目＝部屋を鴨川の上に重ねる（奥行きは部屋だけで比べる）
+          }
+          if (bloomPass) bloomPass.enabled = false
+          bloomWanted = false // 鴨川の町は灯りのにじみを掛けない（試作と同じ）
+          if (outPass) { const u = outPass.uniforms; u.gAtm.value = 0; u.gWashA.value = 0; u.gPaperA.value = 0; u.gSat.value = 1; u.gSepia.value = 0; u.gContrast.value = 1 } // 水彩の層を掛けない（便16 の決め）
+          renderer.toneMapping = THREE.NoToneMapping // 色の圧縮は、鴨川＝1枚目の中（ACES）・部屋＝材の中（Neutral）で済ませる
+        } catch (e) { console.warn('鴨川の町を組めなかったので、前の角部屋で開きます:', e && e.message); if (kamo) { try { kamo.dispose() } catch (e2) { /* 無視 */ } } kamo = null }
+      }
+    }
   }
 
   let drawCount = 0 // 描いた回数（検証用・S38）
@@ -8155,6 +8195,7 @@ export async function mountTown3d(parent, opts = {}) {
       // これを怠ると情景往復のたびにMSAA RT＋composerのrenderTarget1/2＋bloomの内部RTがGPUに残留し、
       // 低メモリ端末で数往復すると（コード全体が避けようとしている）コンテキスト枯渇/黒画面を誘発する。
       try { if (composer) { for (const p of composer.passes) { if (p && p.dispose) p.dispose() } composer.dispose() } } catch (e) { /* 無視 */ }
+      try { if (kamo) kamo.dispose() } catch (e) { /* 無視 */ } // 便18: 鴨川の町の形・材・図・影・映り込みの描画先
       // forceContextLoss() は呼ばない: 上で geometry/material/texture を解放済みなので不要で、
       // 情景往復のたびにコンテキストを強制喪失・再生成するとモバイルでコンテキスト枯渇→3D表示不能の温床になる（評価 技術-H5）。
       renderer.dispose()
@@ -8165,6 +8206,8 @@ export async function mountTown3d(parent, opts = {}) {
   const cornerYaw0 = (w, h) => (w / h >= 1 ? -0.6 : -1.12)
   let cornerYawSet = kind === 'corner' ? cornerYaw0(W, H) : null // 便15 D4: 最後に決めた最初の向き（見回す前に画面を回したら、その向きの最初の向きに決め直す）
   if (kind === 'corner') active.yaw = active.yawTarget = cornerYawSet
+  // 便18: 鴨川の町の角部屋は、飛ぶ・降りるが揃うまで（便16 の作る順＝便19）窓辺だけにする（今の飛ぶ仕組みは北寺尾の町の地面と当たり判定で動くため）
+  if (kamo) active.flyEnabled = false
 
   // 解像度/サイズを変える時は必ずここを通す＝camera.aspect も同時に更新（更新漏れが「横に伸びる」バグの元）。
   function applySize() {
@@ -8315,6 +8358,7 @@ export async function mountTown3d(parent, opts = {}) {
     // 水彩グレードはここ一本に統一（canvas側の二つ目のfilterは廃止）。二重がけ時より sepia/brightness を控えめにし、
     // 澄んだ青空が黄ばむのを解消（評価アート指摘）。canvasの暖色/明度のひと匙ぶんだけ僅かに足して水彩味は保つ。
     const b = (lerp(1.04, 1.07, c) * userBright).toFixed(3)
+    if (outPass && kamo) { outPass.uniforms.gBright.value = userBright; outPass.uniforms.gPx.value = curPR; stage.style.filter = 'none'; return } // 便18: 鴨川の町は水彩の層を掛けず、明るさの設定だけを効かせる
     if (outPass) { // 水彩の仕上げ（描画の中）へ渡す。舞台の filter は使わない（画面全体の合成をもう1枚増やさない）
       const u = outPass.uniforms; u.gSat.value = lerp(0.88, 0.99, c); u.gSepia.value = lerp(0.05, 0.025, c); u.gBright.value = +b; u.gPx.value = curPR
       stage.style.filter = 'none'
@@ -8682,7 +8726,7 @@ export async function mountTown3d(parent, opts = {}) {
     for (let i = 0; i < N; i++) { head[i * 3] = (R() - 0.5) * 150; head[i * 3 + 1] = R() * 92; head[i * 3 + 2] = -100 + R() * 150; spd[i] = 34 * (0.7 + R() * 0.6) } // 範囲を絞って密度を上げる
     const rgeo = new THREE.BufferGeometry(); rgeo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); lightDraw(rgeo, 340, 2) // 軽やかは 340 本（1本＝頂点2つ）
     const rmat = new THREE.LineBasicMaterial({ color: 0xc8d6e4, transparent: true, opacity: 0.6, fog: true, depthWrite: false })
-    const rseg = new THREE.LineSegments(rgeo, rmat); rseg.frustumCulled = false; scene.add(rseg)
+    const rseg = new THREE.LineSegments(rgeo, rmat); rseg.frustumCulled = false; rseg.userData.kamoKeep = true; scene.add(rseg) // kamoKeep＝鴨川の町でも描く（窓の外に降る雨）
     scene.fog.far *= 0.88 // 雨で奥がけむる
     // 雲海より上に出ると雨がやむ＝雲の上は晴れ。雲の層(基準面SEA_Y=88・雲頂~110)を抜ける高度帯でやわらかく消える。
     // 下界(y≦76)では満雨、雲を抜けた島の高さ(y≧108)で晴れ。窓辺/地上(非飛行)では常に降る。
@@ -8850,6 +8894,7 @@ export async function mountTown3d(parent, opts = {}) {
   const todayFavor = SKY_MOODS[(((festDay * 2654435761) ^ 0x9e3779b9) >>> 0) % SKY_MOODS.length]
   function scheduleFx(dt) {
     if (reduceMotion) return // 視差軽減では定期イベント（突発・大きな動き）を起こさない。ぼーっと眺める静けさは保つ
+    if (kamo) return // 便18: 時々の出来事は北寺尾の町の上に出る物なので、鴨川の町では起こさない（鴨川の出来事は便16 の作る順の「音と時々の出来事」の便で作る）
     // 深く眺めるほど（無操作が長いほど）発火間隔を伸ばす＝騒がしくせず静けさへ沈める（整う・評価エモ）。
     // 触れれば lastInputT が更新されて通常の頻度へ戻る。最大でも間隔は約1.8倍まで（イベントが完全に止まりはしない）。
     const idleMs = performance.now() - ((active && active.lastInputT) || 0)
@@ -10369,7 +10414,8 @@ export async function mountTown3d(parent, opts = {}) {
           else if (n.kind === 'paddy' || n.kind === 'ruin' || n.kind === 'onsen' || n.kind === 'well') riverAmt = Math.max(riverAmt, near * 0.42) // 水のある島＝せせらぎ/水滴
         }
       }
-      onAmbience(seaAmt, riverAmt, crowdAmt, festAmt, staAmt, festPan, staPan) }
+      if (kamo) onAmbience(0, 0, 0, 0, 0, 0, 0) // 便18: 海・川・人だまり・祭り・駅の音の近さは北寺尾の町の場所から測る物なので、鴨川の町では鳴らさない
+      else onAmbience(seaAmt, riverAmt, crowdAmt, festAmt, staAmt, festPan, staPan) }
     // 夜の灯りの息づき（篝火/松明＝炎の揺らぎ・ガス灯＝穏やかな明滅）。二重サインで不規則に。
     for (const g of nightGlows) g.m.opacity = Math.max(0, g.base * (1 + g.amp * (Math.sin(t * g.sp + g.ph) * 0.6 + Math.sin(t * g.sp * 1.73 + g.ph * 1.3) * 0.4)))
     // 静かな瞬間の鈴＝雲上で休む/止空でじっと佇むと、ふと澄んだ音が満ちる（整う）。嫌われたBGMパッドの代わりの、自然で控えめな癒しの音色。
@@ -10741,6 +10787,8 @@ export async function mountTown3d(parent, opts = {}) {
     mistOff += Math.min(0.25, Math.max(0, t - mistT)) * MIST.flow; mistT = t; mistDD = drift.on ? drift.t / DRIFT_SECS : 0; applyMist() // 低く溜まる霧（霞の色が決まった後に当てる）
     drawCount++
     composerUsed = false
+    if (kamo) { kamo.update(kamoLastT < 0 ? 0 : Math.min(0.05, t - kamoLastT)); kamoLastT = t; kamoRoomExp.value = renderer.toneMappingExposure } // 便18: 鴨川の水面と木の揺れを進め、部屋の明るさを前と同じ値にそろえる
+    const drawDirect = () => (kamo ? kamo.renderDirect(renderer, camera, () => renderer.render(scene, camera)) : renderer.render(scene, camera)) // 後処理なしの直描き（鴨川の町は鴨川→部屋の順）
     if (composer && t >= composerRetryT) {
       try {
         if (composerThrowOnce) { composerThrowOnce = false; throw new Error('検査用の後処理の例外') }
@@ -10749,9 +10797,9 @@ export async function mountTown3d(parent, opts = {}) {
         composerFails++
         if (composerFails >= 3) composer = null
         else composerRetryT = t + 5
-        renderer.render(scene, camera)
+        drawDirect()
       }
-    } else renderer.render(scene, camera)
+    } else drawDirect()
   }
   // 初回フレームでの「可視マテリアルの一斉シェーダーコンパイル」(progs多数=数百msのヒッチ)を、
   // 描画を始める前にまとめて済ませる＝マウント直後の最初のframe()が固まらない（暗転の裏で温める）。
@@ -10760,6 +10808,32 @@ export async function mountTown3d(parent, opts = {}) {
   // この一斉リコンパイルが、上昇ボタンの長押しを iOS に pointercancel させ「雲海突入直前で1回解除」させていた実機FBの主因。直後の compile で透明版を温める。
   // 低空では cloudObjs.visible=false なので、常時透明でも低空の描画コスト（オーバードロー）は増えない。
   if (cloudObjs && cloudObjs.length) { cloudRevealMats = []; for (const o of cloudObjs) o.traverse((c) => { if (c.isMesh) { const mm = Array.isArray(c.material) ? c.material : [c.material]; for (const m of mm) { if (m && m.__revBase === undefined) { m.__revBase = (m.opacity == null ? 1 : m.opacity); m.transparent = true; m.opacity = 0; cloudRevealMats.push(m) } } } }) }
+  // ── 便18: 鴨川の町の時は、町の3Dの舞台からは「部屋」と「窓の外に降る物（kamoKeep）」と光だけを描く（層 2）。北寺尾の町・空・時々の出来事は描かない。
+  //    部屋の材は前と同じ Neutral の色の圧縮を材の中でかける（後処理の最後の色の圧縮は鴨川の ACES と二重にならないよう外した）
+  if (kamo) {
+    const KL = 2
+    const toneRoom = (m) => {
+      if (!m || m.userData.kamoTone) return
+      m.userData.kamoTone = true
+      const prev = m.onBeforeCompile, prevKey = m.customProgramCacheKey()
+      m.onBeforeCompile = (sh, r) => {
+        if (prev) prev.call(m, sh, r)
+        sh.uniforms.uKRoomExp = kamoRoomExp
+        sh.fragmentShader = sh.fragmentShader
+          .replace('#include <common>', '#include <common>\n#define toneMappingExposure uKRoomExp\n#include <tonemapping_pars_fragment>')
+          .replace('#include <tonemapping_fragment>', 'gl_FragColor.rgb = NeutralToneMapping( gl_FragColor.rgb );')
+      }
+      m.customProgramCacheKey = () => prevKey + '|kamoTone'
+      m.needsUpdate = true
+    }
+    const keepIt = (o) => { o.layers.enable(KL); const ms = Array.isArray(o.material) ? o.material : [o.material]; for (const m of ms) toneRoom(m) }
+    winRoom.traverse(keepIt)
+    scene.traverse((o) => { if (o.userData && o.userData.kamoKeep) o.traverse(keepIt); if (o.isLight) o.layers.enable(KL) })
+    camera.layers.set(KL)
+    kamoRoomExp.value = renderer.toneMappingExposure
+    try { kamo.sync(camera); renderer.compile(kamo.scene, kamo.camera) } catch (e) { /* 最初の描画で組み立てる */ }
+    applyStageFilter()
+  }
   // 町を組み終えた時の乱数の状態（同じなら、ここまでの町の乱数の消費が同じ＝家・木・人の配置が同じ）。祭りの有無・段の違いで比べる（S26・S25）
   const layoutEnd = { rngEnd: R.state(), fest: festivalSpots.length }
   let compiledBy = 'none'
@@ -10791,6 +10865,9 @@ export async function mountTown3d(parent, opts = {}) {
     window.__town3dSetView = (y, p) => { if (active) { active.yaw = active.yawTarget = y || 0; active.pitch = active.pitchTarget = p || 0 } }
     window.__town3dPaused = (on) => setTown3dPaused(!!on) // 検証用: おやすみ相当の描画停止/再開（active.pausedを立てる）
     window.__town3dBloom = (on) => { if (bloomPass) { bloomPass.enabled = !!on; return bloomPass.strength } return null } // 検証用: ブルームを強制ON/OFF（同一フレームでのAB＝アニメ差を排除）
+    // 検証用（便18）: 同じ1こまを n 回続けて描き、描き終わるまで（GPU を待つ）の1こまの時間 ms を返す。町の3Dは描く回数を 16〜30 こまに落とすので、出せるこま数はこれで測る
+    window.__town3dBench = (n = 30) => { const gl = renderer.getContext(), px = new Uint8Array(4), draw = () => (composer ? composer.render() : renderer.render(scene, camera)), sync = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); draw(); sync(); const t0 = performance.now(); for (let i = 0; i < n; i++) draw(); sync(); return +((performance.now() - t0) / n).toFixed(2) }
+    window.__town3dKamo = () => (kamo ? kamo.info() : null) // 検証用（便18）: 鴨川の町の段・時刻・空・影・部屋の箱で外した建物の数
     window.__town3dBloomInfo = () => bloomPass ? { enabled: bloomPass.enabled, strength: +bloomPass.strength.toFixed(3), wanted: bloomWanted } : null // 検証用: 現情景のブルーム状態
     window.__town3dFrame = () => renderer.info.render.frame // 検証用: 実描画したフレーム総数（停止中は増えない＝停止の確認に使う）
     window.__town3dFly = (b) => setTown3dFly(!!b) // 検証用: 空へ飛び立つ/窓へもどる
@@ -10987,7 +11064,7 @@ export async function mountTown3d(parent, opts = {}) {
       yaw: +active.flyYaw.toFixed(2), camYaw: +(active.walkCamYaw || 0).toFixed(2), pitch: +active.flyPitch.toFixed(2),
       vel: +Math.hypot(active.vel.x, active.vel.y, active.vel.z).toFixed(2), mvX: +active.moveX.toFixed(2), mvY: +active.moveY.toFixed(2), bank: +active.bankCur.toFixed(2),
     })
-    window.__town3dStats = () => { if (active !== me) return null; const r = renderer.info.render; let objs = 0; scene.traverse(() => objs++); return { calls: r.calls, tris: r.triangles, objs, pr: +curPR.toFixed(2), ddt: +lastDDT.toFixed(3), heavy: adHeavy, light: adLight, frames: drawCount, composer: composerUsed } } // 検証用: 描画コール/三角形/オブジェクト数/自動品質状態（重い・軽い判定の続いた数＝U1 の数え方）。町を出た後は null（前の町の数を返さない・D9）。以前の low/ok（adQLow・adQOk）は U1 で数え方ごと替えたので無い
+    window.__town3dStats = () => { if (active !== me) return null; const r = renderer.info.render; let objs = 0; scene.traverse(() => objs++); return { calls: r.calls, tris: r.triangles, objs, pr: +curPR.toFixed(2), ddt: +lastDDT.toFixed(3), heavy: adHeavy, light: adLight, frames: drawCount, composer: composerUsed, flyable: !!active.flyEnabled } } // 検証用: 描画コール/三角形/オブジェクト数/自動品質状態/飛べるか（便18）（重い・軽い判定の続いた数＝U1 の数え方）。町を出た後は null（前の町の数を返さない・D9）。以前の low/ok（adQLow・adQOk）は U1 で数え方ごと替えたので無い
     window.__town3dThrowFrames = (n) => { if (active) active.throwN = n || 1 } // 検証用: 描画ループの更新で n フレーム続けて例外を起こす（S38）
     window.__town3dQuality = () => (active === me ? { q: curQual, cap: qCap, floor: prFloor, fly: plan.fly, pr: +curPR.toFixed(3), shadow: sun.shadow.mapSize.x, bloom: !!(bloomPass && bloomPass.enabled), p75: +adP75.toFixed(4), changes: prChanges, failedCap, compiled: compiledBy } : null) // 検証用: 段の中身と自動調整の状態（D1・D2・U1・S27・U13）
     window.__town3dSimLoad = (fn) => { simLoad = typeof fn === 'function' ? fn : null } // 検証用: 毎フレームに重さ（ミリ秒）を足す。fn(今の倍率)（U1）

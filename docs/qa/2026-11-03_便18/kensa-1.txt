@@ -1,0 +1,9 @@
+○ K1 組めた true・鴨川 有り・外した建物 3・エラー 0・GL 0
+○ K2 飛べる false
+○ K6 町の3Dの舞台の描く呼び出し 103（600 未満で合格）
+○ K3 組めた true・鴨川 無し・エラー 1（Failed to load resource: net::ERR_FAILED）
+○ K4 組めた true・鴨川 無し・エラー 0
+○ K5 kitaterao-window-3d: 組めた true・鴨川 無し・飛べる true・エラー 0
+○ K5 shishigaya-window-3d: 組めた true・鴨川 無し・飛べる true・エラー 0
+○ K7 雪の夕の見上げた空の明るさ 0.562（0.25 以上で合格）
+検査 8 本・外れ 0

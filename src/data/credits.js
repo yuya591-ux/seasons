@@ -3,7 +3,7 @@
 // 出典の正本は CREDITS.md。本ファイルは利用者向けの要約（作者・ライセンス・出典URL）。両者を一致させること。
 
 export const CREDIT_INTRO =
-  '環境音・背景画像は、ライセンスが明確なフリー素材（CC0／パブリックドメイン優先）のみを使っています。作者と出典をここに記します。'
+  '環境音・背景画像・地図のデータは、ライセンスが明確なフリー素材とオープンデータ（CC0／パブリックドメイン優先）のみを使っています。作者と出典をここに記します。'
 
 // 環境音（実在の録音。MP3 へ変換して同梱）。情景データの sounds[].src で使っている素材を全部載せ、使っていない素材は載せない
 // （file は同梱のファイル。scripts/qa-credits.mjs が情景データ・CREDITS.md と照らす＝スモークで回る）
@@ -26,6 +26,14 @@ export const CREDIT_IMAGES = [
   { title: '窓の外の風景（生成画像）', by: 'Pollinations.AI / Flux（無料・オープンソース）', license: 'AI生成物', url: 'https://pollinations.ai/', note: '雨の窓の外の景色' },
 ]
 
+// 角部屋の窓の外の鴨川の町（便18）。地図のデータは加工して経緯度を外した形で同梱。出典の正本は CREDITS.md（scripts/qa-credits.mjs が照らす）
+export const CREDIT_MAPS = [
+  { title: '地理院タイル（標高タイル）を加工して作成', by: '国土地理院', license: '国土地理院コンテンツ利用規約', url: 'https://maps.gsi.go.jp/development/ichiran.html', note: '地形と山' },
+  { title: '京都市 建築物モデル LOD2（加工して作成）', by: '国土交通省 Project PLATEAU', license: 'CC BY 4.0 互換', url: 'https://www.mlit.go.jp/plateau/', note: '建物の形と高さ' },
+  { title: '川・道・橋・木・飛び石', by: '© OpenStreetMap contributors', license: 'ODbL 1.0', url: 'https://www.openstreetmap.org/copyright', note: '川と道' },
+  { title: '地面・道・壁・屋根・木の皮の写真の質感（7 種）', by: 'Poly Haven', license: 'CC0', url: 'https://polyhaven.com/license', note: '質感' },
+]
+
 // 描画・道具
 export const CREDIT_TOOLS = [
   { title: 'three.js', by: 'mrdoob ほか', license: 'MIT', url: 'https://threejs.org/', note: '立体の街の描画' },
@@ -33,4 +41,4 @@ export const CREDIT_TOOLS = [
 
 // 作品自体の扱い（継承ライセンスの明示）
 export const CREDIT_OUTRO =
-  'この作品の独自部分（描画・データ・コード）は MIT ライセンスです。同梱の第三者素材は上記それぞれのライセンスに従います。CC BY-SA 素材を含むため、それらの素材は CC BY-SA を継承します。詳細はリポジトリの CREDITS.md / LICENSE をご覧ください。'
+  'この作品の独自部分（描画・データ・コード）は MIT ライセンスです。同梱の第三者素材は上記それぞれのライセンスに従います。CC BY-SA 素材を含むため、それらの素材は CC BY-SA を継承します。鴨川の町の川・道・木のデータ（OpenStreetMap から作った物）は ODbL 1.0 で提供します。詳細はリポジトリの CREDITS.md / LICENSE をご覧ください。'

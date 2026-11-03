@@ -3,13 +3,13 @@
 焼く物: 空いっぱいの白い光（時刻に依らない）に当てた時の、面ごとの明るさ（直に届く空の光＋まわりの面の照り返し）。
   ＝建物の足もと・路地・軒下・木の下が柔らかく暗くなり、明るい壁の照り返しが入る。太陽の光と影は実行時（three.js）に足す。
   時刻・季節で色を変える器（本体の情景のデータ）と合わせるため、色は焼かず明るさだけを焼く。
-入る物: scripts/_bin17-data/geo/（_bin17-build.mjs が作る・原点からのメートル）
-出る物: scripts/_bin17-data/bake/（git に入れない）
+入る物: scripts/kamo/_data/geo/（scripts/kamo/build.mjs が作る・原点からのメートル）
+出る物: scripts/kamo/_data/bake/（git に入れない）
   lm_terrain.png … 近くの地形の明るさ（真上から見た図・±NEAR_R m）
   lm_bldg.png    … 建物の明るさ（建物の面を図に並べた物）
   bldg_baked.bin … 建物の三角形の角ごとの 位置(3)・図の位置(2)・建物の番号(1)（float32）
   bake-log.txt
-使い方: py -3.13 scripts/_bin17-bake.py [解像度=4096] [光の数=96]
+使い方: py -3.13 scripts/kamo/bake.py [解像度=4096] [光の数=96]
 """
 import json
 import os
@@ -20,9 +20,9 @@ import bpy  # bpy を先に読む（bmesh は bpy の後でないと読めない
 import bmesh  # noqa: E402
 import numpy as np
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-GEO = os.path.join(ROOT, "scripts", "_bin17-data", "geo")
-OUT = os.path.join(ROOT, "scripts", "_bin17-data", "bake")
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+GEO = os.path.join(ROOT, "scripts", "kamo", "_data", "geo")
+OUT = os.path.join(ROOT, "scripts", "kamo", "_data", "bake")
 os.makedirs(OUT, exist_ok=True)
 RES = int(sys.argv[1]) if len(sys.argv) > 1 else 4096
 SAMPLES = int(sys.argv[2]) if len(sys.argv) > 2 else 96

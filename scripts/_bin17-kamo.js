@@ -65,14 +65,14 @@ scene.add(sunL); scene.add(sunL.target)
 scene.add(new THREE.HemisphereLight(...TIME.hemi))
 
 // ── 地図のデータを読む ──
-const geo = await (await fetch('./_bin17-data/geo/geo.json')).json()
+const geo = await (await fetch('./kamo/_data/geo/geo.json')).json()
 const ab = async (p) => (await fetch(p)).arrayBuffer()
-const [nearB, farB, roadsB, treesB, waterB, bldgB, zoneB, stonesB] = await Promise.all(['geo/near.bin', 'geo/far.bin', 'geo/roads.bin', 'geo/trees.bin', 'geo/water.bin', 'bake/bldg_baked.bin', 'geo/near-zone.bin', 'geo/stones.bin'].map((p) => ab('./_bin17-data/' + p)))
+const [nearB, farB, roadsB, treesB, waterB, bldgB, zoneB, stonesB] = await Promise.all(['geo/near.bin', 'geo/far.bin', 'geo/roads.bin', 'geo/trees.bin', 'geo/water.bin', 'bake/bldg_baked.bin', 'geo/near-zone.bin', 'geo/stones.bin'].map((p) => ab('./kamo/_data/' + p)))
 const WY = geo.waterY, NR = geo.near.R
 const texLoader = new THREE.TextureLoader()
 const loadLM = (p) => { const t = texLoader.load(p); t.colorSpace = THREE.SRGBColorSpace; t.channel = 1; t.flipY = true; return t }
-const LM_T = BAKE ? loadLM('./_bin17-data/bake/lm_terrain.png') : null
-const LM_B = BAKE ? loadLM('./_bin17-data/bake/lm_bldg.png') : null
+const LM_T = BAKE ? loadLM('./kamo/_data/bake/lm_terrain.png') : null
+const LM_B = BAKE ? loadLM('./kamo/_data/bake/lm_bldg.png') : null
 
 // 焼いた光（空の光の届き方＋照り返し）を、空と照り返しの光（間接の光）にだけ掛ける。開けた所＝1.0
 function useBake(mat, tex) {
