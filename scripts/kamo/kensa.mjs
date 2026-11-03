@@ -9,14 +9,14 @@
 //   K5 角部屋でない情景（北寺尾・谷戸）は鴨川の町を組まない（エラー無し）
 //   K6 鴨川の角部屋の町の3Dの舞台は、部屋と降る物だけを描く（北寺尾の町を描かない＝描く呼び出し 600 未満）
 //   K7 雪の夕の空は曇天の灰（乗り出して見上げた空の明るさが 0.25 以上・物理の空だと空の上が黒くなった）
-//   K8 iPhone の画面（402×874・指で触る）では軽い段で開き、PC の画面では通常の段で開く
+//   K8 iPhone の画面（402×874・指で触る）では軽い段で開き、PC の画面では通常の段で開く（【便19】歩く高さを読む地形の網も、描く網と同じ間引き＝iPhone 2・PC 1）
 //   K9 歩いて川へ向かうと水際で止まる（水に入らない・水際の 3m 手前より先まで進む）（便19）
 //   K10 建物へ向かって歩くと壁の手前で止まる（建物の中に入らない）（便19）
 //   K11 橋の床の上を歩くと、水の上を渡って向こうへ行ける（足が橋の床の高さのまま）（便19）
 //   K12 背の高い建物へ低く飛んで向かうと、建物の上を越える（自分は建物・木の上 1m 以上・カメラは 0.5m 以上）（便19）
 //   K13 iPhone の縦で開くと正面の窓（東＝鴨川）が正面（見回しの横 0）。PC は今のまま -0.6、?kamo=0 の iPhone は -1.12（便19・便18 #1=1）
 //   K14 乗り出して見下ろした画の真っ黒（RGB の最大 3 以下）の画素が 0.5% 未満（建物の焼けていない面の黒・前は 3.4%）（便19）
-//   K15 水面の凹凸の図で、上位 20 本の波に入る力が 40% 以下（前は 18 本だけ＝100%・格子の干渉）（便19）
+//   K15 水面の凹凸の図で、上位 20 本の波に入る力が 40% 以下（前は 18 本だけ＝100%・格子の干渉）で、読む向きを回す差し替えが効いている（便19）
 //   K16 窓から空へ出てすぐ地上へ降りると、開けた所（8方位の抜けの平均 15m 以上・水と建物でない）に降りる（便19）
 //   ~~K17 空から部屋の建物を見ると、部屋の窓の所が外壁で塞がる（塞ぐ壁を止めた画と 0.2% 以上の画素が違う）~~（【便19】揺れだけで合格したので下の形に替えた）
 //   K17 部屋の窓の所を塞ぐ壁が、窓辺では出ず、空と地上では出て、窓辺へもどると消える（便19）
@@ -95,9 +95,9 @@ if (run('K7')) {
 if (run('K8')) {
   const r = {}
   for (const [name, dev] of [['iphone', { viewport: { width: 402, height: 874 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }], ['pc', { viewport: { width: 1280, height: 720 } }]]) {
-    const o = await open('autumn-dusk-corner-room', { dev }); const k = await kamoInfo(o.p); r[name] = k && k !== 'no-hook' ? k.low : null; await o.ctx.close()
+    const o = await open('autumn-dusk-corner-room', { dev }); const k = await kamoInfo(o.p); r[name] = k && k !== 'no-hook' ? (k.low ? 'low' : 'normal') + '/' + k.navDec : null; await o.ctx.close()
   }
-  check('K8', r.iphone === true && r.pc === false, `軽い段: iPhone ${r.iphone}・PC ${r.pc}`)
+  check('K8', r.iphone === 'low/2' && r.pc === 'normal/1', `段／歩く高さの網の間引き: iPhone ${r.iphone}（low/2）・PC ${r.pc}（normal/1）`) // 【便19】網の間引きを足した
 }
 // ── 便19: 飛ぶ・歩く ──
 const sampleWhile = async (p, ms, fn) => { const out = []; const t0 = Date.now(); while (Date.now() - t0 < ms) { out.push(await p.evaluate(fn)); await p.waitForTimeout(150) } return out }
@@ -177,7 +177,7 @@ if (run('K14')) {
 if (run('K15')) {
   const o = await open('summer-morning-corner-room')
   const k = await kamoInfo(o.p)
-  check('K15', !!k && k !== 'no-hook' && k.waveTop20 !== null && k.waveTop20 <= 40, `水面の凹凸の図の上位 20 本の波の力 ${k && k.waveTop20}%（40% 以下で合格・前は 100%）`)
+  check('K15', !!k && k !== 'no-hook' && k.waveTop20 !== null && k.waveTop20 <= 40 && k.waterRot === true, `水面の凹凸の図の上位 20 本の波の力 ${k && k.waveTop20}%（40% 以下で合格・前は 100%）・読む向きを回す差し替え ${k && k.waterRot}（true）・図を作った時間 ${k && k.waterMs}ms`)
   await o.ctx.close()
 }
 if (run('K16')) { // 窓から空へ出てすぐ地上へ降りる（今の真下に降りる）

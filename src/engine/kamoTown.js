@@ -161,10 +161,12 @@ void main() { float h = normalize(vD).y; gl_FragColor = vec4(mix(uHor, uTop, smo
   #endif
 #endif`
   // fill＝建物の図: 図の上で1画素に満たない小さな面は焼いた値が 0 のまま残り、真っ黒に写った（便19 の調べ＝壁の面積の 6.5% が 0・その 98.7% が 2 画素未満の島）。
-  //   本物の暗がり（路地・軒下）は 0.1 より上に焼けているので、0.04 より下だけを「焼けていない所」として並みの明るさ 0.55 で埋める（gate/probe-lm-mae.txt）
+  //   ~~本物の暗がり（路地・軒下）は 0.1 より上に焼けているので、0.04 より下だけを「焼けていない所」として並みの明るさ 0.55 で埋める（gate/probe-lm-mae.txt）~~
+  //   （【便19・外の目】上の数は JPEG の画素を 0〜1 で読んだ値＝sRGB。図は SRGBColorSpace なのでシェーダーの中では線形に戻った値で比べる＝線形の 0.04 は sRGB の約 0.22、0.55 は約 0.77 で、
+  //    本物の暗がりまで埋まり、埋めた面が並みの壁より明るく浮いた。線形の値に直した: sRGB 0.04 → 線形 0.0031 より下を、sRGB 0.55 → 線形 0.26 で埋める）
   function useBake(mat, tex, { fill = false } = {}) {
     mat.aoMap = tex; mat.aoMapIntensity = 1
-    const frag = fill ? AOFRAG.replace('float ambientOcclusion = clamp( texture2D( aoMap, vAoMapUv ).r * 1.25, 0.0, 1.25 );', 'float lmRaw = texture2D( aoMap, vAoMapUv ).r; float ambientOcclusion = clamp( ( lmRaw < 0.04 ? 0.55 : lmRaw ) * 1.25, 0.0, 1.25 );') : AOFRAG
+    const frag = fill ? AOFRAG.replace('float ambientOcclusion = clamp( texture2D( aoMap, vAoMapUv ).r * 1.25, 0.0, 1.25 );', 'float lmRaw = texture2D( aoMap, vAoMapUv ).r; float ambientOcclusion = clamp( ( lmRaw < 0.0031 ? 0.26 : lmRaw ) * 1.25, 0.0, 1.25 );') : AOFRAG
     mat.onBeforeCompile = chain(mat.onBeforeCompile, (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <aomap_fragment>', frag) })
     addKey(mat, fill ? 'bakeF' : 'bake')
   }
@@ -325,6 +327,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   //   向きも長さもばらばらな波 140 本（周期 4〜48 に1つ）を、長い波ほど高く重ねる（傾きの強さは前と同じ 0.15 前後・上位 20 本の波に入る力は前 100% → 25%）。乱数は町の R と分ける（R の回る数を変えると、後で組む木の形が変わる）。
   //   kamowave=0 は外し回し用（前の 18 本の作り）
   function waterNormals(n = 256) {
+    const tW0 = performance.now()
     const OLD = /[?&]kamowave=0/.test(location.search)
     let ws = 777; const RW = () => { ws = (ws * 1664525 + 1013904223) >>> 0; return ws / 4294967296 }
     const waves = []
@@ -336,9 +339,9 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { let h = 0; for (const [fx, fy, ph, a] of waves) h += a * Math.sin(6.2832 * (fx * i + fy * j) / n + ph); H[j * n + i] = h }
     const d = new Uint8Array(n * n * 4), v = new THREE.Vector3()
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const hx = H[j * n + (i + 1) % n] - H[j * n + (i - 1 + n) % n], hy = H[((j + 1) % n) * n + i] - H[((j - 1 + n) % n) * n + i]; v.set(-hx * 0.9, -hy * 0.9, 1).normalize(); d.set([(v.x * 0.5 + 0.5) * 255, (v.y * 0.5 + 0.5) * 255, (v.z * 0.5 + 0.5) * 255, 255], (j * n + i) * 4) }
-    const t = new THREE.DataTexture(d, n, n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; return keep(t)
+    const t = new THREE.DataTexture(d, n, n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; waterMs = Math.round(performance.now() - tW0); return keep(t)
   }
-  let water, waveTop20 = null
+  let water, waveTop20 = null, waterMs = null, waterRot = false // 便19: 水面の図を作った時間（ms）・読む向きを回す差し替えが効いたか（検査 K15）
   {
     const sec = meta.files.misc.secs, wp = view(data.buf.misc, sec.wpos), wi = view(data.buf.misc, sec.widx), nv = meta.water.nv
     const lp = new Float32Array(nv * 3); for (let i = 0; i < nv; i++) { lp[i * 3] = wp[i * 3]; lp[i * 3 + 1] = -wp[i * 3 + 2]; lp[i * 3 + 2] = wp[i * 3 + 1] - WY } // 水面の板の中の座標（回して y=WY に置く）
@@ -356,6 +359,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
 					vec4 noise = texture2D( normalSampler, uv0 ) * 1.1 + texture2D( normalSampler, uv1 ) + texture2D( normalSampler, uv2 ) * 1.2 + texture2D( normalSampler, uv3 ) * 0.7;
 					return noise * 0.5 - 1.0;
 				}`)
+      waterRot = water.material.fragmentShader.includes('mat2( 0.8253') // 差し替えの文が合わなくなると黙って元のままになるので、効いたかを残す
       water.material.needsUpdate = true
     }
     water.rotation.x = -Math.PI / 2; water.position.y = WY; water.material.uniforms.size.value = 2.2
@@ -555,7 +559,13 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     const u = Math.min(nN - 1.001, Math.max(0, (X + NR) / nS)), v = Math.min(nN - 1.001, Math.max(0, (Z + NR) / nS)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nN + i
     return (f(k) * (1 - fu) + f(k + 1) * fu) * (1 - fv) + (f(k + nN) * (1 - fu) + f(k + nN + 1) * fu) * fv
   }
-  const terrK = (X, Z) => gridAt(X, Z, (k) => terrain[k] * nQ) // 地面の高さ（鴨川の座標・水面の下は川底）
+  // 【便19・外の目】iPhone の段は地形の網を1つおき（8m）に間引いて描く（gridTiles の dec）。歩く高さとカメラの下限を 4m の網で引くと描いた地面とずれ、土手で目やカメラがめり込む＝同じ間引きの網で読む
+  const navDec = low ? 2 : 1
+  const terrK = (X, Z) => { // 地面の高さ（鴨川の座標・水面の下は川底）。描く網と同じ間引きで4点を混ぜる
+    const st = nS * navDec, m = (nN - 1) / navDec + 1, u = Math.min(m - 1.001, Math.max(0, (X + NR) / st)), v = Math.min(m - 1.001, Math.max(0, (Z + NR) / st)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j
+    const h = (ii, jj) => terrain[jj * navDec * nN + ii * navDec] * nQ
+    return (h(i, j) * (1 - fu) + h(i + 1, j) * fu) * (1 - fv) + (h(i, j + 1) * (1 - fu) + h(i + 1, j + 1) * fu) * fv
+  }
   const wetK = (X, Z) => gridAt(X, Z, (k) => (zone[k] === 2 ? 1 : 0)) // 水面の度合い（0.5 以上を水とする）
   const zoneK = (X, Z) => zone[Math.round(Math.min(nN - 1, Math.max(0, (Z + NR) / nS))) * nN + Math.round(Math.min(nN - 1, Math.max(0, (X + NR) / nS)))]
   const floorK = (X, Z) => terrK(X, Z) + Math.min(1, wetK(X, Z) * 2) * 0.6 // 目の下限の元（水の上は水面＝川底の 0.6m 上・build.mjs）
@@ -579,6 +589,8 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
         if (w1 >= -0.02 && w2 >= -0.02 && w3 >= -0.02) fn(j * GN + i, w1 * ay + w2 * by + w3 * cy, yMax)
       }
     }
+    const trunks = new Map()
+    try { // 【便19・外の目】建物・橋・木の表を組めなかった時は、地面と水だけで飛ぶ・歩く（窓辺に戻れなくならない）
     { // 建物（描かない建物は除く）と、部屋のあるマンション
       const { p16, bidA, drop, ps, nv } = navSrc.bldg
       const mark = (k, y, yMax) => { if (yMax > top[k]) top[k] = yMax; bld[k] = 1 }
@@ -593,12 +605,13 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
       for (let q = 0; q < idx.length; q += 3) { const a = idx[q], b = idx[q + 1], c = idx[q + 2]; if (kind[a] !== 2) continue; tri(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2], pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2], mark) }
     }
     // 木: 樹冠の上の高さ（飛ぶ時）と幹（歩く時の当たり・8m 四方の箱に入れる）
-    const trunks = new Map(), tr = view(data.buf.misc, meta.files.misc.secs.trees)
+    const tr = view(data.buf.misc, meta.files.misc.secs.trees)
     for (let q = 0; q < tr.length; q += 6) {
       const X = tr[q], Y = tr[q + 1], Z = tr[q + 2], h = tr[q + 3], r = tr[q + 4] * 0.5
       for (let j = Math.max(0, ci(Z - r)); j <= Math.min(GN - 1, ci(Z + r)); j++) for (let i = Math.max(0, ci(X - r)); i <= Math.min(GN - 1, ci(X + r)); i++) { const k = j * GN + i; if (Y + h > top[k]) top[k] = Y + h }
       const key = Math.floor(X / 8) * 100003 + Math.floor(Z / 8); let a = trunks.get(key); if (!a) { a = []; trunks.set(key, a) } a.push(X, Z)
     }
+    } catch (e) { console.warn('鴨川の道案内の表（建物・橋・木）を組めなかったので、地面と水だけで飛ぶ・歩く:', e && e.message); top.fill(-1e9); bld.fill(0); deck.fill(NaN); trunks.clear() }
     // 飛ぶ時の下限: 地面（水面）と建物・木・橋の上の高い方を、まわり 8m の一番高い所へ広げてからなだらかにする（建物の手前で先に浮き上がり、急に持ち上がらない）
     const F = new Float32Array(GN * GN)
     for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; F[k] = Math.max(top[k], floorK(-NR + (i + 0.5) * GC, -NR + (j + 0.5) * GC)) }
@@ -634,10 +647,11 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     // 足の高さ feetY（町の3Dの座標）から見た地面: 足もとに近い橋の床があればその上、無ければ地面
     groundAt: (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z), d = deckOk(X, Z, feetY + dY); return (d === d ? d + 0.05 : terrK(X, Z)) - dY },
     // 一歩進めるか: 網の縁・建物・幹でなく、水でない（足もとに近い橋の床の上なら水の上も渡れる）
-    canStep: (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (blockedK(X, Z)) return false; if (deckOk(X, Z, feetY + dY) === deckOk(X, Z, feetY + dY)) return true; return wetK(X, Z) < 0.5 },
+    canStep: (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (blockedK(X, Z)) return false; if (!Number.isNaN(deckOk(X, Z, feetY + dY))) return true; return wetK(X, Z) < 0.5 },
     aim: (x, z) => Math.atan2(cX - x, -(cZ - z)), // その所から鴨川デルタを向く向き（町の3Dの向き: 0＝-z）
     place: (x, z, y) => { const X = KX(x, z), Z = KZ(x, z), alt = y + dY - terrK(X, Z)
-      if (alt > 70) return '鴨川の上空'; if (Math.hypot(X, Z) < 130) return '鴨川デルタ'; if (wetK(X, Z) >= 0.5) return '鴨川の上'; if (zoneK(X, Z) === 1) return '鴨川の河川敷'; return 'まちなか' },
+      const river = Z < -20 ? (X < 0 ? '賀茂川' : '高野川') : '鴨川' // 【便19・外の目】合流（原点）より北は、西が賀茂川・東が高野川
+      if (alt > 70) return '鴨川の上空'; if (wetK(X, Z) >= 0.5) return river + 'の上'; if (Math.hypot(X, Z) < 130) return '鴨川デルタ'; if (zoneK(X, Z) === 1) return river + 'の河川敷'; return 'まちなか' },
     gauge: (y) => Math.max(0, Math.min(1, (y + dY - meta.view.groundY) / 150)), // 高さのゲージ（地面から 150m で満ちる）
     deck: (x, z) => { const k = cellK(KX(x, z), KZ(x, z)), d = k >= 0 ? ensureNav().deck[k] : NaN; return d === d ? d - dY : null }, // 橋の床の高さ（無ければ null・検証用）
     info: () => (G ? { ms: G.ms, cells: GN * GN } : null),
@@ -724,7 +738,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, plugShown: !!(plug && plug.visible) } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, navDec, plugShown: !!(plug && plug.visible) } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {

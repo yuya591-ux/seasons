@@ -8240,7 +8240,7 @@ export async function mountTown3d(parent, opts = {}) {
     const b = bound
     const nx = Math.max(-b.x, Math.min(b.xMax || b.x, pos.x + dx))
     const nz = Math.max(b.zMin, Math.min(b.zMax, pos.z + dz))
-    if (KN) { const feet = pos.y - FLY.eye; if (KN.canStep(nx, pos.z, feet)) pos.x = nx; if (KN.canStep(pos.x, nz, feet)) pos.z = nz; return } // 鴨川: 橋の床の上なら水の上も渡れる
+    if (KN) { const feet = pos.y - FLY.eye - ((active && active.jumpY) || 0); if (KN.canStep(nx, pos.z, feet)) pos.x = nx; if (KN.canStep(pos.x, nz, feet)) pos.z = nz; return } // 鴨川: 橋の床の上なら水の上も渡れる
     if (!blockedAt(nx, pos.z) && !wetAt(nx, pos.z)) pos.x = nx // x方向だけ先に試す（壁/水際に沿って横へ滑る）
     if (!blockedAt(pos.x, nz) && !wetAt(pos.x, nz)) pos.z = nz // z方向だけ試す
   }
@@ -8350,7 +8350,7 @@ export async function mountTown3d(parent, opts = {}) {
   const HINT_CSS = 'font:600 13px/1.5 system-ui,-apple-system,sans-serif;color:rgba(255,255,255,.95);text-shadow:0 1px 5px rgba(0,0,0,.55);text-align:center'
   const HINT_WALK = `<div style="position:absolute;left:8%;bottom:22%;${HINT_CSS}">◉<br><span style="font-weight:500">左で歩く</span></div>` +
     `<div style="position:absolute;right:8%;bottom:22%;${HINT_CSS}">⟲<br><span style="font-weight:500">右で見まわす</span></div>`
-  const HINT_FLY = `<div style="position:absolute;left:0;right:0;bottom:21%;${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">${kamo ? '川に沿ってデルタへ　飛び石と大文字山が見えてきます' : '高く昇れば雲海へ　海の向こうには、遠い季節の街が'}</span></div>`
+  const HINT_FLY = `<div style="position:absolute;left:0;right:0;bottom:21%;${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">${kamo ? '川に沿って、デルタの飛び石の上へ' : '高く昇れば雲海へ　海の向こうには、遠い季節の街が'}</span></div>`
   let ctrlHintT = 0
   // 歩く案内は、常駐のスティックの輪のすぐ上に出す（以前は左8%・下22%で、PC・横長では輪から200px前後離れていた・V48）。
   // 飛ぶ案内は、左下の操作トレイの上端より上に淡い帯を敷いて出す（以前は帯が無く街の上で読みにくく、iPhone では＋−に接した・V61）。
@@ -8360,7 +8360,7 @@ export async function mountTown3d(parent, opts = {}) {
   const flyHintHtml = () => { const sr = stage.getBoundingClientRect(); let bottom = Math.round(sr.height * 0.21)
     const pr = pad.getBoundingClientRect() // トレイの枠の上端（透明なボタンも場所を取る）より上に出す
     if (pr.height > 0) bottom = Math.max(bottom, Math.round(sr.bottom - pr.top + 16))
-    return `<div style="position:absolute;left:50%;bottom:${bottom}px;transform:translateX(-50%);width:max-content;max-width:92%;padding:8px 14px;border-radius:12px;background:rgba(18,14,22,0.42);${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">${kamo ? '川に沿ってデルタへ　飛び石と大文字山が見えてきます' : '高く昇れば雲海へ　海の向こうには、遠い季節の街が'}</span></div>` }
+    return `<div style="position:absolute;left:50%;bottom:${bottom}px;transform:translateX(-50%);width:max-content;max-width:92%;padding:8px 14px;border-radius:12px;background:rgba(18,14,22,0.42);${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">${kamo ? '川に沿って、デルタの飛び石の上へ' : '高く昇れば雲海へ　海の向こうには、遠い季節の街が'}</span></div>` }
   const showCtrlHint = (kind) => { ctrlHint.innerHTML = kind === 'fly' ? flyHintHtml() : walkHintHtml(); ctrlHint.style.opacity = '1'; ctrlHintT = 5 } // 5秒後にそっと消える
   const hideCtrlHint = () => { if (ctrlHintT > 0) { ctrlHintT = 0; ctrlHint.style.opacity = '0' } } // 触れたら即消える
   // 室内の薄暗がり（周辺減光）。巨大box-shadowブラーは毎フレームの合成が重い→静的なradial-gradientの
@@ -10080,7 +10080,7 @@ export async function mountTown3d(parent, opts = {}) {
           if (cloudSurfaceY(nx, nz) != null) { active.flyPos.x = nx; active.flyPos.z = nz }
           else { if (cloudSurfaceY(nx, active.flyPos.z) != null) active.flyPos.x = nx; if (cloudSurfaceY(active.flyPos.x, nz) != null) active.flyPos.z = nz } // 縁に沿って滑る
         } else tryWalk(active.flyPos, active.vel.x * dt, active.vel.z * dt) // 当たり判定つきで水平移動
-        const groundY = onCl ? (cloudSurfaceY(active.flyPos.x, active.flyPos.z) ?? active.flyPos.y - FLY.eye) : KN ? KN.groundAt(active.flyPos.x, active.flyPos.z, active.flyPos.y - FLY.eye) : heightAt(active.flyPos.x, active.flyPos.z)
+        const groundY = onCl ? (cloudSurfaceY(active.flyPos.x, active.flyPos.z) ?? active.flyPos.y - FLY.eye) : KN ? KN.groundAt(active.flyPos.x, active.flyPos.z, active.flyPos.y - FLY.eye - (active.jumpY || 0)) : heightAt(active.flyPos.x, active.flyPos.z)
         // ── ジャンプ（重力）。jumpY=地面からの高さ。接地中にジャンプ要求があれば発射。空中の連打は二段ジャンプにしない。──
         const grounded = (active.jumpY || 0) <= 0.001
         if (active.jumpQueued) { if (grounded && active.flyP > 0.6) { active.jumpVel = FLY.jumpForce; active.jumpY = 0.0001 } active.jumpQueued = false } // 要求は1フレームで消費（連打でも溜まらない＝確実に1回ずつ判定）

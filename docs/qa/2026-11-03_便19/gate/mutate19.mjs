@@ -16,6 +16,10 @@ const M = [
   { name: 'M8 水面の凹凸の図を前の 18 本に戻す', file: K, a: 'const OLD = /[?&]kamowave=0/.test(location.search)', b: 'const OLD = true', test: 'K15' },
   { name: 'M9 着地の抜けの線を 6m に下げる（路地に降りる）', file: V, a: 'return avg >= 15 && maxRise < 4.5', b: 'return avg >= 6 && maxRise < 4.5', test: 'K16' },
   { name: 'M10 部屋の窓の所を塞がない', file: K, a: 'setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce },', b: 'setRoomShown(b) { },', test: 'K17' },
+  { name: 'M12 別世界の空気（霧と色の膜）を鴨川でも掛ける', file: V, a: '    if (flyAmt > 0.02 && !kamo) { // 便19: 鴨川の町では別世界の空気', b: '    if (flyAmt > 0.02) { // 便19: 鴨川の町では別世界の空気', test: 'K18' },
+  { name: 'M13 iPhone の段でも歩く高さを 4m の網で読む', file: K, a: '  const navDec = low ? 2 : 1\n', b: '  const navDec = 1\n', test: 'K8' },
+  { name: 'M14 iPhone でも通常の段で開く', file: V, a: 'const KAMO_LOW = /[?&]kamoq=low/.test(location.search) ||', b: 'const KAMO_LOW = /[?&]kamoq=low/.test(location.search) || false &&', test: 'K8' },
+  { name: 'M15 水面の図を読む向きを回さない', file: K, a: "    if (!/[?&]kamowave=0/.test(location.search)) {\n      water.material.fragmentShader", b: "    if (false) {\n      water.material.fragmentShader", test: 'K15' },
   { name: 'M11 時代の粒子と霞の帯を鴨川でも出す', file: V, a: '    if (flyAmt > 0.02 && !kamo) { // 便19: 鴨川の町では時代の粒子', b: '    if (flyAmt > 0.02) { // 便19: 鴨川の町では時代の粒子', test: 'K18' },
 ]
 const out = []
