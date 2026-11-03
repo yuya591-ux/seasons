@@ -1,3 +1,4 @@
+※使わない数（便18 の外の目 18）: この回は町の3Dの描画の呼び出しの回数（__town3dFrame）や、間引いた後の描いたこまの数で数えた。出せるこま数の比べには fps-4.txt（同じこまを60回続けて描いた1こまの時間）だけを使う
 fps2-pc pc autumn-dusk-corner-room 組むまで 9998ms fps 94 {"kamo":{"calls":162,"tris":1321565,"removed":3,"low":false,"time":"dusk","sky":"cloudy","shadow":true,"exposure":0.41600000000000004,"parts":{"sky":12,"terrainNear":320000,"terrainFar":387200,"road
 fps2-ipad ipad autumn-dusk-corner-room 組むまで 10375ms fps 90 {"kamo":{"calls":161,"tris":1316445,"removed":3,"low":false,"time":"dusk","sky":"cloudy","shadow":true,"exposure":0.41600000000000004,"parts":{"sky":12,"terrainNear":320000,"terrainFar":387200,
 fps2-iphone iphone autumn-dusk-corner-room 組むまで 9439ms fps 96 {"kamo":{"calls":107,"tris":527553,"removed":3,"low":true,"time":"dusk","sky":"cloudy","shadow":false,"exposure":0.41600000000000004,"parts":{"sky":12,"terrainNear":80000,"terrainFar":96800,

@@ -1,3 +1,4 @@
+※使わない数（便18 の外の目 18）: この回は町の3Dの描画の呼び出しの回数（__town3dFrame）や、間引いた後の描いたこまの数で数えた。出せるこま数の比べには fps-4.txt（同じこまを60回続けて描いた1こまの時間）だけを使う
 fps-pc-kamo pc autumn-dusk-corner-room 組むまで 9742ms fps 88 {"kamo":{"calls":23,"tris":2832417,"removed":0,"low":false,"time":"dusk","sky":"cloudy","shadow":true,"exposure":0.41600000000000004},"pr":1,"q":"standard"} エラー無し
 
 fps-pc-old pc autumn-dusk-corner-room 組むまで 8636ms fps 245 {"kamo":null,"pr":1,"q":"standard"} エラー無し

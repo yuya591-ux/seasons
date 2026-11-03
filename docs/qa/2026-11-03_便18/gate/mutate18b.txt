@@ -1,0 +1,4 @@
+落ちた M4 鴨川の町が読めない時は前の角部屋で開く × K3 組めた false・鴨川 検証の口が無い（町の3Dが組めなかった）・エラー 2（Failed to load resource: net::ERR_FAILED） / 検査 1 本・外れ 1
+落ちた M8 iPhone の画面では軽い段で開く × K8 軽い段: iPhone false・PC false / 検査 1 本・外れ 1
+外し回し 8 通り・落ちた 8・戻した後の作業ツリーの差 "docs/qa/2026-11-03_\344\276\27718/build-log.txt" | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)

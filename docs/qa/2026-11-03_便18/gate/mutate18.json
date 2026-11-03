@@ -30,7 +30,10 @@
   "name": "M4 鴨川の町が読めない時は前の角部屋で開く",
   "file": "src/engine/town3dViewer.js",
   "caught": true,
-  "failed": []
+  "failed": [
+   "× K3 組めた false・鴨川 検証の口が無い（町の3Dが組めなかった）・エラー 2（Failed to load resource: net::ERR_FAILED）",
+   "検査 1 本・外れ 1"
+  ]
  },
  {
   "name": "M5 雨・雪の空は霞の色から作る（物理の空にしない）",
@@ -49,6 +52,15 @@
    "× K5 kitaterao-window-3d: 組めた true・鴨川 有り・飛べる false・エラー 0",
    "× K5 shishigaya-window-3d: 組めた true・鴨川 有り・飛べる false・エラー 0",
    "検査 2 本・外れ 2"
+  ]
+ },
+ {
+  "name": "M8 iPhone の画面では軽い段で開く",
+  "file": "src/engine/town3dViewer.js",
+  "caught": true,
+  "failed": [
+   "× K8 軽い段: iPhone false・PC false",
+   "検査 1 本・外れ 1"
   ]
  },
  {

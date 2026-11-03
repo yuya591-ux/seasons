@@ -20,8 +20,8 @@ dist/assets/FXAAShader-DBPwA37V.js             6.28 kB │ gzip:   1.72 kB
 dist/assets/UnrealBloomPass-BpGZ7xtC.js        9.39 kB │ gzip:   2.43 kB
 dist/assets/BufferGeometryUtils-DqgGtPdn.js   12.55 kB │ gzip:   3.92 kB
 dist/assets/kamoTown-Bg9MNpo0.js              41.91 kB │ gzip:  16.19 kB
-dist/assets/index-u3WvYfHG.js                163.33 kB │ gzip:  52.60 kB
-dist/assets/town3dViewer-C4bwuuE6.js         568.02 kB │ gzip: 182.43 kB
+dist/assets/index-Bc52HMdt.js                163.37 kB │ gzip:  52.63 kB
+dist/assets/town3dViewer-f0XGsBw3.js         568.02 kB │ gzip: 182.43 kB
 dist/assets/three.module-CbbBeXoY.js         722.73 kB │ gzip: 184.42 kB
 
-[32m✓ built in 516ms[39m
+[32m✓ built in 496ms[39m
