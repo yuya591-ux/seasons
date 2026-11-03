@@ -1,0 +1,4 @@
+mae-lean-down.png: 真っ黒の画素 3.442%
+ato-lean-down.png: 真っ黒の画素 0.278%
+mae-water-summer.png: 真っ黒の画素 3.605%
+ato-water-summer.png: 真っ黒の画素 0.034%

@@ -1,0 +1,18 @@
+[
+ {
+  "name": "M13 iPhone の段でも歩く高さを 4m の網で読む",
+  "test": "K8",
+  "caught": true,
+  "failed": [
+   "× K8 段／歩く高さの網の間引き: iPhone low/1（low/2）・PC normal/1（normal/1）"
+  ]
+ },
+ {
+  "name": "M15 水面の図を読む向きを回さない",
+  "test": "K15",
+  "caught": true,
+  "failed": [
+   "× K15 水面の凹凸の図の上位 20 本の波の力 25.4%（40% 以下で合格・前は 100%）・読む向きを回す差し替え false（true）・図を作った時間 245ms"
+  ]
+ }
+]
