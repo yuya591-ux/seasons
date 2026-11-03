@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import { assertCleanTree } from '../../../../../../.claude/skills/_shared/clean-tree.mjs'
-assertCleanTree()
+assertCleanTree(process.cwd(), ['src/engine/town3dViewer.js', 'src/engine/kamoTown.js', 'scripts/kamo/kensa.mjs']) // 外し回しで書き換えるファイルと検査の台本だけを見る（記録の書き出しは数えない）
 const V = 'src/engine/town3dViewer.js', K = 'src/engine/kamoTown.js'
 const M = [
   { name: 'M1 鴨川の飛ぶ・降りるを止めたまま（便18 の形）', file: V, a: '  if (kamo && !kamo.nav) active.flyEnabled = false', b: '  if (kamo) active.flyEnabled = false', test: 'K2' },
