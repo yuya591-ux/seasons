@@ -1,0 +1,4 @@
+"litBy":[75,103,63,79,53,108],"t":132.8
+撮った docs/qa/2026-11-04_便20/shots/g4-torii.png
+撮った docs/qa/2026-11-04_便20/shots/g4-hidari.png
+エラー 0  注意 

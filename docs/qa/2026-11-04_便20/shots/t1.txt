@@ -1,0 +1,4 @@
+"train":{"mode":"dwell","s0":6,"v":0.38,"track":1,"wait":55.4,"shown":true}
+撮った docs/qa/2026-11-04_便20/shots/t1-sta.png
+撮った docs/qa/2026-11-04_便20/shots/t1-sta-b.png
+エラー 0  注意 
