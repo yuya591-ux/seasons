@@ -8,14 +8,17 @@
 //   K5 角部屋でない情景（北寺尾・谷戸）は鴨川の町を組まない（エラー無し）
 //   K6 鴨川の角部屋の町の3Dの舞台は、部屋と降る物だけを描く（北寺尾の町を描かない＝描く呼び出し 600 未満）
 //   K7 雪の夕の空は曇天の灰（乗り出して見上げた空の明るさが 0.25 以上・物理の空だと空の上が黒くなった）
+//   K8 iPhone の画面（402×874・指で触る）では軽い段で開き、PC の画面では通常の段で開く
+// 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
 import { chromium } from 'playwright'
 const PORT = process.env.PORT || 4961, BASE = `http://localhost:${PORT}/seasons/`
 const want = new Set(process.argv.slice(2))
 const run = (k) => !want.size || want.has(k)
 const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu'] })
 const results = []
-async function open(scene, { q = '', block = false, view = null, win = null } = {}) {
-  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' }) // service worker を止める（止めないと読み込みの網を通らずに取りに行く＝K3 が測れない）
+const kamoInfo = (p) => p.evaluate(() => (window.__town3dKamo ? window.__town3dKamo() : 'no-hook'))
+async function open(scene, { q = '', block = false, view = null, win = null, dev = null } = {}) {
+  const ctx = await b.newContext({ ...(dev || { viewport: { width: 1280, height: 720 } }), serviceWorkers: 'block' }) // service worker を止める（止めないと読み込みの網を通らずに取りに行く＝K3 が測れない）
   const p = await ctx.newPage()
   const errs = [], gl = []
   p.on('pageerror', (e) => errs.push('PE ' + e.message))
@@ -44,8 +47,8 @@ if (run('K1') || run('K2') || run('K6')) {
 }
 if (run('K3')) {
   const o = await open('autumn-dusk-corner-room', { block: true })
-  const k = await o.p.evaluate(() => window.__town3dKamo())
-  check('K3', o.ok && !k && !o.errs.filter((e) => !/kamo\/|Failed to load resource/.test(e)).length, `組めた ${o.ok}・鴨川 ${k ? '有り' : '無し'}・エラー ${o.errs.length}${o.errs.length ? '（' + o.errs[0] + '）' : ''}`)
+  const k = await kamoInfo(o.p)
+  check('K3', o.ok && !k && !o.errs.filter((e) => !/kamo\/|Failed to load resource/.test(e)).length, `組めた ${o.ok}・鴨川 ${k === 'no-hook' ? '検証の口が無い（町の3Dが組めなかった）' : k ? '有り' : '無し'}・エラー ${o.errs.length}${o.errs.length ? '（' + o.errs[0] + '）' : ''}`)
   await o.ctx.close()
 }
 if (run('K4')) {
@@ -69,6 +72,13 @@ if (run('K7')) {
   const lum = await o.p.evaluate(async (b64) => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; return s / (d.length / 4) }, png.toString('base64'))
   check('K7', lum >= 0.25, `雪の夕の見上げた空の明るさ ${lum.toFixed(3)}（0.25 以上で合格）`)
   await o.ctx.close()
+}
+if (run('K8')) {
+  const r = {}
+  for (const [name, dev] of [['iphone', { viewport: { width: 402, height: 874 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }], ['pc', { viewport: { width: 1280, height: 720 } }]]) {
+    const o = await open('autumn-dusk-corner-room', { dev }); const k = await kamoInfo(o.p); r[name] = k && k !== 'no-hook' ? k.low : null; await o.ctx.close()
+  }
+  check('K8', r.iphone === true && r.pc === false, `軽い段: iPhone ${r.iphone}・PC ${r.pc}`)
 }
 await b.close()
 const bad = results.filter((r) => !r.pass)

@@ -14,10 +14,15 @@ const M = [
   { name: 'M4 鴨川の町が読めない時は前の角部屋で開く', file: 'src/engine/town3dViewer.js', from: "      .catch((e) => { console.warn('鴨川の町を読めなかったので、前の角部屋で開きます:', e && e.message); return null })\n", to: '', test: ['node', 'scripts/kamo/kensa.mjs', 'K3'] },
   { name: 'M5 雨・雪の空は霞の色から作る（物理の空にしない）', file: 'src/engine/kamoTown.js', from: '  const DOME = RAIN || SNOW || NIGHT', to: '  const DOME = NIGHT', test: ['node', 'scripts/kamo/kensa.mjs', 'K7'] },
   { name: 'M6 鴨川の町は角部屋の時だけ', file: 'src/engine/town3dViewer.js', from: "  const KAMO_WANT = kind === 'corner' && !", to: "  const KAMO_WANT = !", test: ['node', 'scripts/kamo/kensa.mjs', 'K5'] },
+  { name: 'M8 iPhone の画面では軽い段で開く', file: 'src/engine/town3dViewer.js', from: "  const KAMO_LOW = /[?&]kamoq=low/.test(location.search) || (", to: "  const KAMO_LOW = /[?&]kamoq=low/.test(location.search) && (", test: ['node', 'scripts/kamo/kensa.mjs', 'K8'] },
   { name: 'M7 出典: public/kamo の全ファイルが CREDITS.md にある', file: 'CREDITS.md', from: '`public/kamo/terrain.bin`', to: '`public/kamo/terrain`', test: ['node', 'scripts/qa-credits.mjs'], noBuild: true },
 ]
+// 名前の頭（M1 など）を渡すと、その外し回しだけを回し、記録の同じ名前の行を差し替える
+const only = process.argv.slice(2)
+const prev = only.length && fs.existsSync('docs/qa/2026-11-03_便18/gate/mutate18.json') ? JSON.parse(fs.readFileSync('docs/qa/2026-11-03_便18/gate/mutate18.json', 'utf8')) : []
 const out = []
 for (const m of M) {
+  if (only.length && !only.some((o) => m.name.startsWith(o + ' '))) { const p = prev.find((x) => x.name === m.name); if (p) out.push(p); continue }
   assertCleanTree(process.cwd(), [m.file]) // 書き換えるファイルに変更が無いこと（戻す手 git checkout で直しが消えないように）
   const src = fs.readFileSync(m.file, 'utf8'), crlf = src.includes('\r\n')
   const from = crlf ? m.from.replace(/\n/g, '\r\n') : m.from, to = crlf ? m.to.replace(/\n/g, '\r\n') : m.to

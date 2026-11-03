@@ -35,3 +35,11 @@ Commons Attribution (CC BY) licenses. Those works, and any direct adaptations of
 them, remain under their respective CC licenses, with attribution provided in
 CREDITS.md and in the in-app credits screen. Public-domain / CC0 assets carry no
 restrictions. See CREDITS.md for the authoritative, per-asset record.
+
+Map data for the Kamo River view (public/kamo/) is derived from third-party open
+data and is NOT covered by the MIT license: the river, road, tree and water-level
+data derived from OpenStreetMap (public/kamo/roads.bin, misc.bin, terrain.bin,
+kamo.json) is made available under the Open Database License (ODbL) 1.0
+(© OpenStreetMap contributors); terrain heights are processed from GSI Japan
+elevation tiles (Geospatial Information Authority of Japan terms of use); building
+shapes are processed from Project PLATEAU (MLIT, CC BY 4.0 compatible).

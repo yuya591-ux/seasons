@@ -29,8 +29,8 @@ export const CREDIT_IMAGES = [
 // 角部屋の窓の外の鴨川の町（便18）。地図のデータは加工して経緯度を外した形で同梱。出典の正本は CREDITS.md（scripts/qa-credits.mjs が照らす）
 export const CREDIT_MAPS = [
   { title: '地理院タイル（標高タイル）を加工して作成', by: '国土地理院', license: '国土地理院コンテンツ利用規約', url: 'https://maps.gsi.go.jp/development/ichiran.html', note: '地形と山' },
-  { title: '京都市 建築物モデル LOD2（加工して作成）', by: '国土交通省 Project PLATEAU', license: 'CC BY 4.0 互換', url: 'https://www.mlit.go.jp/plateau/', note: '建物の形と高さ' },
-  { title: '川・道・橋・木・飛び石', by: '© OpenStreetMap contributors', license: 'ODbL 1.0', url: 'https://www.openstreetmap.org/copyright', note: '川と道' },
+  { title: '3D都市モデル（Project PLATEAU）京都市（2025年度）建築物モデル LOD2 を加工して作成', by: '国土交通省', license: 'CC BY 4.0 互換', url: 'https://www.mlit.go.jp/plateau/', note: '建物の形と高さ' },
+  { title: '川・水面・道・橋・木・飛び石', by: '© OpenStreetMap contributors', license: 'ODbL 1.0', url: 'https://www.openstreetmap.org/copyright', note: '川と道' },
   { title: '地面・道・壁・屋根・木の皮の写真の質感（7 種）', by: 'Poly Haven', license: 'CC0', url: 'https://polyhaven.com/license', note: '質感' },
 ]
 
