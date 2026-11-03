@@ -1,0 +1,2 @@
+{"file":"docs/qa/2026-11-03_本番5/01_公開_pc_角部屋_窓をあけた.png","scene":"autumn-dusk-corner-room","view":"open","gpu":"ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)","middleBand":{"mean":62.4,"std":38},"errs":[]}
+{"file":"docs/qa/2026-11-03_本番5/02_公開_iphone_角部屋_窓をあけた.png","scene":"autumn-dusk-corner-room","view":"open","gpu":"ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)","middleBand":{"mean":46.5,"std":26},"errs":[]}
