@@ -45,4 +45,4 @@
 
 ## 便の回し方（2026-10-12 追加）
 - 便の回し方は `~/.claude/skills/_shared/bin-kata.md`。裁定記録は `docs/qa/裁定記録.md`、診断と検収の設定は `.claude/shindan/config.md`
-- push は裕也さんが `! git push origin main` の1行で打つ（Claude Code は push しない）。main への push で GitHub Pages へ自動で出る
+- ~~push は裕也さんが `! git push origin main` の1行で打つ（Claude Code は push しない）。~~【2026-11-03】本番の問いに裕也さんが「はい」（または `/qa-gate seasons 本番`）と答えた直後に限り、Claude Code が `git push origin main` を打つ（強制の push・ほかの枝・ほかの行き先は打たない。見張り `_ops/tools/bin-guard.mjs` が同じ形だけを通す）。根拠: 裁定記録 49行（2026-10-13）と 2026-11-03 の裕也さんの言葉（出先のリモートでは push の1行を打てない）。main への push で GitHub Pages へ自動で出る
