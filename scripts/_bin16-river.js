@@ -55,6 +55,7 @@ const TIME = {
   dusk: { el: 4.5, az: 236, turb: 5.5, ray: 1.3, exp: 0.4, sun: 0xffa66a, sunI: 2.0, hemi: [0xa8a8c8, 0x403028, 0.45], fog: 0xc6b2a6, fogD: 0.0009, lit: 0.2 },
   night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232, fogD: 0.0012, lit: 0.85 },
 }[T]
+if (Q.has('saz')) TIME.az = +Q.get('saz') // 便17 の比べ: 太陽の向き（three の向きの角度）を目に合わせて渡す
 if (W === 'rain') { TIME.turb = 14; TIME.fogD *= 1.9; TIME.sunI *= 0.25; TIME.fog = new THREE.Color(TIME.fog).lerp(new THREE.Color(0x8a9096), 0.6).getHex() }
 const LEAF = { spring: [0xe8b8c8, 0x7fa05c], summer: [0x3f6a34, 0x5a8040], autumn: [0xb8622e, 0x6e7a3a], winter: [0x4a5a44, 0x55604a] }[S]
 const GRASS = { spring: 0x6f8f4a, summer: 0x557a34, autumn: 0x8a8048, winter: W === 'snow' ? 0xe8ecf0 : 0x8a8466 }[S]
@@ -464,6 +465,9 @@ const eye = new THREE.Vector3(camX - (Q.has('eh') ? 70 : 0), +(Q.get('eh') || 54
 const tgt0 = new THREE.Vector3(RIVER.cx(-260) - (V === 'B' ? 40 : 20), 4, -260)
 if (Q.get('cam') === 'shop') { eye.set(stX + 150, 34, stZ + 200); tgt0.set(stX + 110, 10, stZ - 20) }
 if (Q.get('cam') === 'street') { eye.set(stX - 40, groundH(stX - 40, stZ + 125) + 1.6, stZ + 125); tgt0.set(stX - 40, groundH(stX - 40, stZ) + 2.6, stZ - 60) }
+// 便17 の比べの目（窓・土手・歩く）。②③の高さ（窓は地面から約22m・土手と歩くは目の高さ 1.6m）にそろえる。向きは既定と同じ下流
+if (Q.get('cam') === 'window') eye.set(camX, TOWN_H + 22, camZ)
+if (Q.get('cam') === 'bank' || Q.get('cam') === 'walk') { const z0 = camZ - 60, e = RIVER.cx(z0) + RIVER.hw(z0), x0 = Q.get('cam') === 'bank' ? e + BANK + LEVEE + TOP * 0.5 : e + 12; eye.set(x0, groundH(x0, z0) + 1.6, z0) }
 camera.position.copy(eye)
 function aim() { const dir = tgt0.clone().sub(eye).normalize(); const yaw0 = Math.atan2(dir.x, -dir.z), pitch0 = Math.asin(dir.y)
   const y = yaw0 + look.yaw, p = pitch0 + look.pitch; camera.lookAt(eye.x + Math.sin(y) * Math.cos(p), eye.y + Math.sin(p), eye.z - Math.cos(y) * Math.cos(p)) }

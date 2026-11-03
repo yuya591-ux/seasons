@@ -1,0 +1,6 @@
+pc window fps 16 呼び 9833 三角 9.5M ／ fps 71 呼び 75 三角 16.3M ／ fps 129 呼び 36 三角 8.2M
+pc bank fps 40 呼び 5149 三角 9.5M ／ fps 76 呼び 75 三角 16.3M ／ fps 145 呼び 36 三角 8.2M
+pc walk fps 36 呼び 5645 三角 9.5M ／ fps 77 呼び 75 三角 16.3M ／ fps 149 呼び 36 三角 8.2M
+ipad window fps 43 呼び 4857 三角 9.5M ／ fps 56 呼び 75 三角 16.3M ／ fps 105 呼び 36 三角 8.2M
+ipad bank fps 74 呼び 3545 三角 9.5M ／ fps 53 呼び 75 三角 16.3M ／ fps 120 呼び 36 三角 8.2M
+ipad walk fps 71 呼び 3547 三角 9.5M ／ fps 61 呼び 75 三角 16.3M ／ fps 123 呼び 36 三角 8.2M
