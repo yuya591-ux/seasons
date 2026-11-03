@@ -80,11 +80,30 @@ console.log(`舞台の数: ${ids.length} 情景で外れ ${stageBad}`)
 // 便15 S28: 情景パネル経由の本物の操作（場所→その場所の先頭の情景）で、町→雨の窓→町と替え、画面の部品（窓をあけるボタン・強さの行）が情景に合う
 {
   curId = '情景パネル'
+  // 本番5: SMOKE_CPU=<倍> で処理を遅くする（GitHub の遅い機械で落ちた点検を、手元で同じ遅さにして確かめる。既定は遅くしない）
+  if (process.env.SMOKE_CPU) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: +process.env.SMOKE_CPU }) }
+  // 本番5: 遅い機械では、指の動きを送ってもボタンが出きる前に押しに行き、町の画面に取られて時間切れになった（GitHub Actions bfbb3a3）。
+  // 指の動きを送ってボタンが出た（body に idle が無い）のを待ち、出きる移ろいを待ってから押す。押せなければ指の動きから送り直す
+  const wakeClick = async (loc) => {
+    for (let k = 0; k < 6; k++) {
+      await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true })))
+      await page.waitForFunction(() => !document.body.classList.contains('idle'), null, { timeout: 5000 }).catch(() => {})
+      await page.waitForTimeout(1300)
+      // 押し終わるまで 0.4 秒ごとに指の動きを送り続ける（遅い機械では、押す前の止まりの確かめが「3.5 秒で隠す」を超え、押す前にまた隠れた＝手元で 6 倍遅くして再現）
+      await page.evaluate(() => { clearInterval(window.__smokePoke); window.__smokePoke = setInterval(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true })), 400) })
+      try { await loc.click({ timeout: 8000 }); await page.evaluate(() => clearInterval(window.__smokePoke)); return } catch (e) {
+        await page.evaluate(() => clearInterval(window.__smokePoke)).catch(() => {})
+        // 押せなかった時のその場の様子（ボタンが隠れた状態か・ボタンの真ん中に何がかぶっているか）を記録へ出す＝GitHub で落ちた時に原因を突き止める
+        const why = await loc.evaluate((el) => { const r = el.getBoundingClientRect(), top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return { idle: document.body.classList.contains('idle'), body: document.body.className, rect: [r.x, r.y, r.width, r.height].map(Math.round), top: top ? top.tagName + '.' + top.className : null, op: getComputedStyle(el.closest('.topbar') || el).opacity } }).catch((x) => String(x))
+        console.log('情景パネルで押せなかった（' + (k + 1) + '回目）: ' + JSON.stringify(why))
+        if (k === 5) throw e
+      }
+    }
+  }
   const pickPlace = async (place) => {
-    await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointermove', { bubbles: true })))
-    await page.locator('.topbar .iconbtn', { hasText: '情景' }).first().click(); await page.waitForTimeout(600)
-    await page.locator('.panel--open .scene-card', { hasText: place }).first().click(); await page.waitForTimeout(600)
-    await page.locator('.panel--open .scene-card').first().click(); await page.waitForTimeout(1800)
+    await wakeClick(page.locator('.topbar .iconbtn', { hasText: '情景' }).first()); await page.waitForTimeout(600)
+    await wakeClick(page.locator('.panel--open .scene-card', { hasText: place }).first()); await page.waitForTimeout(600)
+    await wakeClick(page.locator('.panel--open .scene-card').first()); await page.waitForTimeout(1800)
   }
   const state = () => page.evaluate(() => { const st = document.querySelector('.iconbtn--stage'); const row = [...document.querySelectorAll('.panel--set .setrow')].find((r) => r.querySelector('input[type=range]') && !/音|明るさ/.test(r.querySelector('.setrow__label')?.textContent || '')); return { stage: !!st && getComputedStyle(st).display !== 'none', inten: !!row && row.style.display !== 'none' } })
   await pickPlace('雨の窓'); await page.waitForTimeout(2000)
