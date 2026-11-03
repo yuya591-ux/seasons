@@ -160,10 +160,13 @@ void main() { float h = normalize(vD).y; gl_FragColor = vec4(mix(uHor, uTop, smo
     reflectedLight.indirectSpecular *= computeSpecularOcclusion( dotNV, min( ambientOcclusion, 1.0 ), material.roughness );
   #endif
 #endif`
-  function useBake(mat, tex) {
+  // fill＝建物の図: 図の上で1画素に満たない小さな面は焼いた値が 0 のまま残り、真っ黒に写った（便19 の調べ＝壁の面積の 6.5% が 0・その 98.7% が 2 画素未満の島）。
+  //   本物の暗がり（路地・軒下）は 0.1 より上に焼けているので、0.04 より下だけを「焼けていない所」として並みの明るさ 0.55 で埋める（gate/probe-lm-mae.txt）
+  function useBake(mat, tex, { fill = false } = {}) {
     mat.aoMap = tex; mat.aoMapIntensity = 1
-    mat.onBeforeCompile = chain(mat.onBeforeCompile, (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <aomap_fragment>', AOFRAG) })
-    addKey(mat, 'bake')
+    const frag = fill ? AOFRAG.replace('float ambientOcclusion = clamp( texture2D( aoMap, vAoMapUv ).r * 1.25, 0.0, 1.25 );', 'float lmRaw = texture2D( aoMap, vAoMapUv ).r; float ambientOcclusion = clamp( ( lmRaw < 0.04 ? 0.55 : lmRaw ) * 1.25, 0.0, 1.25 );') : AOFRAG
+    mat.onBeforeCompile = chain(mat.onBeforeCompile, (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <aomap_fragment>', frag) })
+    addKey(mat, fill ? 'bakeF' : 'bake')
   }
 
   // 写真から作った CC0 の質感の素材。色は頂点の色を保ち、写真の模様だけを足す（便16 の見本と同じ考え）
@@ -294,12 +297,14 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     }
   }
 
+  const navSrc = {} // 便19: 飛ぶ・歩くの道案内（下の makeNav）が使う、建物と橋の形
   // ── 道・小道・橋・線路（地形の焼いた光をそのまま使う） ──
   {
     const sec = meta.files.roads.secs, ps = meta.roads.pStep
     const p16 = view(data.buf.roads, sec.pos), idx = view(data.buf.roads, sec.idx), kind = view(data.buf.roads, sec.kind)
     const P = new Array(p16.length); for (let i = 0; i < p16.length; i++) P[i] = p16[i] * ps
     const I = Array.from(idx), K = Array.from(kind), pos = P.slice()
+    navSrc.roads = { pos, idx, kind }
     for (let t = 0; t < idx.length; t += 6) { // 橋の床の両側に、下へ 1.5m の桁を足す
       const a = idx[t]; if (kind[a] !== 2) continue
       for (const [e0, e1] of [[a, a + 2], [a + 1, a + 3]]) { const b = P.length / 3; P.push(pos[e0 * 3], pos[e0 * 3 + 1], pos[e0 * 3 + 2], pos[e1 * 3], pos[e1 * 3 + 1], pos[e1 * 3 + 2], pos[e0 * 3], pos[e0 * 3 + 1] - 1.5, pos[e0 * 3 + 2], pos[e1 * 3], pos[e1 * 3 + 1] - 1.5, pos[e1 * 3 + 2]); K.push(4, 4, 4, 4); I.push(b, b + 2, b + 1, b + 1, b + 2, b + 3) }
@@ -316,15 +321,24 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   }
 
   // ── 川の水面（OpenStreetMap の水面の形・映り込みは three の Water） ──
+  // 便19: 前は整数の周波数の波 18 本だけで作り、波どうしの干渉が四角い格子に見えた（便18 の範囲外・夏の朝・雪の夕）。
+  //   向きも長さもばらばらな波 140 本（周期 4〜48 に1つ）を、長い波ほど高く重ねる（傾きの強さは前と同じ 0.15 前後・上位 20 本の波に入る力は前 100% → 25%）。乱数は町の R と分ける（R の回る数を変えると、後で組む木の形が変わる）。
+  //   kamowave=0 は外し回し用（前の 18 本の作り）
   function waterNormals(n = 256) {
-    const waves = []; for (let k = 0; k < 18; k++) waves.push([Math.round((R() - 0.5) * 2 * (2 + k)), Math.round((R() - 0.5) * 2 * (2 + k)), R() * 6.283, 1 / (1 + k * 0.6)])
+    const OLD = /[?&]kamowave=0/.test(location.search)
+    let ws = 777; const RW = () => { ws = (ws * 1664525 + 1013904223) >>> 0; return ws / 4294967296 }
+    const waves = []
+    if (OLD) for (let k = 0; k < 18; k++) waves.push([Math.round((R() - 0.5) * 2 * (2 + k)), Math.round((R() - 0.5) * 2 * (2 + k)), R() * 6.283, 1 / (1 + k * 0.6)])
+    else while (waves.length < 140) { const fx = Math.round((RW() - 0.5) * 96), fy = Math.round((RW() - 0.5) * 96), f = Math.hypot(fx, fy); if (f < 4 || f > 48) continue; waves.push([fx, fy, RW() * 6.283, Math.pow(f, -1.35) * 1.8]) }
+    if (!OLD) for (let k = 0; k < 18; k++) { R(); R(); R() } // 町の R の回る数は前のまま（後で組む木の形と色を変えない）
+    { const pw = waves.map(([fx, fy, , a]) => (a * Math.hypot(fx, fy)) ** 2).sort((x, y) => y - x), tot = pw.reduce((x, y) => x + y, 0); waveTop20 = +(pw.slice(0, 20).reduce((x, y) => x + y, 0) / tot * 100).toFixed(1) } // 上位 20 本の波に入る傾きの力の割合（格子の出やすさ・検査 K15）
     const H = new Float32Array(n * n)
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { let h = 0; for (const [fx, fy, ph, a] of waves) h += a * Math.sin(6.2832 * (fx * i + fy * j) / n + ph); H[j * n + i] = h }
     const d = new Uint8Array(n * n * 4), v = new THREE.Vector3()
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const hx = H[j * n + (i + 1) % n] - H[j * n + (i - 1 + n) % n], hy = H[((j + 1) % n) * n + i] - H[((j - 1 + n) % n) * n + i]; v.set(-hx * 0.9, -hy * 0.9, 1).normalize(); d.set([(v.x * 0.5 + 0.5) * 255, (v.y * 0.5 + 0.5) * 255, (v.z * 0.5 + 0.5) * 255, 255], (j * n + i) * 4) }
     const t = new THREE.DataTexture(d, n, n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; return keep(t)
   }
-  let water
+  let water, waveTop20 = null
   {
     const sec = meta.files.misc.secs, wp = view(data.buf.misc, sec.wpos), wi = view(data.buf.misc, sec.widx), nv = meta.water.nv
     const lp = new Float32Array(nv * 3); for (let i = 0; i < nv; i++) { lp[i * 3] = wp[i * 3]; lp[i * 3 + 1] = -wp[i * 3 + 2]; lp[i * 3 + 2] = wp[i * 3 + 1] - WY } // 水面の板の中の座標（回して y=WY に置く）
@@ -332,6 +346,18 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     const tw = low ? 512 : 1024
     water = new Water(g, { textureWidth: tw, textureHeight: tw, waterNormals: waterNormals(), sunDirection: sunDir.clone(), sunColor: NIGHT ? 0x445066 : RAIN || SNOW ? 0x8a929c : T.sun, waterColor: SNOW ? 0x223238 : RAIN ? 0x262f30 : 0x2a3b38, distortionScale: RAIN ? 3.2 : 2.2, fog: true, alpha: 1 })
     water.material.side = THREE.DoubleSide
+    // 便19: 凹凸の図の4つの重ねを、向きと大きさを変えて読む（前は 1/103 と 1/107 の2つが同じ向きで重なり、格子のうなりが出た）
+    if (!/[?&]kamowave=0/.test(location.search)) {
+      water.material.fragmentShader = water.material.fragmentShader.replace(/vec4 getNoise\( vec2 uv \) \{[\s\S]*?return noise \* 0\.5 - 1\.0;\s*\}/, `vec4 getNoise( vec2 uv ) {
+					vec2 uv0 = mat2( 0.8253, -0.5646, 0.5646, 0.8253 ) * uv / 61.0 + vec2( time / 17.0, time / 29.0 );
+					vec2 uv1 = mat2( -0.4161, -0.9093, 0.9093, -0.4161 ) * uv / 37.0 - vec2( time / -19.0, time / 31.0 );
+					vec2 uv2 = mat2( 0.2675, 0.9636, -0.9636, 0.2675 ) * uv / 113.0 + vec2( time / 101.0, time / 97.0 );
+					vec2 uv3 = mat2( -0.9900, 0.1411, -0.1411, -0.9900 ) * uv / 19.0 - vec2( time / 109.0, time / -113.0 );
+					vec4 noise = texture2D( normalSampler, uv0 ) * 1.1 + texture2D( normalSampler, uv1 ) + texture2D( normalSampler, uv2 ) * 1.2 + texture2D( normalSampler, uv3 ) * 0.7;
+					return noise * 0.5 - 1.0;
+				}`)
+      water.material.needsUpdate = true
+    }
     water.rotation.x = -Math.PI / 2; water.position.y = WY; water.material.uniforms.size.value = 2.2
     keep(water.material); water.userData.part = 'water'; scene.add(water)
   }
@@ -341,6 +367,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   //   部屋のあるマンションの外壁（窓の下と横・屋上）を足し、その中に入る PLATEAU の建物は描かない（重なる面のちらつきも出さない）
   const fromKamo = toKamo.clone().invert()
   const removed = []
+  let plug = null // 便19: 部屋の窓の所を塞ぐ壁（部屋が隠れている間だけ出す）
   // 部屋の原点（町の3Dの座標）と、部屋の箱の部屋の座標（窓の中心が原点・正面 -z・左 -x）での広がり
   const roomO = new THREE.Vector3().setFromMatrixPosition(fromKamo.clone().multiply(new THREE.Matrix4().makeTranslation(meta.view.x - 0.6, meta.view.y - 1.5, meta.view.z)))
   const rb = { x0: roomBox.min.x - roomO.x, x1: roomBox.max.x - roomO.x, y0: roomBox.min.y - roomO.y, y1: roomBox.max.y - roomO.y, z0: roomBox.min.z - roomO.z, z1: roomBox.max.z - roomO.z }
@@ -357,6 +384,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     for (let i = 0; i < nv; i++) { const b = bidA[i]; let e = bb.get(b); if (!e) { e = new THREE.Box3(); bb.set(b, e) } e.expandByPoint(new THREE.Vector3(p16[i * 3] * ps, p16[i * 3 + 1] * ps, p16[i * 3 + 2] * ps)) }
     const drop = new Set(); for (const [b, e] of bb) if (e.intersectsBox(hostK)) drop.add(b)
     for (const b of drop) removed.push(b)
+    navSrc.bldg = { p16, bidA, drop, ps, nv }
     const WALL = [0xddd6c8, 0xcfc6b4, 0xe8e4da, 0xbcae98, 0xc8ccd0, 0xd4c8b0, 0x9a8a78, 0xa8b0b4, 0xe2d8c0, 0x8a7a6a, 0xc4b8a0, 0xb8b4a8]
     const ROOF = [0x4a4f57, 0x5a6878, 0x4e463e, 0x6a5444, 0x3e444c, 0x7a6a5a, 0x2e3238]
     const KINDS = ['wallP', 'wallC', 'roofT', 'roofF'], CELL = 400
@@ -364,7 +392,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     for (const k of KINDS) {
       const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: k === 'roofT' ? (RAIN ? 0.45 : 0.7) : 0.88, metalness: 0, side: THREE.DoubleSide }))
       if (k.startsWith('wall')) useWindows(m, k === 'wallC')
-      useBake(m, data.lm.bldg)
+      useBake(m, data.lm.bldg, { fill: !/[?&]kamofill=0/.test(location.search) }) // kamofill=0 は外し回し用（埋めを外す）
       useTex(m, { roofT: { a: 'grey_roof_tiles', tile: 3, mode: 'xz' }, roofF: { a: 'concrete_wall_004', tile: 6, mode: 'xz', ns: 0.4 }, wallP: { a: 'grey_plaster_02', tile: 3, mode: 'tri', ns: 0.5 }, wallC: { a: 'concrete_wall_004', tile: 4, mode: 'tri', ns: 0.5 } }[k])
       mats[k] = m
     }
@@ -411,6 +439,12 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     useWindows(m, true)
     useTex(m, { a: 'concrete_wall_004', tile: 4, mode: 'tri', ns: 0.5 })
     const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'home'; scene.add(mesh)
+    // 便19: 部屋の窓の所の空き（正面と左）を塞ぐ壁。部屋は空・地上で隠れる（町の3Dの作り）ので、外から見るとその所が穴になる。部屋が隠れている間だけ出す（setRoomShown）
+    const PP = [], addP = (a, b, c, d) => { for (const v of [a, b, c, a, c, d]) { const k = toK(...v); PP.push(k.x, k.y, k.z) } }
+    addP([x0, ry0, z0], [rx1, ry0, z0], [rx1, y1, z0], [x0, y1, z0]) // 正面の窓の所
+    addP([x0, ry0, rz1], [x0, ry0, z0], [x0, y1, z0], [x0, y1, rz1]) // 左の窓の所
+    const gp = keep(new THREE.BufferGeometry()); gp.setAttribute('position', new THREE.Float32BufferAttribute(PP, 3)); gp.computeVertexNormals()
+    plug = new THREE.Mesh(gp, m); plug.castShadow = false; plug.receiveShadow = true; plug.userData.part = 'home'; plug.visible = false; scene.add(plug)
   }
 
   // ── 木（OpenStreetMap の森・公園・木の点と、川岸の並木）。樹冠は「葉の小片＋奥の暗い芯＋幹・風で揺れる」 ──
@@ -510,6 +544,105 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     sunL.target.updateMatrixWorld(); sunL.updateMatrixWorld()
   }
 
+  // ── 便19: 飛ぶ・歩くの道案内。町の3Dの飛ぶ・歩くの仕組み（地面の高さ・当たり・水際・着地）に、鴨川の地形の網・建物・川・木・橋を渡す ──
+  //   問いも答えも町の3Dの座標（toKamo は y 軸の回りの回転と移動だけなので、高さは足し引きだけ）。
+  //   建物・木・橋の高さの表（2m 四方）は最初に聞かれた時に作る＝窓辺だけで眺める時は作らない
+  const navM = toKamo.elements, invM = fromKamo.elements, dY = navM[13]
+  const KX = (x, z) => navM[0] * x + navM[8] * z + navM[12], KZ = (x, z) => navM[2] * x + navM[10] * z + navM[14]
+  const TX = (X, Z) => invM[0] * X + invM[8] * Z + invM[12], TZ = (X, Z) => invM[2] * X + invM[10] * Z + invM[14]
+  const nN = meta.near.n, nS = meta.near.step, nQ = meta.near.hStep
+  const gridAt = (X, Z, f) => { // 近くの地形の網を4点で混ぜて読む（網の外は端の値）
+    const u = Math.min(nN - 1.001, Math.max(0, (X + NR) / nS)), v = Math.min(nN - 1.001, Math.max(0, (Z + NR) / nS)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nN + i
+    return (f(k) * (1 - fu) + f(k + 1) * fu) * (1 - fv) + (f(k + nN) * (1 - fu) + f(k + nN + 1) * fu) * fv
+  }
+  const terrK = (X, Z) => gridAt(X, Z, (k) => terrain[k] * nQ) // 地面の高さ（鴨川の座標・水面の下は川底）
+  const wetK = (X, Z) => gridAt(X, Z, (k) => (zone[k] === 2 ? 1 : 0)) // 水面の度合い（0.5 以上を水とする）
+  const zoneK = (X, Z) => zone[Math.round(Math.min(nN - 1, Math.max(0, (Z + NR) / nS))) * nN + Math.round(Math.min(nN - 1, Math.max(0, (X + NR) / nS)))]
+  const floorK = (X, Z) => terrK(X, Z) + Math.min(1, wetK(X, Z) * 2) * 0.6 // 目の下限の元（水の上は水面＝川底の 0.6m 上・build.mjs）
+  const EDGE = NR - 40 // 近くの地形の網の縁から 40m 内側まで（網の縁は遠くの網との継ぎ目）
+  const GC = 2, GN = Math.ceil((2 * NR) / GC)
+  let G = null
+  function ensureNav() {
+    if (G) return G
+    const t0 = performance.now()
+    const top = new Float32Array(GN * GN).fill(-1e9), bld = new Uint8Array(GN * GN), deck = new Float32Array(GN * GN).fill(NaN)
+    const ci = (X) => Math.floor((X + NR) / GC)
+    // 三角形を真上から見て、覆う升に fn(升, その所の高さ, 三角形の一番高い所) を渡す（壁のように真上から線に潰れる面は、頂点の升だけ）
+    const tri = (ax, ay, az, bx, by, bz, cx, cy, cz, fn) => {
+      const yMax = Math.max(ay, by, cy)
+      for (const [vx, vy, vz] of [[ax, ay, az], [bx, by, bz], [cx, cy, cz]]) { const i = ci(vx), j = ci(vz); if (i >= 0 && j >= 0 && i < GN && j < GN) fn(j * GN + i, vy, yMax) }
+      const den = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(den) < 1e-6) return
+      const i0 = Math.max(0, ci(Math.min(ax, bx, cx))), i1 = Math.min(GN - 1, ci(Math.max(ax, bx, cx))), j0 = Math.max(0, ci(Math.min(az, bz, cz))), j1 = Math.min(GN - 1, ci(Math.max(az, bz, cz)))
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        const px = -NR + (i + 0.5) * GC, pz = -NR + (j + 0.5) * GC
+        const w1 = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / den, w2 = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / den, w3 = 1 - w1 - w2
+        if (w1 >= -0.02 && w2 >= -0.02 && w3 >= -0.02) fn(j * GN + i, w1 * ay + w2 * by + w3 * cy, yMax)
+      }
+    }
+    { // 建物（描かない建物は除く）と、部屋のあるマンション
+      const { p16, bidA, drop, ps, nv } = navSrc.bldg
+      const mark = (k, y, yMax) => { if (yMax > top[k]) top[k] = yMax; bld[k] = 1 }
+      for (let t = 0; t < nv; t += 3) { if (drop.has(bidA[t])) continue; const o = t * 3; tri(p16[o] * ps, p16[o + 1] * ps, p16[o + 2] * ps, p16[o + 3] * ps, p16[o + 4] * ps, p16[o + 5] * ps, p16[o + 6] * ps, p16[o + 7] * ps, p16[o + 8] * ps, mark) }
+      for (let j = Math.max(0, ci(hostK.min.z)); j <= Math.min(GN - 1, ci(hostK.max.z)); j++) for (let i = Math.max(0, ci(hostK.min.x)); i <= Math.min(GN - 1, ci(hostK.max.x)); i++) { const k = j * GN + i; top[k] = Math.max(top[k], hostK.max.y); bld[k] = 1 }
+      // 建物の升でも、地面から 1.8m より低い物（塀・段・屋根の無い小さな形）は歩ける
+      for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; if (bld[k] && top[k] - terrK(-NR + (i + 0.5) * GC, -NR + (j + 0.5) * GC) < 1.8) bld[k] = 0 }
+    }
+    { // 橋の床（歩いて渡れる・飛ぶ時は欄干の分だけ上を通る）
+      const { pos, idx, kind } = navSrc.roads
+      const mark = (k, y) => { if (!(deck[k] >= y)) deck[k] = y; if (y + 1.2 > top[k]) top[k] = y + 1.2 }
+      for (let q = 0; q < idx.length; q += 3) { const a = idx[q], b = idx[q + 1], c = idx[q + 2]; if (kind[a] !== 2) continue; tri(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2], pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2], mark) }
+    }
+    // 木: 樹冠の上の高さ（飛ぶ時）と幹（歩く時の当たり・8m 四方の箱に入れる）
+    const trunks = new Map(), tr = view(data.buf.misc, meta.files.misc.secs.trees)
+    for (let q = 0; q < tr.length; q += 6) {
+      const X = tr[q], Y = tr[q + 1], Z = tr[q + 2], h = tr[q + 3], r = tr[q + 4] * 0.5
+      for (let j = Math.max(0, ci(Z - r)); j <= Math.min(GN - 1, ci(Z + r)); j++) for (let i = Math.max(0, ci(X - r)); i <= Math.min(GN - 1, ci(X + r)); i++) { const k = j * GN + i; if (Y + h > top[k]) top[k] = Y + h }
+      const key = Math.floor(X / 8) * 100003 + Math.floor(Z / 8); let a = trunks.get(key); if (!a) { a = []; trunks.set(key, a) } a.push(X, Z)
+    }
+    // 飛ぶ時の下限: 地面（水面）と建物・木・橋の上の高い方を、まわり 8m の一番高い所へ広げてからなだらかにする（建物の手前で先に浮き上がり、急に持ち上がらない）
+    const F = new Float32Array(GN * GN)
+    for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; F[k] = Math.max(top[k], floorK(-NR + (i + 0.5) * GC, -NR + (j + 0.5) * GC)) }
+    const pass = (src, r, op) => { // 横と縦に分けて、まわり r 升の一番高い所（op='max'）か平均（op='avg'）をとる
+      const tmp = new Float32Array(GN * GN), out = new Float32Array(GN * GN)
+      for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const ii = Math.min(GN - 1, Math.max(0, i + d)), v = src[j * GN + ii]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } tmp[j * GN + i] = op === 'max' ? m : m / c }
+      for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const jj = Math.min(GN - 1, Math.max(0, j + d)), v = tmp[jj * GN + i]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } out[j * GN + i] = op === 'max' ? m : m / c }
+      return out
+    }
+    const S = pass(pass(F, 4, 'max'), 3, 'avg')
+    G = { top: F, bld, deck, S, trunks, ms: Math.round(performance.now() - t0) }
+    return G
+  }
+  const cellK = (X, Z) => { const i = Math.floor((X + NR) / GC), j = Math.floor((Z + NR) / GC); return i < 0 || j < 0 || i >= GN || j >= GN ? -1 : j * GN + i }
+  const softK = (X, Z) => { const g = ensureNav(), u = Math.min(GN - 1.001, Math.max(0, (X + NR) / GC - 0.5)), v = Math.min(GN - 1.001, Math.max(0, (Z + NR) / GC - 0.5)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * GN + i
+    return (g.S[k] * (1 - fu) + g.S[k + 1] * fu) * (1 - fv) + (g.S[k + GN] * (1 - fu) + g.S[k + GN + 1] * fu) * fv }
+  const trunkK = (X, Z) => { const g = ensureNav(); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const arr = g.trunks.get((Math.floor(X / 8) + a) * 100003 + Math.floor(Z / 8) + b); if (!arr) continue; for (let q = 0; q < arr.length; q += 2) { const dx = X - arr[q], dz = Z - arr[q + 1]; if (dx * dx + dz * dz < 0.36) return true } } return false }
+  const blockedK = (X, Z) => { if (Math.abs(X) > EDGE || Math.abs(Z) > EDGE) return true; const k = cellK(X, Z); return (k >= 0 && ensureNav().bld[k] === 1) || trunkK(X, Z) }
+  const deckOk = (X, Z, feetK) => { const k = cellK(X, Z); if (k < 0) return NaN; const d = ensureNav().deck[k]; return d === d && Math.abs(d - feetK) < 1.3 ? d : NaN } // 足の高さに近い橋の床だけ（河川敷を歩いていて頭の上の橋に吸い上げられない）
+  const half = EDGE / (Math.abs(Math.cos(THREE.MathUtils.degToRad(meta.view.yawDeg))) + Math.abs(Math.sin(THREE.MathUtils.degToRad(meta.view.yawDeg))))
+  const cX = TX(0, 0), cZ = TZ(0, 0) // 鴨川デルタ（原点）の町の3Dの座標
+  const nav = {
+    // 飛べる箱（町の3Dの座標の軸に沿った箱＝近くの地形の網の内側に入る一番大きい四角）。yFloor＝建物・木の上に空ける高さ
+    bound: { x: half - cX, xMax: cX + half, zMin: cZ - half, zMax: cZ + half, yMax: 240 - dY, yFloor: 3.5 },
+    lms: [{ x: cX, z: cZ }], // 眺めて止まっている時に、ゆっくり回る名所（鴨川デルタ）
+    ground: (x, z) => terrK(KX(x, z), KZ(x, z)) - dY, // 地面の高さ
+    floor: (x, z) => floorK(KX(x, z), KZ(x, z)) - dY, // 目の下限の元（水の上は水面）
+    top: (x, z) => { const X = KX(x, z), Z = KZ(x, z), k = cellK(X, Z); return (k >= 0 ? ensureNav().top[k] : floorK(X, Z)) - dY }, // 建物・木・橋の上（その升）
+    topSoft: (x, z) => softK(KX(x, z), KZ(x, z)) - dY, // 飛ぶ時の下限の元（広げてなだらかにした物）
+    wet: (x, z) => wetK(KX(x, z), KZ(x, z)) >= 0.5,
+    zone: (x, z) => zoneK(KX(x, z), KZ(x, z)), // 0 町・1 河川敷・2 水面
+    blocked: (x, z) => blockedK(KX(x, z), KZ(x, z)), // 建物・幹・網の縁（歩けない・カメラを置かない）
+    // 足の高さ feetY（町の3Dの座標）から見た地面: 足もとに近い橋の床があればその上、無ければ地面
+    groundAt: (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z), d = deckOk(X, Z, feetY + dY); return (d === d ? d + 0.05 : terrK(X, Z)) - dY },
+    // 一歩進めるか: 網の縁・建物・幹でなく、水でない（足もとに近い橋の床の上なら水の上も渡れる）
+    canStep: (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (blockedK(X, Z)) return false; if (deckOk(X, Z, feetY + dY) === deckOk(X, Z, feetY + dY)) return true; return wetK(X, Z) < 0.5 },
+    aim: (x, z) => Math.atan2(cX - x, -(cZ - z)), // その所から鴨川デルタを向く向き（町の3Dの向き: 0＝-z）
+    place: (x, z, y) => { const X = KX(x, z), Z = KZ(x, z), alt = y + dY - terrK(X, Z)
+      if (alt > 70) return '鴨川の上空'; if (Math.hypot(X, Z) < 130) return '鴨川デルタ'; if (wetK(X, Z) >= 0.5) return '鴨川の上'; if (zoneK(X, Z) === 1) return '鴨川の河川敷'; return 'まちなか' },
+    gauge: (y) => Math.max(0, Math.min(1, (y + dY - meta.view.groundY) / 150)), // 高さのゲージ（地面から 150m で満ちる）
+    deck: (x, z) => { const k = cellK(KX(x, z), KZ(x, z)), d = k >= 0 ? ensureNav().deck[k] : NaN; return d === d ? d - dY : null }, // 橋の床の高さ（無ければ null・検証用）
+    info: () => (G ? { ms: G.ms, cells: GN * GN } : null),
+  }
+
   // ── 目: 部屋の目（町の3Dの camera）を鴨川の座標へ写す ──
   const tmp = new THREE.Matrix4()
   let lastFov = -1, lastAspect = -1, lastZoom = -1
@@ -587,9 +720,10 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     const k = o.userData.part || (o.isInstancedMesh ? 'inst' : 'mesh'); parts[k] = (parts[k] || 0) + Math.round(n)
   })
   return {
-    scene, camera, sync, update, makePass, renderDirect, removed,
+    scene, camera, sync, update, makePass, renderDirect, removed, nav,
     setBright(b) { state.bright = b || 1 },
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts } },
+    setRoomShown(b) { if (plug) plug.visible = !b }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20 } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {

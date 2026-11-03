@@ -364,7 +364,7 @@ export async function mountTown3d(parent, opts = {}) {
   const weather = opts.weather || null    // 'snow' | 'petals' | 'leaves' | null（降るもの）
   const MORNING = opts.time === 'morning' // 情景の時間帯が朝（便15 V29: 朝は窓の灯りを消す。空の明るさだけでは朝の淡い空が夕と同じに読まれた）
   const kind = opts.kind || 'town'        // 'town'（坂の街）| 'yato'（谷戸＝棚田と茅葺の屋敷）
-  const bound = kind === 'yato' ? FLY.yatoBound : FLY.bound // 飛べる箱は情景ごと（谷戸は谷筋に沿う狭め）
+  let bound = kind === 'yato' ? FLY.yatoBound : FLY.bound // 便19: 鴨川の町が組めたら鴨川の飛べる箱に替える（下の KN）。 飛べる箱は情景ごと（谷戸は谷筋に沿う狭め）
   // 便18（便17 #3・#4・#5=1）: 角部屋の窓の外を鴨川の町（kamoTown.js・地図のデータ＋焼いた光＋CC0 の質感の素材）にする。
   //   データは町を組んでいる間に裏で取る。読めなかった時は前の角部屋（北寺尾の町）のまま開く。?kamo=0 で前の角部屋に戻せる（比べる用）
   //   iPhone（小さい画面で指で触る端末）と「軽やか」は軽い段（光の図 2048・素材の写真は縦横半分・影なし・映り込み 512）。?kamoq=low|high で決め打ちできる（測る用）
@@ -8203,11 +8203,12 @@ export async function mountTown3d(parent, opts = {}) {
   }
   // 便13 #3=1: 角部屋は、開いた最初の向きを左の角へ振る（前は北寺尾の窓辺と同じ正面で、同じ部屋に見えた＝V58）。
   //   横長（PC・iPad の横）は二つの窓が角で並ぶ向き、縦長（iPhone・iPad の縦）は左の窓が正面に来る向き
-  const cornerYaw0 = (w, h) => (w / h >= 1 ? -0.6 : -1.12)
+  // 便19（便18 #1=1）: 鴨川の角部屋の縦長は、正面の窓（東＝デルタ・飛び石・大文字山）を正面にする（前の角部屋と横長は今のまま）
+  const cornerYaw0 = (w, h) => (w / h >= 1 ? -0.6 : kamo ? 0 : -1.12)
   let cornerYawSet = kind === 'corner' ? cornerYaw0(W, H) : null // 便15 D4: 最後に決めた最初の向き（見回す前に画面を回したら、その向きの最初の向きに決め直す）
   if (kind === 'corner') active.yaw = active.yawTarget = cornerYawSet
-  // 便18: 鴨川の町の角部屋は、飛ぶ・降りるが揃うまで（便16 の作る順＝便19）窓辺だけにする（今の飛ぶ仕組みは北寺尾の町の地面と当たり判定で動くため）
-  if (kamo) active.flyEnabled = false
+  // ~~便18: 鴨川の町の角部屋は、飛ぶ・降りるが揃うまで（便16 の作る順＝便19）窓辺だけにする~~（【便19】鴨川の道案内 kamo.nav で飛ぶ・降りるを載せた。道案内が無い時だけ止める）
+  if (kamo && !kamo.nav) active.flyEnabled = false
 
   // 解像度/サイズを変える時は必ずここを通す＝camera.aspect も同時に更新（更新漏れが「横に伸びる」バグの元）。
   function applySize() {
@@ -8229,11 +8230,17 @@ export async function mountTown3d(parent, opts = {}) {
 
   // ── 歩行（散策）の当たり判定 ── blockedAt は上方（colliders定義の直後）で定義済み＝住民配置時にも使える
   // 水際（海・川）は歩いて踏み込まない＝汀で止まる。歩行のみで使う。
-  const wetAt = (x, z) => kind !== 'yato' && ((x > SEA.coast && heightAt(x, z) < SEA.level + 0.4) || Math.abs(x - RIVER.x) < RIVER.halfW)
+  // 便19: 鴨川の町の道案内（地面・水・建物・木・橋・飛べる箱・名所・居場所）。北寺尾と谷戸は null＝今までの関数のまま
+  const KN = kamo ? kamo.nav : null
+  if (KN) bound = KN.bound
+  const navGround = KN ? KN.ground : heightAt // 地面の高さ（着地・カメラの構図の見張り）
+  const navBlocked = KN ? KN.blocked : blockedAt // 建物・幹（歩けない・カメラを置かない）
+  const wetAt = (x, z) => KN ? KN.wet(x, z) : kind !== 'yato' && ((x > SEA.coast && heightAt(x, z) < SEA.level + 0.4) || Math.abs(x - RIVER.x) < RIVER.halfW)
   const tryWalk = (pos, dx, dz) => {
     const b = bound
     const nx = Math.max(-b.x, Math.min(b.xMax || b.x, pos.x + dx))
     const nz = Math.max(b.zMin, Math.min(b.zMax, pos.z + dz))
+    if (KN) { const feet = pos.y - FLY.eye; if (KN.canStep(nx, pos.z, feet)) pos.x = nx; if (KN.canStep(pos.x, nz, feet)) pos.z = nz; return } // 鴨川: 橋の床の上なら水の上も渡れる
     if (!blockedAt(nx, pos.z) && !wetAt(nx, pos.z)) pos.x = nx // x方向だけ先に試す（壁/水際に沿って横へ滑る）
     if (!blockedAt(pos.x, nz) && !wetAt(pos.x, nz)) pos.z = nz // z方向だけ試す
   }
@@ -8241,6 +8248,7 @@ export async function mountTown3d(parent, opts = {}) {
   const spawnBad = (x, z) => {
     const b = bound
     if (x < -b.x || x > (b.xMax || b.x) || z < b.zMin || z > b.zMax) return true // 箱の外には降りない
+    if (KN) return KN.blocked(x, z) || KN.wet(x, z) || Math.abs(KN.ground(x, z + 0) - KN.floor(x, z)) > 0.01 // 鴨川: 建物・幹・水・水際には降りない
     if (kind !== 'yato') {
       if (x > SEA.coast && heightAt(x, z) < SEA.level + 0.6) return true // 海・汀には降りない（水没を防ぐ）
       if (Math.abs(x - RIVER.x) < RIVER.halfW + 1.3) return true // 川には降りない
@@ -8252,7 +8260,7 @@ export async function mountTown3d(parent, opts = {}) {
     return false
   }
   // 着地点の開放度＝8方位で歩ける距離の最大。降りた所が箱詰め（密集の谷間）なら低い。
-  const maxClearAt = (x, z) => { let best = 0; for (let a = 0; a < 8; a++) { const yaw = a / 8 * 6.2832, hx = Math.sin(yaw), hz = -Math.cos(yaw); let d = 1.0; for (; d < 24; d += 1.6) { if (blockedAt(x + hx * d, z + hz * d)) break } if (d > best) best = d } return best } // 24uまで測る＝「狭いが空いてる(14)」と「本当に開けた(24)」を区別し、抜けのある着地点を選べるようにする（旧14だと閾16に届かず全て同等扱いだった）
+  const maxClearAt = (x, z) => { let best = 0; for (let a = 0; a < 8; a++) { const yaw = a / 8 * 6.2832, hx = Math.sin(yaw), hz = -Math.cos(yaw); let d = 1.0; for (; d < 24; d += 1.6) { if (navBlocked(x + hx * d, z + hz * d)) break } if (d > best) best = d } return best } // 24uまで測る＝「狭いが空いてる(14)」と「本当に開けた(24)」を区別し、抜けのある着地点を選べるようにする（旧14だと閾16に届かず全て同等扱いだった）
   active.resolveSpawn = (x, z) => {
     // 「建物/水を避ける」だけでなく「歩いて出られる開けた所」を選ぶ＝降りた途端に透明の壁で詰まらない。
     // さらに、屋台/門/群衆の際に降りると一人称の前方が近接物で塞がるため、十分に開けた地点を優先する
@@ -8264,14 +8272,18 @@ export async function mountTown3d(parent, opts = {}) {
       if (spawnBad(nx, nz)) return false
       const c = maxClearAt(nx, nz)
       // 急斜面の縁に降りると視界が斜面の地肌で埋まる（着地景色の悪化）。前後左右8u先の高低差が小さい平場を「良い着地点」とする。
-      const h0 = heightAt(nx, nz); let maxRise = 0
-      for (const [ox, oz] of [[8, 0], [-8, 0], [0, 8], [0, -8]]) { const dh = Math.abs(heightAt(nx + ox, nz + oz) - h0); if (dh > maxRise) maxRise = dh }
+      const h0 = navGround(nx, nz); let maxRise = 0
+      for (const [ox, oz] of [[8, 0], [-8, 0], [0, 8], [0, -8]]) { const dh = Math.abs(navGround(nx + ox, nz + oz) - h0); if (dh > maxRise) maxRise = dh }
+      if (KN) { // 便19: 鴨川の町は路地が狭く、1方位だけ抜けた路地に降りた（窓の真下＝7方位が 1.5〜9m で壁）。8方位の抜けの平均で開けた所を選ぶ（歩けない所と水で止める）
+        let sum = 0; for (let a = 0; a < 8; a++) { const yaw = a / 8 * 6.2832, hx = Math.sin(yaw), hz = -Math.cos(yaw); let d = 1.0; for (; d < 24; d += 1.6) { if (KN.blocked(nx + hx * d, nz + hz * d) || KN.wet(nx + hx * d, nz + hz * d)) break } sum += d }
+        const avg = sum / 8, sc = avg - maxRise * 2.2; if (sc > bestScore) { bestScore = sc; best = [nx, nz] } return avg >= 15 && maxRise < 4.5 // 15m＝路地の交わり（2方位だけ長い・平均 11m）を外し、河川敷（18m）・開けた所（20m）を採る（gate/probe-open.mjs）
+      }
       const score = Math.min(c, 24) - maxRise * 2.2 // フォールバック優先度: 開けて(上限24)かつ平らなほど高い＝斜面の縁でなく平場を選ぶ
       if (score > bestScore) { bestScore = score; best = [nx, nz] }
       return c >= 16 && maxRise < 4.5 // 抜けがあり かつ 平場（旧6→4.5に厳しく＝斜面を避け谷底/街路の平場へ寄せる）＝即採用
     }
     if (consider(x, z)) return [x, z]
-    for (let r = 1.5; r <= 28; r += 1.5) { // 抜けのある所まで少し広く探す（斜面の縁など詰まった所からも開けた景色へ寄せる）
+    for (let r = 1.5; r <= (KN ? 70 : 28); r += 1.5) { // 便19: 鴨川の町は路地が密で、28m 以内に開けた所が無いことがある（窓の真下）＝70m まで探して土手・河川敷へ寄せる。抜けのある所まで少し広く探す（斜面の縁など詰まった所からも開けた景色へ寄せる）
       for (let a = 0; a < 12; a++) {
         const nx = x + Math.cos(a / 12 * 6.2832) * r, nz = z + Math.sin(a / 12 * 6.2832) * r
         if (consider(nx, nz)) return [nx, nz]
@@ -8282,6 +8294,13 @@ export async function mountTown3d(parent, opts = {}) {
   // 着地時の向き：最も視界の抜ける方向を基本に、街並み(中心)の方へ顔を向ける＝壁/空き地/水面でなく
   // 景色の深い方（街路・ランドマーク）を望む。抜けの距離＋中心へ向く度合いの合算で選ぶ。
   active.openYaw = (x, z) => {
+    if (KN) { // 鴨川: 抜けの距離（歩ける所が続く長さ）＋鴨川デルタを向く度合い＋水の方を向く度合い（川の眺め）
+      const aim = KN.aim(x, z); let best = aim, bestScore = -1e9
+      for (let a = 0; a < 16; a++) { const yaw = a / 16 * 6.2832, hx = Math.sin(yaw), hz = -Math.cos(yaw); let d = 1.0, water = 0
+        for (; d < 34; d += 1.2) { const px = x + hx * d, pz = z + hz * d; if (KN.blocked(px, pz)) break; if (KN.wet(px, pz)) { water = 1; break } }
+        let dd = yaw - aim; dd = Math.atan2(Math.sin(dd), Math.cos(dd)); const sc = d + water * 14 + (1 - Math.abs(dd) / Math.PI) * 9; if (sc > bestScore) { bestScore = sc; best = yaw } }
+      return best
+    }
     const centers = [{ x: 0, z: -24 }, DOWNTOWN, STATION, PARK, { x: EDO.x, z: EDO.z }, { x: SENGOKU.x, z: SENGOKU.z }, { x: TAISHO.x, z: TAISHO.z }]
     let ic = centers[0], icd = 1e9
     for (const c of centers) { const d = (c.x - x) ** 2 + (c.z - z) ** 2; if (d > 100 && d < icd) { icd = d; ic = c } } // 自分から少し離れた最寄りの中心
@@ -8305,7 +8324,7 @@ export async function mountTown3d(parent, opts = {}) {
     }
     return best
   }
-  active.cloudWalk = cloudWalkInfo // 雲上の回遊群島（着地判定/歩行ネットワーク）。townのみ非null
+  active.cloudWalk = KN ? null : cloudWalkInfo // 便19: 鴨川の町には雲上の島が無い // 雲上の回遊群島（着地判定/歩行ネットワーク）。townのみ非null
 
   const startT = performance.now() // THREE.Clock は非推奨→performance.now 差分で経過秒を出す（警告解消・依存削減）
   let lastT = 0
@@ -8331,7 +8350,7 @@ export async function mountTown3d(parent, opts = {}) {
   const HINT_CSS = 'font:600 13px/1.5 system-ui,-apple-system,sans-serif;color:rgba(255,255,255,.95);text-shadow:0 1px 5px rgba(0,0,0,.55);text-align:center'
   const HINT_WALK = `<div style="position:absolute;left:8%;bottom:22%;${HINT_CSS}">◉<br><span style="font-weight:500">左で歩く</span></div>` +
     `<div style="position:absolute;right:8%;bottom:22%;${HINT_CSS}">⟲<br><span style="font-weight:500">右で見まわす</span></div>`
-  const HINT_FLY = `<div style="position:absolute;left:0;right:0;bottom:21%;${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">高く昇れば雲海へ　海の向こうには、遠い季節の街が</span></div>`
+  const HINT_FLY = `<div style="position:absolute;left:0;right:0;bottom:21%;${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">${kamo ? '川に沿ってデルタへ　飛び石と大文字山が見えてきます' : '高く昇れば雲海へ　海の向こうには、遠い季節の街が'}</span></div>`
   let ctrlHintT = 0
   // 歩く案内は、常駐のスティックの輪のすぐ上に出す（以前は左8%・下22%で、PC・横長では輪から200px前後離れていた・V48）。
   // 飛ぶ案内は、左下の操作トレイの上端より上に淡い帯を敷いて出す（以前は帯が無く街の上で読みにくく、iPhone では＋−に接した・V61）。
@@ -8341,7 +8360,7 @@ export async function mountTown3d(parent, opts = {}) {
   const flyHintHtml = () => { const sr = stage.getBoundingClientRect(); let bottom = Math.round(sr.height * 0.21)
     const pr = pad.getBoundingClientRect() // トレイの枠の上端（透明なボタンも場所を取る）より上に出す
     if (pr.height > 0) bottom = Math.max(bottom, Math.round(sr.bottom - pr.top + 16))
-    return `<div style="position:absolute;left:50%;bottom:${bottom}px;transform:translateX(-50%);width:max-content;max-width:92%;padding:8px 14px;border-radius:12px;background:rgba(18,14,22,0.42);${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">高く昇れば雲海へ　海の向こうには、遠い季節の街が</span></div>` }
+    return `<div style="position:absolute;left:50%;bottom:${bottom}px;transform:translateX(-50%);width:max-content;max-width:92%;padding:8px 14px;border-radius:12px;background:rgba(18,14,22,0.42);${HINT_CSS};text-align:center">指でドラッグして空をすすむ<br><span style="font-weight:500">「すすむ／とまる」で巡航・自動で前へ</span><br><span style="font-weight:400;opacity:.8;font-size:.92em">${kamo ? '川に沿ってデルタへ　飛び石と大文字山が見えてきます' : '高く昇れば雲海へ　海の向こうには、遠い季節の街が'}</span></div>` }
   const showCtrlHint = (kind) => { ctrlHint.innerHTML = kind === 'fly' ? flyHintHtml() : walkHintHtml(); ctrlHint.style.opacity = '1'; ctrlHintT = 5 } // 5秒後にそっと消える
   const hideCtrlHint = () => { if (ctrlHintT > 0) { ctrlHintT = 0; ctrlHint.style.opacity = '0' } } // 触れたら即消える
   // 室内の薄暗がり（周辺減光）。巨大box-shadowブラーは毎フレームの合成が重い→静的なradial-gradientの
@@ -9393,6 +9412,7 @@ export async function mountTown3d(parent, opts = {}) {
     { let loc = ''
       if (active.mode !== 'window') {
         if (kind === 'yato') loc = '獅子ヶ谷の谷戸'
+        else if (KN) loc = KN.place(active.flyPos.x, active.flyPos.z, active.flyPos.y) // 便19: 鴨川の町の居場所
         else { const fp = active.flyPos
           if (fp.y > SEA_Y - 16) loc = '雲海'
           else if (Math.hypot(fp.x - EDO.x, fp.z - EDO.z) < 250) loc = '江戸の城下町'
@@ -9801,7 +9821,7 @@ export async function mountTown3d(parent, opts = {}) {
     if (seaUniforms) { seaUniforms.uSky.value.copy(skyHor0); seaUniforms.uSky2.value.copy(skyTop0) }
     { const dp = drift.on ? drift.t / DRIFT_SECS : 0; if (Math.abs(dp - lastDayPhase) > 0.03) { lastDayPhase = dp; onDayPhase(dp) } } // 音も時刻に連れ添う（夕方は外音がやわらぐ）。変化時だけ通知
     // 別世界感: 飛ぶほど霧を晴らして遠くの街を壮大に見せ、目的地に近いほどその時代の空気（色・露出）へ移す。
-    if (flyAmt > 0.02) {
+    if (flyAmt > 0.02 && !kamo) { // 便19: 鴨川の町では別世界の空気（霧と色の膜）を掛けない
       active.fogTouched = true
       const fp = active.flyPos
       // リベール範囲を広げ(230)、近づくほど強く霧を晴らす(最大fog.far≈3.3倍)＝霞の向こうから街全体が早めに立ち上がる。
@@ -9849,7 +9869,7 @@ export async function mountTown3d(parent, opts = {}) {
       if (eraGradeCur > 0.001) { eraGradeCur = 0; eraGrade.style.opacity = '0' } // 別世界グレードも解く
     }
     // 別世界の気配: 時代の粒子（江戸=桜/蛍・戦国=火の粉）と霞の帯の白いベール（関門をくぐる瞬間に白む）
-    if (flyAmt > 0.02) {
+    if (flyAmt > 0.02 && !kamo) { // 便19: 鴨川の町では時代の粒子・霞の帯・海の鳥・島の鳥を出さない
       const fp = active.flyPos, dEdo = Math.hypot(fp.x - EDO.x, fp.z - EDO.z), dSen = Math.hypot(fp.x - SENGOKU.x, fp.z - SENGOKU.z), dTai = Math.hypot(fp.x - TAISHO.x, fp.z - TAISHO.z)
       const updFx = (fx, prox, fall) => { if (!fx) return; const p = fx.g.attributes.position; for (let i = 0; i < p.count; i++) { let y = p.getY(i) + fall * dt * (1.2 + (i % 5) * 0.32); if (fall < 0 && y < fx.y0) y = fx.y0 + fx.yH; else if (fall > 0 && y > fx.y0 + fx.yH) y = fx.y0; p.setY(i, y); p.setX(i, p.getX(i) + Math.sin(t * 0.45 + fx.ph[i]) * dt * 0.9) } p.needsUpdate = true; fx.m.opacity = Math.min(isNight ? 0.82 : 0.34, prox * 0.95) } // 昼は淡い陽炎/塵程度（明色の粒で景色を白く濁らせない）。夜は篝火・蛍の粉として映える
       updFx(edoFx, flyAmt * Math.max(0, 1 - dEdo / 130), isNight ? 0.38 : -0.95) // 夜の蛍はゆらり昇る/昼の桜はゆっくり散る
@@ -9999,15 +10019,15 @@ export async function mountTown3d(parent, opts = {}) {
         // オートシネマ: 無操作が続くと、最寄りの名所をゆっくりオービット（接線方向へ機首を正し低速で周回）。
         // ただ眺めるだけで街がゆっくり巡る＝「眺めて整う」。触れた瞬間に解除して操作へ戻る。
         const idleMs = performance.now() - (active.lastInputT || 0)
-        let nearLM2 = 1e9; for (const lm of CINEMA_LM) { const d2 = (lm.x - active.flyPos.x) ** 2 + (lm.z - active.flyPos.z) ** 2; if (d2 < nearLM2) nearLM2 = d2 }
+        let nearLM2 = 1e9; for (const lm of (KN ? KN.lms : CINEMA_LM)) { const d2 = (lm.x - active.flyPos.x) ** 2 + (lm.z - active.flyPos.z) ** 2; if (d2 < nearLM2) nearLM2 = d2 }
         // オートシネマは「とまって(ホバリング)名所の近くで眺めている時」だけ作動。巡航中(=移動・別エリアへの渡り)では出さない
         // ＝飛行中に勝手に視点が切り替わらない(実機FB: 渡りの最中に定期的に視点が真後ろ等へ回ってしまう不具合の修正)。
         const wantCinema = flyAmt > 0.9 && idleMs > 7000 && !active.cruise && nearLM2 < 175 * 175 ? 1 : 0
         active.cinema += (wantCinema - active.cinema) * Math.min(1, dt * (wantCinema ? 0.5 : 4)) // ゆっくり始まり・素早く解除
         let cineSpeed = 0
         if (active.cinema > 0.01) {
-          let best = CINEMA_LM[0], bd = 1e9
-          for (const lm of CINEMA_LM) { const d = (lm.x - active.flyPos.x) ** 2 + (lm.z - active.flyPos.z) ** 2; if (d < bd) { bd = d; best = lm } }
+          let best = (KN ? KN.lms : CINEMA_LM)[0], bd = 1e9
+          for (const lm of (KN ? KN.lms : CINEMA_LM)) { const d = (lm.x - active.flyPos.x) ** 2 + (lm.z - active.flyPos.z) ** 2; if (d < bd) { bd = d; best = lm } }
           active.cineLM = best
           const rx = active.flyPos.x - best.x, rz = active.flyPos.z - best.z, r = Math.max(28, Math.hypot(rx, rz))
           const tangYaw = Math.atan2(-rz / r, rx / r) // 名所を中心に反時計回りの接線へ機首を向ける
@@ -10030,7 +10050,7 @@ export async function mountTown3d(parent, opts = {}) {
         dvZ = -Math.cos(active.flyYaw) * cruiseS
         // 上昇気流＝暖かい場所・雲の塔の上は、巡航しながら通るとふわっと持ち上がる（押さなくても少し昇るソアリング）。
         let thermal = 0
-        for (const th of THERMALS) { const d2 = (active.flyPos.x - th.x) ** 2 + (active.flyPos.z - th.z) ** 2; if (d2 < th.r * th.r) thermal = Math.max(thermal, 1 - Math.sqrt(d2) / th.r) }
+        for (const th of (KN ? [] : THERMALS)) { const d2 = (active.flyPos.x - th.x) ** 2 + (active.flyPos.z - th.z) ** 2; if (d2 < th.r * th.r) thermal = Math.max(thermal, 1 - Math.sqrt(d2) / th.r) }
         active.thermal = thermal
         // 低〜中空(y<54)でだけ・控えめ(0.5→0.2)に効かせる＝「押していないのに高度が上がり続ける」を防ぐ（実機FB: 戦国へ向かう航路で勝手に上昇）。
         // soaringのふわっと感は低空で残しつつ、一定高度より上では効かない＝高度はユーザーの手に。止空/手動昇降中も効かせない。
@@ -10060,7 +10080,7 @@ export async function mountTown3d(parent, opts = {}) {
           if (cloudSurfaceY(nx, nz) != null) { active.flyPos.x = nx; active.flyPos.z = nz }
           else { if (cloudSurfaceY(nx, active.flyPos.z) != null) active.flyPos.x = nx; if (cloudSurfaceY(active.flyPos.x, nz) != null) active.flyPos.z = nz } // 縁に沿って滑る
         } else tryWalk(active.flyPos, active.vel.x * dt, active.vel.z * dt) // 当たり判定つきで水平移動
-        const groundY = onCl ? (cloudSurfaceY(active.flyPos.x, active.flyPos.z) ?? active.flyPos.y - FLY.eye) : heightAt(active.flyPos.x, active.flyPos.z)
+        const groundY = onCl ? (cloudSurfaceY(active.flyPos.x, active.flyPos.z) ?? active.flyPos.y - FLY.eye) : KN ? KN.groundAt(active.flyPos.x, active.flyPos.z, active.flyPos.y - FLY.eye) : heightAt(active.flyPos.x, active.flyPos.z)
         // ── ジャンプ（重力）。jumpY=地面からの高さ。接地中にジャンプ要求があれば発射。空中の連打は二段ジャンプにしない。──
         const grounded = (active.jumpY || 0) <= 0.001
         if (active.jumpQueued) { if (grounded && active.flyP > 0.6) { active.jumpVel = FLY.jumpForce; active.jumpY = 0.0001 } active.jumpQueued = false } // 要求は1フレームで消費（連打でも溜まらない＝確実に1回ずつ判定）
@@ -10085,6 +10105,7 @@ export async function mountTown3d(parent, opts = {}) {
           let surf = 'hard'
           if (weather === 'snow') surf = 'snow' // 雪は一面を覆う＝どこでも雪の踏みしめ
           else if (kind === 'yato') surf = 'grass'
+          else if (KN) surf = KN.zone(active.flyPos.x, active.flyPos.z) === 1 ? 'grass' : 'hard' // 便19: 鴨川の河川敷は草
           else { const fx = active.flyPos.x, fz = active.flyPos.z
             if (Math.hypot(fx - PARK.x, fz - PARK.z) < PARK.r || Math.hypot(fx - MOROOKA.x, fz - MOROOKA.z) < MOROOKA.r) surf = 'grass'
             else if (Math.abs(fx - RIVER.x) < RIVER.bankW + 1.5) surf = 'wood' }
@@ -10094,7 +10115,7 @@ export async function mountTown3d(parent, opts = {}) {
         active.flyPos.x += active.vel.x * dt; active.flyPos.y += active.vel.y * dt; active.flyPos.z += active.vel.z * dt
         active.flyPos.x = Math.max(-b.x, Math.min(b.xMax || b.x, active.flyPos.x))
         active.flyPos.z = Math.max(b.zMin, Math.min(b.zMax, active.flyPos.z))
-        const terr = heightAt(active.flyPos.x, active.flyPos.z), floor = terr + b.yFloor
+        const terr = KN ? KN.topSoft(active.flyPos.x, active.flyPos.z) : heightAt(active.flyPos.x, active.flyPos.z), floor = KN ? Math.max(terr + b.yFloor, KN.top(active.flyPos.x, active.flyPos.z) + 1.2) : terr + b.yFloor // 便19: 鴨川は建物・木・橋の上を通る
         if (active.lowCruise) { const gh = terr + 5.5; active.flyPos.y += (gh - active.flyPos.y) * Math.min(1, dt * 1.8) } // 自転車=地形に沿って低く滑空（坂を下る目線）
         active.flyPos.y = Math.max(floor, Math.min(b.yMax, active.flyPos.y))
         const fp = active.flyPos; if (!(fp.x === fp.x && fp.y === fp.y && fp.z === fp.z && Math.abs(fp.x) < 1e5 && Math.abs(fp.y) < 1e5 && Math.abs(fp.z) < 1e5)) { fp.set(0, 36, 50); active.vel.set(0, 0, 0); active.camReady = false } // 安全網: 位置が異常値(NaN/Inf)になったら安全な空へ戻す（遷移時の固まり防止）
@@ -10131,7 +10152,7 @@ export async function mountTown3d(parent, opts = {}) {
         let back = back0
         for (let tries = 0; tries < 5; tries++) {
           const tx = fp.x - fwdX * back, tz = fp.z - fwdZ * back
-          if (!blockedAt(tx, tz)) break
+          if (!navBlocked(tx, tz)) break
           back *= 0.62
         }
         backTgt = back
@@ -10142,7 +10163,7 @@ export async function mountTown3d(parent, opts = {}) {
         for (let i = 1; i <= N; i++) { const tt = i / N
           const sx = fp.x - fwdX * backTgt * tt, sz = fp.z - fwdZ * backTgt * tt
           const sy = fp.y - fwdY * backTgt * tt + upOff * tt // 線分上の高さ（upOffは終端で最大）
-          const gh = Math.max(heightAt(sx, sz), SEA.level) + (isWalk ? 1.0 : 1.4) // 地形＋余裕
+          const gh = (KN ? (isWalk ? KN.floor(sx, sz) : KN.top(sx, sz)) : Math.max(heightAt(sx, sz), SEA.level)) + (isWalk ? 1.0 : 1.4) // 便19: 鴨川の空では建物・木の上も避ける // 地形＋余裕
           if (sy < gh) { backTgt = Math.max(minB, backTgt * (i - 1) / N); break } }
       }
       // 寄せ距離をなめらかに追従（瞬間スナップを排す＝寄せ/戻りで前後にカクつかない）
@@ -10152,7 +10173,7 @@ export async function mountTown3d(parent, opts = {}) {
       let dcx = fp.x - fwdX * back, dcz = fp.z - fwdZ * back
       let dcy = fp.y - fwdY * back + upOff - sit * 0.7 // 腰をおろすと目線がそっと下がる
       // 海上では海底基準だと水面より下に潜り「水中から水板を見る」変な絵になる→水面(SEA.level)を下限に。
-      const camFloor = Math.max(heightAt(dcx, dcz), SEA.level) + (isWalk ? 1.35 - sit * 0.55 : 1.6) // 歩行は一人称寄り＝目線をやや低く許す（座ると更に低く）
+      const camFloor = (KN ? (isWalk ? KN.floor(dcx, dcz) : KN.top(dcx, dcz)) : Math.max(heightAt(dcx, dcz), SEA.level)) + (isWalk ? 1.35 - sit * 0.55 : 1.6) // 歩行は一人称寄り＝目線をやや低く許す（座ると更に低く）
       if (dcy < camFloor) dcy = camFloor
       if (!active.camReady) { active.camPos.set(dcx, dcy, dcz); active.camReady = true } // 飛び立ち/着地直後はスナップ
       else { const cl = isWalk ? FLY.walkCamLag : FLY.camLag; active.camPos.x += (dcx - active.camPos.x) * cl; active.camPos.y += (dcy - active.camPos.y) * cl; active.camPos.z += (dcz - active.camPos.z) * cl } // 歩行は密着＝地に足のついた手応え／飛行は緩い遅れ＝空気の流れ
@@ -10160,7 +10181,7 @@ export async function mountTown3d(parent, opts = {}) {
       let aLookX = fp.x + fwdX * ahead, aLookY = fp.y + fwdY * ahead + Math.sin(t * 0.5) * 0.04 - sit * 0.55, aLookZ = fp.z + fwdZ * ahead // 座ると視線も少し落ちて手前の路へ和らぐ
       // オートシネマ: 接線に沿って機体は流れつつ、視線は名所の中心へ向ける＝名所を画面に保つオービット
       if (!isWalk && active.cinema > 0.01 && active.cineLM) {
-        const cm = active.cinema * 0.92, lx = active.cineLM.x, lz = active.cineLM.z, ly = heightAt(lx, lz) + 15
+        const cm = active.cinema * 0.92, lx = active.cineLM.x, lz = active.cineLM.z, ly = navGround(lx, lz) + 15
         aLookX += (lx - aLookX) * cm; aLookY += (ly - aLookY) * cm; aLookZ += (lz - aLookZ) * cm
       }
       TMP_DIR.set(fwdX, fwdY, fwdZ); TMP_UP2.set(0, 1, 0).applyAxisAngle(TMP_DIR, active.bankCur) // バンクした上ベクトル
@@ -10191,7 +10212,7 @@ export async function mountTown3d(parent, opts = {}) {
       // 着地の沈み込み（とんと沈んで戻る＝接地の手応え）
       if (active.dipT > 0) { active.dipT -= dt; const pp = 1 - Math.max(0, active.dipT) / 0.42; camY -= Math.sin(pp * Math.PI) * 0.6 }
       // 自分の影が真下の地面を走る（高度で大きさ・濃さが変わる＝飛んでいる手応え）
-      const gY = active.onCloud ? (cloudSurfaceY(active.flyPos.x, active.flyPos.z) ?? active.flyPos.y - FLY.eye) : heightAt(active.flyPos.x, active.flyPos.z)
+      const gY = active.onCloud ? (cloudSurfaceY(active.flyPos.x, active.flyPos.z) ?? active.flyPos.y - FLY.eye) : navGround(active.flyPos.x, active.flyPos.z)
       const alt = Math.max(0, active.flyPos.y - gY)
       flyerShadow.visible = flyAmt > 0.5
       flyerShadow.position.set(active.flyPos.x, gY + 0.06, active.flyPos.z)
@@ -10204,7 +10225,7 @@ export async function mountTown3d(parent, opts = {}) {
       // 雲の近接フェード＝迫った積雲/巻雲を群ごとに透明へ溶かし、不透明メッシュが視界を塗りつぶすのを根絶（実機FB「飛行中に目の前が真っ白」）。
       // 雲はfog:false＝近接フォグ(構図ガード)が効かない盲点。材のopacityを距離で落とし、遠のけば不透明へ戻す。白ベール(cumHaze)はフェード進行に連動＝「霧として抜ける」体感。
       let cumHaze = 0
-      const cloudFadeOn = !isWalk && flyAmt > 0.3
+      const cloudFadeOn = !isWalk && flyAmt > 0.3 && !kamo // 便19: 鴨川の町には北寺尾の雲が描かれない
       for (const c of clouds) {
         const u = c.userData, fm = u.fadeMat
         if (!fm) continue
@@ -10218,8 +10239,8 @@ export async function mountTown3d(parent, opts = {}) {
       }
       // 雲海・入道雲を突き抜けるときだけ白く包まれる手応え（高所限定＝街の一望は損なわない）。
       let seaCross = 0, towerHaze = 0
-      if (cloudSea) { const dY = Math.abs(active.flyPos.y - (SEA_Y + 2)); seaCross = Math.max(0, 1 - dY / 13) } // 雲海のデッキを突き抜ける高さ(SEA_Y+2≈90)で最も白く包まれ、島の高さ(≈108-110)では晴れる＝群島が白霞に呑まれず見えるように（旧: ピーク102で島の高さが真っ白だった）
-      for (const tc of towerCenters) { const dh = Math.hypot(tc.x - active.flyPos.x, tc.z - active.flyPos.z); if (dh < 18 && active.flyPos.y > SEA_Y - 16 && active.flyPos.y < tc.yTop + 4) towerHaze = Math.max(towerHaze, 1 - dh / 18) }
+      if (cloudSea && !kamo) { const dY = Math.abs(active.flyPos.y - (SEA_Y + 2)); seaCross = Math.max(0, 1 - dY / 13) } // 雲海のデッキを突き抜ける高さ(SEA_Y+2≈90)で最も白く包まれ、島の高さ(≈108-110)では晴れる＝群島が白霞に呑まれず見えるように（旧: ピーク102で島の高さが真っ白だった）
+      if (!kamo) for (const tc of towerCenters) { const dh = Math.hypot(tc.x - active.flyPos.x, tc.z - active.flyPos.z); if (dh < 18 && active.flyPos.y > SEA_Y - 16 && active.flyPos.y < tc.yTop + 4) towerHaze = Math.max(towerHaze, 1 - dh / 18) }
       const hazeOp = isWalk ? 0 : Math.min(0.6, Math.max(cumHaze * 0.22, seaCross * 0.34, towerHaze * 0.55)) * flyAmt // 雲海の白包みを 0.5→0.34 へ控えめに＝突き抜けの手応えは残しつつ群島が見える（評価: 雲海が白に呑まれて見えない）。cumHazeは近接フェード連動で0.22=溶けた雲の中は淡い霧
       if (Math.abs(hazeOp - cloudHazeCur) > 0.02) { cloudHazeCur = hazeOp; cloudHaze.style.opacity = hazeOp.toFixed(2) }
       // 雲海の出現＝高く昇るほど淡く現れ、突き抜けると街が雲の下に消える別世界（窓辺・巡航では opacity0 で開けた空）。
@@ -10234,7 +10255,7 @@ export async function mountTown3d(parent, opts = {}) {
       // 虹のアーチ＝晴れた日に雲海の上で現れ、くぐると淡い分光のベールに包まれる
       if (rainbowArch) {
         const ab = isWalk ? 0 : Math.max(0, Math.min(1, (active.flyPos.y - (SEA_Y - 30)) / 40))
-        const op = (!isNight && !SNOWY ? 1 : 0) * ab * flyAmt * 0.6
+        const op = (!isNight && !SNOWY && !kamo ? 1 : 0) * ab * flyAmt * 0.6
         rainbowArch.visible = op > 0.02
         for (const m of rainbowArch.userData.mats) m.uniforms.uOp.value = op
         const dzp = Math.abs(active.flyPos.z + 360), dxy = Math.hypot(active.flyPos.x + 20, active.flyPos.y - (SEA_Y - 2)) // アーチ面(z=-360)・開口内
@@ -10249,7 +10270,7 @@ export async function mountTown3d(parent, opts = {}) {
       // ブロッケンの虹輪＝雲海の上を晴れた日に飛ぶと、自分の真下の雲に円い虹が映って追従する
       if (glory) {
         const ab = isWalk ? 0 : Math.max(0, Math.min(1, (active.flyPos.y - (SEA_Y + 8)) / 16)) // 雲海の上に出ているほど
-        const gOp = (!isNight && !SNOWY ? 1 : 0) * ab * flyAmt * 0.8
+        const gOp = (!isNight && !SNOWY && !kamo ? 1 : 0) * ab * flyAmt * 0.8
         glory.visible = gOp > 0.02
         if (glory.visible) { glory.position.set(active.flyPos.x, SEA_Y + 18, active.flyPos.z); glory.material.opacity = gOp }
       }
@@ -10257,8 +10278,8 @@ export async function mountTown3d(parent, opts = {}) {
       const altT = isWalk ? 0 : Math.max(0, Math.min(1, (active.flyPos.y - 34) / 46)) * flyAmt
       if (Math.abs(altT - altTintCur) > 0.02) { altTintCur = altT; altTint.style.opacity = (altT * 0.16).toFixed(2) }
       // 街の環境音(虫)をしぼる量 = 高度 ＋ 海の上 ＋ homeから離れた、の合成。海に出ると虫が消え、風と鳥だけになる（実機FB）。
-      const overSeaT = isWalk ? 0 : (heightAt(active.flyPos.x, active.flyPos.z) < SEA.level + 0.5 ? 1 : 0) * flyAmt // 水面の上か
-      const dHomeT = isWalk ? 0 : Math.min(1, Math.max(0, (Math.hypot(active.flyPos.x, active.flyPos.z) - 80) / 90)) * flyAmt // homeから離れたか
+      const overSeaT = isWalk || KN ? 0 : (heightAt(active.flyPos.x, active.flyPos.z) < SEA.level + 0.5 ? 1 : 0) * flyAmt // 水面の上か
+      const dHomeT = isWalk || KN ? 0 : Math.min(1, Math.max(0, (Math.hypot(active.flyPos.x, active.flyPos.z) - 80) / 90)) * flyAmt // homeから離れたか
       altDuck01 = Math.max(altT, overSeaT, dHomeT)
       // 光の粒（夕夜=蛍/塵の暖かい光。昼の歩行=陽だまりに舞う埃）。カメラ周辺を漂い流れ、降り立つと足元〜目線に寄り集まる。
       const dayMote = flyAmt * (isWalk ? 0.17 : 0.045) * (1 - duskAmt * 0.5) // 昼も薄く舞う＝降り立った時に空気が生きる（歩行で濃く）
@@ -10428,7 +10449,7 @@ export async function mountTown3d(parent, opts = {}) {
     // 操作ゲージの塗りを今の値で更新（＋寄る/速く/上昇で上がる向き）。高さは見渡せる実用域(汀〜90)で正規化。
     zoomGauge.set((3.0 - active.zoomTarget) / 2.6)
     speedGauge.set((active.speedMul - 0.35) / 1.35)
-    altGauge.set((active.flyPos.y - bound.yFloor) / (90 - bound.yFloor))
+    altGauge.set(KN ? KN.gauge(active.flyPos.y) : (active.flyPos.y - bound.yFloor) / (90 - bound.yFloor))
     if (active.climb !== 0) altGauge.show() // 昇降ボタンを押している間はゲージを出し続ける
 
     // ── 3Dの室内窓枠の見え隠れ。部屋の中（窓辺）で見え、乗り出すと素早く退いて街へ。空/地上では消す。
@@ -10438,6 +10459,7 @@ export async function mountTown3d(parent, opts = {}) {
     // 室内は不透明（街を遮蔽してfill節約・カクつき対策）。乗り出すとカメラが窓の開口を抜けて前へ出る＝室内は背後へ退く。
     // lean>0.16で非表示＝カメラがベランダの手すり/窓枠へ達する前に室内ごと消す（貫通して見えるのを防ぐ）。空/地上でも非表示。
     const wrVis = flyAmt < 0.6 && lean < 0.16
+    if (kamo) kamo.setRoomShown(flyAmt < 0.6) // 便19: 空・地上では部屋の窓の所を外壁で塞ぐ（乗り出しでは塞がない）
     if (winRoom.visible !== wrVis) { winRoom.visible = wrVis; winRoom.matrixWorldAutoUpdate = wrVis; if (wrVis) winRoom.updateMatrixWorld(true) } // 飛行で隠れている間は室内(200+ノード)の行列走査ごとスキップ＝発熱削減。窓辺へ戻ったら一度だけ焼き直す
     // 帰還の儀式「ただいま」: 旅から窓辺へ戻りきった瞬間、澄んだ鈴がひとつ満ち、眠っていた猫が顔を上げてこちらを見る＝
     // 出発点でしかなかった窓が「帰る家」になる（エモ最重要: 帰る場所が無く旅が一周しない）。直前の季節/時刻はドリフトが継続＝引き継がれる。
@@ -10867,6 +10889,9 @@ export async function mountTown3d(parent, opts = {}) {
     window.__town3dBloom = (on) => { if (bloomPass) { bloomPass.enabled = !!on; return bloomPass.strength } return null } // 検証用: ブルームを強制ON/OFF（同一フレームでのAB＝アニメ差を排除）
     // 検証用（便18）: 同じ1こまを n 回続けて描き、描き終わるまで（GPU を待つ）の1こまの時間 ms を返す。町の3Dは描く回数を 16〜30 こまに落とすので、出せるこま数はこれで測る
     window.__town3dBench = (n = 30) => { const gl = renderer.getContext(), px = new Uint8Array(4), draw = () => (composer ? composer.render() : renderer.render(scene, camera)), sync = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); draw(); sync(); const t0 = performance.now(); for (let i = 0; i < n; i++) draw(); sync(); return +((performance.now() - t0) / n).toFixed(2) }
+    window.__town3dNav = () => { if (!active) return null; const p = active.flyPos; return { mode: active.mode, flyP: +active.flyP.toFixed(2), x: +p.x.toFixed(1), y: +p.y.toFixed(1), z: +p.z.toFixed(1), yaw: +active.yaw.toFixed(3), flyYaw: +active.flyYaw.toFixed(3), ground: KN ? +KN.ground(p.x, p.z).toFixed(2) : +heightAt(p.x, p.z).toFixed(2), top: KN ? +KN.top(p.x, p.z).toFixed(2) : null, wet: KN ? KN.wet(p.x, p.z) : null, blocked: KN ? KN.blocked(p.x, p.z) : null, place: KN ? KN.place(p.x, p.z, p.y) : null, bound: bound, kamoNav: !!KN, navMs: KN && KN.info() ? KN.info().ms : null, cam: camera.position.toArray().map((v) => +v.toFixed(1)) } } // 検証用（便19）: いる所・地面・建物の上・水か・居場所・飛べる箱
+    window.__town3dWalkPose = (x, z, yaw, feetY) => { if (!active || !active.flyEnabled) return; const g = feetY === undefined ? navGround(x, z) : feetY; active.flyPos.set(x, g + FLY.eye, z); active.flyYaw = active.flyYawTarget = active.walkCamYaw = yaw || 0; active.flyPitch = active.flyPitchTarget = 0; active.vel.set(0, 0, 0); active.moveX = active.moveY = 0; active.camReady = false; active.landedFired = true; active.mode = 'walk'; active.flyP = 1; active.flyTarget = 1 } // 検証用（便19）: 地上の自分を任意の所・向き・足の高さに置く
+    window.__town3dNavAt = (x, z, feet) => (KN ? { ground: KN.ground(x, z), floor: KN.floor(x, z), top: KN.top(x, z), soft: KN.topSoft(x, z), wet: KN.wet(x, z), zone: KN.zone(x, z), blocked: KN.blocked(x, z), deck: KN.deck(x, z), step: feet === undefined ? null : KN.canStep(x, z, feet), at: feet === undefined ? null : KN.groundAt(x, z, feet), place: KN.place(x, z, KN.ground(x, z) + 1.6) } : null) // 検証用（便19）: 道案内に任意の所を聞く
     window.__town3dKamo = () => (kamo ? kamo.info() : null) // 検証用（便18）: 鴨川の町の段・時刻・空・影・部屋の箱で外した建物の数
     window.__town3dBloomInfo = () => bloomPass ? { enabled: bloomPass.enabled, strength: +bloomPass.strength.toFixed(3), wanted: bloomWanted } : null // 検証用: 現情景のブルーム状態
     window.__town3dFrame = () => renderer.info.render.frame // 検証用: 実描画したフレーム総数（停止中は増えない＝停止の確認に使う）

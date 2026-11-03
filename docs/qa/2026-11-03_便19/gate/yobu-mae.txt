@@ -1,0 +1,21 @@
+## 波及の照らし・呼ぶ所の一覧（_shared/hakyu.mjs --yobu・2026/11/3 19:42:18・名指し 14 個）
+
+直す関数・部品ごとに、呼ぶ所を並べた。呼ぶ所の画面・場面を、直す前と後で同じ撮り方で比べた画か検査の名を右の列に書く（比べない所は理由）。
+
+| 関数・部品 | 定義の所 | 呼ぶ所（頭の8つ） | 前後で比べた画・検査 |
+|---|---|---|---|
+| `setTown3dFly` | （名指し） | src/engine/town3dViewer.js:249・src/engine/town3dViewer.js:9264・src/engine/town3dViewer.js:9281・src/engine/town3dViewer.js:10873・src/main.js:210・src/main.js:386・src/main.js:409 | |
+| `setTown3dLand` | （名指し） | src/engine/town3dViewer.js:9272・src/engine/town3dViewer.js:9278・src/engine/town3dViewer.js:10874・src/main.js:211・src/main.js:390・src/main.js:410 | |
+| `isTown3dFlyable` | （名指し） | src/main.js:394 | |
+| `tryWalk` | （名指し） | src/engine/town3dViewer.js:10062 | |
+| `wetAt` | （名指し） | src/engine/town3dViewer.js:8237・src/engine/town3dViewer.js:8238 | |
+| `spawnBad` | （名指し） | src/engine/town3dViewer.js:8264 | |
+| `maxClearAt` | （名指し） | src/engine/town3dViewer.js:8265 | |
+| `resolveSpawn` | （名指し） | scripts/qa-walkland.mjs:17・src/engine/town3dViewer.js:238・src/engine/town3dViewer.js:8256 | |
+| `openYaw` | （名指し） | scripts/qa-beachland.mjs:10・scripts/qa-eyelevel.mjs:17・scripts/qa-treefade2.mjs:22・scripts/qa-walk2.mjs:23・scripts/qa-walk4.mjs:21・src/engine/town3dViewer.js:240・src/engine/town3dViewer.js:8284・src/engine/town3dViewer.js:10892 | |
+| `cornerYaw0` | （名指し） | src/engine/town3dViewer.js:8207・src/engine/town3dViewer.js:8218 | |
+| `buildKamo` | （名指し） | src/engine/town3dViewer.js:8114 | |
+| `loadKamo` | （名指し） | src/engine/kamoTown.js:62・src/engine/town3dViewer.js:374 | |
+| `waterNormals` | （名指し） | scripts/_bin16-river.js:138・scripts/_bin17-kamo.js:230・src/engine/kamoTown.js:333 | |
+| `useTex` | （名指し） | scripts/_bin17-kamo.js:182・scripts/_bin17-kamo.js:212・scripts/_bin17-kamo.js:264・scripts/_bin17-kamo.js:325・scripts/_bin3-inject.js:50・scripts/_bin3-inject.js:70・src/engine/kamoTown.js:278・src/engine/kamoTown.js:314 ほか 3 | |
+

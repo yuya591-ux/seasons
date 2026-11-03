@@ -1,0 +1,8 @@
+mae-iphone-first iphone autumn-dusk-corner-room [] {"nav":null,"kamo":{"low":true,"time":"dusk","sky":"cloudy","calls":100,"tris":545361},"flyable":false,"stage":"窓をあける","pill":null,"idle":true} エラー無し
+mae-pc-first pc autumn-dusk-corner-room [] {"nav":null,"kamo":{"low":false,"time":"dusk","sky":"cloudy","calls":159,"tris":1296023},"flyable":false,"stage":"窓をあける","pill":null,"idle":true} エラー無し
+mae-iphoneL-first iphoneL autumn-dusk-corner-room [] {"nav":null,"kamo":{"low":true,"time":"dusk","sky":"cloudy","calls":175,"tris":720215},"flyable":false,"stage":"窓をあける","pill":null,"idle":true} エラー無し
+mae-water-summer pc summer-morning-corner-room [open,lean,view:0:-0.55] {"nav":null,"kamo":{"low":false,"time":"morning","sky":"cloudy","calls":173,"tris":1402951},"flyable":false,"stage":"窓をあける","pill":null,"idle":true} エラー無し
+mae-water-snow pc winter-snow-dusk-corner-room [open,lean,view:0:-0.55] {"nav":null,"kamo":{"low":false,"time":"dusk","sky":"snow","calls":173,"tris":1403899},"flyable":false,"stage":"窓をあける","pill":null,"idle":true} エラー無し
+mae-lean-down pc autumn-dusk-corner-room [open,lean,view:0:-1.1] {"nav":null,"kamo":{"low":false,"time":"dusk","sky":"cloudy","calls":170,"tris":1436364},"flyable":false,"stage":"窓をあける","pill":null,"idle":true} エラー無し
+mae-band-summer pc summer-morning-corner-room [open,lean,view:0:0.5,poke] {"nav":null,"kamo":{"low":false,"time":"morning","sky":"cloudy","calls":162,"tris":1326671},"flyable":false,"stage":"窓をあける","pill":null,"idle":false} エラー無し
+mae-band-snow pc winter-snow-dusk-corner-room [open,lean,view:0:0.5,poke] {"nav":null,"kamo":{"low":false,"time":"dusk","sky":"snow","calls":162,"tris":1327619},"flyable":false,"stage":"窓をあける","pill":null,"idle":false} エラー無し
