@@ -5,14 +5,21 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 const OUT = 'docs/qa/2026-11-03_便18/shots/ma'
 const sh = (scene, name, port, extra = []) => ({ name: `撮る ${name}`, cmd: 'node', args: ['scripts/kamo/shot.mjs', 'pc', scene, name, '', '', 'close', ...extra], env: { SAME: '1', PORT: String(port), QA_OUT: OUT } })
-const sa = (names, limit) => ({ name: `前後の画素の差 ${names.join('・')}（${limit}% 未満）`, cmd: 'node', args: ['docs/qa/2026-11-03_便18/gate/sa.mjs', ...names], check: (out) => [...out.matchAll(/差が 8 を超える画素 ([\d.]+)%/g)].every((m) => +m[1] < limit) })
+// 前後の差は、今のコードを2回撮った差（動く物の揺れの幅）と比べる: 前後の差 ≦ 揺れの幅×2＋0.1%
+// （便18 の2回目の全テストで、谷戸は同じ撮り方でも 0.02〜0.86% 揺れた＝決め打ちの 0.3% では比べにならなかった）
+const sa = (names) => ({
+  name: `前後の画素の差 ${names.join('・')}（今どうしの揺れ×2＋0.1% 以内）`, cmd: 'node', args: ['docs/qa/2026-11-03_便18/gate/sa.mjs', ...names.flatMap((n) => [n, n + '-x'])],
+  check: (out) => { const v = {}; for (const m of out.matchAll(/^(\S+): 平均の差 [\d.]+\/255・差が 8 を超える画素 ([\d.]+)%/gm)) v[m[1]] = +m[2]; return names.every((n) => n in v && (n + '-x') in v && v[n] <= v[n + '-x'] * 2 + 0.1) },
+})
+// 今どうしの比べの画（-x-mae＝後の1枚目・-x-ato＝後の2枚目）を写す
+const copyX = (n) => ({ name: `撮る ${n}-x（今どうしの組）`, cmd: 'node', args: ['-e', `const fs=require('fs');const D='${OUT}/';fs.copyFileSync(D+'${n}-ato.png',D+'${n}-x-mae.png');fs.copyFileSync(D+'${n}-ato2.png',D+'${n}-x-ato.png')`] })
 const steps = [
   { name: 'ビルド', cmd: 'npm', args: ['run', 'build'] },
   { name: 'スモーク', cmd: 'npm', args: ['run', 'smoke'] },
   { name: '便18 K1〜K7', cmd: 'node', args: ['scripts/kamo/kensa.mjs'] },
-  sh('shishigaya-window-3d', 'all-yato-mae', 4986), sh('shishigaya-window-3d', 'all-yato-ato', 4961),
-  sh('autumn-dusk-corner-room', 'all-corner-mae', 4986), sh('autumn-dusk-corner-room', 'all-corner-ato', 4961, ['kamo=0']),
-  sa(['all-yato', 'all-corner'], 0.3),
+  sh('shishigaya-window-3d', 'all-yato-mae', 4986), sh('shishigaya-window-3d', 'all-yato-ato', 4961), sh('shishigaya-window-3d', 'all-yato-ato2', 4961), copyX('all-yato'),
+  sh('autumn-dusk-corner-room', 'all-corner-mae', 4986), sh('autumn-dusk-corner-room', 'all-corner-ato', 4961, ['kamo=0']), sh('autumn-dusk-corner-room', 'all-corner-ato2', 4961, ['kamo=0']), copyX('all-corner'),
+  sa(['all-yato', 'all-corner']),
 ]
 let pass = 0, n = 0
 for (const s of steps) {
