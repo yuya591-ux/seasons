@@ -3,6 +3,7 @@
 // 使い方: node scripts/kamo/shot.mjs <端末> <情景ID> <名前> [見回しの横 rad] [縦 rad] [窓 close|open|lean] [追加のクエリ]
 //   端末: pc（1920×1080）・ipad（1180×820@2）・iphone（402×874@3・縦）・iphoneL（874×402@3・横）
 //   FPS=1 を付けると画面の同期を切って9秒待ち、最後の3秒に描いたこま数を測る
+//   SAME=1 を付けると、前と後を同じに撮る形にする（動きを抑える＝時々の出来事を止める・Math.random の種と時計をそろえる・service worker を止める）
 // 出る物: QA_OUT（既定 docs/qa/2026-11-03_便18/shots）/<名前>.png と、1行の結果（こま数・段・エラー）
 import { chromium } from 'playwright'
 import fs from 'node:fs'
@@ -17,7 +18,9 @@ const DEV = {
 }[dev]
 const FPS = !!process.env.FPS
 const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu', ...(FPS ? ['--disable-gpu-vsync', '--disable-frame-rate-limit'] : [])] })
-const p = await (await b.newContext(DEV)).newPage()
+const SAME = !!process.env.SAME
+const p = await (await b.newContext({ ...DEV, ...(SAME ? { reducedMotion: 'reduce', serviceWorkers: 'block' } : {}) })).newPage()
+if (SAME) await p.addInitScript(() => { let s = 20261103; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 } })
 const errs = [], warns = []
 p.on('pageerror', (e) => errs.push('PE ' + e.message))
 p.on('response', (r) => { if (r.status() >= 400 && !/favicon/.test(r.url())) errs.push(r.status() + ' ' + r.url().split('/seasons/').pop()) })
