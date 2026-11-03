@@ -1,0 +1,16 @@
+[zentest] seasons・コミット 445bda3・作業ツリーの変更 0 件 → node docs/qa/2026-11-03_便18/gate/all18.mjs
+ビルド 合格（1秒）  ／ [32m✓ built in 558ms[39m
+スモーク 不合格（471秒）   [情景パネル] CE:シェーダーのコンパイルに失敗: null ／   [情景パネル] CE:シェーダーのコンパイルに失敗: null
+便18 K1〜K7 合格（84秒） ○ K8 軽い段: iPhone true・PC false ／ 検査 9 本・外れ 0
+撮る all-yato-mae 合格（9秒） all-yato-mae pc shishigaya-window-3d 組むまで 1676ms {"kamo":null,"pr":1,"q":"standard","stats":{"calls":1,"tris":1,"objs":1274,"pr":1,"ddt":0.067,"heavy":0,"light":1,"frames":106,"composer":true},"auto":{"p75":0.0334,"changes":0,"failedCap":0}} エラー無し
+撮る all-yato-ato 合格（9秒） all-yato-ato pc shishigaya-window-3d 組むまで 1627ms {"kamo":null,"pr":1,"q":"standard","stats":{"calls":1,"tris":1,"objs":1274,"pr":1,"ddt":0.067,"heavy":0,"light":1,"frames":106,"composer":true,"flyable":true},"auto":{"p75":0.0335,"changes":0,"failedCap":0}} エラー
+撮る all-yato-ato2 合格（9秒） all-yato-ato2 pc shishigaya-window-3d 組むまで 1712ms {"kamo":null,"pr":1,"q":"standard","stats":{"calls":1,"tris":1,"objs":1274,"pr":1,"ddt":0.067,"heavy":0,"light":1,"frames":104,"composer":true,"flyable":true},"auto":{"p75":0.0334,"changes":0,"failedCap":0}} エラ
+撮る all-yato-x（今どうしの組） 合格（0秒） 
+撮る all-corner-mae 合格（17秒） all-corner-mae pc autumn-dusk-corner-room 組むまで 8898ms {"kamo":null,"pr":1,"q":"standard","stats":{"calls":1,"tris":1,"objs":10437,"pr":1,"ddt":0.066,"heavy":0,"light":1,"frames":105,"composer":true},"auto":{"p75":0.0334,"changes":0,"failedCap":0}} エラー無し
+撮る all-corner-ato 合格（16秒） all-corner-ato pc autumn-dusk-corner-room 組むまで 8725ms {"kamo":null,"pr":1,"q":"standard","stats":{"calls":1,"tris":1,"objs":10437,"pr":1,"ddt":0.067,"heavy":0,"light":1,"frames":105,"composer":true,"flyable":true},"auto":{"p75":0.0334,"changes":0,"failedCap":0
+撮る all-corner-ato2 合格（17秒） all-corner-ato2 pc autumn-dusk-corner-room 組むまで 8814ms {"kamo":null,"pr":1,"q":"standard","stats":{"calls":1,"tris":1,"objs":10437,"pr":1,"ddt":0.067,"heavy":0,"light":1,"frames":106,"composer":true,"flyable":true},"auto":{"p75":0.0335,"changes":0,"failedCap":
+撮る all-corner-x（今どうしの組） 合格（0秒） 
+前後の画素の差 all-yato・all-corner（今どうしの揺れ×2＋0.1% 以内） 合格（2秒） all-corner: 平均の差 0.105/255・差が 8 を超える画素 0.313% ／ all-corner-x: 平均の差 0.049/255・差が 8 を超える画素 0.137%
+全テストの終わり: 3/4 合格
+[zentest] 終わりの値 1（途中の検査で止まった）・コミット 445bda3・数 3
+[zentest] 記録: C:\Users\yuya.satake\.claude\bin-state\zentest\seasons.jsonl（報告の全テストの数はこの回の物だけを書く。途中で止まった回を足さない）
