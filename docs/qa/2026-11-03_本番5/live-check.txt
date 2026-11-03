@@ -1,0 +1,6 @@
+公開と手元の precache-manifest が同じ: true
+公開の画面のプログラム: assets/index-DaajLvbY.js・assets/index-C_bglLeN.css
+SHA-256 assets/index-DaajLvbY.js 公開・手元 一致 2156507448f908c4fefbc1930365f0b0bab5706d99ed700fca25b6a2330dddc2
+SHA-256 assets/index-C_bglLeN.css 公開・手元 一致 749aa53dee1446b31de3c1ae74fa24837536fbb2e221b0854dac9a4a8c4edd05
+SHA-256 assets/town3dViewer-DYtQLEmV.js 公開・手元 一致 33f099524bf8211d4ace699bddfdde8466ccdcd894fada8b4d5ee90d5f89c964
+便15 で消した素材が公開から消えた: 35/35
