@@ -426,7 +426,7 @@ export async function mountTown3d(parent, opts = {}) {
   const mistWhite = new THREE.Color(0xeef2f4), mistCol = new THREE.Color()
   let mistOff = 0, mistDD = 0, mistT = 0 // 流れの位置（m）・直近の日の傾き（0..1）・前に当てた時刻（秒）
   const applyMist = () => {
-    MIST_A[0] = MIST.base; MIST_A[1] = MIST.scale; MIST_A[2] = MIST.density * (1 + 0.25 * mistDD); MIST_A[3] = mistPin.amount ?? MIST.amount
+    MIST_A[0] = MIST.base; MIST_A[1] = MIST.scale; MIST_A[2] = MIST.density * (1 + 0.25 * mistDD); MIST_A[3] = kamo ? 0 : (mistPin.amount ?? MIST.amount) // 【便22】鴨川の町では低く溜まる霧を掛けない（北寺尾の町の高さで決めた霧が、南ほど土地の低い鴨川の町の祇園・河原町の通りに白いまだらで溜まった）
     mistCol.copy(scene.fog.color).lerp(mistWhite, MIST.tint); MIST_B[0] = mistCol.r; MIST_B[1] = mistCol.g; MIST_B[2] = mistCol.b; MIST_B[3] = mistPin.off ?? mistOff
   }
   applyMist()
@@ -8127,6 +8127,8 @@ export async function mountTown3d(parent, opts = {}) {
           bloomWanted = false // 鴨川の町は灯りのにじみを掛けない（試作と同じ）
           if (outPass) { const u = outPass.uniforms; u.gAtm.value = 0; u.gWashA.value = 0; u.gPaperA.value = 0; u.gSat.value = 1; u.gSepia.value = 0; u.gContrast.value = 1 } // 水彩の層を掛けない（便16 の決め）
           renderer.toneMapping = THREE.NoToneMapping // 色の圧縮は、鴨川＝1枚目の中（ACES）・部屋＝材の中（Neutral）で済ませる
+          // 便22: 外の町（西は金閣寺・南は京都駅と京都タワー・木屋町・河原町・祇園まで）を裏で読み、読めたら足す（読めなくても鴨川の町はそのまま）。kamoouter=0 は外し回し用
+          if (!/[?&]kamoouter=0/.test(location.search)) { const k0 = kamo; import('./kamoOuter.js').then((m) => m.loadOuter(import.meta.env.BASE_URL + 'kamo/outer/').then((od) => { if (kamo === k0 && my === token) { try { k0.addOuter(od, m) } catch (e) { console.warn('外の町を組めなかったので、鴨川の町だけで開きます:', e && e.message) } } })).catch((e) => console.warn('外の町を読めなかったので、鴨川の町だけで開きます:', e && e.message)) }
         } catch (e) { console.warn('鴨川の町を組めなかったので、前の角部屋で開きます:', e && e.message); if (kamo) { try { kamo.dispose() } catch (e2) { /* 無視 */ } } kamo = null }
       }
     }
@@ -10861,6 +10863,7 @@ export async function mountTown3d(parent, opts = {}) {
     scene.traverse((o) => { if (o.userData && o.userData.kamoKeep) o.traverse(keepIt); if (o.isLight) o.layers.enable(KL) })
     camera.layers.set(KL)
     kamoRoomExp.value = renderer.toneMappingExposure
+    applyMist() // 【便22】鴨川の町では低く溜まる霧を 0 に
     try { kamo.sync(camera); renderer.compile(kamo.scene, kamo.camera) } catch (e) { /* 最初の描画で組み立てる */ }
     applyStageFilter()
   }

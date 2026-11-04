@@ -234,6 +234,12 @@ void main() {
     addKey(mat, fill ? 'bakeF' : 'bake')
   }
 
+  // 便22: 置いた所の座標と向き（箱を並べて描く時は instanceMatrix も掛ける。向きは拡大の逆を掛けてから回す＝three の法線と同じ）。並べない時は前と同じ式
+  const INSTW = (P, N) => `#ifdef USE_INSTANCING
+${P} = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; { mat3 kim = mat3(instanceMatrix); vec3 kn0 = objectNormal / vec3(dot(kim[0], kim[0]), dot(kim[1], kim[1]), dot(kim[2], kim[2])); ${N} = normalize(mat3(modelMatrix) * (kim * kn0)); }
+#else
+${P} = (modelMatrix * vec4(transformed, 1.0)).xyz; ${N} = normalize(mat3(modelMatrix) * objectNormal);
+#endif`
   // 写真から作った CC0 の質感の素材。色は頂点の色を保ち、写真の模様だけを足す（便16 の見本と同じ考え）
   const kits = new Map()
   function texKit(name) {
@@ -251,7 +257,7 @@ void main() {
     const A = texKit(a), B = b ? texKit(b) : A, key = `${a}|${b}|${mode}|${ns}`
     mat.onBeforeCompile = chain(mat.onBeforeCompile, (sh) => {
       Object.assign(sh.uniforms, { uTA: { value: A.d }, uTAN: { value: A.n }, uTAavg: { value: A.avg }, uTB: { value: B.d }, uTBN: { value: B.n }, uTBavg: { value: B.avg }, uTile: { value: tile }, uTileB: { value: tileB || tile } })
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGW; varying vec3 vGN;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvGW = (modelMatrix * vec4(transformed, 1.0)).xyz; vGN = normalize(mat3(modelMatrix) * objectNormal);')
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGW; varying vec3 vGN;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n' + INSTW('vGW', 'vGN'))
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
 varying vec3 vGW; varying vec3 vGN; uniform sampler2D uTA, uTAN, uTB, uTBN; uniform vec3 uTAavg, uTBavg; uniform float uTile, uTileB;
 vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z ? vec2(vGW.z, vGW.y) / tl : vec2(vGW.x, vGW.y) / tl;' : 'return vGW.xz / tl;'} }`)
@@ -314,6 +320,9 @@ vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z 
         c = mix(c, vec3(0.6, 0.53, 0.4) * kDet, min(1.0, step(fract(hl / 4.2), 0.07) + step(fract(al / 4.0 + kR), 0.06)));
       } else if (kS == 7) { // 吉田神社の社: 朱の柱と長押・白い壁（調べ §2）
         float pil = step(fract(al / 1.8), 0.1); c = mix(vec3(0.72, 0.7, 0.64) * kDet, vec3(0.5, 0.06, 0.025), min(1.0, max(pil, step(hl, 0.5) + step(2.6, hl)))); kWin = 0.0;
+      } else if (kS == 9) { // 便22: ガラスの外壁（京都駅ビル・背の高い事務所と店）: 灰青のガラスに銀灰の方立（1.5m おき）と階の帯（3.6m おき）。夕と夜は内の灯りが透ける
+        float mu = step(0.92, fract(al / 1.5)), fl = step(0.88, fract(hl / 3.6)); c = mix(vec3(0.13, 0.17, 0.2) * (0.85 + 0.3 * kR), vec3(0.42, 0.44, 0.45), max(mu, fl)) * kDet; kWin = 0.0;
+        kGlowC += vec3(1.0, 0.86, 0.62) * 0.3 * (1.0 - max(mu, fl)) * step(1.0 - uLit * 1.4, fract(floor(hl / 3.6) * 0.37 + floor(al / 6.0) * 0.61 + kR));
       }
       if (c.x >= 0.0) diffuseColor.rgb = c;
     } else`
@@ -346,7 +355,7 @@ vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z 
   function useWindows(mat, tall) {
     mat.onBeforeCompile = chain(mat.onBeforeCompile, (sh) => {
       sh.uniforms.uLit = { value: lit[0] }; sh.uniforms.uLitI = { value: lit[1] }
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWW; varying vec3 vWN;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWW = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal);')
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWW; varying vec3 vWN;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n' + INSTW('vWW', 'vWN'))
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
 varying vec3 vWW; varying vec3 vWN; uniform float uLit, uLitI;
 float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }`)
@@ -365,6 +374,33 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   totalEmissiveRadiance += winMask * step(1.0 - uLit, wHash(wcell * 1.7 + 3.1)) * vec3(1.0, 0.72, 0.42) * uLitI;`)
     })
     addKey(mat, 'win' + (tall ? 'C' : 'P'))
+  }
+
+  // 便21 の道の細かさ（白線・目地・真砂土の縁・橋の歩道）。aRd＝(左 -1・右 +1, 道の長さの位置 m, 幅 m, 種類)。便22 で外の町と分け合うため関数にした（中身は便21 のまま）
+  function useRoad(m) {
+    m.onBeforeCompile = chain(m.onBeforeCompile, (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aRd; varying vec4 vRd;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRd = aRd;')
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec4 vRd;').replace('vec2 tuv = gmix > 0.5 ? tuvB : tuvA;', `vec2 tuv = gmix > 0.5 ? tuvB : tuvA;
+{ int rk = int(vRd.w + 0.5); float hw = vRd.z * 0.5, u = vRd.x * hw, e = hw - abs(u), al = vRd.y;
+  float fwU = max(fwidth(u), 1e-4), fwA = max(fwidth(al), 1e-4);
+  if (rk == 0) {
+    float edge = smoothstep(0.3 - fwU, 0.3, e) * (1.0 - smoothstep(0.45, 0.45 + fwU, e));
+    float cen = hw >= 4.5 ? (1.0 - smoothstep(0.07, 0.07 + fwU, abs(u))) * step(fract(al / 9.0), 0.66) : 0.0;
+    float line = max(edge, cen) * (1.0 - smoothstep(0.4, 1.2, fwA * 0.2 + fwU * 2.0));
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${SNOW ? '0.75, 0.76, 0.78' : '0.62, 0.62, 0.6'}), line * 0.85);
+  } else if (rk == 1) {
+    float jt = max(1.0 - smoothstep(0.0, 0.02 + fwU, abs(fract(u / 0.3 + 0.5) - 0.5) * 0.3), 1.0 - smoothstep(0.0, 0.02 + fwA, abs(fract(al / 0.3) - 0.5) * 0.3));
+    diffuseColor.rgb *= 1.0 - 0.25 * jt * (1.0 - smoothstep(0.2, 0.6, fwA));
+  } else if (rk == 5) {
+    diffuseColor.rgb *= mix(0.72, 1.06, smoothstep(0.0, 0.7, e)) * (0.94 + 0.12 * smoothstep(0.4, 1.4, e));
+  } else if (rk == 2 && hw > 3.0) {
+    float walk = smoothstep(2.0 - fwU, 2.0, e) > 0.5 ? 0.0 : 1.0;
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.41, 0.39) * (0.9 + 0.1 * step(0.5, fract(al / 0.6))), walk);
+    diffuseColor.rgb *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, 0.08 + fwU, abs(e - 2.0)));
+  }
+}`)
+    })
+    addKey(m, 'road21')
   }
 
   // ── 地形（近く＝5m の標高・遠く＝10m の標高）。色は高さと傾きと水面からの高さで計算 ──
@@ -490,31 +526,8 @@ float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.42 : 0.9, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }))
     useBake(m, data.lm.terrain)
     useTex(m, ra ? { a: 'asphalt_02', b: 'gravel_road', tile: 5, tileB: 2.2 } : { a: 'asphalt_02', tile: 5 })
-    if (ra) {
-      m.onBeforeCompile = chain(m.onBeforeCompile, (sh) => {
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aRd; varying vec4 vRd;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRd = aRd;')
-        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec4 vRd;').replace('vec2 tuv = gmix > 0.5 ? tuvB : tuvA;', `vec2 tuv = gmix > 0.5 ? tuvB : tuvA;
-  { int rk = int(vRd.w + 0.5); float hw = vRd.z * 0.5, u = vRd.x * hw, e = hw - abs(u), al = vRd.y;
-    float fwU = max(fwidth(u), 1e-4), fwA = max(fwidth(al), 1e-4);
-    if (rk == 0) {
-      float edge = smoothstep(0.3 - fwU, 0.3, e) * (1.0 - smoothstep(0.45, 0.45 + fwU, e));
-      float cen = hw >= 4.5 ? (1.0 - smoothstep(0.07, 0.07 + fwU, abs(u))) * step(fract(al / 9.0), 0.66) : 0.0;
-      float line = max(edge, cen) * (1.0 - smoothstep(0.4, 1.2, fwA * 0.2 + fwU * 2.0));
-      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${SNOW ? '0.75, 0.76, 0.78' : '0.62, 0.62, 0.6'}), line * 0.85);
-    } else if (rk == 1) {
-      float jt = max(1.0 - smoothstep(0.0, 0.02 + fwU, abs(fract(u / 0.3 + 0.5) - 0.5) * 0.3), 1.0 - smoothstep(0.0, 0.02 + fwA, abs(fract(al / 0.3) - 0.5) * 0.3));
-      diffuseColor.rgb *= 1.0 - 0.25 * jt * (1.0 - smoothstep(0.2, 0.6, fwA));
-    } else if (rk == 5) {
-      diffuseColor.rgb *= mix(0.72, 1.06, smoothstep(0.0, 0.7, e)) * (0.94 + 0.12 * smoothstep(0.4, 1.4, e));
-    } else if (rk == 2 && hw > 3.0) {
-      float walk = smoothstep(2.0 - fwU, 2.0, e) > 0.5 ? 0.0 : 1.0;
-      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.41, 0.39) * (0.9 + 0.1 * step(0.5, fract(al / 0.6))), walk);
-      diffuseColor.rgb *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, 0.08 + fwU, abs(e - 2.0)));
-    }
-  }`)
-      })
-      addKey(m, 'road21')
-    }
+    if (ra) useRoad(m)
+
     const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.castShadow = true; mesh.userData.part = 'roads'; scene.add(mesh)
   }
 
@@ -1055,6 +1068,26 @@ void main() {`)
     info: () => (G ? { ms: G.ms, cells: GN * GNZ } : null),
   }
 
+  // ── 便22: 外の町の道案内。addOuter で ON（外の町の表）が立つと、鴨川の町の網の外（縁から EDGE より外）は外の町の地面・水・建物・橋で答える。
+  //   網の中でも、鴨川の町が描かない縁の 100m の帯の建物（外の町が描く）には当たる。町の3Dは関数を最初に受け取るので、関数の中で ON を見て分ける
+  let ON = null, outer = null, outerMs = null, waterCut = null // waterCut＝網の外で落とした鴨川の町の水面の三角形の数
+  {
+    const inC = (X, Z) => !outK(X, Z)
+    const W = {
+      ground: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z); return inC(X, Z) ? f(x, z) : ON.terr(X, Z) - dY },
+      floor: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z); return inC(X, Z) ? f(x, z) : ON.floor(X, Z) - dY },
+      top: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z), o = ON.top(X, Z) - dY; return inC(X, Z) ? Math.max(f(x, z), o) : Math.max(o, ON.floor(X, Z) - dY) },
+      topSoft: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z), o = ON.soft(X, Z) - dY; return inC(X, Z) ? Math.max(f(x, z), o) : o },
+      wet: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z); return inC(X, Z) ? f(x, z) : ON.zone(X, Z) === 2 },
+      zone: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z); if (inC(X, Z)) return f(x, z); const q = ON.zone(X, Z); return q === 2 ? 2 : q === 3 ? 1 : 0 },
+      blocked: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z); if (!ON.inside(X, Z)) return true; return (inC(X, Z) && f(x, z)) || ON.blocked(X, Z) },
+      groundAt: (f) => (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (inC(X, Z)) return f(x, z, feetY); const d = ON.deck(X, Z, feetY + dY); return (d === d ? d + 0.05 : ON.terr(X, Z)) - dY },
+      canStep: (f) => (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (!ON.inside(X, Z) || ON.blocked(X, Z)) return false; if (inC(X, Z)) return f(x, z, feetY); if (!Number.isNaN(ON.deck(X, Z, feetY + dY))) return true; return ON.zone(X, Z) !== 2 },
+      place: (f) => (x, z, y) => { const X = KX(x, z), Z = KZ(x, z); if (inC(X, Z)) return f(x, z, y); const alt = y + dY - ON.terr(X, Z); if (alt > 90) return '京都の上空'; const p = ON.placeOf(X, Z); if (p) return p; if (ON.zone(X, Z) === 2) return Z > 900 && Math.abs(X + 40) < 220 ? '鴨川の上' : '水の上'; if (ON.zone(X, Z) === 3) return '鴨川の河川敷'; return '京のまちなか' },
+    }
+    for (const [k, w] of Object.entries(W)) { const f0 = nav[k], wf = w(f0); nav[k] = (...a) => (ON ? wf(...a) : f0(...a)) }
+  }
+
   // ── 便20: 人や電車や鳥が動く所と、時々の出来事（kamoLife.js）。置く高さは間引かない網で読む（iPhone の段でも人が地面に埋まらない） ──
   const terrFull = (X, Z) => gridAt(X, Z, (k) => terrain[k] * nQ)
   const fN = meta.far.n, fR = meta.far.R, fS = meta.far.step, fQ = meta.far.hStep
@@ -1104,7 +1137,104 @@ void main() {`)
     causU.value = tAcc // 便21: 川底の光の網の時計
     cloudU.value = tAcc // 便21: 雲の流れの時計
     if (people) { try { people.update(dt) } catch (e) { console.warn('鴨川の河川敷の人を止めました:', e && e.message); people = null; scene.traverse((o) => { if (o.userData && /^(people|fireworks)$/.test(o.userData.part)) o.visible = false }) } }
+    if (outer) { try { outer.update(dt, camera) } catch (e) { console.warn('外の町の更新を止めました:', e && e.message); outer = null } }
     if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null; scene.traverse((o) => { if (o.userData && /^(people|birds|train|okuribi)$/.test(o.userData.part)) o.visible = false }) } } // 【便20・外の目】止めた時は、動く物をその場で固まらせずに隠す
+  }
+
+  // ── 便22: 外の町を足す（町の3Dが鴨川の町を組んだ後に、裏で読んだ外の町のデータを渡す） ──
+  function addOuter(od, mod) {
+    if (outer) return outer.info
+    const t0 = performance.now()
+    const OX = od.meta.OX
+    outer = mod.buildOuter(od, { keep, useTex, useWindows, useKyo, useRoad, gridTiles, chain, addKey, S, TK, SNOW, RAIN, NIGHT, LEAF, WHITE, T, waterNormalTex: water.material.uniforms.normalSampler.value, low, sunDir, fogColor: scene.fog.color.getHex() })
+    scene.add(outer.group)
+    // 遠くの網（50m 間隔）を、外の町の範囲で 6m 下げて外の町の網の下に隠す（鴨川の町の範囲の中は前から下げてある）
+    const inN = (x, z, m) => x >= NX0 + m && x <= NX1 - m && z >= NZ0 + m && z <= NZ1 - m
+    scene.traverse((o) => { if (o.userData.part !== 'terrainFar') return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); if (x > OX.x0 + 10 && x < OX.x1 - 10 && z > OX.z0 + 10 && z < OX.z1 - 10 && !inN(x, z, 10)) p.setY(i, p.getY(i) - 6) } p.needsUpdate = true; o.geometry.computeBoundingSphere(); o.geometry.computeBoundingBox() })
+    // 鴨川の町の水面のうち、網の外（南の五条まで延びていた）の三角形を落とす。川の面の輪の三角形分けが崩れて、祇園や河原町の町の上に水の板がかかっていた（外の町を足すと白いもやに見えた）。
+    //   網の外の川の水面は外の町が網から作る。外の町が無い時は前のまま（kamoouter=0）
+    { const g = water.geometry, p = g.attributes.position, ix = g.index.array, keepI = []
+      for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (cx >= NX0 && cx <= NX1 && cz >= NZ0 && cz <= NZ1) keepI.push(ix[t], ix[t + 1], ix[t + 2]) }
+      waterCut = ix.length / 3 - keepI.length / 3; g.setIndex(keepI); g.computeBoundingSphere() }
+    // 水の映り込み（Water がもう一度描く舞台）には外の町を描かない（重さのため・遠くて映り込みに小さい）
+    const ob = water.onBeforeRender
+    water.onBeforeRender = function (...a) { const v = outer && outer.group.visible; if (outer) outer.group.visible = false; try { ob.apply(this, a) } finally { if (outer) outer.group.visible = v } }
+    ON = makeOuterNav(od, mod.OUTER_PLACES)
+    // 飛べる箱を外の町の四角へ広げる（町の3Dは同じ箱の入れ物を見ている）
+    { const W2 = (OX.x1 - OX.x0) / 2 - EDGE, D2 = (OX.z1 - OX.z0) / 2 - EDGE, cx = TX((OX.x0 + OX.x1) / 2, (OX.z0 + OX.z1) / 2), cz = TZ((OX.x0 + OX.x1) / 2, (OX.z0 + OX.z1) / 2)
+      let hx2 = (W2 * a10 - a8 * D2) / det, hz2 = (a0 * D2 - a2 * W2) / det
+      if (!(hx2 > 0 && hz2 > 0)) { hx2 = hz2 = Math.min(W2, D2) / (a0 + a8 + a2 + a10) * 2 }
+      Object.assign(nav.bound, { x: hx2 - cx, xMax: cx + hx2, zMin: cz - hz2, zMax: cz + hz2 }) }
+    outerMs = Math.round(performance.now() - t0)
+    return outer.info
+  }
+  // 外の町の道案内の表（4m 四方・iPhone の段は 8m＝表の大きさを 4 分の 1 に）。建物（箱と外形）の上の高さ・建物の升・木の上・橋の床。最初に聞かれた時に作る
+  function makeOuterNav(od, places) {
+    const M = od.meta, OX = M.OX, st = M.step, nx = M.nx, nz = M.nz, hq = M.hStep
+    const hs = view(od.buf.terrain, M.files.terrain.secs.h), zn = view(od.buf.terrain, M.files.terrain.secs.zone)
+    const terr = (X, Z) => { const u = Math.min(nx - 1.001, Math.max(0, (X - OX.x0) / st)), v = Math.min(nz - 1.001, Math.max(0, (Z - OX.z0) / st)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nx + i
+      return ((hs[k] * (1 - fu) + hs[k + 1] * fu) * (1 - fv) + (hs[k + nx] * (1 - fu) + hs[k + nx + 1] * fu) * fv) * hq }
+    const zone = (X, Z) => zn[Math.round(Math.min(nz - 1, Math.max(0, (Z - OX.z0) / st))) * nx + Math.round(Math.min(nx - 1, Math.max(0, (X - OX.x0) / st)))]
+    const floor = (X, Z) => terr(X, Z) + (zone(X, Z) === 2 ? 1.0 : 0)
+    const GCo = low ? 8 : 4, GX = Math.ceil((OX.x1 - OX.x0) / GCo), GZ = Math.ceil((OX.z1 - OX.z0) / GCo)
+    let tb = null
+    const build = () => {
+      if (tb) return tb
+      const t0 = performance.now(), top = new Float32Array(GX * GZ).fill(-1e9), bld = new Uint8Array(GX * GZ), deck = new Float32Array(GX * GZ).fill(NaN)
+      const ci = (X) => Math.floor((X - OX.x0) / GCo), cj = (Z) => Math.floor((Z - OX.z0) / GCo)
+      try {
+        const B = od.boxes, q = B.q
+        for (let i = 0; i < B.nB; i++) { // 箱: 升の中心が回した長方形の中か
+          const o = i * B.st, cx = B.bi[o] * q.xz, cz = B.bi[o + 1] * q.xz, w = B.bu[o + 2] * q.size, d = B.bu[o + 3] * q.size, hh = B.bu[o + 4] * q.size, base = B.bi[o + 5] * q.base, ang = (B.bu[o + 6] / 65535) * Math.PI, roof = (B.bu[o + 7] >> 4) & 3
+          const c = Math.cos(ang), sn = Math.sin(ang), R0 = Math.hypot(w, d) / 2 + 1, yT = base + hh + (roof ? 0.5 * Math.min(w, d) / 2 + 0.5 : 0)
+          for (let j = Math.max(0, cj(cz - R0)); j <= Math.min(GZ - 1, cj(cz + R0)); j++) for (let ii = Math.max(0, ci(cx - R0)); ii <= Math.min(GX - 1, ci(cx + R0)); ii++) {
+            const px = OX.x0 + (ii + 0.5) * GCo - cx, pz = OX.z0 + (j + 0.5) * GCo - cz, u = px * c + pz * sn, v = -px * sn + pz * c
+            if (Math.abs(u) <= w / 2 + 0.5 && Math.abs(v) <= d / 2 + 0.5) { const k = j * GX + ii; if (yT > top[k]) top[k] = yT; if (hh > 1.8) bld[k] = 1 }
+          }
+        }
+        // 外形の建物（駅ビルなど）: 升の中心が外形の中か
+        const pp = view(od.buf.bldg, M.files.bldg.secs.poly), pts = view(od.buf.bldg, M.files.bldg.secs.polyPts), PS = M.polyStride
+        for (let i = 0; i < pp.length / PS; i++) {
+          const base = pp[i * PS] * q.base, hh = pp[i * PS + 1] * q.size, n = pp[i * PS + 4], o = pp[i * PS + 5], R2 = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9
+          for (let k = 0; k < n; k++) { const x = pts[(o + k) * 2] * q.xz, z = pts[(o + k) * 2 + 1] * q.xz; R2.push([x, z]); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z) }
+          for (let j = Math.max(0, cj(z0)); j <= Math.min(GZ - 1, cj(z1)); j++) for (let ii = Math.max(0, ci(x0)); ii <= Math.min(GX - 1, ci(x1)); ii++) { const px = OX.x0 + (ii + 0.5) * GCo, pz = OX.z0 + (j + 0.5) * GCo; let inside = false; for (let a = 0, b = n - 1; a < n; b = a++) { const [xa, za] = R2[a], [xb, zb] = R2[b]; if (za > pz !== zb > pz && px < ((xb - xa) * (pz - za)) / (zb - za) + xa) inside = !inside } if (inside) { const k = j * GX + ii; top[k] = Math.max(top[k], base + hh); bld[k] = 1 } }
+        }
+        // 名所の高さ（京都タワー 131m・八坂の塔 46m など）
+        for (const [X, Z, r, yT] of od.meishoNav || []) for (let j = Math.max(0, cj(Z - r)); j <= Math.min(GZ - 1, cj(Z + r)); j++) for (let ii = Math.max(0, ci(X - r)); ii <= Math.min(GX - 1, ci(X + r)); ii++) { const px = OX.x0 + (ii + 0.5) * GCo, pz = OX.z0 + (j + 0.5) * GCo; if (Math.hypot(px - X, pz - Z) <= r) { const k = j * GX + ii; top[k] = Math.max(top[k], yT); bld[k] = 1 } }
+        // 木の上（飛ぶ時）
+        const t = od.trees; for (let i = 0; i < t.length; i += 6) { const X = t[i], Y = t[i + 1], Z = t[i + 2], hh = t[i + 3], r = t[i + 4] * 0.5; for (let j = Math.max(0, cj(Z - r)); j <= Math.min(GZ - 1, cj(Z + r)); j++) for (let ii = Math.max(0, ci(X - r)); ii <= Math.min(GX - 1, ci(X + r)); ii++) { const k = j * GX + ii; if (Y + hh > top[k]) top[k] = Y + hh } }
+        // 橋の床（道の帯の種類 2）
+        const rs = M.files.roads.secs, rq = M.roadQ, p16 = view(od.buf.roads, rs.pos), runs = view(od.buf.roads, rs.runs), kd = view(od.buf.roads, rs.kind)
+        let base = 0
+        for (const L of runs) {
+          if (kd[base] === 2) for (let i = 0; i < L - 1; i++) { const a = base + i * 2, P = (v) => [p16[v * 3] * rq.xz, p16[v * 3 + 1] * rq.y, p16[v * 3 + 2] * rq.xz], A = P(a), Bq = P(a + 1), Cq = P(a + 2), Dq = P(a + 3)
+            const x0 = Math.min(A[0], Bq[0], Cq[0], Dq[0]), x1 = Math.max(A[0], Bq[0], Cq[0], Dq[0]), z0 = Math.min(A[2], Bq[2], Cq[2], Dq[2]), z1 = Math.max(A[2], Bq[2], Cq[2], Dq[2]), y = (A[1] + Bq[1] + Cq[1] + Dq[1]) / 4
+            const mx = (A[0] + Bq[0] + Cq[0] + Dq[0]) / 4, mz = (A[2] + Bq[2] + Cq[2] + Dq[2]) / 4, ax = (Cq[0] + Dq[0] - A[0] - Bq[0]) / 2, az = (Cq[2] + Dq[2] - A[2] - Bq[2]) / 2, al = Math.hypot(ax, az) || 1, hw = Math.hypot(Bq[0] - A[0], Bq[2] - A[2]) / 2
+            for (let j = Math.max(0, cj(z0)); j <= Math.min(GZ - 1, cj(z1)); j++) for (let ii = Math.max(0, ci(x0)); ii <= Math.min(GX - 1, ci(x1)); ii++) { const px = OX.x0 + (ii + 0.5) * GCo - mx, pz = OX.z0 + (j + 0.5) * GCo - mz, u = (px * ax + pz * az) / al, v = (-px * az + pz * ax) / al; if (Math.abs(u) <= al / 2 + 1 && Math.abs(v) <= hw + 0.3) { const k = j * GX + ii; if (!(deck[k] >= y)) deck[k] = y; if (y + 1.2 > top[k]) top[k] = y + 1.2 } } }
+          base += L * 2
+        }
+      } catch (e) { console.warn('外の町の道案内の表を組めなかったので、地面と水だけで飛ぶ・歩く:', e && e.message); top.fill(-1e9); bld.fill(0); deck.fill(NaN) }
+      // 建物の升でも地面から 1.8m より低い物は歩ける。飛ぶ時の下限＝地面と上の高い方を 8m に広げてなだらかに
+      const F = new Float32Array(GX * GZ)
+      for (let j = 0; j < GZ; j++) for (let i = 0; i < GX; i++) { const k = j * GX + i, X = OX.x0 + (i + 0.5) * GCo, Z = OX.z0 + (j + 0.5) * GCo, fl = floor(X, Z); if (bld[k] && top[k] - terr(X, Z) < 1.8) bld[k] = 0; F[k] = Math.max(top[k], fl) }
+      const pass = (src, r, op) => { const tmp = new Float32Array(GX * GZ), out = new Float32Array(GX * GZ)
+        for (let j = 0; j < GZ; j++) for (let i = 0; i < GX; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const v = src[j * GX + Math.min(GX - 1, Math.max(0, i + d))]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } tmp[j * GX + i] = op === 'max' ? m : m / c }
+        for (let j = 0; j < GZ; j++) for (let i = 0; i < GX; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const v = tmp[Math.min(GZ - 1, Math.max(0, j + d)) * GX + i]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } out[j * GX + i] = op === 'max' ? m : m / c }
+        return out }
+      tb = { top: F, bld, deck, S: pass(pass(F, 2, 'max'), 2, 'avg'), ms: Math.round(performance.now() - t0) }
+      return tb
+    }
+    const cell = (X, Z) => { const i = Math.floor((X - OX.x0) / GCo), j = Math.floor((Z - OX.z0) / GCo); return i < 0 || j < 0 || i >= GX || j >= GZ ? -1 : j * GX + i }
+    return {
+      terr, zone, floor,
+      inside: (X, Z) => X > OX.x0 + EDGE && X < OX.x1 - EDGE && Z > OX.z0 + EDGE && Z < OX.z1 - EDGE,
+      top: (X, Z) => { const k = cell(X, Z); return k >= 0 ? build().top[k] : -1e9 },
+      soft: (X, Z) => { const g = build(), u = Math.min(GX - 1.001, Math.max(0, (X - OX.x0) / GCo - 0.5)), v = Math.min(GZ - 1.001, Math.max(0, (Z - OX.z0) / GCo - 0.5)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * GX + i; return (g.S[k] * (1 - fu) + g.S[k + 1] * fu) * (1 - fv) + (g.S[k + GX] * (1 - fu) + g.S[k + GX + 1] * fu) * fv },
+      blocked: (X, Z) => { const k = cell(X, Z); return k >= 0 && build().bld[k] === 1 },
+      deck: (X, Z, feetK) => { const k = cell(X, Z); if (k < 0) return NaN; const d = build().deck[k]; return d === d && Math.abs(d - feetK) < 1.3 ? d : NaN },
+      placeOf: (X, Z) => { for (const p of places) if (X >= p.x0 && X <= p.x1 && Z >= p.z0 && Z <= p.z1) return p.name; return null },
+      info: () => ({ ms: tb ? tb.ms : null, cells: GX * GZ }),
+    }
   }
 
   // ── 後処理の1枚目: 鴨川の舞台を描き、この町の明るさで ACES の色の圧縮をかけて書く（部屋はこの上に重ねる） ──
@@ -1170,9 +1300,10 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     get life() { return life }, // 便20: 動く物と時々の出来事（組めなかった時は null）
     townOf: (X, Z, Y = 0) => ({ x: TX(X, Z), y: Y - dY, z: TZ(X, Z) }), // 検証用（便20）: 鴨川の座標 → 町の3Dの座標
     setBright(b) { state.bright = b || 1 },
+    addOuter, // 便22: 外の町を足す（kamoOuter.js が読んだデータ）
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {
