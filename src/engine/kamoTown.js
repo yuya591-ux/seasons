@@ -275,7 +275,7 @@ vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z 
   //   屋根（build.mjs が足した切妻と寄棟）: いぶし銀の桟瓦（瓦の段の陰と桟の波）。今の家の一部は黒や茶のスレート
   //   夕方と夜は、町家の格子と虫籠窓、古民家のガラス戸の一部に、内の灯りが温かく透ける
   let KYO = false
-  const kyoCount = [0, 0, 0, 0, 0, 0]
+  const kyoCount = [0, 0, 0, 0, 0, 0, 0, 0, 0] // 6 京大の赤茶・7 吉田神社の社・8 茂庵
   function useKyo(mat, isWall) {
     mat.onBeforeCompile = chain(mat.onBeforeCompile, (sh) => {
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aKB; varying vec4 vKB;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvKB = aKB;')
@@ -905,6 +905,10 @@ void main() {`)
       const lists = [[], [], []]
       for (let i = 0; i < n; i++) { const k = sk[i] === 3 ? 0 : Math.min(2, sk[i]); lists[k].push(i); stoneKinds.byKind[sk[i]]++ }
       stoneKinds.n = n
+      // 検査用（便21）: 渡る石が列の線から左右へずれた量（千鳥）の一番小さい所と大きい所（m）
+      const rows = (meta.stones && meta.stones.rows) || []; let zmin = 1e9, zmax = 0
+      for (let i = 0; i < n; i++) { if (sk[i] === 3) continue; let best = 1e9; for (let r = 0; r < rows.length; r += 4) { const ax = rows[r], az = rows[r + 1], bx = rows[r + 2], bz = rows[r + 3], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((st[i * 4] - ax) * dx + (st[i * 4 + 2] - az) * dz) / L2)); best = Math.min(best, Math.hypot(st[i * 4] - ax - dx * u, st[i * 4 + 2] - az - dz * u)) } zmin = Math.min(zmin, best); zmax = Math.max(zmax, best) }
+      stoneKinds.zig = [+zmin.toFixed(2), +zmax.toFixed(2)]
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1), at = new THREE.Vector3()
       lists.forEach((L, k) => {
         if (!L.length) return

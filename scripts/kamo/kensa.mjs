@@ -28,6 +28,12 @@
 //   K23 鴨川の出来事の音（トビの声・叡山電車）を鳴らしてもエラーが無く、出来事を起こすと鳴らした数が増える（便20）
 //   ~~K24 視差軽減（動きを減らす設定）では、送り火も時々の出来事も起きない（座る人と電車はいつもの景色として居る）（便20）~~（【便20・外の目】下の形に替えた）
 //   K24 視差軽減（動きを減らす設定）では、時々の出来事の帯（飛び石を渡る人・トビの声・ユリカモメ）の時計が進まず、出来事が起きない。送り火（ゆっくり点く遠い火）は灯るまでの待ちが進む（便20）
+//   K27 浅瀬の水: 川底が透ける水の差し替えが効き、夏の朝は川底の光の網があり、飛び石に亀（3 以上）・千鳥（2 以上）・すれ違いの石（2 以上）があって、渡る石が列の線から 0.1〜0.4m 左右へずれている（便21）
+//   K28 空: 夏の朝と夏の夜と秋の雨の夜に雲の層がある（便21）
+//   K29 家並み: 町家 1,000 棟以上・古民家 1,500 棟以上・通り庇と犬矢来 5,000 三角形以上・京大の赤茶の建物 50 棟以上・吉田神社の社 10 棟以上（便21）
+//   K30 橋と灯り: 賀茂大橋の石灯籠がちょうど 14 基・欄干 10 本以上・街灯 500 以上（便21）
+//   K31 河川敷の人: 夏の朝は歩く・走る・自転車が 15 人以上いて 2 秒で動き、浅瀬の子ども 4 人以上・飛び石に座る学生 3 人以上。夏の夜はデルタの花火の人 6 人以上で火花が出る。冬の雪の夕は水遊びも花火も無い（便21）
+//   K32 名所: 時計塔・正門・大元宮・茂庵がある・鳥居 15 基以上・ベンチ 100 以上・遊具 3・東屋 1 以上（便21）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 //   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
@@ -311,6 +317,24 @@ if (run('K26')) {
   const n2 = await p.evaluate(() => document.querySelectorAll('.town3d-stage').length)
   check('K26', n === 1 && n2 === 1 && !errs.filter((e) => !/net::|ERR_/.test(e)).length, `鴨川を読んでいる途中で北寺尾へ替えた後の舞台 ${n} 枚・読み終わる頃 ${n2} 枚（どちらも 1 で合格）・エラー ${errs.length}`)
   await ctx.close()
+}
+// ── 便21 ──
+if (run('K27') || run('K28') || run('K29') || run('K30') || run('K31') || run('K32')) {
+  const o = await open('summer-morning-corner-room'), k = await kamoInfo(o.p)
+  if (run('K27')) { const st = k.stones || {}, bk = st.byKind || [], zg = st.zig || [0, 0]; check('K27', k.waterShallow === true && k.caus > 0 && bk[1] >= 3 && bk[2] >= 2 && bk[3] >= 2 && zg[0] >= 0.1 && zg[1] <= 0.4, `浅瀬の水の差し替え ${k.waterShallow}・川底の光の網 ${k.caus}・石の形 長方形 ${bk[0]}・亀 ${bk[1]}・千鳥 ${bk[2]}・すれ違い ${bk[3]}・列の線からのずれ ${zg[0]}〜${zg[1]}m（0.1〜0.4m で合格）`) }
+  if (run('K28')) check('K28', k.clouds === true, `夏の朝の雲の層 ${k.clouds}`)
+  if (run('K29')) { const c = (k.kyo && k.kyo.count) || []; check('K29', c[1] >= 1000 && c[2] >= 1500 && k.kyo.eaves >= 5000 && c[6] >= 50 && c[7] >= 10, `町家 ${c[1]}・古民家 ${c[2]}・通り庇と犬矢来 ${k.kyo && k.kyo.eaves}・京大の赤茶 ${c[6]}・吉田神社の社 ${c[7]}`) }
+  if (run('K30')) { const br = k.bridges || {}; check('K30', br.lanterns === 14 && br.rails >= 10 && br.lamps >= 500, `賀茂大橋の石灯籠 ${br.lanterns}（14 で合格）・欄干 ${br.rails}・街灯 ${br.lamps}`) }
+  if (run('K31')) { const p0 = k.people || {}; await o.p.waitForTimeout(2000); const p1 = (await kamoInfo(o.p)).people || {}; const moved = (p0.sample || []).some((s, i) => p1.sample && p1.sample[i] && (s[1] !== p1.sample[i][1] || s[2] !== p1.sample[i][2])); const n = (p0.walk || 0) + (p0.jog || 0) + (p0.bike || 0); o.k31 = { ok: n >= 15 && moved && p0.wade >= 4 && p0.stoneSit >= 3, msg: `夏の朝 歩く ${p0.walk}・走る ${p0.jog}・自転車 ${p0.bike}（15 以上）・2 秒で動いた ${moved}・浅瀬の子ども ${p0.wade}（4 以上）・飛び石に座る ${p0.stoneSit}（3 以上）` } }
+  if (run('K32')) { const m = k.marks || {}; check('K32', m.tower && m.gate && m.daigengu && m.moan && m.torii >= 15 && m.benches >= 100 && m.play >= 3 && m.shelters >= 1, `時計塔 ${m.tower}・正門 ${m.gate}・大元宮 ${m.daigengu}・茂庵 ${m.moan}・鳥居 ${m.torii}・ベンチ ${m.benches}・遊具 ${m.play}・東屋 ${m.shelters}`) }
+  const k31 = o.k31; await o.ctx.close()
+  if (run('K28') || run('K31')) {
+    const o2 = await open('summer-night-corner-room'); await o2.p.waitForTimeout(3000); const n2 = await kamoInfo(o2.p); await o2.ctx.close()
+    const o3 = await open('winter-snow-dusk-corner-room'); const n3 = await kamoInfo(o3.p); await o3.ctx.close()
+    const o4 = run('K28') ? await open('autumn-rain-night-corner-room') : null; const n4 = o4 ? await kamoInfo(o4.p) : null; if (o4) await o4.ctx.close()
+    if (run('K28')) check('K28', n2.clouds === true && n4.clouds === true, `夏の夜の雲 ${n2.clouds}・秋の雨の夜の雲 ${n4.clouds}`)
+    if (run('K31')) { const h = n2.people || {}, w = n3.people || {}; check('K31', k31 && k31.ok && h.hanabi >= 6 && h.sparks > 0 && w.wade === 0 && w.hanabi === 0, `${k31 ? k31.msg : '夏の朝を測れていない'}／夏の夜 花火の人 ${h.hanabi}（6 以上）・火花の出ている人 ${h.sparks}／冬の雪の夕 子ども ${w.wade}・花火 ${w.hanabi}（0）`) }
+  }
 }
 await b.close()
 const bad = results.filter((r) => !r.pass)
