@@ -41,6 +41,7 @@
 //   K36 外の町の地面: 外の町の中の地面の高さが外の町の網と合い（祇園は原点より低い・金閣寺は 40m 以上高い）、四条大橋の床の上は水の上でも歩ける（便22）
 //   K37 外の町を読めない時（データを止めた時・?kamoouter=0）は、鴨川の町だけで開き、飛べる箱は鴨川の町のまま・エラー 0（便22）
 //   K38 iPhone の画面（402×874・指で触る＝軽い段）でも外の町を組めて、エラーと GL 0・木は PC の半分ほど（便22・iPhone の段の地形の間引きで NaN が出た）
+//   K39 情景を替えても前の町がメモリに残らない: 鴨川の角部屋（外の町まで）→ 北寺尾 → 鴨川の角部屋 → 北寺尾 と替え、2回目の北寺尾の JS のメモリ（GC の後）が1回目より 200MB 以上増えない（便22・three の使い回しの図と検証の口が前の町を掴み、1回 約 250MB ずつ増えて全テストがメモリ不足で止められた）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 //   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
@@ -339,6 +340,16 @@ if (run('K38')) { // 【便22】
   await o.p.waitForTimeout(1500)
   check('K38', got && k.low === true && O && O.boxes >= 100000 && O.trees > 10000 && O.trees < 35000 && !o.errs.length && !o.gl.length, `組めた ${got}・段 ${k && k.low ? '軽い' : '通常'}・箱 ${O && O.boxes}・木 ${O && O.trees}（1 万〜3.5 万）・エラー ${o.errs.length}${o.errs.length ? '（' + o.errs[0].slice(0, 80) + '）' : ''}・GL ${o.gl.length}`)
   await o.ctx.close()
+}
+if (run('K39')) { // 【便22】
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' }), p = await ctx.newPage(), cdp = await ctx.newCDPSession(p), errs = []
+  p.on('pageerror', (e) => errs.push('PE ' + e.message))
+  await p.goto(`${BASE}?dev=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }); await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(800)
+  const mem = async () => { await cdp.send('HeapProfiler.collectGarbage'); await p.waitForTimeout(400); await cdp.send('HeapProfiler.collectGarbage'); return p.evaluate(() => Math.round(performance.memory.usedJSHeapSize / 1e6)) }
+  const go = async (id) => { await p.evaluate((i) => window.__applyScene(i), id); await p.waitForFunction(() => window.__town3dStats && window.__town3dStats() && window.__town3dStats().frames > 3, null, { timeout: 120000 }).catch(() => {}); if (/corner/.test(id)) await outerWait(p); await p.waitForTimeout(1500); return mem() }
+  const m = []; for (const id of ['autumn-dusk-corner-room', 'kitaterao-window-3d', 'summer-morning-corner-room', 'kitaterao-window-3d']) m.push(await go(id))
+  check('K39', m[3] - m[1] < 200 && !errs.length, `JS のメモリ 角部屋 ${m[0]}MB → 北寺尾 ${m[1]}MB → 角部屋 ${m[2]}MB → 北寺尾 ${m[3]}MB（2回目の北寺尾の増え ${m[3] - m[1]}MB・200 未満）・エラー ${errs.length}`)
+  await ctx.close()
 }
 if (run('K24')) {
   // 【便20・外の目】夏の夜は帯の出来事がもともと起きない（昼の物・冬の物）ので、帯の時計が進まないことを春の夕で見る。送り火の待ちが進むことは夏の夜で見る

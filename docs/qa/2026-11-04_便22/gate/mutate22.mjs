@@ -15,6 +15,8 @@ const M0 = [
   { id: 'M10', what: '（K38）iPhone の段の外の町の地形を間引けない数で間引く（範囲の南北が 16m で割り切れなかった時と同じ NaN）', file: 'src/engine/kamoOuter.js', a: 'dec: low ? 2 : 1, tiles: [8, 8]', b: 'dec: low ? 3 : 1, tiles: [8, 8]', k: ['K38'] },
   { id: 'M11', what: '（K36 の書き換え）外の町の橋の床の高さを答えない', file: 'src/engine/kamoTown.js', a: 'deckAt: (X, Z) => { const k = cell(X, Z); return k < 0 ? NaN : build().deck[k] },', b: 'deckAt: () => NaN,', k: ['K36'] },
   { id: 'M12', what: '（K36 の書き換え・外の目 #1）鴨川の町の網の中の縁の帯も外の町の下げた網で答える', file: 'src/engine/kamoTown.js', a: 'const terr = (X, Z) => (inGrid(X, Z) ? terrK(X, Z) : terrO(X, Z))', b: 'const terr = (X, Z) => terrO(X, Z)', k: ['K36'] },
+  { id: 'M15', what: '（K39）町を片付ける時に three の使い回しの図（DFG_LUT）を解放しない', file: 'src/engine/town3dViewer.js', a: '        if (lut) lut.dispose()', b: '        void lut', k: ['K39'] },
+  { id: 'M16', what: '（K39）検証の口 __girlPNG2 を片付けで外さない', file: 'src/engine/town3dViewer.js', a: "if (!(k.startsWith('__town3d') || k === '__girlPNG2') || MAIN_HOOKS.has(k)) continue", b: "if (!k.startsWith('__town3d') || MAIN_HOOKS.has(k)) continue", k: ['K39'] },
   { id: 'M9', what: '外の町を読めない時の受けを外す', file: 'src/engine/town3dViewer.js', a: ".catch((e) => console.warn('外の町を読めなかったので、鴨川の町だけで開きます:', e && e.message)) }", b: " }", k: ['K37'] },
 ]
 const M = ONLY.length ? M0.filter((m) => ONLY.includes(m.id)) : M0

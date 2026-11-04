@@ -8180,6 +8180,14 @@ export async function mountTown3d(parent, opts = {}) {
       try { window.removeEventListener('pointerup', winClimbUp) } catch (e) { /* 無視 */ }
       // 便15 U2・S26: この町が window に置いた検証の口を外す（前の町を掴み続けない・次の町で前の町を測らない）
       try { for (const k of myHooks) if (window[k] && window[k].__t3dMe === me) delete window[k] } catch (e) { /* 無視 */ }
+      // 【便22】three が全部の描き手で使い回す小さな図（DFG_LUT・材の dfgLUT）を解放する。描き手ごとに GPU へ載せた控えが残り、そこから古い画面の板・町の受け口・町の中身までが掴まれ続けた
+      //   （情景を替えるたびに前の町がまるごと残り、1回 約 250MB ずつ増えた＝全テストがメモリ不足で3回止められた）。材を解放する前に、材の控えから図を引く。次の町では three が載せ直す
+      try {
+        let lut = null
+        const findLut = (sc) => { if (lut || !sc) return; sc.traverse((o) => { if (lut) return; const ms = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []); for (const m of ms) { const pr = m && renderer.properties.get(m), u = pr && pr.uniforms; if (u && u.dfgLUT && u.dfgLUT.value) { lut = u.dfgLUT.value; break } } }) }
+        findLut(scene); if (kamo) findLut(kamo.scene)
+        if (lut) lut.dispose()
+      } catch (e) { /* 無視 */ }
       // シーングラフ全体の geometry/material/texture を解放（連打切替でのGPUメモリ蓄積＝コンテキストロストを防ぐ）
       try {
         scene.traverse((o) => {
@@ -8403,7 +8411,7 @@ export async function mountTown3d(parent, opts = {}) {
   const myHooks = []
   const guardDevHooks = () => {
     for (const k of Object.keys(window)) {
-      if (!k.startsWith('__town3d') || MAIN_HOOKS.has(k)) continue
+      if (!(k.startsWith('__town3d') || k === '__girlPNG2') || MAIN_HOOKS.has(k)) continue // 【便22】__girlPNG2 も町の中を掴む口＝片付けで外す（外していなかったので、?dev=1 の検査で情景を替えるたびに前の町がまるごと残り、1回 約 250MB ずつメモリが増えた）
       const f = window[k]
       if (typeof f !== 'function' || f.__t3dMe) continue
       const g = function (...a) { return active === me ? f.apply(this, a) : null }
