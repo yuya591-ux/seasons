@@ -124,6 +124,57 @@ void main() { float h = normalize(vD).y; gl_FragColor = vec4(mix(uHor, uTop, smo
     keep(skyMesh.geometry); keep(skyMesh.material)
   }
   skyMesh.userData.part = 'sky'; scene.add(skyMesh)
+  // ── 便21: 雲の層・星・月（kamocloud=0 は外し回し用＝前の雲の無い空） ──
+  //   空の上の丸天井に、計算で作る雲（重ねた雑音・ゆっくり流れる）を張る。量は天気（晴れ 少し・曇り 多め・雨 一面）、色は時刻（朝 白く暖か・昼 白・夕 茜と紫・夜 町の灯りが下から映る暗い雲）。
+  //   日の側は縁が明るく光り、日の反対へ影を落とす（日の向きへ1つずらした雲の濃さで陰を決める）。晴れた夜は星と月。iPhone の段は雑音の重ねを減らす
+  const cloudU = { value: 0 }
+  let cloudMesh = null
+  if (!/[?&]kamocloud=0/.test(location.search)) {
+    const COV = { clear: NIGHT ? 0.33 : 0.39, cloudy: 0.55, rain: 0.9, snow: 0.82 }[sky] ?? 0.39 // 雲の量（晴れ 1割強・曇り 4割ほど・雨と雪は一面）
+    const disp = { // 画面に出したい雲の色（日の当たる所・陰）。invTone でこの町の明るさの前の値に戻す
+      morning: [[0.84, 0.81, 0.76], [0.52, 0.56, 0.64]], noon: [[0.86, 0.86, 0.85], [0.56, 0.6, 0.68]], // 白（1.0）を指すと色の圧縮を戻した値が大きくなりすぎて桃色にずれた（便21 の1回目）＝0.9 より下に抑える
+      dusk: [[0.88, 0.6, 0.44], [0.32, 0.27, 0.36]], night: [[0.075, 0.072, 0.08], [0.028, 0.03, 0.042]],
+    }[TK]
+    const wet = RAIN ? [[0.5, 0.52, 0.55], [0.3, 0.32, 0.36]] : SNOW ? [[0.74, 0.76, 0.79], [0.5, 0.52, 0.57]] : null
+    const [lit, shd] = (wet && !NIGHT ? wet : disp).map((c) => invTone(...c))
+    const stars = NIGHT && !RAIN && !SNOW && sky !== 'cloudy'
+    const moonDir = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - 38), THREE.MathUtils.degToRad(150))
+    const cm = new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false, depthTest: true, transparent: true, fog: false,
+      uniforms: { uT: cloudU, uCov: { value: COV }, uLit: { value: lit }, uShd: { value: shd }, uSun: { value: sunDir.clone() }, uSunK: { value: NIGHT ? 0 : SK.sunK }, uStar: { value: stars ? 1 : 0 }, uMoon: { value: moonDir }, uStarC: { value: invTone(0.85, 0.87, 0.95) }, uMoonC: { value: invTone(0.92, 0.9, 0.82) } },
+      vertexShader: 'varying vec3 vD; void main() { vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position.z = gl_Position.w * 0.99999; }',
+      fragmentShader: `uniform float uT, uCov, uSunK, uStar; uniform vec3 uLit, uShd, uSun, uMoon, uStarC, uMoonC; varying vec3 vD;
+float h21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vnoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y); }
+float fbm(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < ${low ? 4 : 6}; i++) { s += a * vnoise(p); p = mat2(1.6, 1.2, -1.2, 1.6) * p + 7.3; a *= 0.5; } return s; }
+float dens(vec2 uv) { float n = fbm(uv + vec2(uT * 0.004, uT * 0.0016)); float w = fbm(uv * 0.35 - vec2(uT * 0.001, 0.0)); return smoothstep(1.0 - uCov, 1.0 - uCov + 0.32, n * 0.75 + w * 0.45 - 0.1); }
+void main() {
+  vec3 d = normalize(vD); float hor = smoothstep(0.0, 0.14, d.y);
+  vec3 col = vec3(0.0); float a = 0.0;
+  if (uStar > 0.5 && d.y > 0.02) { // 星（方向の升ごとに1つ・またたく）と月
+    vec2 sp = vec2(atan(d.z, d.x) * 180.0, d.y * 260.0); vec2 si = floor(sp); float r = h21(si);
+    if (r > 0.978) { vec2 sf = fract(sp) - vec2(h21(si + 3.1), h21(si + 7.7)) * 0.6 - 0.2; float st = smoothstep(0.09, 0.0, length(sf)) * (0.5 + 0.5 * sin(uT * (1.5 + r * 3.0) + r * 40.0)); col += uStarC * st * (r - 0.978) * 45.0 * hor; a = max(a, st * hor); }
+    float md = dot(d, normalize(uMoon)); col += uMoonC * (smoothstep(0.99986, 0.99992, md) * 3.0 + pow(max(md, 0.0), 1600.0) * 0.25); a = max(a, smoothstep(0.99984, 0.99992, md) + pow(max(md, 0.0), 1600.0) * 0.18);
+  }
+  if (d.y > 0.0) {
+    vec2 uv = d.xz / (d.y + 0.12) * 1.6;
+    float c = dens(uv);
+    if (c > 0.002) {
+      float sh = dens(uv + normalize(uSun.xz + vec2(1e-4)) * 0.18); // 日の向きへずらした所の濃さ＝陰
+      float sunSide = pow(max(dot(d, uSun), 0.0), 6.0) * uSunK;
+      vec3 cc = mix(uLit, uShd, clamp(sh * 1.1 - c * 0.15, 0.0, 1.0) * 0.85 + c * 0.15);
+      cc += uLit * sunSide * (1.0 - c) * 0.35; // 日の側の縁の光
+      float ca = c * hor * 0.96;
+      col = mix(col, cc, ca); a = max(a, ca);
+    }
+  }
+  if (a < 0.003) discard;
+  gl_FragColor = vec4(col / max(a, 1e-3), a);
+}`,
+    })
+    cloudMesh = new THREE.Mesh(keep(new THREE.SphereGeometry(19000, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2)), keep(cm))
+    cloudMesh.renderOrder = -1; cloudMesh.frustumCulled = false; cloudMesh.userData.part = 'clouds'; scene.add(cloudMesh)
+  }
   const pmrem = new THREE.PMREMGenerator(renderer)
   {
     const envScene = new THREE.Scene()
@@ -834,6 +885,7 @@ void main() {`)
     water.material.uniforms.time.value += dt * 0.35
     for (const u of windU) u.value = tAcc
     causU.value = tAcc // 便21: 川底の光の網の時計
+    cloudU.value = tAcc // 便21: 雲の流れの時計
     if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null; scene.traverse((o) => { if (o.userData && /^(people|birds|train|okuribi)$/.test(o.userData.part)) o.visible = false }) } } // 【便20・外の目】止めた時は、動く物をその場で固まらせずに隠す
   }
 
@@ -902,7 +954,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {
