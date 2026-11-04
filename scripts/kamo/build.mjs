@@ -193,6 +193,12 @@ const wdepth = new Uint8Array(near.nx * near.nz) // 便21: 水面の点の水の
     const deep = Math.min(0.42, 0.02 + dEdge[k] * 0.025) * swell
     near.pos[k * 3 + 1] = wyAt[k] - deep; wdepth[k] = Math.min(255, Math.round(deep * 400))
   }
+  // 便21: 5m の標高に橋の床の高さが入った所が、河川敷と川の中に三角の山として残っていた（賀茂大橋の下など）。河川敷と水の点で、向かい合う 2 方向の両方より 1.2m 以上高い尖りと尾根をならす（2 回）
+  let nSpike = 0
+  for (let pass = 0; pass < 2; pass++) for (let j = 1; j < nz - 1; j++) for (let i = 1; i < n - 1; i++) { const k = j * n + i; if (!zone[k]) continue; const H = (di, dj) => near.pos[((j + dj) * n + i + di) * 3 + 1], y = near.pos[k * 3 + 1]; let best = null
+    for (const [[a1, b1], [a2, b2]] of [[[1, 0], [-1, 0]], [[0, 1], [0, -1]], [[1, 1], [-1, -1]], [[1, -1], [-1, 1]]]) { const p = H(a1, b1), q = H(a2, b2); if (y > p + 1.2 && y > q + 1.2) best = Math.min(best ?? 1e9, Math.max(p, q)) }
+    if (best !== null) { near.pos[k * 3 + 1] = best + 0.1; nSpike++ } } // 向かい合う 2 方向の両方より 1.2m 以上高い点（尖りと、橋の線に沿った尾根）だけ。護岸の斜面（片側だけ高い）は削らない
+  log.push(`河川敷と川の中の尖った点をならした: ${nSpike}`)
   let c1 = 0, c2 = 0; for (const z of zone) { if (z === 1) c1++; if (z === 2) c2++ }
   log.push(`河川敷の範囲: 水面 ${c2} 点・河川敷 ${c1} 点（${NEAR_STEP}m 間隔）`)
 }
@@ -201,6 +207,7 @@ const wdepth = new Uint8Array(near.nx * near.nz) // 便21: 水面の点の水の
 const ROADW = { trunk: 14, primary: 13, secondary: 11, tertiary: 9, unclassified: 6, residential: 5.5, living_street: 4.5, service: 3.5, pedestrian: 5, footway: 2.2, path: 2.2, cycleway: 2.5, track: 3, steps: 2 }
 const rpos = [], ridx = [], rkind = [] // kind: 0 車道 1 小道 2 橋の床 3 線路（便21: 5 河川敷の真砂土の道）
 const ralong = [], rwidth = [], riverPath = [] // 便21
+const bridgeEdges = [], lamps = [] // 便21: 水を渡る橋の床の縁（欄干を立てる）と、街灯（x, y, z, 道へ向く向き）
 let nRoad = 0, nBridge = 0
 const roadPts = [] // 便21: 車道と小道の中心の点（x, z, 種類）
 const stones = [] // 飛び石（ford=stepping_stones）: x, y, z, 向き
@@ -261,7 +268,25 @@ for (const e of osm) {
     rpos.push(x + nx, Number.isNaN(yl) ? ys[i] : yl, z + nz, x - nx, Number.isNaN(yr) ? ys[i] : yr, z - nz); rkind.push(kind, kind)
   }
   for (let i = 0; i < dense.length - 1; i++) { const a = base + i * 2; ridx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3) }
+  // 便21: 水を渡る橋は、床の両縁を欄干の線として残す。橋の名と所から形を決める（賀茂大橋＝今出川通の橋は石の高欄と石灯籠・出町橋＝透かしのコンクリートと薄緑の手すり・ほか＝コンクリートの欄干）
+  if (kind === 2 && dense.some(([x, z]) => inWater(x, z))) {
+    const nm = tag(e, 'name') || tag(e, 'bridge:name') || '', hw2 = hw || ''
+    const style = /賀茂大橋|加茂大橋|今出川/.test(nm) ? 'kamo' : /出町橋/.test(nm) ? 'demachi' : 'plain'
+    const L = [], Rr = []
+    for (let i = base; i < rpos.length / 3; i += 2) { L.push([+rpos[i * 3].toFixed(2), +rpos[i * 3 + 1].toFixed(2), +rpos[i * 3 + 2].toFixed(2)]); Rr.push([+rpos[i * 3 + 3].toFixed(2), +rpos[i * 3 + 4].toFixed(2), +rpos[i * 3 + 5].toFixed(2)]) }
+    bridgeEdges.push({ style, foot: /footway|path|cycleway/.test(hw2) ? 1 : 0, w, l: L, r: Rr })
+  }
+  // 便21: 幅 9m 以上の車道に 32m おきの街灯（左右を交互に・縁から 0.6m 外）
+  if (kind === 0 && w >= 9) { let a2 = 0, next = 16, side = 1; for (let i = 1; i < dense.length; i++) { a2 += Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]); if (a2 < next) continue; next += 32; side = -side
+    const dx = dense[i][0] - dense[i - 1][0], dz = dense[i][1] - dense[i - 1][1], l = Math.hypot(dx, dz) || 1, nx = (-dz / l) * side, nz = (dx / l) * side, x = dense[i][0] + nx * (w / 2 + 0.6), z = dense[i][1] + nz * (w / 2 + 0.6)
+    if (!inWater(x, z) && inNear(x, z, 10)) lamps.push(+x.toFixed(2), +ground(x, z).toFixed(2), +z.toFixed(2), +Math.atan2(-nx, -nz).toFixed(3)) } }
 }
+for (const e of osm) if (e.type === 'node' && tag(e, 'highway') === 'street_lamp') { const x = toX(e.lon), z = toZ(e.lat); if (inNear(x, z, 10) && !inWater(x, z)) lamps.push(+x.toFixed(2), +ground(x, z).toFixed(2), +z.toFixed(2), 0) } // 地図の街灯の点（向きは決めない）
+// 便21: 橋の縁のうち、すぐ外 2m に別の橋の床がある縁（車道の橋と並ぶ歩道の橋のあいだ）には欄干を立てない
+{ const pts = []; for (const b of bridgeEdges) for (const p of [...b.l, ...b.r]) pts.push(p)
+  const onOther = (b, x, z) => bridgeEdges.some((o) => o !== b && [...o.l, ...o.r].some((p) => Math.hypot(p[0] - x, p[2] - z) < 2.4))
+  for (const b of bridgeEdges) { for (const side of ['l', 'r']) { const E = b[side], O = b[side === 'l' ? 'r' : 'l']; let inner = 0; for (let i = 0; i < E.length; i++) { const dx = E[i][0] - O[i][0], dz = E[i][2] - O[i][2], l = Math.hypot(dx, dz) || 1; if (onOther(b, E[i][0] + (dx / l) * 2, E[i][2] + (dz / l) * 2)) inner++ } b[side + 'In'] = inner > E.length * 0.5 ? 1 : 0 } } }
+log.push(`橋の欄干: ${bridgeEdges.length} 本（賀茂大橋 ${bridgeEdges.filter((b) => b.style === 'kamo').length}・出町橋 ${bridgeEdges.filter((b) => b.style === 'demachi').length}）・街灯 ${lamps.length / 4}`)
 log.push(`道の帯: 道 ${nRoad}・橋 ${nBridge}・点 ${rpos.length / 3}・飛び石 ${stones.length / 4} 個`)
 
 // 木: 森・公園の中に散らす＋木の点＋川岸（水面の輪の外側 6〜14m）に並べる
@@ -491,6 +516,7 @@ const meta = {
   water: { nv: wpos.length / 3, ni: widx.length, bytes: wr('water.bin', [new Float32Array(wpos), new Uint32Array(widx)]) },
   roads: { nv: rpos.length / 3, ni: ridx.length, bytes: wr('roads.bin', [new Float32Array(rpos), new Uint32Array(ridx), new Uint8Array(rkind)]), auxBytes: wr('roads-aux.bin', [new Float32Array(ralong), new Uint8Array(rwidth)]) }, // 便21: 道の長さの位置・幅（0.1m 刻み）
   riverPath, // 便21: 河川敷の小道の折れ線
+  bridgeEdges, lamps, // 便21: 橋の欄干の線・街灯
   trees: { n: trees.length, bytes: wr('trees.bin', [new Float32Array(trees.flat())]) },
   stones: { n: stones.length / 4, bytes: wr('stones.bin', [new Float32Array(stones)]), kindBytes: wr('stones-kind.bin', [new Uint8Array(stoneKind)]), rows: stoneRows },
   wdepthBytes: wr('near-wdepth.bin', [wdepth]), // 便21: 水の深さ（0.25cm 刻み）

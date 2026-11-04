@@ -688,6 +688,73 @@ void main() {`)
     addKey(m, 'eaves')
     const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'eaves'; scene.add(mesh); eaveN = ek.length / 3
   }
+  // ── 便21: 橋の欄干と石灯籠・街灯（kamobridge=0 は外し回し用） ──
+  //   賀茂大橋（今出川通）: 白っぽい石の高欄（1m おきの束と笠石）と、歩道の外側に 20m おきの石灯籠（台・竿・中台・火袋・六角の笠・宝珠）。夕方と夜は火袋が灯る（調べ §8「欄干の石灯籠が夜に灯る」）
+  //   出町橋: 灰色のコンクリートの低い壁と薄緑の手すり（調べ §8 の写真）／ほかの橋: コンクリートの欄干 1.05m
+  //   街灯: 幅 9m 以上の車道に 32m おき（左右を交互に）と、地図の街灯の点。夕方と夜は灯る（灯りの暈は点の光で描く）
+  const lampsInfo = { rails: 0, lanterns: 0, lamps: 0 }
+  if (meta.bridgeEdges && !/[?&]kamobridge=0/.test(location.search)) {
+    const LITE = NIGHT || TK === 'dusk'
+    const parts = { stone: [], conc: [], pipe: [], glowL: [], pole: [], head: [] }, glowL = [], glowS = []
+    const box = (list, a, b, w, h, yb) => { const dx = b[0] - a[0], dz = b[2] - a[2], L = Math.hypot(dx, dz); if (L < 0.05) return; const g = new THREE.BoxGeometry(L + 0.02, h, w); g.translate(0, h / 2 + yb, 0); g.rotateY(-Math.atan2(dz, dx)); g.translate((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2); list.push(g) }
+    const post = (list, p, s, h, yb = 0) => { const g = new THREE.BoxGeometry(s, h, s); g.translate(p[0], p[1] + yb + h / 2, p[2]); list.push(g) }
+    const lerp3 = (a, c, t) => [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t, a[2] + (c[2] - a[2]) * t]
+    const lantern = (p) => {
+      post(parts.stone, p, 0.62, 0.22); post(parts.stone, p, 0.24, 0.85, 0.22); post(parts.stone, p, 0.5, 0.12, 1.07)
+      const fb = new THREE.BoxGeometry(0.4, 0.38, 0.4); fb.translate(p[0], p[1] + 1.38, p[2]); parts.glowL.push(fb)
+      const kasa = new THREE.ConeGeometry(0.52, 0.34, 6); kasa.translate(p[0], p[1] + 1.74, p[2]); parts.stone.push(kasa)
+      const hoju = new THREE.SphereGeometry(0.1, 8, 6); hoju.translate(p[0], p[1] + 1.98, p[2]); parts.stone.push(hoju)
+      glowL.push(p[0], p[1] + 1.38, p[2]); lampsInfo.lanterns++
+    }
+    const carK = meta.bridgeEdges.filter((b) => b.style === 'kamo' && !b.foot).flatMap((b) => [...b.l, ...b.r])
+    const dCar = (E) => E.reduce((s, p) => s + Math.min(...carK.map((q) => Math.hypot(q[0] - p[0], q[2] - p[2]))), 0) / E.length
+    for (const b of meta.bridgeEdges) {
+      const outer = b.style === 'kamo' && b.foot && carK.length ? (dCar(b.l) > dCar(b.r) ? 'l' : 'r') : null
+      for (const side of ['l', 'r']) {
+        if (b[side + 'In']) continue
+        const E = b[side], O = b[side === 'l' ? 'r' : 'l']
+        const P = E.map((p, i) => { const dx = O[i][0] - p[0], dz = O[i][2] - p[2], l = Math.hypot(dx, dz) || 1; return [p[0] + (dx / l) * 0.15, p[1], p[2] + (dz / l) * 0.15] })
+        lampsInfo.rails++
+        let acc = 0, nextL = 4
+        for (let i = 0; i < P.length - 1; i++) {
+          const a = P[i], c = P[i + 1], L = Math.hypot(c[0] - a[0], c[2] - a[2])
+          if (b.style === 'kamo') { box(parts.stone, a, c, 0.3, 0.16, 0.9); box(parts.stone, a, c, 0.24, 0.12, 0.04); const n = Math.max(1, Math.round(L / 1.0)); for (let k = 0; k < n; k++) post(parts.stone, lerp3(a, c, k / n), 0.13, 0.78, 0.12) }
+          else if (b.style === 'demachi') { box(parts.conc, a, c, 0.22, 0.82, 0); box(parts.pipe, a, c, 0.08, 0.08, 1.02) }
+          else box(parts.conc, a, c, 0.22, 1.05, 0)
+          if (side === outer) while (acc + L >= nextL) { lantern(lerp3(a, c, (nextL - acc) / L)); nextL += 20 }
+          acc += L
+        }
+      }
+    }
+    // 街灯: 柱・腕・灯具
+    const lp = meta.lamps || []
+    for (let i = 0; i < lp.length; i += 4) {
+      const x = lp[i], y = lp[i + 1], z = lp[i + 2], a = lp[i + 3], arm = a ? 1.3 : 0.35, hx = x + Math.sin(a) * arm, hz = z + Math.cos(a) * arm
+      const pole = new THREE.CylinderGeometry(0.055, 0.08, 6.6, 6); pole.translate(x, y + 3.3, z); parts.pole.push(pole)
+      box(parts.pole, [x, y + 6.45, z], [hx, y + 6.45, hz], 0.06, 0.06, 0)
+      const hd = new THREE.BoxGeometry(0.5, 0.1, 0.24); hd.rotateY(a + Math.PI / 2); hd.translate(hx, y + 6.4, hz); parts.head.push(hd)
+      glowS.push(hx, y + 6.25, hz); lampsInfo.lamps++
+    }
+    const mk = (list, mat, part, cast = true) => { if (!list.length) return; const g = keep(BGU.mergeGeometries(list.map((x) => (x.index ? x.toNonIndexed() : x)))); list.forEach((x) => x.dispose()); const m = new THREE.Mesh(g, keep(mat)); m.castShadow = cast; m.receiveShadow = true; m.userData.part = part; scene.add(m) }
+    const stoneM = new THREE.MeshStandardMaterial({ color: SNOW ? 0xdedcd6 : 0xc9c4b8, roughness: 0.9 }); useTex(stoneM, { a: 'concrete_wall_004', tile: 1.6, mode: 'tri', ns: 0.5 })
+    const concM = new THREE.MeshStandardMaterial({ color: 0xb4b1aa, roughness: 0.9 }); useTex(concM, { a: 'concrete_wall_004', tile: 2.2, mode: 'tri', ns: 0.5 })
+    mk(parts.stone, stoneM, 'bridgeRail'); mk(parts.conc, concM, 'bridgeRail')
+    mk(parts.pipe, new THREE.MeshStandardMaterial({ color: 0x8fb39a, roughness: 0.5, metalness: 0.3 }), 'bridgeRail')
+    mk(parts.glowL, new THREE.MeshStandardMaterial({ color: 0xd8d2c4, emissive: LITE ? 0xffb060 : 0x000000, emissiveIntensity: NIGHT ? 2.2 : 1.2, roughness: 0.9 }), 'lantern')
+    mk(parts.pole, new THREE.MeshStandardMaterial({ color: 0x5c5f63, roughness: 0.6, metalness: 0.4 }), 'lamps', false)
+    mk(parts.head, new THREE.MeshStandardMaterial({ color: 0xe8e8e4, emissive: LITE ? 0xfff0d8 : 0x000000, emissiveIntensity: NIGHT ? 2.5 : 1.3, roughness: 0.5 }), 'lamps', false)
+    if (LITE) { // 灯りの暈（点の光・遠くでも小さく灯って見える）
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64; const x = cv.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32)
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64)
+      const tx = keep(new THREE.CanvasTexture(cv))
+      for (const [arr, col, sz] of [[glowL, 0xffb868, 2.6], [glowS, 0xfff0d8, 3.2]]) {
+        if (!arr.length) continue
+        const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3))
+        const pm = keep(new THREE.PointsMaterial({ map: tx, color: new THREE.Color(col).multiplyScalar(NIGHT ? 1.6 : 0.9), size: sz, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: true }))
+        const pts = new THREE.Points(g, pm); pts.userData.part = 'glow'; pts.renderOrder = 2; scene.add(pts)
+      }
+    }
+  }
   // 部屋のあるマンションの外壁。部屋の座標で板を並べ、部屋の前（窓の面）と左（左の窓の面）は部屋の所だけ空ける（窓の外を塞がない）
   {
     const P = [], add = (a, b, c, d) => { for (const v of [a, b, c, a, c, d]) { const k = toK(...v); P.push(k.x, k.y, k.z) } }
@@ -1078,7 +1145,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {
