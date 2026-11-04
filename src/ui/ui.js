@@ -500,7 +500,7 @@ export function buildUI(opts) {
         flagship: 'kitaterao-window-3d', test: (s) => s.render === 'town3d' && s.town3dKind !== 'corner' && s.id.startsWith('kitaterao') },
       { key: 'shishigaya', label: '獅子ヶ谷の谷戸', desc: '谷あいの棚田と茅葺き、ふるさとの窓辺',
         flagship: 'shishigaya-window-3d', test: (s) => s.render === 'town3d' && s.town3dKind !== 'corner' && s.id.startsWith('shishigaya') },
-      { key: 'corner', label: '高台の角部屋', desc: '二面採光の角部屋から、街を広く見渡す',
+      { key: 'corner', label: '京都・鴨川デルタの角部屋', desc: '出町柳の川べりから、鴨川デルタと京の町を見渡す', // 便22: 窓の外が鴨川になったので場所の名を京都・鴨川に（前は「高台の角部屋」）
         flagship: 'autumn-dusk-corner-room', test: (s) => s.render === 'town3d' && s.town3dKind === 'corner' },
       { key: 'rain', label: '雨の窓', desc: 'ガラスをつたう雨だれ、にじむ街あかり',
         flagship: 'summer-rain-dusk', test: (s) => s.render === 'rainGlass' },

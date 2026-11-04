@@ -80,6 +80,17 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 - 風は森を渡る風の録音。多くの情景で薄く重ねる（同じファイルを再利用。どの情景かは情景データが正）。
 - 変更点：Ogg→MP3 へ変換。アプリ内ではループ再生。CC BY-SA 素材は同ライセンス継承。
 
+### 木々のざわめき・鴨川デルタの子どもの声 — `public/audio/kamo/`（便22）
+
+| レイヤー | ファイル | 作品 / 作者 | ライセンス | 出典 |
+| --- | --- | --- | --- | --- |
+| 木々のざわめき | `leaves.mp3` | "Soft Wind in the Trees - Leaves rustle" / Borgory | CC0 (パブリックドメイン) — https://creativecommons.org/publicdomain/zero/1.0/ | https://freesound.org/people/Borgory/sounds/751473/ |
+| 子どもの遊ぶ声 | `asobi.mp3` | "AMB_S_Park_Children_02.wav" / conleec | CC0 (パブリックドメイン) — https://creativecommons.org/publicdomain/zero/1.0/ | https://freesound.org/people/conleec/sounds/193698/ |
+
+- 木々のざわめきは、風に葉がそよぐ録音（2分27秒）。鴨川の角部屋の情景の下地に薄く敷く（前の「風」の代わり）。
+- 子どもの遊ぶ声は、公園で遊ぶ子どもたちの録音（5分3秒・ブランコのきしみも入る）。鴨川デルタの近さで満ち引きさせ、遠いほど高い音をこもらせる（声の中身は聞き取れない気配として）。
+- 変更点：どちらも freesound の試聴用の MP3（高音質版）から作った。2段のハイパス（木々 160Hz・声 200Hz）で低い唸りを落とし、端を 3〜4 秒重ねて継ぎ目の無いループにし、音の大きさをそろえて 44.1kHz の MP3 にした（木々 2分23秒・声 3分）。CC0 は表示義務はないが出典を全数記録。
+
 ## 外部AI生成画像（雨の窓の外の景色）
 
 シェーダーの現象（雨粒の屈折・曇り・きらめき）を土台に残し、「窓の外の風景・空」だけを外部の無料AIで

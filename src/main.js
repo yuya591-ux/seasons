@@ -189,7 +189,7 @@ function start() {
           onLand: (surf) => { if (!sleepFading) audio.land(surf) }, // 降り立つ一打（低い胴鳴り＋土埃の擦れ）
           onBirdFlush: () => { if (!sleepFading) audio.birdFlush() }, // 鳥が驚いて飛び立つ羽音
           onAltitude: (v) => audio.setAltitudeDuck(v), // 高空で街の環境音をしぼる（風だけの静けさへ）
-          onAmbience: (sea, river, crowd, fest, sta, festPan, staPan) => { if (!sleepFading) audio.setAmbience(sea, river, crowd, fest, sta, festPan, staPan) }, // 場所に応じた音（海＝波／川＝せせらぎ／人だまり＝ざわめき／夏祭り＝囃子／駅＝発車ベル）が満ち引き＋祭/駅は方角へ定位（空間音）
+          onAmbience: (sea, river, crowd, fest, sta, festPan, staPan, voice, voicePan) => { if (!sleepFading) audio.setAmbience(sea, river, crowd, fest, sta, festPan, staPan, voice, voicePan) }, // 便22: voice＝鴨川デルタの人の声 // 場所に応じた音（海＝波／川＝せせらぎ／人だまり＝ざわめき／夏祭り＝囃子／駅＝発車ベル）が満ち引き＋祭/駅は方角へ定位（空間音）
           onSeaBird: () => { if (!sleepFading) audio.seaBird() }, // 海の上で時々かもめが鳴く
           onPurr: (v) => { if (!sleepFading) audio.setPurr(v) }, // 窓辺の猫を撫でるとゴロゴロ鳴る
           onMeow: (pitch, kind) => { if (!sleepFading) audio.meow(pitch, kind) }, // 窓辺の猫がタップ反応で鳴く（にゃーん）

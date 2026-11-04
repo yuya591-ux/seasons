@@ -7,7 +7,7 @@ await page.locator('.gate').click().catch(() => {})
 await page.waitForTimeout(500)
 await page.locator('button:has-text("情景")').click()
 await page.waitForTimeout(300)
-await page.locator('.scene-card:has-text("秋の雨の夜、高台の角部屋")').click()
+await page.locator('.scene-card:has-text("秋の雨の夜、鴨川デルタの角部屋")').click()
 // 数フレーム撮って点滅・車の動きを捉える
 for (let i = 0; i < 4; i++) {
   await page.waitForTimeout(1100)

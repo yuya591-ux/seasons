@@ -4,8 +4,8 @@
 export default {
   id: 'autumn-rain-night-corner-room',
   axes: { season: 'autumn', weather: 'rain', time: 'night' },
-  label: '秋の雨の夜、高台の角部屋',
-  desc: '窓を流れる雨と、眼下の街あかり。時おり遠雷。指や傾きで見回す。',
+  label: '秋の雨の夜、鴨川デルタの角部屋',
+  desc: '窓を流れる雨と、川向こうににじむ京の町あかり。時おり遠雷。',
   status: 'ready',
   render: 'town3d',          // 立体の街エンジンへ載せ替え（見回しの正しさ・立体感）
   town3dKind: 'corner',
@@ -34,9 +34,10 @@ export default {
   driftPeriod: 300,
   phenomena: { rain: { intensity: 0.7 } },
 
+  // 便22: 音は自然の音だけ（木々のざわめき・川・雨・虫・鳥）。素材の低い唸り（車の走る音のように聞こえた）を hp で切る。人の声は鴨川デルタの近さで町の側が足す
   sounds: [
-    { id: 'rain', label: '雨音', src: 'audio/summer-rain-dusk/rain.mp3', gain: 0.8, loop: true },
-    { id: 'thunder', label: '遠雷', src: 'audio/summer-rain-dusk/thunder.mp3', gain: 0.45, loop: false, interval: [24, 58], cue: 'thunder' },
-    { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.12, loop: true },
+    { id: 'rain', label: '雨音', src: 'audio/summer-rain-dusk/rain.mp3', gain: 0.8, loop: true, hp: 230 },
+    { id: 'thunder', label: '遠雷', src: 'audio/summer-rain-dusk/thunder.mp3', gain: 0.4, loop: false, interval: [30, 70], cue: 'thunder' },
+    { id: 'leaves', label: '木々のざわめき', src: 'audio/kamo/leaves.mp3', gain: 0.16, loop: true, hp: 160 },
   ],
 }

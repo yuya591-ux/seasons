@@ -18,6 +18,8 @@ export const CREDIT_SOUNDS = [
   { file: 'kitaterao-window-3d-night/suzumushi.mp3', title: 'Suzumushi 06z3286（スズムシ）', by: 'Cory (ISAKA Yoji)', license: 'CC BY-SA 3.0', url: 'https://commons.wikimedia.org/wiki/File:Suzumushi_06z3286.ogg', note: '鈴虫' },
   { file: 'shishigaya-morning-yato/uguisu.mp3', title: 'Japanese bush warbler (uguisu) in a city ambiance（ウグイス）', by: 'warukunai', license: 'CC0', url: 'https://freesound.org/people/warukunai/sounds/524526/', note: 'ウグイス' },
   { file: 'shishigaya-morning-yato/stream.mp3', title: 'Flowing-water-100019', by: 'Fg2', license: 'パブリックドメイン', url: 'https://commons.wikimedia.org/wiki/File:Flowing-water-100019.ogg', note: 'せせらぎ' },
+  { file: 'kamo/leaves.mp3', title: 'Soft Wind in the Trees - Leaves rustle（木々のざわめき）', by: 'Borgory', license: 'CC0', url: 'https://freesound.org/people/Borgory/sounds/751473/', note: '木々のざわめき' }, // 便22
+  { file: 'kamo/asobi.mp3', title: 'AMB_S_Park_Children_02（公園で遊ぶ子どもの声）', by: 'conleec', license: 'CC0', url: 'https://freesound.org/people/conleec/sounds/193698/', note: '鴨川デルタの子どもの声' }, // 便22
   { file: 'winter-snow-night/wind.mp3', title: 'Wind in Swedish pine forest at 25 mps', by: 'W.carter', license: 'CC BY-SA 4.0', url: 'https://commons.wikimedia.org/wiki/File:Wind_in_Swedish_pine_forest_at_25_mps.ogg', note: '風' },
 ]
 

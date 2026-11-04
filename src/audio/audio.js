@@ -178,18 +178,21 @@ export function createAudio(opts) {
     const tgt = Math.max(0.0001, (layer.baseGain || 0.4) * (1 - altDuckV * 0.985) * dayFadeMul(layer.dayFade, dayPhaseV))
     try { layer.layerGain.gain.setTargetAtTime(tgt, now(), ramp) } catch { /* 無視 */ }
   }
-  function startLoop(buffer, gainVal, pan, myGen, swell, dayFade) {
+  function startLoop(buffer, gainVal, pan, myGen, swell, dayFade, hp) {
     const dur = buffer.duration
     const xf = Math.min(0.8, dur * 0.25)
     const layerGain = ctx.createGain()
     layerGain.gain.setValueAtTime(0.0001, now())
     const initMul = (1 - altDuckV * 0.985) * dayFadeMul(dayFade, dayPhaseV) // 立ち上げ時点の高度・日の傾きを反映（夕に始めればヒグラシ寄りで入る）
     layerGain.gain.linearRampToValueAtTime(Math.max(0.0001, gainVal * initMul), now() + 1.4) // レイヤーのフェードイン
+    // 便22: 素材の低い唸りを切る（hp＝この Hz より下を落とす）。虫の音と雨音の素材は 150Hz より下が一番強く、窓を閉じた時のこもり（900Hz より上を落とす）でその唸りだけが残り、車の走る音のように聞こえた
+    let head = layerGain
+    if (hp > 0 && ctx.createBiquadFilter) { const f1 = ctx.createBiquadFilter(); f1.type = 'highpass'; f1.frequency.value = hp; f1.Q.value = 0.6; const f2 = ctx.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = hp; f2.Q.value = 0.6; layerGain.connect(f1).connect(f2); head = f2 } // 2段で 1オクターブ下を約 24dB 落とす
     // swell の揺らぎ段（layerGain → swellGain → panner/master）。素のレイヤーは layerGain を直結。
-    let tail = layerGain
+    let tail = head
     if (swell && ctx.createOscillator) {
       const swellGain = ctx.createGain(); swellGain.gain.value = 0.6 // 平均を下げ、満ち引きの余地をつくる
-      layerGain.connect(swellGain); tail = swellGain
+      head.connect(swellGain); tail = swellGain
       try {
         // 互いに割り切れない2つの遅いLFOを重ねて準ランダムな満ち引きに（機械的な周期に聞こえない）。
         const l1 = ctx.createOscillator(); l1.frequency.value = 0.035; const g1 = ctx.createGain(); g1.gain.value = 0.24; l1.connect(g1).connect(swellGain.gain); l1.start()
@@ -205,7 +208,7 @@ export function createAudio(opts) {
     } else {
       tail.connect(master)
     }
-    const layer = { layerGain, stopped: false, panner, basePan: pan, baseGain: gainVal, dayFade: dayFade || null }
+    const layer = { layerGain, stopped: false, panner, basePan: pan, baseGain: gainVal, dayFade: dayFade || null, hp: head !== layerGain ? hp : 0 }
     layers.push(layer)
 
     let nextStart = now() + 0.05
@@ -247,6 +250,7 @@ export function createAudio(opts) {
     const baseGain = def.gain != null ? def.gain : 0.5
     g.gain.value = baseGain * (def.cue ? 0.55 + Math.random() * 0.55 : 0.7 + Math.random() * 0.5)
     let node = src.connect(g)
+    if (def.hp > 0 && ctx.createBiquadFilter) { const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = def.hp; h.Q.value = 0.6; node = node.connect(h) } // 便22: 素材の低い唸りを切る
     if (ctx.createBiquadFilter) {
       const lp = ctx.createBiquadFilter()
       lp.type = 'lowpass'
@@ -355,7 +359,7 @@ export function createAudio(opts) {
         li++
         const lgain = def.gain != null ? def.gain : 1
         // 鈴虫(16kHz素材)は高域が8kHzで切れ、48kHzの虫(crickets)と並ぶと高域落差が目立つ→控えめにし虫を主役へ（評価サウンド）。
-        startLoop(buffer, /suzumushi/.test(def.src || '') ? lgain * 0.72 : lgain, pan, myGen, !!def.swell, def.dayFade)
+        startLoop(buffer, /suzumushi/.test(def.src || '') ? lgain * 0.72 : lgain, pan, myGen, !!def.swell, def.dayFade, def.hp || 0)
       } else if (def.interval) {
         scheduleInterval(def, buffer, myGen)
       } else {
@@ -580,9 +584,38 @@ export function createAudio(opts) {
     if (staNode.pan && Number.isFinite(pan)) staNode.pan.pan.setTargetAtTime(Math.max(-0.9, Math.min(0.9, pan)), t, 0.25) // 駅の方角へ定位
     staState.amt = a
   }
+  // ── 便22: 鴨川デルタの人の声（子どもの遊ぶ声・笑い声。素材 audio/kamo/asobi.mp3＝CC0 の公園の録音）。setVoices(近さ 0..1, 左右)
+  //   遠いほど高い音がこもり（声の中身は聞き取れず、にぎわいの気配だけ）、近づくと澄む。離れたら 0。素材は初めて近づいた時に読む
+  let voiceNode = null
+  const voiceState = { amt: 0, loading: false }
+  async function ensureVoices() {
+    if (voiceNode || voiceState.loading || !ctx || !ctx.createBiquadFilter) return
+    voiceState.loading = true
+    const buf = await loadBuffer('audio/kamo/asobi.mp3')
+    if (!buf || !ctx || voiceNode) { voiceState.loading = false; return }
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true // 素材の端は継ぎ目の無いように重ねてある
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 240; hp.Q.value = 0.6
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.4
+    const g = ctx.createGain(); g.gain.value = 0
+    const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null
+    src.connect(hp).connect(lp).connect(g); if (p) g.connect(p).connect(master); else g.connect(master)
+    try { src.start(0, Math.random() * buf.duration) } catch { /* 無視 */ }
+    voiceNode = { g, lp, pan: p }; voiceState.loading = false
+    setVoices(voiceState.amt, voiceState.pan)
+  }
+  function setVoices(amt, pan) {
+    const a = Math.max(0, Math.min(1, amt || 0)); voiceState.amt = a; voiceState.pan = pan
+    if (a > 0.01 && !voiceNode) ensureVoices()
+    if (!voiceNode) return
+    const t = now()
+    voiceNode.g.gain.setTargetAtTime(a <= 0.01 ? 0 : a * 0.42, t, 1.2)
+    voiceNode.lp.frequency.setTargetAtTime(700 + a * a * 6000, t, 1.2) // 遠＝こもった気配／近＝澄んだ声
+    if (voiceNode.pan && Number.isFinite(pan)) voiceNode.pan.pan.setTargetAtTime(Math.max(-0.85, Math.min(0.85, pan)), t, 0.3)
+  }
   // 夏の風鈴の「チリン」は実機FBで不快につき廃止（合成関数ごと削除＝死蔵コードを残さない）。風鈴の見た目は3D側に残す。
   // 海の近さ・川の近さ・人混みの近さ・夏祭り・駅(各0..1)で環境音を満ち引きさせる。完全に離れたら 0（無音＝ノイズ漏れ無し）。
-  function setAmbience(sea, river, crowd, fest, sta, festPan, staPan) {
+  function setAmbience(sea, river, crowd, fest, sta, festPan, staPan, voice, voicePan) {
+    setVoices(voice || 0, voicePan) // 便22: 鴨川デルタの人の声（鴨川の町の時だけ値が来る）
     setFestival(fest, festPan)  // 夏祭りの囃子（場所への近さで満ち引き＋会場の方角へ定位）
     setStation(sta, staPan)     // 駅の音（発車ベル＋電車の通過音＋駅の方角へ定位）
     if (!waterNode) return
@@ -662,26 +695,28 @@ export function createAudio(opts) {
     }
   }
   function eidenPass(at, amt, pan, dep) {
-    // 叡山電車: 低い走る音（ゴー）と、レールの継ぎ目（カタン・コトン）と、モーターの音（出る時は上がり、着く時は下がる）
+    // 叡山電車（便22 で作り直した）: ほんのり。前の低い「ゴー」（雑音の帯 240Hz・11 秒）は車の走る音に聞こえたので外した（裕也さん「車のような音はいらない」）。
+    //   残すのは、レールの継ぎ目の「カタン・コトン」（短い乾いた音と、ごく短い胴の響き）と、細いモーターの音だけ。遠いほど小さく高い音がこもる
     if (!ctx.createBufferSource) return
-    if (!evNoise) { const len = Math.floor(4 * ctx.sampleRate); evNoise = ctx.createBuffer(1, len, ctx.sampleRate); const d = evNoise.getChannelData(0); let b = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b = 0.92 * b + w * 0.08; d[i] = (b * 0.85 + w * 0.15) * 0.5 } }
-    const out = evOut(pan), A = Math.max(0.08, Math.min(1, amt)), DUR = 11
-    const src = ctx.createBufferSource(); src.buffer = evNoise; src.loop = true
-    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 120
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 240; bp.Q.value = 0.7
-    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.16 * A, at + 3); g.gain.setValueAtTime(0.16 * A, at + 6); g.gain.linearRampToValueAtTime(0.0001, at + DUR)
-    src.connect(hp).connect(bp).connect(g).connect(out); try { src.start(at); src.stop(at + DUR + 0.1) } catch { /* 無視 */ }
-    for (let k = 0; k < 7; k++) for (const off of [0, 0.16]) { // カタン・コトン（2つ1組）
-      const ct = at + 1.4 + k * (dep ? 1.25 - k * 0.08 : 0.9 + k * 0.1) + off, env = Math.sin(((k + 0.5) / 7) * Math.PI)
-      const cg = ctx.createGain(); cg.gain.setValueAtTime(0.001, ct); cg.gain.exponentialRampToValueAtTime(0.07 * A * env + 0.002, ct + 0.005); cg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.07)
-      const cl = ctx.createBiquadFilter(); cl.type = 'bandpass'; cl.frequency.value = off ? 520 : 640; cl.Q.value = 1.1
-      const nb = ctx.createBufferSource(); nb.buffer = evNoise; nb.connect(cl).connect(cg).connect(out); try { nb.start(ct, Math.random() * 3); nb.stop(ct + 0.09) } catch { /* 無視 */ }
+    if (!evNoise) { const len = Math.floor(4 * ctx.sampleRate); evNoise = ctx.createBuffer(1, len, ctx.sampleRate); const d = evNoise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1 }
+    const out0 = evOut(pan), A = Math.max(0.06, Math.min(1, amt))
+    const air = ctx.createBiquadFilter(); air.type = 'lowpass'; air.frequency.value = 1800 + A * A * 5000; air.connect(out0) // 遠いほどこもる
+    const out = air
+    for (let k = 0; k < 7; k++) for (const off of [0, 0.15]) { // カタン・コトン（台車の前と後ろの車輪＝2つ1組）
+      const ct = at + 1.0 + k * (dep ? 1.3 - k * 0.09 : 0.85 + k * 0.11) + off, env = Math.sin(((k + 0.5) / 7) * Math.PI)
+      const cg = ctx.createGain(); cg.gain.setValueAtTime(0.0001, ct); cg.gain.exponentialRampToValueAtTime(0.045 * A * env + 0.0002, ct + 0.003); cg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.045)
+      const cl = ctx.createBiquadFilter(); cl.type = 'bandpass'; cl.frequency.value = off ? 1250 : 1550; cl.Q.value = 2.2
+      const nb = ctx.createBufferSource(); nb.buffer = evNoise; nb.connect(cl).connect(cg).connect(out); try { nb.start(ct, Math.random() * 3); nb.stop(ct + 0.06) } catch { /* 無視 */ }
+      if (ctx.createOscillator) { const th = ctx.createOscillator(); th.type = 'sine'; th.frequency.setValueAtTime(off ? 300 : 340, ct); th.frequency.exponentialRampToValueAtTime(off ? 210 : 240, ct + 0.05) // 胴の響き（中域・ごく短い）
+        const tg = ctx.createGain(); tg.gain.setValueAtTime(0.0001, ct); tg.gain.exponentialRampToValueAtTime(0.02 * A * env + 0.0002, ct + 0.004); tg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.06); th.connect(tg).connect(out); try { th.start(ct); th.stop(ct + 0.08) } catch { /* 無視 */ } }
     }
-    if (ctx.createOscillator) { // モーター（中高域の細い音・控えめ）
-      const m = ctx.createOscillator(); m.type = 'sine'
-      if (dep) { m.frequency.setValueAtTime(330, at + 0.5); m.frequency.linearRampToValueAtTime(860, at + 7.5) } else { m.frequency.setValueAtTime(820, at + 0.5); m.frequency.linearRampToValueAtTime(300, at + 8) }
-      const mg = ctx.createGain(); mg.gain.setValueAtTime(0.0001, at + 0.5); mg.gain.linearRampToValueAtTime(0.008 * A, at + 2); mg.gain.linearRampToValueAtTime(0.0001, at + 8.5)
-      m.connect(mg).connect(out); try { m.start(at + 0.5); m.stop(at + 8.6) } catch { /* 無視 */ }
+    if (ctx.createOscillator) { // モーター（細い音・控えめ）。出る時は上がり、着く時は下がる
+      for (const [mul, amp] of [[1, 0.0055], [2.0, 0.0018]]) {
+        const m = ctx.createOscillator(); m.type = 'sine'
+        if (dep) { m.frequency.setValueAtTime(320 * mul, at + 0.5); m.frequency.linearRampToValueAtTime(820 * mul, at + 7.5) } else { m.frequency.setValueAtTime(800 * mul, at + 0.5); m.frequency.linearRampToValueAtTime(300 * mul, at + 8) }
+        const mg = ctx.createGain(); mg.gain.setValueAtTime(0.0001, at + 0.5); mg.gain.linearRampToValueAtTime(amp * A, at + 2); mg.gain.linearRampToValueAtTime(0.0001, at + 8.5)
+        m.connect(mg).connect(out); try { m.start(at + 0.5); m.stop(at + 8.6) } catch { /* 無視 */ }
+      }
     }
   }
   function playEvent(kind, o) {
@@ -752,6 +787,8 @@ export function createAudio(opts) {
     setFestival,
     /** 駅の音（発車ベル＋電車の通過音）の満ち引き。amt=駅への近さ(0..1)。 */
     setStation,
+    /** 便22: 鴨川デルタの人の声の満ち引き。amt=近さ(0..1)・pan=左右。 */
+    setVoices,
     /** 情景を切り替える（音もクロスフェードで差し替える）。 */
     async setScene(scene) {
       currentScene = scene
@@ -1006,7 +1043,7 @@ export function createAudio(opts) {
     Object.assign(api, {
       _dbg() { return { altDuck: +altDuckV.toFixed(3), loops: layers.filter((l) => !l.stopped).map((l) => +l.layerGain.gain.value.toFixed(4)), duskShelf: duskShelf ? +duskShelf.gain.value.toFixed(2) : null, flyWind: flyWindV, cache: [...bufferCache.keys()], timers: timers.length, timersFired, chime: chimeDbg, started } },
       getLookPan() { return lookPan },
-      getDebug() { return { state: ctx ? ctx.state : 'none', water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2), ev: { ...evDbg } } },
+      getDebug() { return { state: ctx ? ctx.state : 'none', water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2), ev: { ...evDbg }, voice: +voiceState.amt.toFixed(2), voiceOn: !!voiceNode, voiceLp: voiceNode ? Math.round(voiceNode.lp.frequency.value) : null, loopHp: layers.filter((l) => !l.stopped).map((l) => l.hp || 0) } },
     })
   }
   return api

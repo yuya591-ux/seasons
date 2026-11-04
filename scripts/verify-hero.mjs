@@ -7,7 +7,7 @@ await page.locator('.gate').click().catch(() => {})
 await page.waitForTimeout(500)
 await page.locator('button:has-text("情景")').click()
 await page.waitForTimeout(300)
-await page.locator('.scene-card:has-text("秋の夕暮れ、高台の角部屋")').click()
+await page.locator('.scene-card:has-text("秋の夕暮れ、鴨川デルタの角部屋")').click()
 await page.waitForTimeout(2500)
 await page.screenshot({ path: 'scripts/_shots/hero_front.png' })
 // 少し下を向く（道路と手前の家並み）

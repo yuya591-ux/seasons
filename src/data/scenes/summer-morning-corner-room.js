@@ -4,8 +4,8 @@
 export default {
   id: 'summer-morning-corner-room',
   axes: { season: 'summer', weather: 'cloudy', time: 'morning' },
-  label: '夏の朝、高台の角部屋',
-  desc: '朝靄にかすむ街を、部屋の窓から見下ろす。指や傾きで見回す。',
+  label: '夏の朝、鴨川デルタの角部屋',
+  desc: '朝の鴨川。浅瀬で遊ぶ子どもと、飛び石を渡る人。指や傾きで見回す。',
   status: 'ready',
   render: 'town3d',          // 立体の街エンジンへ載せ替え（見回しの正しさ・立体感）
   town3dKind: 'corner',
@@ -31,8 +31,10 @@ export default {
   driftPeriod: 280,
   phenomena: {},
 
+  // 便22: 音は自然の音だけ（木々のざわめき・川・雨・虫・鳥）。素材の低い唸り（車の走る音のように聞こえた）を hp で切る。人の声は鴨川デルタの近さで町の側が足す
   sounds: [
-    { id: 'higurashi', label: 'ヒグラシ', src: 'audio/summer-rain-dusk/higurashi.mp3', gain: 0.35, loop: true },
-    { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.12, loop: true },
+    { id: 'higurashi', label: 'ヒグラシ', src: 'audio/summer-rain-dusk/higurashi.mp3', gain: 0.3, loop: true, hp: 320 },
+    { id: 'leaves', label: '木々のざわめき', src: 'audio/kamo/leaves.mp3', gain: 0.24, loop: true, hp: 160 },
+    { id: 'kawa', label: '川の音', src: 'audio/shishigaya-morning-yato/stream.mp3', gain: 0.12, loop: true, pan: 0.15, hp: 260 },
   ],
 }

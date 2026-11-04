@@ -4,8 +4,8 @@
 export default {
   id: 'spring-morning-corner-room',
   axes: { season: 'spring', weather: 'clear', time: 'morning' },
-  label: '春の朝、高台の角部屋',
-  desc: '夜明けの桜色の空と、窓の外を舞う花びら。澄んだ朝の街を見下ろす。',
+  label: '春の朝、鴨川デルタの角部屋',
+  desc: '澄んだ朝の鴨川と、窓の外を舞う花びら。',
   status: 'ready',
   render: 'town3d',          // 立体の街エンジンへ載せ替え（見回しの正しさ・立体感）
   town3dKind: 'corner',
@@ -34,9 +34,10 @@ export default {
   phenomena: {},
 
   // 春の朝の気配: うぐいすと渡る風をうっすら（既存の素材を再利用。CREDITS.md記録済み）
+  // 便22: 音は自然の音だけ（木々のざわめき・川・雨・虫・鳥）。素材の低い唸り（車の走る音のように聞こえた）を hp で切る。人の声は鴨川デルタの近さで町の側が足す
   sounds: [
-    { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.12, loop: true },
-    // ウグイスは春の朝の主役。ゆらぎのある間隔でそっと（cueなし＝自然な高域）。
-    { id: 'uguisu', label: 'ウグイス', src: 'audio/shishigaya-morning-yato/uguisu.mp3', loop: false, interval: [6, 17], gain: 0.4 },
+    { id: 'leaves', label: '木々のざわめき', src: 'audio/kamo/leaves.mp3', gain: 0.24, loop: true, hp: 160 },
+    { id: 'kawa', label: '川の音', src: 'audio/shishigaya-morning-yato/stream.mp3', gain: 0.12, loop: true, pan: 0.15, hp: 260 },
+    { id: 'uguisu', label: 'ウグイス', src: 'audio/shishigaya-morning-yato/uguisu.mp3', loop: false, interval: [6, 17], gain: 0.4, hp: 300 },
   ],
 }

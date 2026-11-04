@@ -464,7 +464,11 @@ void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float fl = 0.78 +
   }
 
   // ── 飛ぶ・歩く時の音の近さ（鴨川の目の位置から）。0.25 秒ごとに測る ──
-  const amb = { river: 0, crowd: 0, sta: 0, staPan: 0 }
+  const amb = { river: 0, crowd: 0, sta: 0, staPan: 0, voice: 0, voicePan: 0 }
+  // 便22: 鴨川デルタの人の声（子どもの遊ぶ声・笑い声）の多さ。昼の晴れと曇りだけ（雨と雪は居ない）。夏が一番多く、冬は少ない。夕方は少し減る。
+  //   夜は夏の夜だけ（デルタの手持ち花火の学生と家族）。窓辺（約 120m 先）でもかすかに届き、近づくほど澄む
+  const VOICE_BASE = WET ? 0 : NIGHT ? (S === 'summer' ? 0.5 : 0) : ({ summer: 1, spring: 0.75, autumn: 0.65, winter: 0.3 }[S] ?? 0.6) * (DUSK ? 0.7 : 1)
+  const DELTA = [-66, 40] // 鴨川デルタ（三角州の先と飛び石のあたり）
   let ambT = 0
   const masu = []; if (life && life.masugata) for (let i = 0; i < life.masugata.length; i += 2) masu.push([life.masugata[i], life.masugata[i + 1]])
   const segD = (x, z, a, b) => { const dx = b[0] - a[0], dz = b[1] - a[1], u = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz || 1))); return Math.hypot(x - a[0] - dx * u, z - a[1] - dz * u) }
@@ -480,8 +484,11 @@ void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float fl = 0.78 +
     let md = 999; for (let i = 0; i < masu.length - 1; i++) md = Math.min(md, segD(cp.x, cp.z, masu[i], masu[i + 1]))
     const sta = life && life.eiden ? life.eiden.sta : null, sdist = sta ? Math.hypot(sta.x - cp.x, sta.z - cp.z) : 999
     const glow = Math.max(0, Math.min(1, (30 - alt) / 24))
-    amb.crowd = Math.max(Math.max(0, 1 - md / 45), Math.max(0, 1 - sdist / 40) * 0.5, info.sitters && Math.hypot(cp.x, cp.z) < 120 ? 0.18 : 0) * glow
-    amb.sta = sta ? Math.pow(Math.max(0, Math.min(1, (95 - sdist) / 95)), 1.5) * glow : 0
+    // ~~amb.crowd（商店街と駅のまわりの合成のざわめき）・amb.sta（駅の電車の合成の唸り）~~（【便22】鳴らさない。合成の雑音の唸りが車の走る音に聞こえた＝裕也さん「車のような音とかそういうのいらない」。人の声はデルタだけ＝下の amb.voice）
+    amb.crowd = 0; amb.sta = 0; void md; void glow
+    { const dd = Math.hypot(DELTA[0] - cp.x, DELTA[1] - cp.z), up = Math.max(0, Math.min(1, (90 - alt) / 70)) // 高く飛ぶほど遠のく
+      amb.voice = VOICE_BASE * Math.pow(Math.max(0, Math.min(1, 1 - dd / 280)), 1.4) * up
+      amb.voicePan = panAmt(DELTA[0], DELTA[1]).pan }
     amb.staPan = sta ? panAmt(sta.x, sta.z).pan : 0
   }
 
@@ -505,7 +512,7 @@ void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float fl = 0.78 +
       return {
         ...info, chains: chains.map((c) => c.length), train: train ? { mode: train.mode, s0: +Math.min(train.s0, 9999).toFixed(1), v: +train.v.toFixed(2), track: train.tr, wait: +train.wait.toFixed(1), shown: train.cars.visible } : null,
         okuribi: okuribi ? { orderBy: okuribi.names.map((_, gi) => { const o = okuribi.beds.filter((b) => b.g === gi).map((b) => b.order); return [+Math.min(...o).toFixed(1), +Math.max(...o).toFixed(1), o.length] }), names: okuribi.names, lastOn: +okuribi.lastOn.toFixed(1), dur: +okuribi.dur.toFixed(0), litBy: okuribi.names.map((_, gi) => +okuribi.beds.reduce((a, b, i) => a + (b.g === gi ? okuribi.lit[i] : 0), 0).toFixed(1)), t: +okuribi.t.toFixed(1), wait: +okuribi.wait.toFixed(1), lit: +(okuribi.lit.reduce((a, b) => a + b, 0)).toFixed(1), beds: okuribi.beds.length, y: [Math.round(Math.min(...okuribi.beds.map((b) => b.y))), Math.round(Math.max(...okuribi.beds.map((b) => b.y)))] } : null,
-        walkers: walkers.length, gulls: gulls.length, amb: { river: +amb.river.toFixed(2), crowd: +amb.crowd.toFixed(2), sta: +amb.sta.toFixed(2), staPan: +amb.staPan.toFixed(2) }, bandNext: bands.map((b) => +b.next.toFixed(2)),
+        walkers: walkers.length, gulls: gulls.length, amb: { river: +amb.river.toFixed(2), crowd: +amb.crowd.toFixed(2), sta: +amb.sta.toFixed(2), staPan: +amb.staPan.toFixed(2), voice: +amb.voice.toFixed(3), voicePan: +amb.voicePan.toFixed(2) }, bandNext: bands.map((b) => +b.next.toFixed(2)),
       }
     },
   }

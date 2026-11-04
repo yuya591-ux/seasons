@@ -10442,17 +10442,18 @@ export async function mountTown3d(parent, opts = {}) {
         }
       }
       // ~~便18: 海・川・人だまり・祭り・駅の音の近さは北寺尾の町の場所から測る物なので、鴨川の町では鳴らさない~~（【便20】鴨川の町の場所から測る＝川の瀬音・まちの気配・叡山電車の駅。外に出ている時だけ）
-      if (kamo) { const a = kamo.life ? kamo.life.ambience() : null; if (a) onAmbience(0, a.river * outAmt, a.crowd * outAmt, 0, a.sta * outAmt, 0, a.staPan); else onAmbience(0, 0, 0, 0, 0, 0, 0) }
+      // 【便22】鴨川の町の合成のざわめきと駅の唸りは鳴らさない（車の走る音に聞こえた）。人の声はデルタだけ（a.voice・窓辺でもかすかに届く＝外に出ていなくても送る）
+      if (kamo) { const a = kamo.life ? kamo.life.ambience() : null; if (a) onAmbience(0, a.river * outAmt, 0, 0, 0, 0, 0, a.voice, a.voicePan); else onAmbience(0, 0, 0, 0, 0, 0, 0, 0, 0) }
       else onAmbience(seaAmt, riverAmt, crowdAmt, festAmt, staAmt, festPan, staPan) }
     // 夜の灯りの息づき（篝火/松明＝炎の揺らぎ・ガス灯＝穏やかな明滅）。二重サインで不規則に。
     for (const g of nightGlows) g.m.opacity = Math.max(0, g.base * (1 + g.amp * (Math.sin(t * g.sp + g.ph) * 0.6 + Math.sin(t * g.sp * 1.73 + g.ph * 1.3) * 0.4)))
     // 静かな瞬間の鈴＝雲上で休む/止空でじっと佇むと、ふと澄んだ音が満ちる（整う）。嫌われたBGMパッドの代わりの、自然で控えめな癒しの音色。
     { const calm = active.onCloud || (active.mode === 'fly' && !active.cruise && Math.hypot(active.vel.x, active.vel.z) < 1.6 && (active.flyP || 0) > 0.6 && active.flyPos.y > SEA_Y - 12) || (active.mode === 'walk' && (active.sitAmt || 0) > 0.6) // 歩いて立ち止まり腰をおろすと、ふと澄んだ鈴が満ちる
       // 実時計 t で計る（休息中は描画が間引かれ dt が頭打ちになるため、dt 積算だと鈴が遅れる）
-      if (calm) { if (t >= chimeT) { chimeT = t + 8 + R() * 10; onChime(); chimeCount++ } } else chimeT = t + 4 + R() * 4 }
+      if (calm && !kamo) { if (t >= chimeT) { chimeT = t + 8 + R() * 10; onChime(); chimeCount++ } } else chimeT = t + 4 + R() * 4 }
     // 夕暮れの街にどこからか流れるチャイム（夕方の合図＝「もうおうちへ」の郷愁）。夕夜の街(home)でだけ・初回＋ごくたまに。高空や別世界（城下町/雲海）では鳴らさない。
     if (eveChimeT < 0) eveChimeT = (kind !== 'yato' && (isNight || duskAmt > 0.36)) ? t + 11 + R() * 6 : Infinity
-    else if (t >= eveChimeT) { eveChimeT = t + 240 + R() * 180; if (active.mode !== 'fly' || (active.flyP || 0) < 0.7) onEveningChime() }
+    else if (t >= eveChimeT) { eveChimeT = t + 240 + R() * 180; if (!kamo && (active.mode !== 'fly' || (active.flyP || 0) < 0.7)) onEveningChime() } // 【便22】鴨川では夕方のチャイムを鳴らさない（音は雨・木々・川・虫・鳥の自然の音だけ＝裕也さんの頼み）
     // 操作ゲージの塗りを今の値で更新（＋寄る/速く/上昇で上がる向き）。高さは見渡せる実用域(汀〜90)で正規化。
     zoomGauge.set((3.0 - active.zoomTarget) / 2.6)
     speedGauge.set((active.speedMul - 0.35) / 1.35)

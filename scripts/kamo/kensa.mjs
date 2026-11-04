@@ -24,7 +24,9 @@
 //   K19 春の夕の鴨川に、座る人（20 人以上）・飛び石の列（5 石以上が 2 列以上）・叡山電車・トビ 2 羽・アオサギが居て、?kamolife=0 では動く物を組まない（便20）
 //   K20 夏の夜の角部屋の五山の送り火: 並びが 大文字→妙→法→船形→左大文字→鳥居形、火床が 75・103・63・79・53・108、点く時刻が本物の順（5分＝25秒おき）で、点けて 12 秒の所で大文字だけが灯る（便20）
 //   K21 夏の夜でない角部屋（秋の夕）には送り火を組まない（便20）
-//   K22 飛ぶ・歩く時の音の近さ: 水の上の低い所で川の瀬音、出町桝形商店街でまちの気配、出町柳駅で駅の音が満ち、高い空では川の音が消える（便20）
+//   ~~K22 飛ぶ・歩く時の音の近さ: 水の上の低い所で川の瀬音、出町桝形商店街でまちの気配、出町柳駅で駅の音が満ち、高い空では川の音が消える（便20）~~（【便22】下の形に替えた。合成のざわめきと駅の唸りは車の走る音に聞こえたので鳴らさない＝裕也さんの頼み）
+//   K22 飛ぶ・歩く時の音の近さ: 水の上の低い所で川の瀬音が満ち、出町桝形商店街と出町柳駅でも合成のざわめき・駅の唸りは 0 のまま（音の部品へ流す値も 0）、高い空では川の音が消える（便22）
+//   K33 鴨川デルタの人の声: 夏の朝の窓辺でかすかに（0.05〜0.6）流し、デルタの上の低い所で満ち（0.6 以上）、東へ 1.2km で 0、雨の夜は 0。角部屋の情景の音の素材は自然の音だけで、虫・雨・川・ヒグラシ・風に低音切り（hp 150 以上）が付く（便22）
 //   K23 鴨川の出来事の音（トビの声・叡山電車）を鳴らしてもエラーが無く、出来事を起こすと鳴らした数が増える（便20）
 //   ~~K24 視差軽減（動きを減らす設定）では、送り火も時々の出来事も起きない（座る人と電車はいつもの景色として居る）（便20）~~（【便20・外の目】下の形に替えた）
 //   K24 視差軽減（動きを減らす設定）では、時々の出来事の帯（飛び石を渡る人・トビの声・ユリカモメ）の時計が進まず、出来事が起きない。送り火（ゆっくり点く遠い火）は灯るまでの待ちが進む（便20）
@@ -264,7 +266,9 @@ if (run('K22')) {
   const water = await at(-60, -2, 40), masu = await at(L.masugata[4], 1.5, L.masugata[5]), sta = await at(L.eiden.sta.x, 2, L.eiden.sta.z), high = await at(-60, 160, 40)
   // 音の部品へ流した値（海・川・人だまり・祭り・駅…）も同じ所で見る（動く物の側で測れていても、町の3Dが流していなければ鳴らない）
   const sentOk = water.sent && water.sent[1] >= 0.3 && masu.sent && masu.sent[2] >= 0.3 && sta.sent && sta.sent[4] >= 0.3 && high.sent && high.sent[1] < 0.05
-  check('K22', water.river >= 0.3 && masu.crowd >= 0.3 && sta.sta >= 0.3 && high.river < 0.05 && sentOk, `水の上 川 ${water.river}（流した ${water.sent && water.sent[1]}）・商店街 気配 ${masu.crowd}（${masu.sent && masu.sent[2]}）・駅 駅 ${sta.sta}（${sta.sent && sta.sent[4]}）（それぞれ 0.3 以上）・高い空 川 ${high.river}（${high.sent && high.sent[1]}・0.05 未満）`)
+  const sentOk22 = water.sent && water.sent[1] >= 0.3 && masu.sent && masu.sent[2] === 0 && sta.sent && sta.sent[4] === 0 && high.sent && high.sent[1] < 0.05 // 【便22】
+  void sentOk
+  check('K22', water.river >= 0.3 && masu.crowd === 0 && sta.sta === 0 && high.river < 0.05 && sentOk22, `水の上 川 ${water.river}（流した ${water.sent && water.sent[1]}）・商店街 気配 ${masu.crowd}（${masu.sent && masu.sent[2]}）・駅 駅 ${sta.sta}（${sta.sent && sta.sent[4]}）（川は 0.3 以上・気配と駅は 0）・高い空 川 ${high.river}（${high.sent && high.sent[1]}・0.05 未満）`)
   await o.ctx.close()
 }
 if (run('K23')) {
@@ -276,6 +280,21 @@ if (run('K23')) {
   // 【便20・外の目】動く物の側で数えた数だけでなく、町の3Dが音の部品の口（onEvent）へ流した数も見る
   check('K23', r[0] === 'ok' && r[1] === 'ok' && after > before && sent0 >= 0 && sent1 > sent0 && !o.errs.length, `音を鳴らす ${r[0]}・トビを起こす ${r[1]}・鳴らした数 ${before} → ${after}・音の部品へ流した数 ${sent0} → ${sent1}・エラー ${o.errs.length}`)
   await o.ctx.close()
+}
+if (run('K33')) { // 【便22】鴨川デルタの人の声と、角部屋の音の素材
+  const o = await open('summer-morning-corner-room')
+  const w = (await life(o.p)).amb, ws = await o.p.evaluate(() => window.__town3dAmb())
+  await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
+  const at = async (X, Y, Z) => { await o.p.evaluate(([X, Y, Z]) => { const e = window.__town3dKamoTown(X, Z, Y); window.__town3dFlyPose(e.x, e.y, e.z, 0, 0) }, [X, Y, Z]); await o.p.waitForTimeout(2500); return { ...(await life(o.p)).amb, sent: await o.p.evaluate(() => window.__town3dAmb()) } }
+  const near = await at(-66, 6, 70), far = await at(1150, 20, 40)
+  await o.ctx.close()
+  const r = await open('autumn-rain-night-corner-room'), rw = (await life(r.p)).amb; await r.ctx.close()
+  // 情景データの音の素材（角部屋＝鴨川の町）: 自然の音の素材だけで、低い唸りのある素材には低音切り
+  const NAT = /crickets|suzumushi|stream|leaves|rain.mp3|thunder|higurashi|uguisu|wind.mp3/, RUMBLE = /crickets|suzumushi|stream|rain.mp3|higurashi|wind.mp3/
+  const ids = ['autumn-dusk', 'autumn-rain-night', 'summer-morning', 'spring-dusk', 'spring-morning', 'winter-snow-dusk', 'summer-night'].map((n) => n + '-corner-room')
+  const bad = []
+  for (const id of ids) { const sc = (await import('../../src/data/scenes/' + id + '.js')).default; for (const d of sc.sounds) { if (!NAT.test(d.src)) bad.push(id + ':' + d.src); else if (RUMBLE.test(d.src) && !(d.hp >= 150)) bad.push(id + ':' + d.id + ' hp ' + d.hp) } if (!sc.sounds.some((d) => /leaves/.test(d.src))) bad.push(id + ':木々なし') }
+  check('K33', w && w.voice >= 0.05 && w.voice <= 0.6 && ws && ws[7] >= 0.05 && near.voice >= 0.6 && near.sent && near.sent[7] >= 0.6 && far.voice === 0 && rw && rw.voice === 0 && !bad.length && !o.errs.length && !r.errs.length, `窓辺 ${w && w.voice}（流した ${ws && ws[7]}）・デルタの上 ${near.voice}（${near.sent && near.sent[7]}）・東へ 1.2km ${far.voice}・雨の夜 ${rw && rw.voice}・素材の外れ ${bad.length ? bad.join(' ') : 'なし'}・エラー ${o.errs.length + r.errs.length}`)
 }
 if (run('K24')) {
   // 【便20・外の目】夏の夜は帯の出来事がもともと起きない（昼の物・冬の物）ので、帯の時計が進まないことを春の夕で見る。送り火の待ちが進むことは夏の夜で見る

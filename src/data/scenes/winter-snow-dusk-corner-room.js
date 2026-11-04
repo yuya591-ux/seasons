@@ -4,8 +4,8 @@
 export default {
   id: 'winter-snow-dusk-corner-room',
   axes: { season: 'winter', weather: 'snow', time: 'dusk' },
-  label: '冬の雪の夕暮れ、高台の角部屋',
-  desc: '舞う雪と、窓の桟に積もる白。眼下に冷たい街あかり。指や傾きで見回す。',
+  label: '冬の雪の夕暮れ、鴨川デルタの角部屋',
+  desc: '舞う雪と、白く染まる河川敷。比叡の山並みに冷たい夕あかり。',
   status: 'ready',
   render: 'town3d',          // 立体の街エンジンへ載せ替え（見回しの正しさ・立体感）
   town3dKind: 'corner',
@@ -33,7 +33,9 @@ export default {
   driftPeriod: 300,
   phenomena: { snow: { intensity: 0.6 } },
 
+  // 便22: 音は自然の音だけ（木々のざわめき・川・雨・虫・鳥）。素材の低い唸り（車の走る音のように聞こえた）を hp で切る。人の声は鴨川デルタの近さで町の側が足す
   sounds: [
-    { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.3, loop: true },
+    { id: 'leaves', label: '木々のざわめき', src: 'audio/kamo/leaves.mp3', gain: 0.22, loop: true, hp: 160 },
+    { id: 'wind', label: '風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.12, loop: true, hp: 450 },
   ],
 }

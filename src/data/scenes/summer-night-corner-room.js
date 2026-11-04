@@ -5,7 +5,7 @@
 export default {
   id: 'summer-night-corner-room',
   axes: { season: 'summer', weather: 'clear', time: 'night' },
-  label: '夏の夜、川べりの角部屋',
+  label: '夏の夜、鴨川デルタの角部屋',
   desc: '川風の夜。川べりに涼む人の影と、駅に着く電車の灯り。夜が更けると、五山の送り火が順に灯る。',
   status: 'ready',
   render: 'town3d',
@@ -32,10 +32,11 @@ export default {
   driftPeriod: 300,
   phenomena: {},
 
+  // 便22: 音は自然の音だけ（木々のざわめき・川・雨・虫・鳥）。素材の低い唸り（車の走る音のように聞こえた）を hp で切る。人の声は鴨川デルタの近さで町の側が足す
   sounds: [
-    { id: 'mushi', label: '虫の音', src: 'audio/autumn-dusk-corner-room/crickets.mp3', gain: 0.26, loop: true, swell: true, pan: -0.22 },
-    { id: 'suzumushi', label: '鈴虫', src: 'audio/kitaterao-window-3d-night/suzumushi.mp3', gain: 0.2, loop: true, swell: true, pan: 0.28 },
-    { id: 'kawa', label: '川の音', src: 'audio/shishigaya-morning-yato/stream.mp3', gain: 0.16, loop: true, pan: 0.15 },
-    { id: 'wind', label: '夜風', src: 'audio/winter-snow-night/wind.mp3', gain: 0.08, loop: true },
+    { id: 'mushi', label: '虫の音', src: 'audio/autumn-dusk-corner-room/crickets.mp3', gain: 0.26, loop: true, swell: true, pan: -0.22, hp: 420 },
+    { id: 'suzumushi', label: '鈴虫', src: 'audio/kitaterao-window-3d-night/suzumushi.mp3', gain: 0.2, loop: true, swell: true, pan: 0.28, hp: 420 },
+    { id: 'kawa', label: '川の音', src: 'audio/shishigaya-morning-yato/stream.mp3', gain: 0.14, loop: true, pan: 0.15, hp: 260 },
+    { id: 'leaves', label: '木々のざわめき', src: 'audio/kamo/leaves.mp3', gain: 0.12, loop: true, hp: 160 },
   ],
 }
