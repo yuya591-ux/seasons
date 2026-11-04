@@ -1,4 +1,4 @@
-// 便20 の全テスト（便19 の all19 を引き継ぐ）: ビルド・スモーク（34情景・出典の照らし）・鴨川の検査 K1〜K25・前後の画素の差
+// 便20 の全テスト（便19 の all19 を引き継ぐ）: ビルド・スモーク（34情景・出典の照らし）・鴨川の検査 K1〜K26・前後の画素の差
 //   前後の差は、鴨川の時だけ分かれる直しが、ほかの情景（谷戸・北寺尾の窓辺・北寺尾の空・前の角部屋）を変えていないかを見る
 //   【便20】便19 の範囲外「今どうしの揺れが回ごとに大きく違う（2枚だけの揺れの幅では比べにならない）」を受けて、揺れを2組（ato と ato2・ato と ato3）でとり、大きい方の揺れで比べる
 // 前に: 今のコードの vite preview を 4981、復元地点 8540db8（便19 の終わり）の作業フォルダの vite preview を 4982 に立てる
@@ -18,7 +18,7 @@ const four = (f, scene, n, extra) => [f(scene, n + '-mae', 4982, extra), f(scene
 const steps = [
   { name: 'ビルド', cmd: 'npm', args: ['run', 'build'] },
   { name: 'スモーク', cmd: 'npm', args: ['run', 'smoke'] },
-  { name: '鴨川の検査 K1〜K25', cmd: 'node', args: ['scripts/kamo/kensa.mjs'], env: { PORT: '4981' } },
+  { name: '鴨川の検査 K1〜K26', cmd: 'node', args: ['scripts/kamo/kensa.mjs'], env: { PORT: '4981' } },
   ...four(sh, 'shishigaya-window-3d', 'all-yato', ''),
   ...four(sh, 'kitaterao-window-3d', 'all-kita', ''),
   ...four(shF, 'kitaterao-window-3d', 'all-kitafly', FLY),

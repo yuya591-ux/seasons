@@ -8104,8 +8104,11 @@ export async function mountTown3d(parent, opts = {}) {
     // ── 便18: 鴨川の町を組む。部屋の窓（winRoom の原点＝窓の中心・正面の窓は -z・左の窓は -x）を、鴨川の窓（西岸の建物の東の壁の上の階・
     //    便17 #5=1 の東）の位置と向きへ写す。北寺尾の町は今までどおり組むが描かない（部屋と、窓の外に降る物だけを描く＝下の「描き始める前」）
     if (kamoP) {
-      const got = await kamoP
-      if (my !== token) { try { renderer.dispose() } catch (e) { /* 無視 */ } if (stage.parentNode) stage.parentNode.removeChild(stage); return }
+      // 【便20】鴨川のデータを読み終えるのを待つ間に別の情景へ替わったら、読み終わりを待たずにすぐ片付ける（前は読み終わるまで舞台が残り、
+      //   遅い機械で角部屋から始まった時に舞台が2枚になった＝GitHub のスモーク 41749226137「北寺尾 舞台の数 2」）
+      const gone = new Promise((res) => { const iv = setInterval(() => { if (my !== token) { clearInterval(iv); res('__gone') } }, 100); kamoP.finally(() => clearInterval(iv)).catch(() => {}) })
+      const got = await Promise.race([kamoP, gone])
+      if (my !== token || got === '__gone') { try { renderer.dispose() } catch (e) { /* 無視 */ } if (stage.parentNode) stage.parentNode.removeChild(stage); return }
       if (got) {
         try {
           const v = got.d.meta.view, B = THREE.MathUtils.degToRad(v.yawDeg), o = winRoom.position

@@ -29,6 +29,7 @@
 //   ~~K24 視差軽減（動きを減らす設定）では、送り火も時々の出来事も起きない（座る人と電車はいつもの景色として居る）（便20）~~（【便20・外の目】下の形に替えた）
 //   K24 視差軽減（動きを減らす設定）では、時々の出来事の帯（飛び石を渡る人・トビの声・ユリカモメ）の時計が進まず、出来事が起きない。送り火（ゆっくり点く遠い火）は灯るまでの待ちが進む（便20）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
+//   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
 import { chromium } from 'playwright'
 const PORT = process.env.PORT || 4961, BASE = `http://localhost:${PORT}/seasons/`
@@ -294,6 +295,21 @@ if (run('K25')) {
   const k = await p.evaluate(() => window.__town3dKamo && window.__town3dKamo()), l = await p.evaluate(() => window.__town3dKamoLife && window.__town3dKamoLife())
   const real = errs.filter((e) => !/life.json|ERR_FAILED|net::/.test(e))
   check('K25', !!k && l === null && !real.length, `鴨川の町 ${k ? '有り' : '無し'}・動く物 ${JSON.stringify(l)}・エラー ${real.length}（読めなかった知らせ ${errs.length - real.length} は除く）`)
+  await ctx.close()
+}
+if (run('K26')) {
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' }), p = await ctx.newPage(), errs = []
+  p.on('pageerror', (e) => errs.push('PE ' + e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)) })
+  await ctx.addInitScript(() => { try { localStorage.setItem('seasons.state.v1', JSON.stringify({ version: 2, sceneId: 'autumn-dusk-corner-room', sceneAt: Date.now() })) } catch (e) { /* 無視 */ } })
+  await ctx.route('**/kamo/kamo.json', async (r) => { await new Promise((res) => setTimeout(res, 20000)); r.continue().catch(() => {}) }) // 鴨川のデータの読み込みを 20 秒遅らせる
+  await p.goto(`${BASE}?dev=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }); await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(2500)
+  await p.evaluate(() => window.__applyScene('kitaterao-window-3d'))
+  await p.waitForFunction(() => window.__town3dDraw && window.__town3dDraw(), null, { timeout: 60000 }).catch(() => {})
+  await p.waitForTimeout(1500)
+  const n = await p.evaluate(() => document.querySelectorAll('.town3d-stage').length)
+  await p.waitForTimeout(20000)
+  const n2 = await p.evaluate(() => document.querySelectorAll('.town3d-stage').length)
+  check('K26', n === 1 && n2 === 1 && !errs.filter((e) => !/net::|ERR_/.test(e)).length, `鴨川を読んでいる途中で北寺尾へ替えた後の舞台 ${n} 枚・読み終わる頃 ${n2} 枚（どちらも 1 で合格）・エラー ${errs.length}`)
   await ctx.close()
 }
 await b.close()

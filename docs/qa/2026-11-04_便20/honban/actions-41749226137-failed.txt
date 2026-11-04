@@ -1,0 +1,17 @@
+build	Run npm run smoke	﻿2026-11-04T00:46:28.1048925Z ##[group]Run npm run smoke
+build	Run npm run smoke	2026-11-04T00:46:28.1049298Z ^[[36;1mnpm run smoke^[[0m
+build	Run npm run smoke	2026-11-04T00:46:28.1063233Z shell: /usr/bin/bash -e {0}
+build	Run npm run smoke	2026-11-04T00:46:28.1063685Z ##[endgroup]
+build	Run npm run smoke	2026-11-04T00:46:28.1919036Z 
+build	Run npm run smoke	2026-11-04T00:46:28.1919772Z > seasons@0.0.0 smoke
+build	Run npm run smoke	2026-11-04T00:46:28.1920458Z > node scripts/qa-smoke.mjs
+build	Run npm run smoke	2026-11-04T00:46:28.1920743Z 
+build	Run npm run smoke	2026-11-04T00:46:28.6381373Z 出典の照らし OK: 鳴らす音 11・アプリ内の出典 11・CREDITS.md の音の行 11・背景の画像 4・鴨川の町のファイル 38
+build	Run npm run smoke	2026-11-04T00:58:28.0349024Z 舞台の数: 26 情景で外れ 1
+build	Run npm run smoke	2026-11-04T00:59:33.0199584Z 町→町の連続切替: 4 町・最後の舞台 1・今の町の口 true
+build	Run npm run smoke	2026-11-04T01:01:15.0158172Z 情景パネル: 雨の窓（窓をあける なし・強さの行 あり）→ 町（窓をあける あり・強さの行 なし）
+build	Run npm run smoke	2026-11-04T01:01:41.4053361Z 横長（1180×820）: 3 情景を開いた
+build	Run npm run smoke	2026-11-04T01:02:11.0253248Z 軽やか: 3 情景を開いた
+build	Run npm run smoke	2026-11-04T01:02:14.2948535Z SMOKE FAIL: 1 件の異常（情景 34枚を走査）
+build	Run npm run smoke	2026-11-04T01:02:14.2950436Z   [kitaterao-window-3d] 舞台の数 2（1 のはず）
+build	Run npm run smoke	2026-11-04T01:02:14.3422298Z ##[error]Process completed with exit code 1.
