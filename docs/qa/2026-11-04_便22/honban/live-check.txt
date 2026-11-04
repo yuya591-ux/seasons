@@ -1,0 +1,4 @@
+組むまで 21729 ms・鴨川 {"lifeMs":14,"calls":230,"tris":2048991,"low":false,"time":"morning"}
+js {"outer":{"boxes":153918,"polys":50,"trees":45248,"roads":8342,"water":34616,"chunks":36,"styles":[77983,19779,20360,23113,11290,1169,0,0,0,224],"roofs":[34627,62786,56505],"terrainPts":746327,"meisho":{"kinkaku":true,"tower":true,"romon":true,"yasakaTo":tr
+鴨川のデータの読み先 audio/kamo/leaves.mp3 kamo/kamo.json?v=21 kamo/life.json?v=21 kamo/terrain.bin?v=21 kamo/bldg.bin?v=21 kamo/roads.bin?v=21 ・数 30 ・版の印つき 22
+エラー 0  注意 
