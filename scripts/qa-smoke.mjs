@@ -80,6 +80,13 @@ console.log(`舞台の数: ${ids.length} 情景で外れ ${stageBad}`)
 // 便15 S28: 情景パネル経由の本物の操作（場所→その場所の先頭の情景）で、町→雨の窓→町と替え、画面の部品（窓をあけるボタン・強さの行）が情景に合う
 {
   curId = '情景パネル'
+  // 【便20】情景パネルの段の頭でページを開き直す。GitHub の遅い機械（GPU なし）で 34 情景を次々に開くと、重さと描画の文脈が溜まり、
+  //   この段でこまが進まず、押す前の「動きが止まったか」の確かめ（こまを2つ待つ）が6回とも時間切れになった（Actions 41745434207・鴨川の角部屋が7つになった便20）。
+  //   この段が見るのは画面の部品の出し分けなので、溜まった物を捨ててから始める（舞台が残らないかは上の段で見ている）
+  await page.goto(`${BASE}?dev=1`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+  await page.locator('.gate').click().catch(() => {})
+  await page.waitForTimeout(1200)
+  await page.evaluate(() => window.__applyScene('kitaterao-window-3d')); await settle('kitaterao-window-3d')
   // 本番5: SMOKE_CPU=<倍> で処理を遅くする（GitHub の遅い機械で落ちた点検を、手元で同じ遅さにして確かめる。既定は遅くしない）
   if (process.env.SMOKE_CPU) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: +process.env.SMOKE_CPU }) }
   // 本番5: 遅い機械では、指の動きを送ってもボタンが出きる前に押しに行き、町の画面に取られて時間切れになった（GitHub Actions bfbb3a3）。

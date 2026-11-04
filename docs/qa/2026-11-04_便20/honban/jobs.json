@@ -1,0 +1,150 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 126297114204,
+      "run_id": 41745434207,
+      "workflow_name": "Deploy to GitHub Pages",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/yuya591-ux/seasons/actions/runs/41745434207",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOS5sHuM8AAAAdZ-UGXA",
+      "head_sha": "b8fb344f0175ad1a108c3f987d17f10e356d47d7",
+      "url": "https://api.github.com/repos/yuya591-ux/seasons/actions/jobs/126297114204",
+      "html_url": "https://github.com/yuya591-ux/seasons/actions/runs/41745434207/job/126297114204",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-11-04T00:15:23Z",
+      "started_at": "2026-11-04T00:15:26Z",
+      "completed_at": "2026-11-04T00:35:12Z",
+      "name": "build",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-04T00:15:27Z",
+          "completed_at": "2026-11-04T00:15:28Z"
+        },
+        {
+          "name": "Run actions/checkout@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-04T00:15:28Z",
+          "completed_at": "2026-11-04T00:15:41Z"
+        },
+        {
+          "name": "Run actions/setup-node@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-04T00:15:41Z",
+          "completed_at": "2026-11-04T00:15:42Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-04T00:15:42Z",
+          "completed_at": "2026-11-04T00:15:44Z"
+        },
+        {
+          "name": "Run npm run build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-04T00:15:44Z",
+          "completed_at": "2026-11-04T00:15:45Z"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-04T00:15:45Z",
+          "completed_at": "2026-11-04T00:16:05Z"
+        },
+        {
+          "name": "Run npm run smoke",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 7,
+          "started_at": "2026-11-04T00:16:05Z",
+          "completed_at": "2026-11-04T00:35:09Z"
+        },
+        {
+          "name": "Run actions/upload-pages-artifact@v3",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-11-04T00:35:09Z",
+          "completed_at": "2026-11-04T00:35:09Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-11-04T00:35:09Z",
+          "completed_at": "2026-11-04T00:35:09Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-04T00:35:09Z",
+          "completed_at": "2026-11-04T00:35:10Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-04T00:35:10Z",
+          "completed_at": "2026-11-04T00:35:10Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/yuya591-ux/seasons/check-runs/126297114204",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000004215,
+      "runner_name": "GitHub Actions 1000004215",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 126305517169,
+      "run_id": 41745434207,
+      "workflow_name": "Deploy to GitHub Pages",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/yuya591-ux/seasons/actions/runs/41745434207",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOS5sHuM8AAAAdaGU-cQ",
+      "head_sha": "b8fb344f0175ad1a108c3f987d17f10e356d47d7",
+      "url": "https://api.github.com/repos/yuya591-ux/seasons/actions/jobs/126305517169",
+      "html_url": "https://github.com/yuya591-ux/seasons/actions/runs/41745434207/job/126305517169",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-11-04T00:35:13Z",
+      "started_at": "2026-11-04T00:35:13Z",
+      "completed_at": "2026-11-04T00:35:13Z",
+      "name": "deploy",
+      "steps": [
+
+      ],
+      "check_run_url": "https://api.github.com/repos/yuya591-ux/seasons/check-runs/126305517169",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    }
+  ]
+}
