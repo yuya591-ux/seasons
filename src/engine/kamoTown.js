@@ -14,6 +14,7 @@ import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { buildLife } from './kamoLife.js'
+import { buildPeople } from './kamoPeople.js'
 
 // ── 時刻（便17 の試作と同じ値。京都の向き: x 東・z 南。太陽の向きは three の角度で 0＝南） ──
 const TIMES = {
@@ -1055,6 +1056,11 @@ void main() {`)
     if (data.life && !/[?&]kamolife=0/.test(location.search)) life = buildLife({ scene, camera, renderer, life: data.life, terrK: terrFull, farK, wetK, zoneK, WY, stones: hopStones(), S, TK, sky, low, reduceMotion, onSound, keep })
     lifeMs = Math.round(performance.now() - tL0)
   } catch (e) { console.warn('鴨川の町の動く物を組めなかったので、動く物なしで開きます:', e && e.message); life = null }
+  // 便21: 河川敷を歩く人・走る人・自転車、浅瀬で遊ぶ子どもと飛び石に座る学生、夏の夜のデルタの手持ち花火（kamoPeople.js・kamopeople=0 は外し回し用）
+  let people = null
+  try {
+    if (!/[?&]kamopeople=0/.test(location.search) && !/[?&]kamolife=0/.test(location.search)) people = buildPeople({ scene, paths: meta.riverPath || [], stones: hopStones(), terrK: terrFull, wetK, depthK: (X, Z) => (wdepA ? gridAt(X, Z, (k) => wdepA[k] * WDS) : 0), S, TK, sky, low, keep, reduceMotion })
+  } catch (e) { console.warn('鴨川の河川敷の人を組めなかったので、人なしで開きます:', e && e.message); people = null }
 
   // ── 目: 部屋の目（町の3Dの camera）を鴨川の座標へ写す ──
   const tmp = new THREE.Matrix4()
@@ -1077,6 +1083,7 @@ void main() {`)
     for (const u of windU) u.value = tAcc
     causU.value = tAcc // 便21: 川底の光の網の時計
     cloudU.value = tAcc // 便21: 雲の流れの時計
+    if (people) { try { people.update(dt) } catch (e) { console.warn('鴨川の河川敷の人を止めました:', e && e.message); people = null; scene.traverse((o) => { if (o.userData && /^(people|fireworks)$/.test(o.userData.part)) o.visible = false }) } }
     if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null; scene.traverse((o) => { if (o.userData && /^(people|birds|train|okuribi)$/.test(o.userData.part)) o.visible = false }) } } // 【便20・外の目】止めた時は、動く物をその場で固まらせずに隠す
   }
 
@@ -1145,7 +1152,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {
