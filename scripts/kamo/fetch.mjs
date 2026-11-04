@@ -12,7 +12,9 @@ import path from 'node:path'
 
 const OUT = process.env.KAMO_DATA || 'scripts/kamo/_data'
 const LAT0 = 35.0300, LON0 = 135.7725 // 鴨川デルタ（賀茂川と高野川の合流）の南の先のあたり
-const NEAR = 900 // 5m の標高と建物と OSM を取る半径の目安（m）
+const NEAR = 900 // 5m の標高と建物と OSM を取る半径の目安（m）・便17〜20
+// 便21: 京都大学・吉田神社・吉田山・茂庵まで入れるため、東へ広げた四角（原点からの m・x 東・z 南）。build.mjs の範囲（EXT）と同じ
+const EXT = { x0: -800, x1: 1904, z0: -800, z1: 904 } // 幅と奥行きは 8m の倍数（iPhone の段が網を1つおきに間引くため）
 const FAR = 11000 // 遠くの山（比叡山・大文字山・北山・東山）まで
 fs.mkdirSync(OUT + '/dem5', { recursive: true }); fs.mkdirSync(OUT + '/dem10', { recursive: true }); fs.mkdirSync(OUT + '/bldg', { recursive: true })
 
@@ -32,11 +34,12 @@ const lon2x = (lon, z) => ((lon + 180) / 360) * 2 ** z
 const lat2y = (lat, z) => ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) * 2 ** z
 const mPerDegLat = 110940, mPerDegLon = 111320 * Math.cos((LAT0 * Math.PI) / 180)
 const bbox = (r) => ({ s: LAT0 - r / mPerDegLat, n: LAT0 + r / mPerDegLat, w: LON0 - r / mPerDegLon, e: LON0 + r / mPerDegLon })
+const rect = (m) => ({ s: LAT0 - (EXT.z1 + m) / mPerDegLat, n: LAT0 - (EXT.z0 - m) / mPerDegLat, w: LON0 + (EXT.x0 - m) / mPerDegLon, e: LON0 + (EXT.x1 + m) / mPerDegLon }) // 便21
 
 const log = []
 // 1. 標高タイル
 async function demTiles(kind, z, r, dir) {
-  const b = bbox(r), x0 = Math.floor(lon2x(b.w, z)), x1 = Math.floor(lon2x(b.e, z)), y0 = Math.floor(lat2y(b.n, z)), y1 = Math.floor(lat2y(b.s, z))
+  const b = typeof r === 'object' ? r : bbox(r), x0 = Math.floor(lon2x(b.w, z)), x1 = Math.floor(lon2x(b.e, z)), y0 = Math.floor(lat2y(b.n, z)), y1 = Math.floor(lat2y(b.s, z))
   let n = 0, miss = 0
   for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
     const s = await dl(`https://cyberjapandata.gsi.go.jp/xyz/${kind}/${z}/${x}/${y}.png`, `${OUT}/${dir}/${z}_${x}_${y}.png`)
@@ -45,14 +48,14 @@ async function demTiles(kind, z, r, dir) {
   log.push(`${kind} z${z}: x ${x0}〜${x1}・y ${y0}〜${y1}（${n} 枚・無し ${miss}）`)
   return { z, x0, x1, y0, y1 }
 }
-const dem5 = await demTiles('dem5a_png', 15, NEAR, 'dem5')
+const dem5 = await demTiles('dem5a_png', 15, rect(100), 'dem5')
 const dem10 = await demTiles('dem_png', 13, FAR, 'dem10')
 fs.writeFileSync(`${OUT}/dem-tiles.json`, JSON.stringify({ dem5, dem10 }))
 
 // 2. PLATEAU の建物（3区の LOD2 模様なし）。範囲に掛かるタイルを全部の段で取り、作る台本で建物の ID の重なりを除く
 const cat = JSON.parse(fs.existsSync(`${OUT}/plateau-catalog.json`) ? fs.readFileSync(`${OUT}/plateau-catalog.json`, 'utf8') : await (async () => { const t = await (await fetch('https://api.plateau.reearth.io/datacatalog/plateau-datasets')).text(); fs.writeFileSync(`${OUT}/plateau-catalog.json`, t); return t })())
 const wards = ['北区', '上京区', '左京区']
-const bb = bbox(NEAR * 0.75), rad = (d) => (d * Math.PI) / 180
+const bb = rect(-60), rad = (d) => (d * Math.PI) / 180
 const inter = (reg) => !(reg[2] < rad(bb.w) || reg[0] > rad(bb.e) || reg[3] < rad(bb.s) || reg[1] > rad(bb.n))
 const bldgList = []
 for (const w of wards) {
@@ -78,7 +81,7 @@ for (const w of wards) {
 fs.writeFileSync(`${OUT}/bldg-list.json`, JSON.stringify(bldgList, null, 1))
 
 // 3. OpenStreetMap（Overpass）
-const ob = bbox(NEAR * 1.2)
+const ob = rect(180)
 const q = `[out:json][timeout:90];(
 way["natural"="water"](${ob.s},${ob.w},${ob.n},${ob.e});relation["natural"="water"](${ob.s},${ob.w},${ob.n},${ob.e});
 way["waterway"](${ob.s},${ob.w},${ob.n},${ob.e});
@@ -86,7 +89,10 @@ way["highway"](${ob.s},${ob.w},${ob.n},${ob.e});
 way["railway"](${ob.s},${ob.w},${ob.n},${ob.e});
 way["landuse"](${ob.s},${ob.w},${ob.n},${ob.e});way["natural"="wood"](${ob.s},${ob.w},${ob.n},${ob.e});relation["landuse"](${ob.s},${ob.w},${ob.n},${ob.e});
 way["leisure"](${ob.s},${ob.w},${ob.n},${ob.e});way["natural"="tree"](${ob.s},${ob.w},${ob.n},${ob.e});node["natural"="tree"](${ob.s},${ob.w},${ob.n},${ob.e});
-);out body geom;`
+nwr["amenity"](${ob.s},${ob.w},${ob.n},${ob.e});nwr["tourism"](${ob.s},${ob.w},${ob.n},${ob.e});nwr["historic"](${ob.s},${ob.w},${ob.n},${ob.e});
+nwr["man_made"](${ob.s},${ob.w},${ob.n},${ob.e});way["building"]["name"](${ob.s},${ob.w},${ob.n},${ob.e});way["natural"](${ob.s},${ob.w},${ob.n},${ob.e});
+node["natural"="peak"](${ob.s},${ob.w},${ob.n},${ob.e});node["highway"="street_lamp"](${ob.s},${ob.w},${ob.n},${ob.e});way["barrier"](${ob.s},${ob.w},${ob.n},${ob.e});
+);out body geom;` // 便21: 名所（寺社・大学・カフェ・公園）・堰・灯り・塀を足した
 if (!fs.existsSync(`${OUT}/osm.json`)) {
   // 混んでいると 504 が返るので、配り口を順に回す（2026-11-03 の1回目は overpass-api.de が 504、2回目で返った）
   let got = null

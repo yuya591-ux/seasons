@@ -58,9 +58,11 @@ def make_mesh(name, verts, faces):
     return ob
 
 
-def grid_faces(n):
-    i = np.arange(n - 1)
-    a = (i[None, :] + (i[:, None]) * n).ravel()
+def grid_faces(n, nz=None):
+    # 便21: 東西 n 点・南北 nz 点の網（nz を省くと正方形）
+    nz = n if nz is None else nz
+    i, j = np.arange(n - 1), np.arange(nz - 1)
+    a = (i[None, :] + (j[:, None]) * n).ravel()
     b, c = a + 1, a + n
     d = c + 1
     return np.concatenate([np.stack([a, c, b], 1), np.stack([b, c, d], 1)])
@@ -79,9 +81,9 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
 
 # ── 形を読む ──
-n = meta["near"]["n"]
+n, nzn = meta["near"]["nx"], meta["near"]["nz"]
 near_p = np.fromfile(os.path.join(GEO, "near.bin"), dtype=np.float32).reshape(-1, 3)
-near = make_mesh("near", to_bl(near_p), grid_faces(n))
+near = make_mesh("near", to_bl(near_p), grid_faces(n, nzn))
 fn = meta["far"]["n"]
 far_p = np.fromfile(os.path.join(GEO, "far.bin"), dtype=np.float32).reshape(-1, 3)
 far = make_mesh("far", to_bl(far_p), grid_faces(fn))
@@ -105,7 +107,7 @@ for k, (x, y, z, h, w, kind) in enumerate(tr):
     TV.append(iv * np.array([w * 0.5, w * 0.5, h * 0.42], dtype=np.float32) + c)
     TF.append(if_ + k * len(iv))
 trees = make_mesh("trees", np.concatenate(TV), np.concatenate(TF))
-say(f"形: 近くの地形 {n}×{n}・遠くの地形 {fn}×{fn}・建物 {len(bidx)} 三角形・木 {len(tr)} 本（{len(TF) * len(if_)} 三角形）")
+say(f"形: 近くの地形 {n}×{nzn}・遠くの地形 {fn}×{fn}・建物 {len(bidx)} 三角形・木 {len(tr)} 本（{len(TF) * len(if_)} 三角形）")
 
 near.data.materials.append(mat("ground", 0.32))
 far.data.materials.append(mat("far", 0.25))
@@ -118,7 +120,11 @@ bldg.select_set(True)
 bpy.ops.object.mode_set(mode="EDIT")
 bpy.ops.mesh.select_all(action="SELECT")
 bpy.ops.mesh.remove_doubles(threshold=0.01)
-bpy.ops.uv.smart_project(angle_limit=1.15, island_margin=0.0015, area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
+# 便21: 前は smart_project の島ごとの余白（0.0015）が島の数（10万を超える）だけ場所を取り、図の 0.7%（建物を広げた後は 0.15%）しか使っていなかった
+#   （1 画素が 4.6m → 16m・屋根1枚が数画素に潰れて黒く写った）。島は余白なしで作り、並べ直す時に余白を図の 0.0005（約2画素）だけ取る
+bpy.ops.uv.smart_project(angle_limit=1.15, island_margin=0.0, area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
+bpy.ops.uv.select_all(action="SELECT")
+bpy.ops.uv.pack_islands(rotate=False, margin_method="FRACTION", margin=0.0005, shape_method="AABB")
 bpy.ops.object.mode_set(mode="OBJECT")
 bldg.select_set(False)
 say(f"建物の図の位置: {len(bldg.data.vertices)} 点にまとめて島に分けた（{time.time() - t0:.0f} 秒）")
@@ -128,8 +134,11 @@ uvl = near.data.uv_layers.new(name="lm")
 lv = np.empty(len(near.data.loops), dtype=np.int32)
 near.data.loops.foreach_get("vertex_index", lv)
 co = to_bl(near_p)
-R = meta["near"]["R"]
-uv = np.stack([(co[lv, 0] + R) / (2 * R), (co[lv, 1] + R) / (2 * R)], 1).astype(np.float32)
+# 便21: 四角の範囲（x0..x1・z0..z1）。Blender の y＝北＝−z。図の縦は南の端（z1）が 0・北の端（z0）が 1
+NX0, NX1, NZ0, NZ1 = meta["near"]["x0"], meta["near"]["x1"], meta["near"]["z0"], meta["near"]["z1"]
+uv = np.stack([(co[lv, 0] - NX0) / (NX1 - NX0), (co[lv, 1] + NZ1) / (NZ1 - NZ0), ], 1).astype(np.float32)
+# 地形の図は範囲の縦横の比に合わせる（横 RES・縦は比で 16 の倍数）
+RES_TZ = int(round(RES * (NZ1 - NZ0) / (NX1 - NX0) / 16)) * 16
 uvl.data.foreach_set("uv", uv.ravel())
 
 # ── 空の光（白一色・強さ 1）と、焼く道具 ──
@@ -164,8 +173,9 @@ except Exception as e:
 say(f"焼く道具: Cycles・{dev}・光の数 {SAMPLES}・照り返し 3 回・図 {RES}×{RES}")
 
 
-def bake(ob, name, uv_name=None):
-    img = bpy.data.images.new(name, RES, RES, float_buffer=True)
+def bake(ob, name, uv_name=None, h=None):
+    W, H = RES, (h or RES)
+    img = bpy.data.images.new(name, W, H, float_buffer=True)
     m = ob.data.materials[0]
     nt = m.node_tree
     tex = nt.nodes.new("ShaderNodeTexImage")
@@ -179,12 +189,12 @@ def bake(ob, name, uv_name=None):
     bpy.context.view_layer.objects.active = ob
     t = time.time()
     bpy.ops.object.bake(type="DIFFUSE", pass_filter={"DIRECT", "INDIRECT"}, margin=6, use_clear=True)
-    px = np.empty(RES * RES * 4, dtype=np.float32)
+    px = np.empty(W * H * 4, dtype=np.float32)
     img.pixels.foreach_get(px)
-    v = px.reshape(RES, RES, 4)[:, :, 0]
+    v = px.reshape(H, W, 4)[:, :, 0]
     # 光の数が少ない所のざらつきを、3×3 の平均で少しならす
     pad = np.pad(v, 1, mode="edge")
-    v = sum(pad[dy : dy + RES, dx : dx + RES] for dy in range(3) for dx in range(3)) / 9.0
+    v = sum(pad[dy : dy + H, dx : dx + W] for dy in range(3) for dx in range(3)) / 9.0
     say(f"焼いた: {name}（{time.time() - t:.0f} 秒・明るさ 平均 {v[v > 0.001].mean():.3f}・1% {np.percentile(v[v > 0.001], 1):.3f}・99% {np.percentile(v[v > 0.001], 99):.3f}）")
     return v
 
@@ -192,8 +202,9 @@ def bake(ob, name, uv_name=None):
 def save_png(v, path):
     # 8 ビットの灰色（0〜1.25 を 0〜255 に。開けた地面はおよそ 1.0）。図の上下は three.js の向きへ
     g = np.clip(v / 1.25, 0, 1) ** (1 / 2.2)
-    img = bpy.data.images.new(os.path.basename(path), RES, RES)
-    rgba = np.ones((RES, RES, 4), dtype=np.float32)
+    H, W = v.shape
+    img = bpy.data.images.new(os.path.basename(path), W, H)
+    rgba = np.ones((H, W, 4), dtype=np.float32)
     rgba[:, :, 0] = rgba[:, :, 1] = rgba[:, :, 2] = g
     img.pixels.foreach_set(rgba.ravel())
     img.filepath_raw = path
@@ -201,7 +212,7 @@ def save_png(v, path):
     img.save()
 
 
-v = bake(near, "lm_terrain", "lm")
+v = bake(near, "lm_terrain", "lm", RES_TZ)
 save_png(v, os.path.join(OUT, "lm_terrain.png"))
 v = bake(bldg, "lm_bldg", bldg.data.uv_layers[0].name)
 save_png(v, os.path.join(OUT, "lm_bldg.png"))

@@ -1,6 +1,6 @@
 // 便17（鴨川の質の見本）: 取ってきた地図のデータ（scripts/kamo/fetch.mjs）を、原点（鴨川デルタ）からのメートルだけの形に組む。
 // 出る物（scripts/kamo/_data/geo/ ・git に入れない）:
-//   near.bin  … 近くの地形の網（±NEAR_R m・NEAR_STEP m 間隔・5m の標高。無い所は 10m の標高）
+//   near.bin  … 近くの地形の網（四角 EXT・NEAR_STEP m 間隔・5m の標高。無い所は 10m の標高）（便21: ±800m の正方形から、東へ広げた四角にした）
 //   far.bin   … 遠くの山の網（±FAR_R m・FAR_STEP m 間隔・10m の標高）
 //   bldg.bin  … PLATEAU の建物（LOD2）を1つにまとめた三角形（建物ごとの番号つき）
 //   water.bin … 川の水面（OpenStreetMap の水面の形を三角形にした物）
@@ -20,7 +20,11 @@ const phi = (LAT0 * Math.PI) / 180
 const MLAT = 111132.92 - 559.82 * Math.cos(2 * phi) + 1.175 * Math.cos(4 * phi), MLON = 111412.84 * Math.cos(phi) - 93.5 * Math.cos(3 * phi)
 const toX = (lon) => (lon - LON0) * MLON, toZ = (lat) => -(lat - LAT0) * MLAT
 const toLon = (x) => LON0 + x / MLON, toLat = (z) => LAT0 - z / MLAT
-const NEAR_R = 800, NEAR_STEP = 4, FAR_R = 11000, FAR_STEP = 50, BLDG_R = 640
+const NEAR_STEP = 4, FAR_R = 11000, FAR_STEP = 50
+// 便21: 近くの範囲は四角（原点からの m・x 東・z 南）。京都大学・吉田神社・吉田山・茂庵まで入れるため東へ広げた（fetch.mjs の EXT と同じ）
+const EXT = { x0: -800, x1: 1904, z0: -800, z1: 904 } // 幅と奥行きは 8m の倍数（iPhone の段が網を1つおきに間引くため）
+const inNear = (x, z, m = 0) => x >= EXT.x0 + m && x <= EXT.x1 - m && z >= EXT.z0 + m && z <= EXT.z1 - m
+const BLDG_M = 100 // 建物は網の縁から 100m 内側まで（便20 までは ±640m＝縁から 160m）
 const log = []
 
 // ── PNG（地理院の標高タイル）をほどく ──
@@ -84,22 +88,21 @@ log.push(`基準の高さ H0（原点の標高）: ${H0.toFixed(2)} m`)
 const ground = (x, z) => Hraw(x, z) - H0
 
 // ── 地形の網 ──
-function grid(R, step, hf, sink) {
-  const n = Math.round((2 * R) / step) + 1, pos = new Float32Array(n * n * 3), idx = new Uint32Array((n - 1) * (n - 1) * 6)
+// 便21: 四角の網（x0..x1・z0..z1）。nx＝東西の点の数・nz＝南北の点の数
+function grid(x0, x1, z0, z1, step, hf, sink) {
+  const nx = Math.round((x1 - x0) / step) + 1, nz = Math.round((z1 - z0) / step) + 1, pos = new Float32Array(nx * nz * 3)
   let nan = 0
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-    const x = -R + i * step, z = -R + j * step; let y = hf(x, z)
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const x = x0 + i * step, z = z0 + j * step; let y = hf(x, z)
     if (Number.isNaN(y)) { nan++; y = 0 }
     if (sink && sink(x, z)) y -= 6
-    pos.set([x, y, z], (j * n + i) * 3)
+    pos.set([x, y, z], (j * nx + i) * 3)
   }
-  let k = 0
-  for (let j = 0; j < n - 1; j++) for (let i = 0; i < n - 1; i++) { const a = j * n + i, b = a + 1, c = a + n, d = c + 1; idx.set([a, c, b, b, c, d], k); k += 6 }
-  return { n, pos, idx, nan }
+  return { nx, nz, n: nx, x0, z0, pos, nan }
 }
-const near = grid(NEAR_R, NEAR_STEP, ground)
-const far = grid(FAR_R, FAR_STEP, (x, z) => { const la = toLat(z), lo = toLon(x); return H10(la, lo) - H0 }, (x, z) => Math.abs(x) < NEAR_R - 10 && Math.abs(z) < NEAR_R - 10)
-log.push(`近くの地形: ${near.n}×${near.n} 点（${NEAR_STEP}m 間隔・±${NEAR_R}m・標高の無い点 ${near.nan}）`)
+const near = grid(EXT.x0, EXT.x1, EXT.z0, EXT.z1, NEAR_STEP, ground)
+const far = grid(-FAR_R, FAR_R, -FAR_R, FAR_R, FAR_STEP, (x, z) => { const la = toLat(z), lo = toLon(x); return H10(la, lo) - H0 }, (x, z) => inNear(x, z, 10))
+log.push(`近くの地形: ${near.nx}×${near.nz} 点（${NEAR_STEP}m 間隔・x ${EXT.x0}〜${EXT.x1}・z ${EXT.z0}〜${EXT.z1}・標高の無い点 ${near.nan}）`)
 log.push(`遠くの地形: ${far.n}×${far.n} 点（${FAR_STEP}m 間隔・±${FAR_R}m・無い点 ${far.nan}）`)
 
 // ── OpenStreetMap ──
@@ -134,7 +137,7 @@ const waterRings = []
 for (const e of osm) if (tag(e, 'natural') === 'water' && /river|stream|canal/.test(tag(e, 'water') || 'river') || tag(e, 'waterway') === 'riverbank') for (const r of rings(e)) if (r.length > 3) waterRings.push(r)
 const inWater = (x, z) => waterRings.some((r) => pip([x, z], r))
 // 水面の高さ: 水面の内側の地面の低い方（2割の所）
-const wy = []; for (let z = -NEAR_R; z <= NEAR_R; z += 8) for (let x = -NEAR_R; x <= NEAR_R; x += 8) if (inWater(x, z)) { const g = ground(x, z); if (!Number.isNaN(g)) wy.push(g) } // 原点のまわりの水面の内側の地面だけ
+const wy = []; for (let z = -800; z <= 800; z += 8) for (let x = -800; x <= 800; x += 8) if (inWater(x, z)) { const g = ground(x, z); if (!Number.isNaN(g)) wy.push(g) } // 原点のまわりの水面の内側の地面だけ
 wy.sort((a, b) => a - b)
 const WATER_Y = wy.length ? wy[Math.floor(wy.length * 0.3)] + 0.1 : 0
 const wpos = [], widx = []
@@ -150,21 +153,22 @@ function waterAt(x, z) { let m = 1e9; for (let dz = -16; dz <= 16; dz += 4) for 
 log.push(`川の水面: 輪 ${waterRings.length}・三角形 ${widx.length / 3}・水面の高さの基準 ${WATER_Y.toFixed(2)} m`)
 
 // 河川敷の範囲: 近くの地形の網の点のうち、水面の内側から、水面の高さ＋3.5m より低い所を 70m まで広げた所（堤の壁で止まる）
-const zone = new Uint8Array(near.n * near.n) // 0 町・1 河川敷・2 水面
+const zone = new Uint8Array(near.nx * near.nz) // 0 町・1 河川敷・2 水面
+const wyAt = new Float32Array(near.nx * near.nz) // 便21: 網の点ごとの水面の高さ（水面と河川敷の点だけ）。川底の深さを決めるのに使う
 {
-  const n = near.n, q = [], wyAt = new Float32Array(n * n), dist = new Float32Array(n * n).fill(1e9)
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const k = j * n + i, x = -NEAR_R + i * NEAR_STEP, z = -NEAR_R + j * NEAR_STEP; if (inWater(x, z)) { zone[k] = 2; wyAt[k] = waterAt(x, z); dist[k] = 0; q.push(k) } }
+  const n = near.nx, nz = near.nz, q = [], dist = new Float32Array(n * nz).fill(1e9)
+  for (let j = 0; j < nz; j++) for (let i = 0; i < n; i++) { const k = j * n + i, x = EXT.x0 + i * NEAR_STEP, z = EXT.z0 + j * NEAR_STEP; if (inWater(x, z)) { zone[k] = 2; wyAt[k] = waterAt(x, z); dist[k] = 0; q.push(k) } }
   for (let h = 0; h < q.length; h++) {
     const k = q[h], i = k % n, j = (k - i) / n
     for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= n || jj >= n) continue
+      const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= n || jj >= nz) continue
       const kk = jj * n + ii, d = dist[k] + NEAR_STEP; if (zone[kk] || d > 70) continue
       if (near.pos[kk * 3 + 1] > wyAt[k] + 3.5) continue
       zone[kk] = 1; wyAt[kk] = wyAt[k]; dist[kk] = d; q.push(kk)
     }
   }
   // 水面の内側の地面は、水面の 0.6m 下へ下げる（10m の粗い標高で埋めた所が水面より高く、川が隠れるため）
-  for (let k = 0; k < n * n; k++) if (zone[k] === 2) near.pos[k * 3 + 1] = Math.min(near.pos[k * 3 + 1], wyAt[k] - 0.6)
+  for (let k = 0; k < n * nz; k++) if (zone[k] === 2) near.pos[k * 3 + 1] = Math.min(near.pos[k * 3 + 1], wyAt[k] - 0.6)
   let c1 = 0, c2 = 0; for (const z of zone) { if (z === 1) c1++; if (z === 2) c2++ }
   log.push(`河川敷の範囲: 水面 ${c2} 点・河川敷 ${c1} 点（${NEAR_STEP}m 間隔）`)
 }
@@ -192,9 +196,9 @@ for (const e of osm) {
   for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 4)); for (let k = 0; k < n; k++) dense.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]) }
   dense.push(pts[pts.length - 1])
   // 近くの範囲（地形の網）の外の点は落とす（外へはみ出して宙に浮かないように）。途中で切れた所は別の帯にする
-  if (dense.every(([x, z]) => Math.abs(x) > NEAR_R - 6 || Math.abs(z) > NEAR_R - 6)) continue
-  while (dense.length && (Math.abs(dense[0][0]) > NEAR_R - 6 || Math.abs(dense[0][1]) > NEAR_R - 6)) dense.shift()
-  while (dense.length && (Math.abs(dense[dense.length - 1][0]) > NEAR_R - 6 || Math.abs(dense[dense.length - 1][1]) > NEAR_R - 6)) dense.pop()
+  if (dense.every(([x, z]) => !inNear(x, z, 6))) continue
+  while (dense.length && !inNear(dense[0][0], dense[0][1], 6)) dense.shift()
+  while (dense.length && !inNear(dense[dense.length - 1][0], dense[dense.length - 1][1], 6)) dense.pop()
   if (dense.length < 2) continue
   const ys = dense.map(([x, z]) => ground(x, z))
   if (kind === 2) { const y0 = ys[0], y1 = ys[ys.length - 1]; for (let i = 0; i < ys.length; i++) ys[i] = Math.max(y0 + ((y1 - y0) * i) / (ys.length - 1), WATER_Y + 3) + 0.6; nBridge++ } else nRoad++
@@ -216,16 +220,16 @@ const trees = [] // x, y, z, 高さ, 幅, 種類（0 広葉 1 桜・柳の川岸
 const woods = []; for (const e of osm) if (/forest|wood/.test(tag(e, 'landuse') || '') || tag(e, 'natural') === 'wood' || tag(e, 'leisure') === 'park' || tag(e, 'leisure') === 'garden') for (const r of rings(e)) woods.push({ r, park: !!tag(e, 'leisure') })
 for (const { r, park } of woods) {
   let minx = 1e9, maxx = -1e9, minz = 1e9, maxz = -1e9; for (const [x, z] of r) { minx = Math.min(minx, x); maxx = Math.max(maxx, x); minz = Math.min(minz, z); maxz = Math.max(maxz, z) }
-  if (maxx < -NEAR_R || minx > NEAR_R || maxz < -NEAR_R || minz > NEAR_R) continue
+  if (maxx < EXT.x0 || minx > EXT.x1 || maxz < EXT.z0 || minz > EXT.z1) continue
   const area = (maxx - minx) * (maxz - minz), n = Math.min(4000, Math.round(area / (park ? 160 : 55)))
-  for (let i = 0; i < n; i++) { const x = minx + R() * (maxx - minx), z = minz + R() * (maxz - minz); if (Math.abs(x) > NEAR_R || Math.abs(z) > NEAR_R || !pip([x, z], r) || inWater(x, z)) continue; const big = !park; trees.push([x, ground(x, z), z, big ? 13 + R() * 12 : 7 + R() * 6, big ? 7 + R() * 6 : 5 + R() * 4, big ? 2 : 0]) }
+  for (let i = 0; i < n; i++) { const x = minx + R() * (maxx - minx), z = minz + R() * (maxz - minz); if (!inNear(x, z) || !pip([x, z], r) || inWater(x, z)) continue; const big = !park; trees.push([x, ground(x, z), z, big ? 13 + R() * 12 : 7 + R() * 6, big ? 7 + R() * 6 : 5 + R() * 4, big ? 2 : 0]) }
 }
-for (const e of osm) if (e.type === 'node' && tag(e, 'natural') === 'tree') { const x = toX(e.lon), z = toZ(e.lat); if (Math.abs(x) < NEAR_R && Math.abs(z) < NEAR_R) trees.push([x, ground(x, z), z, 7 + R() * 5, 5 + R() * 3, 0]) }
+for (const e of osm) if (e.type === 'node' && tag(e, 'natural') === 'tree') { const x = toX(e.lon), z = toZ(e.lat); if (inNear(x, z)) trees.push([x, ground(x, z), z, 7 + R() * 5, 5 + R() * 3, 0]) }
 for (const r of waterRings) for (let i = 0; i < r.length - 1; i++) { // 川岸の並木（12m ごと・外へ 9m）
   const [ax, az] = r[i], [bx, bz] = r[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.floor(L / 12)
   for (let k = 0; k < n; k++) {
     const t = (k + R()) / Math.max(1, n), x0 = ax + (bx - ax) * t, z0 = az + (bz - az) * t, nx = -(bz - az) / L, nz = (bx - ax) / L
-    for (const s of [1, -1]) { const x = x0 + nx * 9 * s, z = z0 + nz * 9 * s; if (Math.abs(x) > NEAR_R || Math.abs(z) > NEAR_R || inWater(x, z) || R() < 0.35) continue; const g = ground(x, z); if (g - WATER_Y > 5) continue; trees.push([x, g, z, 6 + R() * 4, 6 + R() * 3, 1]); break }
+    for (const s of [1, -1]) { const x = x0 + nx * 9 * s, z = z0 + nz * 9 * s; if (!inNear(x, z) || inWater(x, z) || R() < 0.35) continue; const g = ground(x, z); if (g - WATER_Y > 5) continue; trees.push([x, g, z, 6 + R() * 4, 6 + R() * 3, 1]); break }
   }
 }
 log.push(`木: ${trees.length} 本（森と公園 ${woods.length} か所・川岸の並木）`)
@@ -265,7 +269,7 @@ for (const w of list) for (const t of [...w.tiles].sort((a, b) => b.depth - a.de
       const vmap = new Map(), P3 = [], I = []
       for (const f of fs_) for (let c = 0; c < 3; c++) { const v = faces[f * 3 + c]; if (!vmap.has(v)) { vmap.set(v, P3.length / 3); P3.push(lp[v * 3], lp[v * 3 + 1], lp[v * 3 + 2]) } I.push(vmap.get(v)) }
       let cx = 0, cz = 0; for (let i = 0; i < P3.length; i += 3) { cx += P3[i]; cz += P3[i + 2] } cx /= P3.length / 3; cz /= P3.length / 3
-      if (Math.abs(cx) > BLDG_R || Math.abs(cz) > BLDG_R) continue
+      if (!inNear(cx, cz, BLDG_M)) continue
       seen.add(id)
       blds.push({ pos: P3, idx: I, cx, cz, h: bt['bldg:measuredHeight'][k], usage: bt['bldg:usage'][k], cls: bt['bldg:class'][k] })
     }
@@ -280,7 +284,7 @@ for (const b of blds) {
   const sh = gmin - 0.2 - miny; offs.push(sh + H0); for (let i = 1; i < b.pos.length; i += 3) b.pos[i] += sh
 }
 offs.sort((a, b) => a - b)
-log.push(`PLATEAU の建物: ${blds.length} 棟（±${BLDG_R}m・段の重なりを除いた）・楕円体の高さと標高の差の中央値 ${(-offs[Math.floor(offs.length / 2)]).toFixed(2)} m（ジオイドの高さの目安）`)
+log.push(`PLATEAU の建物: ${blds.length} 棟（網の縁から ${BLDG_M}m 内側・段の重なりを除いた）・楕円体の高さと標高の差の中央値 ${(-offs[Math.floor(offs.length / 2)]).toFixed(2)} m（ジオイドの高さの目安）`)
 let bv = 0, bi = 0; for (const b of blds) { bv += b.pos.length / 3; bi += b.idx.length }
 const bpos = new Float32Array(bv * 3), bidx = new Uint32Array(bi), bbid = new Uint16Array(bv)
 { let vo = 0, io = 0; blds.forEach((b, n) => { bpos.set(b.pos, vo * 3); for (let i = 0; i < b.idx.length; i++) bidx[io + i] = b.idx[i] + vo; bbid.fill(n, vo, vo + b.pos.length / 3); vo += b.pos.length / 3; io += b.idx.length }) }
@@ -328,7 +332,7 @@ const wr = (name, parts) => { const bufs = parts.map((p) => Buffer.from(p.buffer
 const meta = {
   note: '原点（鴨川デルタ）からのメートル。x 東・y 上・z 南。経緯度は入れていない',
   H0: +H0.toFixed(2), waterY: +WATER_Y.toFixed(2),
-  near: { n: near.n, R: NEAR_R, step: NEAR_STEP, bytes: wr('near.bin', [near.pos]), zoneBytes: wr('near-zone.bin', [zone]) },
+  near: { n: near.nx, nx: near.nx, nz: near.nz, x0: EXT.x0, x1: EXT.x1, z0: EXT.z0, z1: EXT.z1, step: NEAR_STEP, bytes: wr('near.bin', [near.pos]), zoneBytes: wr('near-zone.bin', [zone]) },
   far: { n: far.n, R: FAR_R, step: FAR_STEP, bytes: wr('far.bin', [far.pos]) },
   bldg: { nv: bv, ni: bi, count: blds.length, bytes: wr('bldg.bin', [bpos, bidx, bbid]), heights: blds.map((b) => b.h ?? null), usage: blds.map((b) => b.usage ?? null) },
   water: { nv: wpos.length / 3, ni: widx.length, bytes: wr('water.bin', [new Float32Array(wpos), new Uint32Array(widx)]) },

@@ -118,7 +118,7 @@ if (run('K9') || run('K10') || run('K11') || run('K12')) {
   await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2500) // 飛ぶと道案内の表が組まれる
   const S = (x, z, yaw, feet) => o.p.evaluate(([a, b2, c, d]) => window.__town3dWalkPose(a, b2, c, d), [x, z, yaw, feet])
   if (run('K9')) { // 窓の真下からデルタへ向かう線で、最初の水の 12m 手前から、水へ向かって 6 秒歩く
-    const w = await o.p.evaluate(() => { const b0 = window.__town3dNav().bound, cx = (b0.xMax - b0.x) / 2, cz = (b0.zMin + b0.zMax) / 2, x0 = 0, z0 = 22, L = Math.hypot(cx - x0, cz - z0), ux = (cx - x0) / L, uz = (cz - z0) / L
+    const w = await o.p.evaluate(() => { const d0 = window.__town3dKamoTown(0, 0), cx = d0.x, cz = d0.z /* 【便21】飛べる箱は東へ広げた範囲の中ほどになったので、デルタ（鴨川の原点）を町の3Dの座標で引く */, x0 = 0, z0 = 22, L = Math.hypot(cx - x0, cz - z0), ux = (cx - x0) / L, uz = (cz - z0) / L
       for (let d = 0; d < L; d += 0.5) if (window.__town3dNavAt(x0 + ux * d, z0 + uz * d).wet) return { x: x0 + ux * d, z: z0 + uz * d, ux, uz }; return null })
     if (!w) check('K9', false, '水が見つからない')
     else {
@@ -144,7 +144,7 @@ if (run('K9') || run('K10') || run('K11') || run('K12')) {
     }
   }
   if (run('K11')) { // 水の上にある橋の床の所から、床の続く向きを探し、床の手前の端から向こうへ 8 秒歩く
-    const w = await o.p.evaluate(() => { const A = window.__town3dNavAt, b0 = window.__town3dNav().bound, cx = (b0.xMax - b0.x) / 2, cz = (b0.zMin + b0.zMax) / 2
+    const w = await o.p.evaluate(() => { const A = window.__town3dNavAt, d0 = window.__town3dKamoTown(0, 0), cx = d0.x, cz = d0.z /* 【便21】デルタ（鴨川の原点）のまわりで探す */
       for (let x = cx - 300; x <= cx + 300; x += 4) for (let z = cz - 300; z <= cz + 300; z += 4) { const q = A(x, z); if (q.deck === null || !q.wet) continue
         let best = null; for (let a = 0; a < 16; a++) { const yaw = a / 16 * 6.2832, hx = Math.sin(yaw), hz = -Math.cos(yaw); let f = 0, bk = 0; while (f < 200 && A(x + hx * (f + 1), z + hz * (f + 1)).deck !== null) f++; while (bk < 200 && A(x - hx * (bk + 1), z - hz * (bk + 1)).deck !== null) bk++; if (!best || f + bk > best.len) best = { yaw, hx, hz, f, bk, len: f + bk } }
         if (best && best.len > 25) { const sx = x - best.hx * (best.bk - 2), sz = z - best.hz * (best.bk - 2); return { sx, sz, yaw: best.yaw, len: best.len, deck: A(sx, sz).deck } } }

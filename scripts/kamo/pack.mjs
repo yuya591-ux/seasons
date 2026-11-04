@@ -44,23 +44,24 @@ const zone = new Uint8Array(fs.readFileSync(`${D}/geo/near-zone.bin`))
 const terrain = write('terrain.bin', { near: nearH, zone, far: farH })
 
 // ── 建物（焼いた図の位置つき・三角形ごとに角3つ） ──
-const BLDG_P = 0.025
+// 便21: 範囲を東へ広げて ±819m（0.025m 刻み）に収まらなくなったので、範囲の中心（POFF）を引いてから 0.045m 刻みで詰める
+const BLDG_P = 0.045, POFF = [(geo.near.x0 + geo.near.x1) / 2, 0, (geo.near.z0 + geo.near.z1) / 2]
 const bl = f32('bake/bldg_baked.bin'), nv = bl.length / 6
 const bp = new Int16Array(nv * 3), buv = new Uint16Array(nv * 2), bid = new Uint16Array(nv)
 for (let i = 0; i < nv; i++) {
-  for (let k = 0; k < 3; k++) bp[i * 3 + k] = q16(bl[i * 6 + k], BLDG_P)
+  for (let k = 0; k < 3; k++) bp[i * 3 + k] = q16(bl[i * 6 + k] - POFF[k], BLDG_P)
   buv[i * 2] = Math.round(Math.min(1, Math.max(0, bl[i * 6 + 3])) * 65535); buv[i * 2 + 1] = Math.round(Math.min(1, Math.max(0, bl[i * 6 + 4])) * 65535)
   bid[i] = bl[i * 6 + 5]
 }
 const bldg = write('bldg.bin', { pos: bp, uv: buv, bid })
 
 // ── 道・橋・小道・線路 ──
-const ROAD_P = 0.03
+const ROAD_P = 0.045 // 便21: 中心（POFF）を引いてから詰める
 const rb = fs.readFileSync(`${D}/geo/roads.bin`), rnv = geo.roads.nv, rni = geo.roads.ni
 const rpos = new Float32Array(rb.buffer.slice(rb.byteOffset, rb.byteOffset + rnv * 12)), ridx = new Uint32Array(rb.buffer.slice(rb.byteOffset + rnv * 12, rb.byteOffset + rnv * 12 + rni * 4)), rkind = new Uint8Array(rb.buffer.slice(rb.byteOffset + rnv * 12 + rni * 4, rb.byteOffset + rnv * 12 + rni * 4 + rnv))
-if (rnv > 65535) throw new Error('道の点が 65535 を超えた（並びを 32 ビットにする）')
-const rp16 = new Int16Array(rnv * 3); for (let i = 0; i < rp16.length; i++) rp16[i] = q16(rpos[i], ROAD_P)
-const roads = write('roads.bin', { pos: rp16, idx: Uint16Array.from(ridx), kind: rkind })
+
+const rp16 = new Int16Array(rnv * 3); for (let i = 0; i < rp16.length; i++) rp16[i] = q16(rpos[i] - POFF[i % 3], ROAD_P)
+const roads = write('roads.bin', { pos: rp16, idx: rnv > 65535 ? Uint32Array.from(ridx) : Uint16Array.from(ridx), kind: rkind }) // 便21: 道の点が 65535 を超えたら並びを 32 ビットに
 
 // ── 川の水面・木・飛び石（小さいので素の数のまま） ──
 const wb = fs.readFileSync(`${D}/geo/water.bin`), wnv = geo.water.nv, wni = geo.water.ni
@@ -77,7 +78,7 @@ const size = (p) => (fs.statSync(p).size / 1e6).toFixed(2) + 'MB'
 for (const k of ['terrain', 'bldg']) {
   const src = `${D}/bake/lm_${k}.png`
   ff(['-i', src, '-pix_fmt', 'gray', '-q:v', '3', `${OUT}/lm_${k}.jpg`])
-  ff(['-i', src, '-vf', 'scale=2048:2048:flags=area', '-pix_fmt', 'gray', '-q:v', '3', `${OUT}/lm_${k}_s.jpg`])
+  ff(['-i', src, '-vf', 'scale=iw/2:ih/2:flags=area', '-pix_fmt', 'gray', '-q:v', '3', `${OUT}/lm_${k}_s.jpg`]) // 便21: 地形の図は横長なので縦横とも半分
   log.push(`lm_${k}.jpg: ${size(`${OUT}/lm_${k}.jpg`)}・lm_${k}_s.jpg: ${size(`${OUT}/lm_${k}_s.jpg`)}`)
 }
 export const TEX = ['gravel_road', 'grass_path_2', 'asphalt_02', 'grey_roof_tiles', 'concrete_wall_004', 'grey_plaster_02', 'japanese_zelkova_bark']
@@ -94,10 +95,10 @@ log.push(`質感の素材 ${TEX.length} 種: PC と iPad ${(texL / 1e6).toFixed(
 const meta = {
   note: '原点（鴨川デルタ）からのメートル。x 東・y 上・z 南。経緯度は入れていない',
   waterY: geo.waterY,
-  near: { n: geo.near.n, R: geo.near.R, step: geo.near.step, hStep: NEAR_H },
+  near: { nx: geo.near.nx, nz: geo.near.nz, x0: geo.near.x0, x1: geo.near.x1, z0: geo.near.z0, z1: geo.near.z1, step: geo.near.step, hStep: NEAR_H }, // 便21: 四角の範囲
   far: { n: geo.far.n, R: geo.far.R, step: geo.far.step, hStep: FAR_H },
-  bldg: { nv, pStep: BLDG_P, heights: geo.bldg.heights },
-  roads: { nv: rnv, ni: rni, pStep: ROAD_P },
+  bldg: { nv, pStep: BLDG_P, pOff: POFF, heights: geo.bldg.heights },
+  roads: { nv: rnv, ni: rni, pStep: ROAD_P, pOff: POFF },
   water: { nv: wnv, ni: wni },
   trees: { n: geo.trees.n },
   stones: { n: geo.stones.n },

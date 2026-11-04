@@ -144,7 +144,9 @@ void main() { float h = normalize(vD).y; gl_FragColor = vec4(mix(uHor, uTop, smo
   scene.add(sunL, sunL.target)
   scene.add(new THREE.HemisphereLight(...T.hemi))
 
-  const NR = meta.near.R, WY = meta.waterY
+  // 便21: 近くの範囲は四角（x0..x1・z0..z1）。京都大学・吉田山まで東へ広げた。焼いた地形の図の位置は u＝西の端 0・v＝南の端 0
+  const NX0 = meta.near.x0, NX1 = meta.near.x1, NZ0 = meta.near.z0, NZ1 = meta.near.z1, NW = NX1 - NX0, ND = NZ1 - NZ0, WY = meta.waterY
+  const lmU = (x) => (x - NX0) / NW, lmV = (z) => (-z + NZ1) / ND
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
   // 焼いた光（空の光の届き方＋照り返し）を、空と照り返しの光（間接の光）にだけ掛ける。開けた所＝1.0
@@ -242,24 +244,25 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   // 区画（4×4）に分けて描く＝窓の後ろ側の区画は画面の外として描かない（便18: 1つの塊だと後ろ側も毎回描いていた）。
   // iPhone の段は網を1つおきに間引く（近く 8m・遠く 100m 間隔）。法線は全体の網で求めてから分ける（区画の境に陰の継ぎ目を出さない）
   const terrain = view(data.buf.terrain, meta.files.terrain.secs.near), zone = view(data.buf.terrain, meta.files.terrain.secs.zone), farH = view(data.buf.terrain, meta.files.terrain.secs.far)
-  function gridTiles({ n, R0, step, hs, hq, dec, tiles, paint, withUv1 }) {
-    const m = (n - 1) / dec + 1, st = step * dec
-    const pos = new Float32Array(m * m * 3)
-    for (let j = 0; j < m; j++) for (let i = 0; i < m; i++) { const k = j * m + i; pos[k * 3] = -R0 + i * st; pos[k * 3 + 1] = hs[j * dec * n + i * dec] * hq; pos[k * 3 + 2] = -R0 + j * st }
+  // 便21: 東西 nx 点・南北 nz 点の四角の網（x0・z0 が北西の角）。tiles＝[東西の区画の数, 南北の区画の数]
+  function gridTiles({ nx, nz, x0, z0, step, hs, hq, dec, tiles, paint, withUv1 }) {
+    const m = (nx - 1) / dec + 1, mz = (nz - 1) / dec + 1, st = step * dec
+    const pos = new Float32Array(m * mz * 3)
+    for (let j = 0; j < mz; j++) for (let i = 0; i < m; i++) { const k = j * m + i; pos[k * 3] = x0 + i * st; pos[k * 3 + 1] = hs[j * dec * nx + i * dec] * hq; pos[k * 3 + 2] = z0 + j * st }
     const full = new THREE.BufferGeometry(); full.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    const fi = new Uint32Array((m - 1) * (m - 1) * 6); let q = 0
-    for (let j = 0; j < m - 1; j++) for (let i = 0; i < m - 1; i++) { const a = j * m + i, b = a + 1, c = a + m, d = c + 1; fi[q++] = a; fi[q++] = c; fi[q++] = b; fi[q++] = b; fi[q++] = c; fi[q++] = d }
+    const fi = new Uint32Array((m - 1) * (mz - 1) * 6); let q = 0
+    for (let j = 0; j < mz - 1; j++) for (let i = 0; i < m - 1; i++) { const a = j * m + i, b = a + 1, c = a + m, d = c + 1; fi[q++] = a; fi[q++] = c; fi[q++] = b; fi[q++] = b; fi[q++] = c; fi[q++] = d }
     full.setIndex(new THREE.BufferAttribute(fi, 1)); full.computeVertexNormals()
     const nrm = full.attributes.normal.array; full.dispose()
-    const col = new Float32Array(m * m * 3), uv1 = withUv1 ? new Float32Array(m * m * 2) : null, c = new THREE.Color()
-    for (let j = 0; j < m; j++) for (let i = 0; i < m; i++) {
+    const col = new Float32Array(m * mz * 3), uv1 = withUv1 ? new Float32Array(m * mz * 2) : null, c = new THREE.Color()
+    for (let j = 0; j < mz; j++) for (let i = 0; i < m; i++) {
       const k = j * m + i, x = pos[k * 3], y = pos[k * 3 + 1], z = pos[k * 3 + 2]
-      paint(c, x, y, z, nrm[k * 3 + 1], j * dec * n + i * dec); col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b
-      if (uv1) { uv1[k * 2] = (x + NR) / (2 * NR); uv1[k * 2 + 1] = (-z + NR) / (2 * NR) }
+      paint(c, x, y, z, nrm[k * 3 + 1], j * dec * nx + i * dec); col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b
+      if (uv1) { uv1[k * 2] = lmU(x); uv1[k * 2 + 1] = lmV(z) }
     }
-    const out = [], tq = Math.ceil((m - 1) / tiles)
-    for (let tj = 0; tj < tiles; tj++) for (let ti = 0; ti < tiles; ti++) {
-      const i0 = ti * tq, i1 = Math.min(m - 1, i0 + tq), j0 = tj * tq, j1 = Math.min(m - 1, j0 + tq); if (i0 >= i1 || j0 >= j1) continue
+    const out = [], [tX, tZ] = tiles, tq = Math.ceil((m - 1) / tX), tqz = Math.ceil((mz - 1) / tZ)
+    for (let tj = 0; tj < tZ; tj++) for (let ti = 0; ti < tX; ti++) {
+      const i0 = ti * tq, i1 = Math.min(m - 1, i0 + tq), j0 = tj * tqz, j1 = Math.min(mz - 1, j0 + tqz); if (i0 >= i1 || j0 >= j1) continue
       const w = i1 - i0 + 1, h = j1 - j0 + 1, P = new Float32Array(w * h * 3), N = new Float32Array(w * h * 3), C = new Float32Array(w * h * 3), U = uv1 ? new Float32Array(w * h * 2) : null
       for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const s = (j0 + j) * m + i0 + i, d = j * w + i; for (let e = 0; e < 3; e++) { P[d * 3 + e] = pos[s * 3 + e]; N[d * 3 + e] = nrm[s * 3 + e]; C[d * 3 + e] = col[s * 3 + e] } if (U) { U[d * 2] = uv1[s * 2]; U[d * 2 + 1] = uv1[s * 2 + 1] } }
       const I = new Uint16Array((w - 1) * (h - 1) * 6); let r = 0
@@ -284,7 +287,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.6 : 0.95, metalness: 0 }))
     useBake(m, data.lm.terrain)
     useTex(m, { a: 'gravel_road', b: 'grass_path_2', tile: 3.2, tileB: 3.5 })
-    for (const g of gridTiles({ n: meta.near.n, R0: NR, step: meta.near.step, hs: terrain, hq: meta.near.hStep, dec: low ? 2 : 1, tiles: 4, paint, withUv1: true })) {
+    for (const g of gridTiles({ nx: meta.near.nx, nz: meta.near.nz, x0: NX0, z0: NZ0, step: meta.near.step, hs: terrain, hq: meta.near.hStep, dec: low ? 2 : 1, tiles: [6, 4], paint, withUv1: true })) {
       const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.castShadow = true; mesh.userData.part = 'terrainNear'; scene.add(mesh)
     }
   }
@@ -297,7 +300,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
       if (SNOW) c.lerp(WHITE, ny > 0.85 ? 0.55 : 0.3)
     }
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }))
-    for (const g of gridTiles({ n: meta.far.n, R0: meta.far.R, step: meta.far.step, hs: farH, hq: meta.far.hStep, dec: low ? 2 : 1, tiles: 4, paint, withUv1: false })) {
+    for (const g of gridTiles({ nx: meta.far.n, nz: meta.far.n, x0: -meta.far.R, z0: -meta.far.R, step: meta.far.step, hs: farH, hq: meta.far.hStep, dec: low ? 2 : 1, tiles: [4, 4], paint, withUv1: false })) {
       const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.userData.part = 'terrainFar'; scene.add(mesh)
     }
   }
@@ -305,9 +308,9 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   const navSrc = {} // 便19: 飛ぶ・歩くの道案内（下の makeNav）が使う、建物と橋の形
   // ── 道・小道・橋・線路（地形の焼いた光をそのまま使う） ──
   {
-    const sec = meta.files.roads.secs, ps = meta.roads.pStep
+    const sec = meta.files.roads.secs, ps = meta.roads.pStep, po = meta.roads.pOff || [0, 0, 0] // 便21: 範囲の中心を引いて詰めてある
     const p16 = view(data.buf.roads, sec.pos), idx = view(data.buf.roads, sec.idx), kind = view(data.buf.roads, sec.kind)
-    const P = new Array(p16.length); for (let i = 0; i < p16.length; i++) P[i] = p16[i] * ps
+    const P = new Array(p16.length); for (let i = 0; i < p16.length; i++) P[i] = p16[i] * ps + po[i % 3]
     const I = Array.from(idx), K = Array.from(kind), pos = P.slice()
     navSrc.roads = { pos, idx, kind }
     for (let t = 0; t < idx.length; t += 6) { // 橋の床の両側に、下へ 1.5m の桁を足す
@@ -317,7 +320,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I)
     const col = new Float32Array(K.length * 3), uv1 = new Float32Array(K.length * 2), c = new THREE.Color()
     const CK = [0x55575a, 0xb0a690, 0x8d8a84, 0x6a5e52, 0x7c7a76]
-    for (let i = 0; i < K.length; i++) { c.setHex(CK[K[i]]); if (SNOW && K[i] !== 4) c.lerp(WHITE, K[i] === 0 ? 0.35 : 0.55); col.set([c.r, c.g, c.b], i * 3); uv1.set([(P[i * 3] + NR) / (2 * NR), (-P[i * 3 + 2] + NR) / (2 * NR)], i * 2) }
+    for (let i = 0; i < K.length; i++) { c.setHex(CK[K[i]]); if (SNOW && K[i] !== 4) c.lerp(WHITE, K[i] === 0 ? 0.35 : 0.55); col.set([c.r, c.g, c.b], i * 3); uv1.set([lmU(P[i * 3]), lmV(P[i * 3 + 2])], i * 2) }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2)); g.computeVertexNormals()
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.42 : 0.9, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }))
     useBake(m, data.lm.terrain)
@@ -383,8 +386,10 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   const toK = (x, y, z) => new THREE.Vector3(x, y, z).add(roomO).applyMatrix4(toKamo)
   const hostK = new THREE.Box3(); for (const x of [HOST.x0, HOST.x1]) for (const y of [HOST.y0, HOST.y1]) for (const z of [HOST.z0 - 0.3, HOST.z1]) hostK.expandByPoint(toK(x, y, z))
   {
-    const sec = meta.files.bldg.secs, ps = meta.bldg.pStep
-    const p16 = view(data.buf.bldg, sec.pos), uv16 = view(data.buf.bldg, sec.uv), bidA = view(data.buf.bldg, sec.bid), nv = meta.bldg.nv
+    // 便21: 位置は範囲の中心（pOff）を引いて詰めてあるので、ここでメートルに戻してから使う（以下の p16 はメートル・ps は 1）
+    const sec = meta.files.bldg.secs, ps = 1, bq = view(data.buf.bldg, sec.pos), bStep = meta.bldg.pStep, bOff = meta.bldg.pOff || [0, 0, 0]
+    const p16 = new Float32Array(bq.length); for (let i = 0; i < bq.length; i++) p16[i] = bq[i] * bStep + bOff[i % 3]
+    const uv16 = view(data.buf.bldg, sec.uv), bidA = view(data.buf.bldg, sec.bid), nv = meta.bldg.nv
     const H = meta.bldg.heights
     // 建物ごとの箱（鴨川の座標）。部屋のあるマンションの箱と重なる建物を外す
     const bb = new Map()
@@ -557,37 +562,38 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   const navM = toKamo.elements, invM = fromKamo.elements, dY = navM[13]
   const KX = (x, z) => navM[0] * x + navM[8] * z + navM[12], KZ = (x, z) => navM[2] * x + navM[10] * z + navM[14]
   const TX = (X, Z) => invM[0] * X + invM[8] * Z + invM[12], TZ = (X, Z) => invM[2] * X + invM[10] * Z + invM[14]
-  const nN = meta.near.n, nS = meta.near.step, nQ = meta.near.hStep
+  const nN = meta.near.nx, nNZ = meta.near.nz, nS = meta.near.step, nQ = meta.near.hStep // 便21: 四角の網（東西 nN 点・南北 nNZ 点）
   const gridAt = (X, Z, f) => { // 近くの地形の網を4点で混ぜて読む（網の外は端の値）
-    const u = Math.min(nN - 1.001, Math.max(0, (X + NR) / nS)), v = Math.min(nN - 1.001, Math.max(0, (Z + NR) / nS)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nN + i
+    const u = Math.min(nN - 1.001, Math.max(0, (X - NX0) / nS)), v = Math.min(nNZ - 1.001, Math.max(0, (Z - NZ0) / nS)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nN + i
     return (f(k) * (1 - fu) + f(k + 1) * fu) * (1 - fv) + (f(k + nN) * (1 - fu) + f(k + nN + 1) * fu) * fv
   }
   // 【便19・外の目】iPhone の段は地形の網を1つおき（8m）に間引いて描く（gridTiles の dec）。歩く高さとカメラの下限を 4m の網で引くと描いた地面とずれ、土手で目やカメラがめり込む＝同じ間引きの網で読む
   const navDec = low ? 2 : 1
   const terrK = (X, Z) => { // 地面の高さ（鴨川の座標・水面の下は川底）。描く網と同じ間引きで4点を混ぜる
-    const st = nS * navDec, m = (nN - 1) / navDec + 1, u = Math.min(m - 1.001, Math.max(0, (X + NR) / st)), v = Math.min(m - 1.001, Math.max(0, (Z + NR) / st)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j
+    const st = nS * navDec, m = (nN - 1) / navDec + 1, mz = (nNZ - 1) / navDec + 1, u = Math.min(m - 1.001, Math.max(0, (X - NX0) / st)), v = Math.min(mz - 1.001, Math.max(0, (Z - NZ0) / st)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j
     const h = (ii, jj) => terrain[jj * navDec * nN + ii * navDec] * nQ
     return (h(i, j) * (1 - fu) + h(i + 1, j) * fu) * (1 - fv) + (h(i, j + 1) * (1 - fu) + h(i + 1, j + 1) * fu) * fv
   }
   const wetK = (X, Z) => gridAt(X, Z, (k) => (zone[k] === 2 ? 1 : 0)) // 水面の度合い（0.5 以上を水とする）
-  const zoneK = (X, Z) => zone[Math.round(Math.min(nN - 1, Math.max(0, (Z + NR) / nS))) * nN + Math.round(Math.min(nN - 1, Math.max(0, (X + NR) / nS)))]
+  const zoneK = (X, Z) => zone[Math.round(Math.min(nNZ - 1, Math.max(0, (Z - NZ0) / nS))) * nN + Math.round(Math.min(nN - 1, Math.max(0, (X - NX0) / nS)))]
   const floorK = (X, Z) => terrK(X, Z) + Math.min(1, wetK(X, Z) * 2) * 0.6 // 目の下限の元（水の上は水面＝川底の 0.6m 上・build.mjs）
-  const EDGE = NR - 40 // 近くの地形の網の縁から 40m 内側まで（網の縁は遠くの網との継ぎ目）
-  const GC = 2, GN = Math.ceil((2 * NR) / GC)
+  const EDGE = 40 // 近くの地形の網の縁から 40m 内側まで（網の縁は遠くの網との継ぎ目）
+  const outK = (X, Z) => X < NX0 + EDGE || X > NX1 - EDGE || Z < NZ0 + EDGE || Z > NZ1 - EDGE
+  const GC = 2, GN = Math.ceil(NW / GC), GNZ = Math.ceil(ND / GC) // 便21: 表は東西 GN 升・南北 GNZ 升
   let G = null
   function ensureNav() {
     if (G) return G
     const t0 = performance.now()
-    const top = new Float32Array(GN * GN).fill(-1e9), bld = new Uint8Array(GN * GN), deck = new Float32Array(GN * GN).fill(NaN)
-    const ci = (X) => Math.floor((X + NR) / GC)
+    const top = new Float32Array(GN * GNZ).fill(-1e9), bld = new Uint8Array(GN * GNZ), deck = new Float32Array(GN * GNZ).fill(NaN)
+    const ci = (X) => Math.floor((X - NX0) / GC), cj = (Z) => Math.floor((Z - NZ0) / GC)
     // 三角形を真上から見て、覆う升に fn(升, その所の高さ, 三角形の一番高い所) を渡す（壁のように真上から線に潰れる面は、頂点の升だけ）
     const tri = (ax, ay, az, bx, by, bz, cx, cy, cz, fn) => {
       const yMax = Math.max(ay, by, cy)
-      for (const [vx, vy, vz] of [[ax, ay, az], [bx, by, bz], [cx, cy, cz]]) { const i = ci(vx), j = ci(vz); if (i >= 0 && j >= 0 && i < GN && j < GN) fn(j * GN + i, vy, yMax) }
+      for (const [vx, vy, vz] of [[ax, ay, az], [bx, by, bz], [cx, cy, cz]]) { const i = ci(vx), j = cj(vz); if (i >= 0 && j >= 0 && i < GN && j < GNZ) fn(j * GN + i, vy, yMax) }
       const den = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(den) < 1e-6) return
-      const i0 = Math.max(0, ci(Math.min(ax, bx, cx))), i1 = Math.min(GN - 1, ci(Math.max(ax, bx, cx))), j0 = Math.max(0, ci(Math.min(az, bz, cz))), j1 = Math.min(GN - 1, ci(Math.max(az, bz, cz)))
+      const i0 = Math.max(0, ci(Math.min(ax, bx, cx))), i1 = Math.min(GN - 1, ci(Math.max(ax, bx, cx))), j0 = Math.max(0, cj(Math.min(az, bz, cz))), j1 = Math.min(GNZ - 1, cj(Math.max(az, bz, cz)))
       for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-        const px = -NR + (i + 0.5) * GC, pz = -NR + (j + 0.5) * GC
+        const px = NX0 + (i + 0.5) * GC, pz = NZ0 + (j + 0.5) * GC
         const w1 = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / den, w2 = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / den, w3 = 1 - w1 - w2
         if (w1 >= -0.02 && w2 >= -0.02 && w3 >= -0.02) fn(j * GN + i, w1 * ay + w2 * by + w3 * cy, yMax)
       }
@@ -598,9 +604,9 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
       const { p16, bidA, drop, ps, nv } = navSrc.bldg
       const mark = (k, y, yMax) => { if (yMax > top[k]) top[k] = yMax; bld[k] = 1 }
       for (let t = 0; t < nv; t += 3) { if (drop.has(bidA[t])) continue; const o = t * 3; tri(p16[o] * ps, p16[o + 1] * ps, p16[o + 2] * ps, p16[o + 3] * ps, p16[o + 4] * ps, p16[o + 5] * ps, p16[o + 6] * ps, p16[o + 7] * ps, p16[o + 8] * ps, mark) }
-      for (let j = Math.max(0, ci(hostK.min.z)); j <= Math.min(GN - 1, ci(hostK.max.z)); j++) for (let i = Math.max(0, ci(hostK.min.x)); i <= Math.min(GN - 1, ci(hostK.max.x)); i++) { const k = j * GN + i; top[k] = Math.max(top[k], hostK.max.y); bld[k] = 1 }
+      for (let j = Math.max(0, cj(hostK.min.z)); j <= Math.min(GNZ - 1, cj(hostK.max.z)); j++) for (let i = Math.max(0, ci(hostK.min.x)); i <= Math.min(GN - 1, ci(hostK.max.x)); i++) { const k = j * GN + i; top[k] = Math.max(top[k], hostK.max.y); bld[k] = 1 }
       // 建物の升でも、地面から 1.8m より低い物（塀・段・屋根の無い小さな形）は歩ける
-      for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; if (bld[k] && top[k] - terrK(-NR + (i + 0.5) * GC, -NR + (j + 0.5) * GC) < 1.8) bld[k] = 0 }
+      for (let j = 0; j < GNZ; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; if (bld[k] && top[k] - terrK(NX0 + (i + 0.5) * GC, NZ0 + (j + 0.5) * GC) < 1.8) bld[k] = 0 }
     }
     { // 橋の床（歩いて渡れる・飛ぶ時は欄干の分だけ上を通る）
       const { pos, idx, kind } = navSrc.roads
@@ -611,34 +617,39 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     const tr = view(data.buf.misc, meta.files.misc.secs.trees)
     for (let q = 0; q < tr.length; q += 6) {
       const X = tr[q], Y = tr[q + 1], Z = tr[q + 2], h = tr[q + 3], r = tr[q + 4] * 0.5
-      for (let j = Math.max(0, ci(Z - r)); j <= Math.min(GN - 1, ci(Z + r)); j++) for (let i = Math.max(0, ci(X - r)); i <= Math.min(GN - 1, ci(X + r)); i++) { const k = j * GN + i; if (Y + h > top[k]) top[k] = Y + h }
+      for (let j = Math.max(0, cj(Z - r)); j <= Math.min(GNZ - 1, cj(Z + r)); j++) for (let i = Math.max(0, ci(X - r)); i <= Math.min(GN - 1, ci(X + r)); i++) { const k = j * GN + i; if (Y + h > top[k]) top[k] = Y + h }
       const key = Math.floor(X / 8) * 100003 + Math.floor(Z / 8); let a = trunks.get(key); if (!a) { a = []; trunks.set(key, a) } a.push(X, Z)
     }
     } catch (e) { console.warn('鴨川の道案内の表（建物・橋・木）を組めなかったので、地面と水だけで飛ぶ・歩く:', e && e.message); top.fill(-1e9); bld.fill(0); deck.fill(NaN); trunks.clear() }
     // 飛ぶ時の下限: 地面（水面）と建物・木・橋の上の高い方を、まわり 8m の一番高い所へ広げてからなだらかにする（建物の手前で先に浮き上がり、急に持ち上がらない）
-    const F = new Float32Array(GN * GN)
-    for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; F[k] = Math.max(top[k], floorK(-NR + (i + 0.5) * GC, -NR + (j + 0.5) * GC)) }
+    const F = new Float32Array(GN * GNZ)
+    for (let j = 0; j < GNZ; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; F[k] = Math.max(top[k], floorK(NX0 + (i + 0.5) * GC, NZ0 + (j + 0.5) * GC)) }
     const pass = (src, r, op) => { // 横と縦に分けて、まわり r 升の一番高い所（op='max'）か平均（op='avg'）をとる
-      const tmp = new Float32Array(GN * GN), out = new Float32Array(GN * GN)
-      for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const ii = Math.min(GN - 1, Math.max(0, i + d)), v = src[j * GN + ii]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } tmp[j * GN + i] = op === 'max' ? m : m / c }
-      for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const jj = Math.min(GN - 1, Math.max(0, j + d)), v = tmp[jj * GN + i]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } out[j * GN + i] = op === 'max' ? m : m / c }
+      const tmp = new Float32Array(GN * GNZ), out = new Float32Array(GN * GNZ)
+      for (let j = 0; j < GNZ; j++) for (let i = 0; i < GN; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const ii = Math.min(GN - 1, Math.max(0, i + d)), v = src[j * GN + ii]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } tmp[j * GN + i] = op === 'max' ? m : m / c }
+      for (let j = 0; j < GNZ; j++) for (let i = 0; i < GN; i++) { let m = op === 'max' ? -1e9 : 0, c = 0; for (let d = -r; d <= r; d++) { const jj = Math.min(GNZ - 1, Math.max(0, j + d)), v = tmp[jj * GN + i]; if (op === 'max') { if (v > m) m = v } else { m += v; c++ } } out[j * GN + i] = op === 'max' ? m : m / c }
       return out
     }
     const S = pass(pass(F, 4, 'max'), 3, 'avg')
     G = { top: F, bld, deck, S, trunks, ms: Math.round(performance.now() - t0) }
     return G
   }
-  const cellK = (X, Z) => { const i = Math.floor((X + NR) / GC), j = Math.floor((Z + NR) / GC); return i < 0 || j < 0 || i >= GN || j >= GN ? -1 : j * GN + i }
-  const softK = (X, Z) => { const g = ensureNav(), u = Math.min(GN - 1.001, Math.max(0, (X + NR) / GC - 0.5)), v = Math.min(GN - 1.001, Math.max(0, (Z + NR) / GC - 0.5)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * GN + i
+  const cellK = (X, Z) => { const i = Math.floor((X - NX0) / GC), j = Math.floor((Z - NZ0) / GC); return i < 0 || j < 0 || i >= GN || j >= GNZ ? -1 : j * GN + i }
+  const softK = (X, Z) => { const g = ensureNav(), u = Math.min(GN - 1.001, Math.max(0, (X - NX0) / GC - 0.5)), v = Math.min(GNZ - 1.001, Math.max(0, (Z - NZ0) / GC - 0.5)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * GN + i
     return (g.S[k] * (1 - fu) + g.S[k + 1] * fu) * (1 - fv) + (g.S[k + GN] * (1 - fu) + g.S[k + GN + 1] * fu) * fv }
   const trunkK = (X, Z) => { const g = ensureNav(); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const arr = g.trunks.get((Math.floor(X / 8) + a) * 100003 + Math.floor(Z / 8) + b); if (!arr) continue; for (let q = 0; q < arr.length; q += 2) { const dx = X - arr[q], dz = Z - arr[q + 1]; if (dx * dx + dz * dz < 0.36) return true } } return false }
-  const blockedK = (X, Z) => { if (Math.abs(X) > EDGE || Math.abs(Z) > EDGE) return true; const k = cellK(X, Z); return (k >= 0 && ensureNav().bld[k] === 1) || trunkK(X, Z) }
+  const blockedK = (X, Z) => { if (outK(X, Z)) return true; const k = cellK(X, Z); return (k >= 0 && ensureNav().bld[k] === 1) || trunkK(X, Z) }
   const deckOk = (X, Z, feetK) => { const k = cellK(X, Z); if (k < 0) return NaN; const d = ensureNav().deck[k]; return d === d && Math.abs(d - feetK) < 1.3 ? d : NaN } // 足の高さに近い橋の床だけ（河川敷を歩いていて頭の上の橋に吸い上げられない）
-  const half = EDGE / (Math.abs(Math.cos(THREE.MathUtils.degToRad(meta.view.yawDeg))) + Math.abs(Math.sin(THREE.MathUtils.degToRad(meta.view.yawDeg))))
+  // 便21: 飛べる箱＝鴨川の四角（縁から EDGE 内側）に入る、町の3Dの軸に沿った一番大きい箱。町の3Dの (dx, dz) は鴨川の (m0 dx + m8 dz, m2 dx + m10 dz) へ写る
+  //   |m0| hx + |m8| hz ≤ 幅/2・|m2| hx + |m10| hz ≤ 奥行き/2 を等しく置いて解く（解が負なら、細い方に合わせた正方形）
   const cX = TX(0, 0), cZ = TZ(0, 0) // 鴨川デルタ（原点）の町の3Dの座標
+  const bW = NW / 2 - EDGE, bD = ND / 2 - EDGE, bCX = TX((NX0 + NX1) / 2, (NZ0 + NZ1) / 2), bCZ = TZ((NX0 + NX1) / 2, (NZ0 + NZ1) / 2)
+  const a0 = Math.abs(navM[0]), a8 = Math.abs(navM[8]), a2 = Math.abs(navM[2]), a10 = Math.abs(navM[10]), det = a0 * a10 - a8 * a2
+  let hx = (bW * a10 - a8 * bD) / det, hz = (a0 * bD - a2 * bW) / det
+  if (!(hx > 0 && hz > 0)) { hx = hz = Math.min(bW, bD) / (a0 + a8 + a2 + a10) * 2 }
   const nav = {
     // 飛べる箱（町の3Dの座標の軸に沿った箱＝近くの地形の網の内側に入る一番大きい四角）。yFloor＝建物・木の上に空ける高さ
-    bound: { x: half - cX, xMax: cX + half, zMin: cZ - half, zMax: cZ + half, yMax: 240 - dY, yFloor: 3.5 },
+    bound: { x: hx - bCX, xMax: bCX + hx, zMin: bCZ - hz, zMax: bCZ + hz, yMax: 240 - dY, yFloor: 3.5 },
     lms: [{ x: cX, z: cZ }], // 眺めて止まっている時に、ゆっくり回る名所（鴨川デルタ）
     ground: (x, z) => terrK(KX(x, z), KZ(x, z)) - dY, // 地面の高さ
     floor: (x, z) => floorK(KX(x, z), KZ(x, z)) - dY, // 目の下限の元（水の上は水面）
@@ -657,7 +668,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
       if (alt > 70) return '鴨川の上空'; if (wetK(X, Z) >= 0.5) return river + 'の上'; if (Math.hypot(X, Z) < 130) return '鴨川デルタ'; if (zoneK(X, Z) === 1) return river + 'の河川敷'; return 'まちなか' },
     gauge: (y) => Math.max(0, Math.min(1, (y + dY - meta.view.groundY) / 150)), // 高さのゲージ（地面から 150m で満ちる）
     deck: (x, z) => { const k = cellK(KX(x, z), KZ(x, z)), d = k >= 0 ? ensureNav().deck[k] : NaN; return d === d ? d - dY : null }, // 橋の床の高さ（無ければ null・検証用）
-    info: () => (G ? { ms: G.ms, cells: GN * GN } : null),
+    info: () => (G ? { ms: G.ms, cells: GN * GNZ } : null),
   }
 
   // ── 便20: 人や電車や鳥が動く所と、時々の出来事（kamoLife.js）。置く高さは間引かない網で読む（iPhone の段でも人が地面に埋まらない） ──
