@@ -1,0 +1,23 @@
+{
+ "morning": {
+  "state": "running",
+  "water": true,
+  "sea": 0,
+  "river": 0,
+  "crowd": 0,
+  "fest": 0,
+  "sta": 0,
+  "ev": {
+   "tobi": 0,
+   "eiden": 0
+  },
+  "voice": 0.4,
+  "voiceOn": true,
+  "voiceLp": 1638,
+  "loopHp": [
+   320,
+   160,
+   260
+  ]
+ }
+}

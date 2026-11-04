@@ -36,6 +36,10 @@
 //   K30 橋と灯り: 賀茂大橋の石灯籠がちょうど 14 基・欄干 10 本以上・街灯 500 以上（便21）
 //   K31 河川敷の人: 夏の朝は歩く・走る・自転車が 15 人以上いて 2 秒で動き、浅瀬の子ども 4 人以上・飛び石に座る学生 3 人以上。夏の夜はデルタの花火の人 6 人以上で火花が出る。冬の雪の夕は水遊びも花火も無い（便21）
 //   K32 名所: 時計塔・正門・大元宮・茂庵がある・鳥居 15 基以上・ベンチ 100 以上・遊具 3・東屋 1 以上（便21）
+//   K34 外の町: 鴨川の角部屋を開くと外の町（金閣寺・京都駅・祇園まで）を裏で読んで組む（建物の箱 10 万以上・木 3 万以上・道 5,000 本以上・水面 1 万三角形以上・名所 6 つ）。鴨川の町の網の外の崩れた水面を落とし、低い霧が 0・エラーと GL 0（便22）
+//   K35 外の町へ飛べる: 金閣寺・京都タワー・京都駅・祇園・八坂の塔・南の鴨川が飛べる箱の中で、居場所の名が合い、京都タワーの頂は地面から 125m 以上・金閣は建物の当たり・南の鴨川は水（便22）
+//   K36 外の町の地面: 外の町の中の地面の高さが外の町の網と合い（祇園は原点より低い・金閣寺は 40m 以上高い）、四条大橋の床の上は水の上でも歩ける（便22）
+//   K37 外の町を読めない時（データを止めた時・?kamoouter=0）は、鴨川の町だけで開き、飛べる箱は鴨川の町のまま・エラー 0（便22）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 //   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
@@ -46,13 +50,14 @@ const run = (k) => !want.size || want.has(k)
 const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu'] })
 const results = []
 const kamoInfo = (p) => p.evaluate(() => (window.__town3dKamo ? window.__town3dKamo() : 'no-hook'))
-async function open(scene, { q = '', block = false, view = null, win = null, dev = null } = {}) {
+async function open(scene, { q = '', block = false, view = null, win = null, dev = null, blockOuter = false } = {}) {
   const ctx = await b.newContext({ ...(dev || { viewport: { width: 1280, height: 720 } }), serviceWorkers: 'block' }) // service worker を止める（止めないと読み込みの網を通らずに取りに行く＝K3 が測れない）
   const p = await ctx.newPage()
   const errs = [], gl = []
   p.on('pageerror', (e) => errs.push('PE ' + e.message))
   p.on('console', (m) => { const t = m.text(); if (m.type() === 'error') errs.push(t.slice(0, 200)); if (/GL_INVALID|INVALID_OPERATION/.test(t)) gl.push(t.slice(0, 160)) })
   if (block) await ctx.route('**/kamo/**', (r) => r.abort())
+  if (blockOuter) await ctx.route('**/kamo/outer/**', (r) => r.abort()) // 【便22】外の町のデータだけ止める
   // 【便20】起動時の情景を、開く情景にそろえる（3時間以内に居た情景から開く作り＝main.js の start）。画面の釦（窓をあける・空へ）は起動時の情景で出し分けるので、
   //   検証の口（__applyScene）だけで替えると、起動時の情景が「今の季節と時刻」で窓の無い情景になった日（2026-11-04 の朝）に釦が隠れ、K2 が前の版でも外れた
   await ctx.addInitScript((id) => { try { if (!localStorage.getItem('seasons.state.v1')) localStorage.setItem('seasons.state.v1', JSON.stringify({ version: 2, sceneId: id, sceneAt: Date.now() })) } catch (e) { /* 無視 */ } }, scene)
@@ -295,6 +300,32 @@ if (run('K33')) { // 【便22】鴨川デルタの人の声と、角部屋の音
   const bad = []
   for (const id of ids) { const sc = (await import('../../src/data/scenes/' + id + '.js')).default; for (const d of sc.sounds) { if (!NAT.test(d.src)) bad.push(id + ':' + d.src); else if (RUMBLE.test(d.src) && !(d.hp >= 150)) bad.push(id + ':' + d.id + ' hp ' + d.hp) } if (!sc.sounds.some((d) => /leaves/.test(d.src))) bad.push(id + ':木々なし') }
   check('K33', w && w.voice >= 0.05 && w.voice <= 0.6 && ws && ws[7] >= 0.05 && near.voice >= 0.6 && near.sent && near.sent[7] >= 0.6 && far.voice === 0 && rw && rw.voice === 0 && !bad.length && !o.errs.length && !r.errs.length, `窓辺 ${w && w.voice}（流した ${ws && ws[7]}）・デルタの上 ${near.voice}（${near.sent && near.sent[7]}）・東へ 1.2km ${far.voice}・雨の夜 ${rw && rw.voice}・素材の外れ ${bad.length ? bad.join(' ') : 'なし'}・エラー ${o.errs.length + r.errs.length}`)
+}
+// 【便22】外の町
+const outerWait = (p) => p.waitForFunction(() => window.__town3dKamo && window.__town3dKamo() && window.__town3dKamo().outer, null, { timeout: 90000 }).then(() => true).catch(() => false)
+const navAt = (p, X, Y, Z) => p.evaluate(async ([X, Y, Z]) => { const e = window.__town3dKamoTown(X, Z, Y); window.__town3dFlyPose(e.x, e.y, e.z, 0, 0); await new Promise((r) => setTimeout(r, 700)); const n = window.__town3dNav(); return { place: n.place, ground: n.ground, top: n.top, wet: n.wet, blocked: n.blocked, inBound: e.x >= -n.bound.x && e.x <= (n.bound.xMax || n.bound.x) && e.z >= n.bound.zMin && e.z <= n.bound.zMax } }, [X, Y, Z])
+if (run('K34') || run('K35') || run('K36')) {
+  const o = await open('summer-morning-corner-room')
+  const got = await outerWait(o.p), k = await kamoInfo(o.p), O = k && k.outer, mist = await o.p.evaluate(() => (window.__town3dMist ? window.__town3dMist().applied[3] : -1))
+  if (run('K34')) check('K34', got && O && O.boxes >= 100000 && O.trees >= 30000 && O.roads >= 5000 && O.water >= 10000 && O.meisho && Object.values(O.meisho).every(Boolean) && Object.keys(O.meisho).length === 6 && O.waterCut > 0 && mist === 0 && !o.errs.length && !o.gl.length, `組めた ${got}・箱 ${O && O.boxes}・木 ${O && O.trees}・道 ${O && O.roads}・水面 ${O && O.water}・名所 ${O && JSON.stringify(O.meisho)}・落とした水面 ${O && O.waterCut}・低い霧 ${mist}・組む時間 ${O && O.ms}ms・エラー ${o.errs.length}・GL ${o.gl.length}`)
+  if (run('K35') || run('K36')) {
+    await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
+    const kin = await navAt(o.p, -4022, 80, -1056), tow = await navAt(o.p, -1202, 60, 4709), sta = await navAt(o.p, -1280, 60, 4986), gion = await navAt(o.p, 459, 30, 2914), yas = await navAt(o.p, 616, 60, 3488), riv = await navAt(o.p, -60, 20, 2600)
+    if (run('K35')) check('K35', [kin, tow, sta, gion, yas, riv].every((q) => q.inBound) && kin.place === '金閣寺' && sta.place === '京都駅' && gion.place === '祇園' && yas.place === '八坂の塔' && riv.place === '鴨川の上' && kin.blocked && riv.wet && !riv.blocked && tow.top - tow.ground >= 125, `箱の中 ${[kin, tow, sta, gion, yas, riv].map((q) => q.inBound ? 1 : 0).join('')}・居場所 ${[kin, sta, gion, yas, riv].map((q) => q.place).join('・')}・金閣の当たり ${kin.blocked}・南の鴨川 水 ${riv.wet} 当たり ${riv.blocked}・京都タワーの頂 ${(tow.top - tow.ground).toFixed(1)}m`)
+    if (run('K36')) {
+      // 四条大橋（東 −88・南 2902）の床の上へ歩いて降りる＝床の高さ（水面＋3m 以上）に立つ
+      const br = await o.p.evaluate(async () => { const e = window.__town3dKamoTown(-88, 2902, 0); window.__town3dWalkPose(e.x, e.z, 0); await new Promise((r) => setTimeout(r, 1800)); const n = window.__town3dNav(); return { mode: n.mode, y: n.y, ground: n.ground, wet: n.wet } })
+      const water = await navAt(o.p, -60, 20, 2600)
+      const deck = await navAt(o.p, -88, 30, 2902)
+      check('K36', kin.ground - gion.ground > 40 && br.mode === 'walk' && deck.top - water.ground > 3, `金閣寺の地面 − 祇園の地面 ${(kin.ground - gion.ground).toFixed(1)}m（40 超＝金閣寺は高い）・四条大橋で歩く ${br.mode}・橋の床の上 ${deck.top}（川の地面 ${water.ground}＋3 より上）`)
+    }
+  }
+  await o.ctx.close()
+}
+if (run('K37')) {
+  const a = await open('summer-morning-corner-room', { q: 'kamoouter=0' }); await a.p.waitForTimeout(6000); const ka = await kamoInfo(a.p); const ba = (await a.p.evaluate(() => { window.__town3dFly(true); return new Promise((r) => setTimeout(() => r(window.__town3dNav().bound), 2600)) })); await a.ctx.close()
+  const c = await open('summer-morning-corner-room', { blockOuter: true }); await c.p.waitForTimeout(8000); const kc = await kamoInfo(c.p); await c.ctx.close()
+  check('K37', ka && ka.outer === null && ba && ba.zMax - ba.zMin < 3000 && kc && kc.outer === null && !a.errs.length && !c.errs.filter((e) => !/kamo\/outer|Failed to load resource/.test(e)).length, `?kamoouter=0 の外の町 ${ka && ka.outer}・飛べる箱の奥行き ${ba && (ba.zMax - ba.zMin).toFixed(0)}m（3000 未満）・外の町のデータを止めた時 ${kc && kc.outer}・エラー ${a.errs.length + c.errs.length}`)
 }
 if (run('K24')) {
   // 【便20・外の目】夏の夜は帯の出来事がもともと起きない（昼の物・冬の物）ので、帯の時計が進まないことを春の夕で見る。送り火の待ちが進むことは夏の夜で見る

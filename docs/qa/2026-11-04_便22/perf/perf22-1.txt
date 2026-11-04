@@ -1,0 +1,4 @@
+pc {"outer":true,"window":{"ms":10.72,"calls":241,"tris":2063008},"skySouth":{"ms":5.84,"calls":41,"tris":388215},"gion":{"ms":4.75,"calls":34,"tris":366787},"jsHeapMB":905}
+iphone {"outer":true,"window":{"ms":6.93,"calls":193,"tris":1003874},"skySouth":{"ms":5.38,"calls":39,"tris":210067},"gion":{"ms":4.27,"calls":27,"tris":30723},"jsHeapMB":652}
+pc kamoouter=0 {"outer":false,"window":{"ms":8.36,"calls":241,"tris":2063403},"skySouth":{"ms":4.05,"calls":41,"tris":388610},"gion":{"ms":3.67,"calls":34,"tris":367182},"jsHeapMB":986}
+iphone kamoouter=0 {"outer":false,"window":{"ms":6.2,"calls":191,"tris":988630},"skySouth":{"ms":4.54,"calls":41,"tris":210726},"gion":{"ms":4.5,"calls":27,"tris":31250},"jsHeapMB":826}
