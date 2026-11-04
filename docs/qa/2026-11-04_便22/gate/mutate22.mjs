@@ -32,4 +32,4 @@ for (const m of M) {
   } finally { fs.writeFileSync(m.file, raw) }
 }
 const bd = run('npm', ['run', 'build']); console.log(`元へ戻してビルド 終了コード ${bd.status}`)
-fs.writeFileSync('docs/qa/2026-11-04_便22/gate/mutate22.txt', out.join('\n') + '\n')
+fs.appendFileSync('docs/qa/2026-11-04_便22/gate/mutate22.txt', out.join('\n') + '\n')
