@@ -19,7 +19,7 @@ import { buildLife } from './kamoLife.js'
 const TIMES = {
   morning: { el: 7, az: 115, turb: 6, ray: 1.6, exp: 0.42, sun: 0xffe2c0, sunI: 2.4, hemi: [0xbfd2e6, 0x5a5040, 0.55], fog: 0xd2d6da, fogD: 0.00018 },
   noon: { el: 38, az: 0, turb: 3.5, ray: 1.0, exp: 0.32, sun: 0xfff6ea, sunI: 3.2, hemi: [0xcfe0f2, 0x6a6050, 0.7], fog: 0xc6d4e2, fogD: 0.00014 },
-  dusk: { el: 4.5, az: 290, turb: 5.5, ray: 1.3, exp: 0.4, sun: 0xffa66a, sunI: 2.0, hemi: [0xa8a8c8, 0x403028, 0.45], fog: 0xc6b2a6, fogD: 0.00016 },
+  dusk: { el: 4.5, az: 290, turb: 5.5, ray: 1.3, exp: 0.4, sun: 0xffa66a, sunI: 2.0, hemi: [0xa8a8c8, 0x403028, 1.2], fog: 0xc6b2a6, fogD: 0.00016 },
   night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232, fogD: 0.0002 },
 }
 const timeKey = (t) => (t === 'morning' ? 'morning' : t === 'dusk' || t === 'evening' ? 'dusk' : t === 'night' ? 'night' : 'noon')
@@ -85,6 +85,7 @@ export function buildKamo(data, { renderer, toKamo, roomBox, season = 'autumn', 
   const keep = (x) => { disposables.push(x); return x }
 
   const scene = new THREE.Scene()
+  if (/[?&]dev=1/.test(location.search)) window.__kamoScene = scene // 検証用（便21・?dev=1 の時だけ）: 鴨川の舞台（光と材を切り分けて調べる）
   scene.fog = new THREE.FogExp2(T.fog, T.fogD)
   const camera = new THREE.PerspectiveCamera(60, 1, 1, 26000)
   camera.matrixAutoUpdate = false
@@ -182,7 +183,7 @@ void main() {
     if (DOME) s2 = new THREE.Mesh(new THREE.SphereGeometry(8000, 32, 16), domeMat(domeTop, domeHor))
     else { s2 = new Sky(); s2.scale.setScalar(8000); s2.material.uniforms.sunPosition.value.copy(sunDir); for (const k of ['turbidity', 'rayleigh', 'mieCoefficient', 'mieDirectionalG']) s2.material.uniforms[k].value = su[k].value }
     envScene.add(s2)
-    scene.environment = keep(pmrem.fromScene(envScene, 0, 1, 10000).texture); scene.environmentIntensity = NIGHT ? 0.25 : RAIN ? 0.6 : 0.8
+    scene.environment = keep(pmrem.fromScene(envScene, 0, 1, 10000).texture); scene.environmentIntensity = NIGHT ? 0.25 : RAIN ? 0.6 : TK === 'dusk' ? 1.5 : 0.8 // 便21: 夕方は日の反対側の壁が真っ暗に沈んだので、空の映り込みの光を上げる
     s2.geometry.dispose(); s2.material.dispose(); pmrem.dispose()
   }
 
@@ -286,7 +287,7 @@ vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z 
           else if (hl < 2.72) { // 間口を 1.8m ごとに分け、3つに1つは出入り口の戸（濃い木の板戸と上の明かり取り）、ほかは千本格子（4.5cm おき・遠くは平均の色にならす）
             float bay = floor(al / 1.82 + kR * 3.0), door = step(fract(bay * 0.37 + kR) , 0.3), fw = fwidth(al / 0.045);
             float bar = mix(smoothstep(0.38, 0.52, fract(al / 0.045)), 0.55, smoothstep(0.12, 0.45, fw)); float rail = max(step(abs(hl - 1.0), 0.025), step(abs(hl - 2.42), 0.035)); float frm = step(fract(al / 1.82 + kR * 3.0), 0.035);
-            vec3 lat = mix(vec3(0.03, 0.021, 0.015), vec3(0.17, 0.104, 0.058), max(max(bar, rail), frm));
+            vec3 lat = mix(vec3(0.045, 0.026, 0.018), vec3(0.26, 0.11, 0.065) * (0.85 + 0.3 * fract(kR * 3.7)), max(max(bar, rail), frm)); // 紅殻（べんがら）の赤茶の格子
             vec3 dr = mix(vec3(0.07, 0.042, 0.024), vec3(0.11, 0.07, 0.04), step(0.5, fract(al / 0.3))) * (hl > 2.05 ? 0.5 : 1.0);
             c = mix(lat, max(dr, frm * vec3(0.13, 0.078, 0.043)), door); kGlowC += vec3(1.0, 0.62, 0.3) * 0.2 * (1.0 - max(bar, rail)) * glowOK * step(0.55, hl) * (1.0 - door); }
           else if (hl < 3.12) c = vec3(0.035, 0.03, 0.026);
@@ -463,12 +464,46 @@ float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
     }
     const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I)
     const col = new Float32Array(K.length * 3), uv1 = new Float32Array(K.length * 2), c = new THREE.Color()
-    const CK = [0x55575a, 0xb0a690, 0x8d8a84, 0x6a5e52, 0x7c7a76]
+    // 便21: 5＝河川敷の真砂土の道（明るいベージュ・少し緑に寄せた頂点の色で、写真の模様を砂利の素材に切り替える）
+    const CK = [0x55575a, 0xb0a690, 0x8d8a84, 0x6a5e52, 0x7c7a76, 0xc0b490]
     for (let i = 0; i < K.length; i++) { c.setHex(CK[K[i]]); if (SNOW && K[i] !== 4) c.lerp(WHITE, K[i] === 0 ? 0.35 : 0.55); col.set([c.r, c.g, c.b], i * 3); uv1.set([lmU(P[i * 3]), lmV(P[i * 3 + 2])], i * 2) }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2)); g.computeVertexNormals()
+    // 便21: 道の細かさ（kamoroad=0 は外し回し用）: 車道の白い外側線（縁から 0.3m）と、幅 9m 以上の道の破線の中央線（6m 引いて 3m あける）／歩道の平板の目地／
+    //   河川敷の真砂土の道は縁の草際を濃く・まん中を踏み固めた明るさに／橋の床は両側 2m を歩道（明るい平板と縁石の段の陰）。aRd＝(左 -1・右 +1, 道の長さの位置 m, 幅 m, 種類)
+    const ra = meta.files.roads.secs.along && !/[?&]kamoroad=0/.test(location.search) ? { al: view(data.buf.roads, meta.files.roads.secs.along), wd: view(data.buf.roads, meta.files.roads.secs.width) } : null
+    if (ra) {
+      const rd = new Float32Array(K.length * 4)
+      for (let i = 0; i < p16.length / 3; i++) rd.set([i % 2 ? -1 : 1, ra.al[i], ra.wd[i] / 10, K[i]], i * 4)
+      g.setAttribute('aRd', new THREE.BufferAttribute(rd, 4))
+    }
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.42 : 0.9, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }))
     useBake(m, data.lm.terrain)
-    useTex(m, { a: 'asphalt_02', tile: 5 })
+    useTex(m, ra ? { a: 'asphalt_02', b: 'gravel_road', tile: 5, tileB: 2.2 } : { a: 'asphalt_02', tile: 5 })
+    if (ra) {
+      m.onBeforeCompile = chain(m.onBeforeCompile, (sh) => {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aRd; varying vec4 vRd;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvRd = aRd;')
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec4 vRd;').replace('vec2 tuv = gmix > 0.5 ? tuvB : tuvA;', `vec2 tuv = gmix > 0.5 ? tuvB : tuvA;
+  { int rk = int(vRd.w + 0.5); float hw = vRd.z * 0.5, u = vRd.x * hw, e = hw - abs(u), al = vRd.y;
+    float fwU = max(fwidth(u), 1e-4), fwA = max(fwidth(al), 1e-4);
+    if (rk == 0) {
+      float edge = smoothstep(0.3 - fwU, 0.3, e) * (1.0 - smoothstep(0.45, 0.45 + fwU, e));
+      float cen = hw >= 4.5 ? (1.0 - smoothstep(0.07, 0.07 + fwU, abs(u))) * step(fract(al / 9.0), 0.66) : 0.0;
+      float line = max(edge, cen) * (1.0 - smoothstep(0.4, 1.2, fwA * 0.2 + fwU * 2.0));
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${SNOW ? '0.75, 0.76, 0.78' : '0.62, 0.62, 0.6'}), line * 0.85);
+    } else if (rk == 1) {
+      float jt = max(1.0 - smoothstep(0.0, 0.02 + fwU, abs(fract(u / 0.3 + 0.5) - 0.5) * 0.3), 1.0 - smoothstep(0.0, 0.02 + fwA, abs(fract(al / 0.3) - 0.5) * 0.3));
+      diffuseColor.rgb *= 1.0 - 0.25 * jt * (1.0 - smoothstep(0.2, 0.6, fwA));
+    } else if (rk == 5) {
+      diffuseColor.rgb *= mix(0.72, 1.06, smoothstep(0.0, 0.7, e)) * (0.94 + 0.12 * smoothstep(0.4, 1.4, e));
+    } else if (rk == 2 && hw > 3.0) {
+      float walk = smoothstep(2.0 - fwU, 2.0, e) > 0.5 ? 0.0 : 1.0;
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.41, 0.39) * (0.9 + 0.1 * step(0.5, fract(al / 0.6))), walk);
+      diffuseColor.rgb *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, 0.08 + fwU, abs(e - 2.0)));
+    }
+  }`)
+      })
+      addKey(m, 'road21')
+    }
     const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.castShadow = true; mesh.userData.part = 'roads'; scene.add(mesh)
   }
 
@@ -718,7 +753,8 @@ void main() {`)
     addKey(leafMat, 'leaf')
     const coreGeo = keep(new THREE.IcosahedronGeometry(0.55, low ? 0 : 1)), coreMat = keep(new THREE.MeshStandardMaterial({ roughness: 1 }))
     const bark = texKit('japanese_zelkova_bark')
-    const trunkMat = keep(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, map: bark.d.clone(), normalMap: bark.n.clone() })); trunkMat.map.repeat.set(1, 2); trunkMat.normalMap.repeat.set(1, 2); trunkMat.map.needsUpdate = trunkMat.normalMap.needsUpdate = true; keep(trunkMat.map); keep(trunkMat.normalMap)
+    const TREE21 = !/[?&]kamotree=0/.test(location.search) // 便21: kamotree=0 は外し回し用（前の樹冠と幹）
+    const trunkMat = keep(new THREE.MeshStandardMaterial({ color: TREE21 ? 0x6e6358 : 0xffffff, roughness: 1, map: bark.d.clone(), normalMap: bark.n.clone() })); // 便21: 幹を暗く（明るい棒に見えた） trunkMat.map.repeat.set(1, 2); trunkMat.normalMap.repeat.set(1, 2); trunkMat.map.needsUpdate = trunkMat.normalMap.needsUpdate = true; keep(trunkMat.map); keep(trunkMat.normalMap)
     const trunkGeo = keep(new THREE.CylinderGeometry(0.1, 0.18, 1, low ? 5 : 8, 1, true).translate(0, 0.5, 0))
     // 1本ずつの形と色を先に決める（乱数の順は木の並びのまま＝区画の分け方で木の形が変わらない）
     const CELL = 400, cells = new Map()
@@ -726,8 +762,10 @@ void main() {`)
     for (let i = 0; i < n; i++) {
       const tx = tr[i * 6], ty = tr[i * 6 + 1], tz = tr[i * 6 + 2], h = tr[i * 6 + 3], w = tr[i * 6 + 4], kind = tr[i * 6 + 5], sR = w * 0.5
       q.setFromAxisAngle(up, R() * 6.283)
-      sc.set(sR * (0.9 + R() * 0.25), Math.max(sR * 0.9, h * 0.36) * (0.85 + R() * 0.25), sR * (0.9 + R() * 0.25)) // 樹冠は低く大きく（幹が見えるのは下の 3〜4 割）
-      const crownM = m4.compose(at.set(tx, ty + h - sc.y * 0.8, tz), q, sc).clone()
+      // 便21: 樹冠をもう一回り大きく低く（前は細い幹の上に丸い樹冠が乗った「棒付きの飴」に見えた）。川岸の桜と柳（種類 1）は横へ広く低い。乱数の回る数は前のまま
+      const wide = TREE21 ? (kind === 1 ? 1.32 : 1.16) : 1
+      sc.set(sR * (0.9 + R() * 0.25) * wide, Math.max(sR * 0.9, h * (TREE21 ? 0.44 : 0.36)) * (0.85 + R() * 0.25), sR * (0.9 + R() * 0.25) * wide) // 樹冠は低く大きく（幹が見えるのは下の 3〜4 割）
+      const crownM = m4.compose(at.set(tx, ty + h - sc.y * (TREE21 ? 0.98 : 0.8), tz), q, sc).clone()
       const base = kind === 1 && S === 'spring' ? LEAF[0] : R() < (S === 'autumn' ? 0.55 : 0.3) ? LEAF[0] : LEAF[1]
       c.setHex(base).offsetHSL((R() - 0.5) * 0.03, (R() - 0.5) * 0.1, (R() - 0.5) * 0.08)
       if (SNOW) c.lerp(WHITE, 0.35)

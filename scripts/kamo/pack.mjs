@@ -63,7 +63,8 @@ const rb = fs.readFileSync(`${D}/geo/roads.bin`), rnv = geo.roads.nv, rni = geo.
 const rpos = new Float32Array(rb.buffer.slice(rb.byteOffset, rb.byteOffset + rnv * 12)), ridx = new Uint32Array(rb.buffer.slice(rb.byteOffset + rnv * 12, rb.byteOffset + rnv * 12 + rni * 4)), rkind = new Uint8Array(rb.buffer.slice(rb.byteOffset + rnv * 12 + rni * 4, rb.byteOffset + rnv * 12 + rni * 4 + rnv))
 
 const rp16 = new Int16Array(rnv * 3); for (let i = 0; i < rp16.length; i++) rp16[i] = q16(rpos[i] - POFF[i % 3], ROAD_P)
-const roads = write('roads.bin', { pos: rp16, idx: rnv > 65535 ? Uint32Array.from(ridx) : Uint16Array.from(ridx), kind: rkind }) // 便21: 道の点が 65535 を超えたら並びを 32 ビットに
+const raux = fs.readFileSync(`${D}/geo/roads-aux.bin`) // 便21: 道の長さの位置（float32）と幅（0.1m 刻み）
+const roads = write('roads.bin', { pos: rp16, idx: rnv > 65535 ? Uint32Array.from(ridx) : Uint16Array.from(ridx), kind: rkind, along: new Float32Array(raux.buffer.slice(raux.byteOffset, raux.byteOffset + rnv * 4)), width: new Uint8Array(raux.subarray(rnv * 4, rnv * 5)) }) // 便21: 道の点が 65535 を超えたら並びを 32 ビットに
 
 // ── 川の水面・木・飛び石（小さいので素の数のまま） ──
 const wb = fs.readFileSync(`${D}/geo/water.bin`), wnv = geo.water.nv, wni = geo.water.ni
@@ -107,6 +108,7 @@ const meta = {
   trees: { n: geo.trees.n },
   stones: { n: geo.stones.n, rows: geo.stones.rows }, // 便21: rows＝飛び石の列の両端
   weirs: geo.weirs, // 便21: 堰の線分
+  riverPath: geo.riverPath, // 便21: 河川敷の小道の折れ線（歩く人・走る人・自転車）
   wdepthStep: 0.0025, // 便21: 水の深さの刻み（m）
   view: geo.views.window, // 角部屋の窓（西岸の建物の東の壁の上の階）。yawDeg＝窓の向き（北から東回りの度・便17 #5=1 の東）
   files: { terrain, bldg, roads, misc },

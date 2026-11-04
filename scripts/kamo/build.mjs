@@ -199,7 +199,8 @@ const wdepth = new Uint8Array(near.nx * near.nz) // 便21: 水面の点の水の
 
 // 道・橋・線路・小道（帯）
 const ROADW = { trunk: 14, primary: 13, secondary: 11, tertiary: 9, unclassified: 6, residential: 5.5, living_street: 4.5, service: 3.5, pedestrian: 5, footway: 2.2, path: 2.2, cycleway: 2.5, track: 3, steps: 2 }
-const rpos = [], ridx = [], rkind = [] // kind: 0 車道 1 小道 2 橋の床 3 線路
+const rpos = [], ridx = [], rkind = [] // kind: 0 車道 1 小道 2 橋の床 3 線路（便21: 5 河川敷の真砂土の道）
+const ralong = [], rwidth = [], riverPath = [] // 便21
 let nRoad = 0, nBridge = 0
 const roadPts = [] // 便21: 車道と小道の中心の点（x, z, 種類）
 const stones = [] // 飛び石（ford=stepping_stones）: x, y, z, 向き
@@ -232,8 +233,10 @@ for (const e of osm) {
     }
     continue
   }
-  const w = rw ? 4 : ROADW[hw], kind = rw ? 3 : tag(e, 'bridge') === 'yes' ? 2 : /footway|path|cycleway|track|steps|pedestrian/.test(hw) ? 1 : 0
+  let w = rw ? 4 : ROADW[hw], kind = rw ? 3 : tag(e, 'bridge') === 'yes' ? 2 : /footway|path|cycleway|track|steps|pedestrian/.test(hw) ? 1 : 0
   const pts = P(e.geometry)
+  // 便21: 河川敷の小道（点の 6 割以上が河川敷の範囲）は、幅 3.4m の真砂土の道（種類 5）。歩く人・走る人・自転車が通る（調べ §6）
+  if (kind === 1 && hw !== 'steps') { let zr = 0, zn = 0; for (const [x, z] of pts) { if (!inNear(x, z)) continue; zn++; const i = Math.round((x - EXT.x0) / NEAR_STEP), j = Math.round((z - EXT.z0) / NEAR_STEP); if (zone[j * near.nx + i] === 1) zr++ } if (zn && zr / zn >= 0.6) { kind = 5; w = 3.4 } }
   // 4m ごとに点を足して地面に沿わせる。橋は両端の高さを結ぶ
   const dense = []
   for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 4)); for (let k = 0; k < n; k++) dense.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]) }
@@ -244,13 +247,16 @@ for (const e of osm) {
   while (dense.length && !inNear(dense[dense.length - 1][0], dense[dense.length - 1][1], 6)) dense.pop()
   if (dense.length < 2) continue
   if (kind === 0 || kind === 1) for (let i = 0; i < dense.length; i += 1) roadPts.push(dense[i][0], dense[i][1], kind) // 便21: 建物の表（通りに面する向き）を決める道の点
+  if (kind === 5 && dense.length > 3) riverPath.push(dense.map(([x, z]) => [+x.toFixed(1), +z.toFixed(1)])) // 便21: 河川敷の小道（歩く人・走る人・自転車の道筋・1本ずつの折れ線）
   const ys = dense.map(([x, z]) => ground(x, z))
   if (kind === 2) { const y0 = ys[0], y1 = ys[ys.length - 1]; for (let i = 0; i < ys.length; i++) ys[i] = Math.max(y0 + ((y1 - y0) * i) / (ys.length - 1), WATER_Y + 3) + 0.6; nBridge++ } else nRoad++
   const base = rpos.length / 3
+  let acc = 0
   for (let i = 0; i < dense.length; i++) {
     const a = dense[Math.max(0, i - 1)], b = dense[Math.min(dense.length - 1, i + 1)]
     let dx = b[0] - a[0], dz = b[1] - a[1]; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l
-    const nx = -dz * w * 0.5, nz = dx * w * 0.5, [x, z] = dense[i], lift = kind === 2 ? 0 : kind === 1 ? 0.12 : 0.18
+    const nx = -dz * w * 0.5, nz = dx * w * 0.5, [x, z] = dense[i], lift = kind === 2 ? 0 : kind === 1 || kind === 5 ? 0.12 : 0.18
+    if (i) acc += Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]); ralong.push(acc, acc); rwidth.push(Math.round(w * 10), Math.round(w * 10)) // 便21: 道の長さの位置と幅（白線と目地に使う）
     const yl = kind === 2 ? ys[i] : ground(x + nx, z + nz) + lift, yr = kind === 2 ? ys[i] : ground(x - nx, z - nz) + lift
     rpos.push(x + nx, Number.isNaN(yl) ? ys[i] : yl, z + nz, x - nx, Number.isNaN(yr) ? ys[i] : yr, z - nz); rkind.push(kind, kind)
   }
@@ -483,7 +489,8 @@ const meta = {
   bldg: { nv: bv, ni: bi, count: blds.length, bytes: wr('bldg.bin', [bpos, bidx, bbid]), heights: blds.map((b) => b.h ?? null), usage: blds.map((b) => b.usage ?? null), kyoBytes: wr('bldg-kyo.bin', [style, front]) }, // 便21: 形の種類・通りに面する向き（0〜255＝一周）
   eaves: { n: eaves.length / 3, bytes: wr('eaves.bin', [new Float32Array(eaves), new Uint8Array(ekind)]) }, // 便21: 町家の通り庇と犬矢来
   water: { nv: wpos.length / 3, ni: widx.length, bytes: wr('water.bin', [new Float32Array(wpos), new Uint32Array(widx)]) },
-  roads: { nv: rpos.length / 3, ni: ridx.length, bytes: wr('roads.bin', [new Float32Array(rpos), new Uint32Array(ridx), new Uint8Array(rkind)]) },
+  roads: { nv: rpos.length / 3, ni: ridx.length, bytes: wr('roads.bin', [new Float32Array(rpos), new Uint32Array(ridx), new Uint8Array(rkind)]), auxBytes: wr('roads-aux.bin', [new Float32Array(ralong), new Uint8Array(rwidth)]) }, // 便21: 道の長さの位置・幅（0.1m 刻み）
+  riverPath, // 便21: 河川敷の小道の折れ線
   trees: { n: trees.length, bytes: wr('trees.bin', [new Float32Array(trees.flat())]) },
   stones: { n: stones.length / 4, bytes: wr('stones.bin', [new Float32Array(stones)]), kindBytes: wr('stones-kind.bin', [new Uint8Array(stoneKind)]), rows: stoneRows },
   wdepthBytes: wr('near-wdepth.bin', [wdepth]), // 便21: 水の深さ（0.25cm 刻み）

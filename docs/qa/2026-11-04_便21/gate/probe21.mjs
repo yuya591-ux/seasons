@@ -63,6 +63,7 @@ for (const s of steps) {
   else if (k === 'audio') console.log('音', JSON.stringify(await p.evaluate(() => window.__audioDebug ? window.__audioDebug() : null)))
   else if (k === 'fly' || k === 'walk') { await p.locator('.iconbtn--stage').click({ force: true }).catch(() => {}); await p.waitForTimeout(3500) }
   else if (k === 'eval') console.log('eval', JSON.stringify(await p.evaluate(a)))
+  else if (k === 'jsf') console.log('js', JSON.stringify(await p.evaluate(fs.readFileSync(a, 'utf8')))) // 便21: ファイルに書いた式を読んで回す（コロンを含む式のため）
 }
 console.log('エラー', errs.length, errs.slice(0, 5).join(' ／ '), '注意', warns.slice(0, 5).join(' ／ '))
 await b.close()
