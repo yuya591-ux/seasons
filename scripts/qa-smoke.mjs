@@ -2,7 +2,8 @@
 // 無いこと・情景が落ちずにマウントできることを確認する。1つでも異常があれば exit 1（回帰をビルド後に自動検知）。
 // 使い方: node scripts/qa-smoke.mjs  （vite preview を自前で起動→検査→停止。PORT 環境変数で上書き可）
 import { chromium } from 'playwright'
-import { spawn } from 'node:child_process'
+import { spawn, execSync } from 'node:child_process'
+const spawnSyncKill = (cmd) => { try { execSync(cmd, { stdio: 'ignore' }) } catch { /* もう止まっている */ } }
 import { SCENES } from '../src/data/scenes/index.js'
 
 // 便15 U1: 出典の照らし（アプリ内の出典と情景データ・CREDITS.md）を最初に回す。外れたら開かずに止める
@@ -14,7 +15,8 @@ const ids = SCENES.filter((s) => s.status === 'ready' && s.public !== false).map
 
 // vite preview を子プロセスで起動（CIでもローカルでも自己完結）。shell:true には引数を文字列で渡す（args配列だと非推奨警告）。
 const srv = spawn(`npx vite preview --port ${PORT} --strictPort`, { shell: true, stdio: 'ignore' })
-const cleanup = () => { try { srv.kill() } catch { /* 無視 */ } }
+// 【便22】Windows では srv.kill() が殻（shell）だけを止め、中の npx と vite preview が残り続けた（4938 番が便ごとに溜まった）＝処理の木ごと止める
+const cleanup = () => { try { if (process.platform === 'win32') spawnSyncKill(`taskkill /PID ${srv.pid} /T /F`); else srv.kill() } catch { /* 無視 */ } }
 process.on('exit', cleanup)
 
 async function waitServer(ms = 30000) {

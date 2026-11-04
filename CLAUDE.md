@@ -48,3 +48,4 @@
 ## 便の回し方（2026-10-12 追加）
 - 便の回し方は `~/.claude/skills/_shared/bin-kata.md`。裁定記録は `docs/qa/裁定記録.md`、診断と検収の設定は `.claude/shindan/config.md`
 - ~~push は裕也さんが `! git push origin main` の1行で打つ（Claude Code は push しない）。~~【2026-11-03】本番の問いに裕也さんが「はい」（または `/qa-gate seasons 本番`）と答えた直後に限り、Claude Code が `git push origin main` を打つ（強制の push・ほかの枝・ほかの行き先は打たない。見張り `_ops/tools/bin-guard.mjs` が同じ形だけを通す）。根拠: 裁定記録 49行（2026-10-13）と 2026-11-03 の裕也さんの言葉（出先のリモートでは push の1行を打てない）。main への push で GitHub Pages へ自動で出る
+- 【2026-11-05】便で立てた手元の確かめ用のサーバー（`vite preview --port 49xx`・開発用の `vite --port 4970`）と、前の版を取り出した作業フォルダ（`git worktree` の `../_tmp_binNN_mae`）は、便の終わり（報告PDFを出した後・本番の後）に必ず片付ける: `node scripts/stop-qa-servers.mjs` と `git worktree remove --force ../_tmp_binNN_mae`。重い全テストは、使うサーバーをその段の間だけ立てる（`docs/qa/2026-11-04_便22/gate/audio22-run.mjs` の形）。根拠: 便18〜21 の止め忘れ 8 組（約 900MB）が溜まり、全テストがメモリ不足で3回止められた（裁定記録 2026-11-05・裕也さん「止めて良いです。また再発防止もしてください」）
