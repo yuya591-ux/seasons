@@ -12,6 +12,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js'
 import { Water } from 'three/examples/jsm/objects/Water.js'
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { buildLife } from './kamoLife.js'
 
 // ── 時刻（便17 の試作と同じ値。京都の向き: x 東・z 南。太陽の向きは three の角度で 0＝南） ──
@@ -274,11 +275,21 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     return out
   }
   const vn = (x, z) => { const s = Math.sin(x * 0.071 + z * 0.113) * 0.5 + Math.sin(x * 0.023 - z * 0.041) * 0.5; return s * 0.5 + 0.5 }
+  // ── 便21: 水の深さの図（build.mjs の wdepth・0.25cm 刻み）。水面の透け方・川底の光の網・目の下限に使う。古いデータ（無い時）は前の作り ──
+  const wdepA = meta.files.terrain.secs.wdepth ? view(data.buf.terrain, meta.files.terrain.secs.wdepth) : null, WDS = meta.wdepthStep || 0.0025
+  let depthTex = null
+  if (wdepA) { depthTex = keep(new THREE.DataTexture(wdepA, meta.near.nx, meta.near.nz, THREE.RedFormat, THREE.UnsignedByteType)); depthTex.unpackAlignment = 1; depthTex.magFilter = depthTex.minFilter = THREE.LinearFilter; depthTex.needsUpdate = true }
+  const f5 = (v) => (+v).toFixed(5)
+  const KUV = `vec2 kUV(vec2 p) { return vec2(((p.x - (${f5(NX0)})) / ${f5(meta.near.step)} + 0.5) / ${f5(meta.near.nx)}, ((p.y - (${f5(NZ0)})) / ${f5(meta.near.step)} + 0.5) / ${f5(meta.near.nz)}); }`
+  // 川底に揺れる光の網（日なたの浅い水の底）。強さは時刻と空で決める（朝と昼 1・夕 0.45・曇り 0.4 倍・雨と雪と夜 0）
+  const CAUS = NIGHT || RAIN || SNOW ? 0 : (TK === 'dusk' ? 0.45 : 1) * (sky === 'cloudy' ? 0.4 : 1)
+  const causU = { value: 0 } // 時計は update() で進める
   {
     const cGrass = new THREE.Color(GRASS), cGravel = new THREE.Color(0x8a8272), cWet = new THREE.Color(0x5e5a50), cWall = new THREE.Color(0x8c877c), cTown = new THREE.Color(0x8a867e)
+    const cBed = new THREE.Color(0xa89e8a), cBed2 = new THREE.Color(0x7d8462), cBed3 = new THREE.Color(0xbdb4a0) // 便21: 川底の丸い礫（灰〜茶灰）・苔の緑・明るい礫
     const paint = (c, x, y, z, ny, k) => {
       const h = y - WY, nz = vn(x, z)
-      if (zone[k] === 2) c.copy(cWet).lerp(cGravel, 0.4) // 水面の下（浅い所の川底の石）
+      if (zone[k] === 2) { if (wdepA) { const d = wdepA[k] * WDS; c.copy(cBed).lerp(cBed3, vn(x * 3.1, z * 2.7) * 0.6).lerp(cBed2, Math.min(1, d / 0.42) * 0.55 * vn(x * 1.3 + 7, z * 1.7)).multiplyScalar(0.92 - d * 0.35) } else c.copy(cWet).lerp(cGravel, 0.4) } // 水面の下（浅い所の川底の石）。便21: 浅瀬の川底は明るい礫、深い所ほど苔の緑がかる
       else if (zone[k] === 1) { if (ny < 0.8) c.copy(cWall); else c.copy(cGrass).offsetHSL(0, 0, (nz - 0.5) * 0.1).lerp(cGravel, Math.max(0, 1 - Math.abs(h - 0.4)) * 0.6) } // 河川敷の草・水際の砂利・護岸
       else if (ny < 0.8) c.copy(cWall)
       else c.copy(cTown).lerp(cGrass, nz * 0.12) // 町の地面（道と建物の間）
@@ -287,6 +298,25 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.6 : 0.95, metalness: 0 }))
     useBake(m, data.lm.terrain)
     useTex(m, { a: 'gravel_road', b: 'grass_path_2', tile: 3.2, tileB: 3.5 })
+    if (depthTex) { // 便21: 川底のこぶし大の丸い礫（近くだけ）と、日なたの光の網（水の深さが 1cm 以上の所だけ・浅い所から深い所へ薄れる）
+      m.onBeforeCompile = chain(m.onBeforeCompile, (sh) => {
+        sh.uniforms.uDepth = { value: depthTex }; sh.uniforms.uCT = causU
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+uniform sampler2D uDepth; uniform float uCT;
+${KUV}
+float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
+  for (int i = 0; i < 3; i++) { q += vec2(sin(q.y * 1.7 + t * 0.9 + float(i)), cos(q.x * 1.3 - t * 0.7)) * 0.65; c += 1.0 / (1.0 + 9.0 * abs(sin(q.x) + sin(q.y))); }
+  return c / 3.0; }`).replace('#include <color_fragment>', `#include <color_fragment>
+  { float kd = texture2D(uDepth, kUV(vGW.xz)).r * ${f5(WDS * 255)};
+    if (kd > 0.01) { float cs = kCaus(vGW.xz, uCT * 1.3) * kCaus(vGW.xz * 0.7 + 3.1, uCT * 1.1 + 2.0);
+      diffuseColor.rgb *= 0.9 + cs * ${f5(4.0 * CAUS)} * smoothstep(0.01, 0.06, kd) * (1.0 - smoothstep(0.25, 0.5, kd) * 0.5);
+      vec2 g = vGW.xz * 4.5, ip = floor(g), fp = fract(g); float d1 = 8.0, d2 = 8.0, tone = 0.5;
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) { vec2 o = vec2(float(i), float(j)), cc = ip + o; vec2 h = fract(sin(vec2(dot(cc, vec2(127.1, 311.7)), dot(cc, vec2(269.5, 183.3)))) * 43758.5453); vec2 r = o + h * 0.8 + 0.1 - fp; float d = dot(r, r); if (d < d1) { d2 = d1; d1 = d; tone = h.x; } else if (d < d2) d2 = d; }
+      float near = 1.0 - smoothstep(0.25, 0.7, length(fwidth(g)));
+      diffuseColor.rgb *= mix(1.0, mix(0.5, 1.0, smoothstep(0.0, 0.14, sqrt(d2) - sqrt(d1))) * (0.8 + 0.4 * tone), near * smoothstep(0.0, 0.03, kd)); } }`)
+      })
+      addKey(m, 'caus')
+    }
     for (const g of gridTiles({ nx: meta.near.nx, nz: meta.near.nz, x0: NX0, z0: NZ0, step: meta.near.step, hs: terrain, hq: meta.near.hStep, dec: low ? 2 : 1, tiles: [6, 4], paint, withUv1: true })) {
       const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.castShadow = true; mesh.userData.part = 'terrainNear'; scene.add(mesh)
     }
@@ -347,13 +377,14 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const hx = H[j * n + (i + 1) % n] - H[j * n + (i - 1 + n) % n], hy = H[((j + 1) % n) * n + i] - H[((j - 1 + n) % n) * n + i]; v.set(-hx * 0.9, -hy * 0.9, 1).normalize(); d.set([(v.x * 0.5 + 0.5) * 255, (v.y * 0.5 + 0.5) * 255, (v.z * 0.5 + 0.5) * 255, 255], (j * n + i) * 4) }
     const t = new THREE.DataTexture(d, n, n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; waterMs = Math.round(performance.now() - tW0); return keep(t)
   }
-  let water, waveTop20 = null, waterMs = null, waterRot = false // 便19: 水面の図を作った時間（ms）・読む向きを回す差し替えが効いたか（検査 K15）
+  let water, waveTop20 = null, waterMs = null, waterRot = false, waterShallow = false // 便19: 水面の図を作った時間（ms）・読む向きを回す差し替えが効いたか（検査 K15）。便21: 浅瀬の水の差し替えが効いたか
   {
     const sec = meta.files.misc.secs, wp = view(data.buf.misc, sec.wpos), wi = view(data.buf.misc, sec.widx), nv = meta.water.nv
     const lp = new Float32Array(nv * 3); for (let i = 0; i < nv; i++) { lp[i * 3] = wp[i * 3]; lp[i * 3 + 1] = -wp[i * 3 + 2]; lp[i * 3 + 2] = wp[i * 3 + 1] - WY } // 水面の板の中の座標（回して y=WY に置く）
     const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(lp, 3)); g.setIndex(new THREE.BufferAttribute(Uint32Array.from(wi), 1)); g.computeVertexNormals()
     const tw = low ? 512 : 1024
-    water = new Water(g, { textureWidth: tw, textureHeight: tw, waterNormals: waterNormals(), sunDirection: sunDir.clone(), sunColor: NIGHT ? 0x445066 : RAIN || SNOW ? 0x8a929c : T.sun, waterColor: SNOW ? 0x223238 : RAIN ? 0x262f30 : 0x2a3b38, distortionScale: RAIN ? 3.2 : 2.2, fog: true, alpha: 1 })
+    // 便21: 水の色は澄んだ浅瀬の緑がかった色（前の濃い紺 0x2a3b38 は深く見えて怖かった＝裁定記録 便21）。雨の日は濁った茶緑
+    water = new Water(g, { textureWidth: tw, textureHeight: tw, waterNormals: waterNormals(), sunDirection: sunDir.clone(), sunColor: NIGHT ? 0x445066 : RAIN || SNOW ? 0x8a929c : T.sun, waterColor: SNOW ? 0x3a4a4c : RAIN ? 0x4a4c3c : NIGHT ? 0x1e2a2a : 0x4f6a5c, distortionScale: RAIN ? 3.2 : 2.2, fog: true, alpha: 1 })
     water.material.side = THREE.DoubleSide
     // 便19: 凹凸の図の4つの重ねを、向きと大きさを変えて読む（前は 1/103 と 1/107 の2つが同じ向きで重なり、格子のうなりが出た）
     if (!/[?&]kamowave=0/.test(location.search)) {
@@ -367,6 +398,56 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
 				}`)
       waterRot = water.material.fragmentShader.includes('mat2( 0.8253') // 差し替えの文が合わなくなると黙って元のままになるので、効いたかを残す
       water.material.needsUpdate = true
+    }
+    // 便21: 浅瀬の水（kamoshallow=0 は外し回し用＝前の不透明な水）。
+    //   ・川底が透ける: 真上から見るほど透け、寝た角度ほど空と岸が映る。浅い所ほど透ける（水の深さの図）
+    //   ・流れ: 賀茂川と高野川はデルタの先へ、合流の後は南へ。波の模様を流れの向きに運ぶ（2つの位相を交互に混ぜて、模様が伸びない形）
+    //   ・白いさざ波: 堰（落差工・帯工）と飛び石の列の下流 7m に、流れに沿った白い筋（調べ §6「滝のような白い帯ではなく、さざ波の白い筋」）
+    if (depthTex && !/[?&]kamoshallow=0/.test(location.search)) {
+      const segs = [...(meta.weirs || []), ...((meta.stones && meta.stones.rows) || [])], NSEG = Math.min(32, segs.length / 4)
+      const segU = []; for (let i = 0; i < 32; i++) segU.push(i < NSEG ? new THREE.Vector4(segs[i * 4], segs[i * 4 + 1], segs[i * 4 + 2], segs[i * 4 + 3]) : new THREE.Vector4())
+      const clar = NIGHT ? 0.9 : RAIN ? 0.72 : SNOW ? 0.62 : TK === 'dusk' ? 0.42 : 0.3
+      const foamLit = NIGHT ? new THREE.Color(0.05, 0.055, 0.065) : new THREE.Color(T.sun).multiplyScalar(0.55 * SK.sunK).add(new THREE.Color(T.hemi[0]).multiplyScalar(0.35))
+      Object.assign(water.material.uniforms, { uDepth: { value: depthTex }, uSeg: { value: segU }, uNSeg: { value: NSEG }, uClar: { value: clar }, uFoamLit: { value: foamLit } })
+      let fs = water.material.fragmentShader
+      fs = fs.replace('void main() {', `uniform sampler2D uDepth; uniform vec4 uSeg[32]; uniform float uNSeg; uniform float uClar; uniform vec3 uFoamLit;
+${KUV}
+vec2 kFlow(vec2 p) {
+  vec2 tip = vec2(-62.0, 60.0), toTip = tip - p; float L = length(toTip);
+  vec2 up = L > 0.5 ? toTip / L : vec2(0.0, 1.0), dn = normalize(vec2(-0.06, 1.0));
+  return normalize(mix(up, dn, smoothstep(tip.y - 30.0, tip.y + 10.0, p.y)));
+}
+vec4 kFlowNoise(vec2 p) {
+  vec2 f = kFlow(p) * 3.5; float ph = time * 0.45, t0 = fract(ph), t1 = fract(ph + 0.5), w = abs(t0 * 2.0 - 1.0);
+  return mix(getNoise((p - f * t0) * size), getNoise((p - f * t1 + vec2(19.3, 7.7)) * size), w);
+}
+float kSegFoam(vec2 p, vec2 fl) {
+  float best = 0.0;
+  for (int i = 0; i < 32; i++) { if (float(i) >= uNSeg) break;
+    vec4 s = uSeg[i]; vec2 ab = s.zw - s.xy; float t = clamp(dot(p - s.xy, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+    vec2 q = p - (s.xy + ab * t); float along = dot(q, fl); float across = length(q - fl * along);
+    best = max(best, (1.0 - smoothstep(0.0, 7.0, along)) * smoothstep(-0.6, 0.3, along) * (1.0 - smoothstep(0.6, 1.6, across)));
+  }
+  return best;
+}
+void main() {`)
+      fs = fs.replace('vec4 noise = getNoise( worldPosition.xz * size );', 'vec4 noise = kFlowNoise( worldPosition.xz );')
+      fs = fs.replace(/float theta = max\( dot\( eyeDirection, surfaceNormal \), 0\.0 \);[\s\S]*?gl_FragColor = vec4\( outgoingLight, alpha \);/, `float theta = max( dot( eyeDirection, surfaceNormal ), 0.0 );
+					float reflectance = 0.02 + 0.98 * pow( ( 1.0 - theta ), 5.0 );
+					vec2 kp = worldPosition.xz; float dep = texture2D( uDepth, kUV( kp ) ).r * ${f5(WDS * 255)};
+					vec2 fl = kFlow( kp ), pr = vec2( fl.y, -fl.x );
+					float n1 = texture2D( normalSampler, vec2( dot( kp, pr ) * 0.35, dot( kp, fl ) * 0.06 - time * 0.9 ) ).r - 0.5;
+					float n2 = texture2D( normalSampler, vec2( dot( kp, pr ) * 0.9 + 0.3, dot( kp, fl ) * 0.15 - time * 1.4 ) ).g - 0.5;
+					float streak = smoothstep( -0.02, 0.22, n1 + n2 );
+					float foam = kSegFoam( kp, fl ) * streak + ( 1.0 - smoothstep( 0.03, 0.11, dep ) ) * 0.22 * streak;
+					vec3 body = waterColor * ( 0.6 + 0.4 * getShadowMask() ) * ( sunColor * 0.25 + vec3( 0.55 ) );
+					float aBody = mix( uClar * 0.45, uClar, smoothstep( 0.04, 0.4, dep ) );
+					vec3 outgoingLight = mix( body, reflectionSample, reflectance ) + specularLight;
+					float a = clamp( aBody + reflectance * ( 1.0 - aBody ) + dot( specularLight, vec3( 0.25 ) ), 0.0, 1.0 );
+					outgoingLight = mix( outgoingLight, uFoamLit, foam ); a = mix( a, 1.0, foam * 0.85 );
+					gl_FragColor = vec4( outgoingLight, a );`)
+      waterShallow = fs.includes('kSegFoam( kp, fl )') && fs.includes('kFlowNoise( worldPosition.xz )') // 差し替えが効いたか（検査）
+      water.material.fragmentShader = fs; water.material.transparent = true; water.material.needsUpdate = true
     }
     water.rotation.x = -Math.PI / 2; water.position.y = WY; water.material.uniforms.size.value = 2.2
     keep(water.material); water.userData.part = 'water'; scene.add(water)
@@ -535,9 +616,51 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   }
 
   // ── 飛び石（鴨川デルタの亀と千鳥の石。形は計算で丸めた平たい石） ──
+  // 便21: 本物は明るい灰色のコンクリートの石で、角の丸い長方形が多く、ときどき亀（丸い甲羅と頭）と千鳥（鳥）の形（調べ §7）。
+  //   水に浸かる下の方は濃い灰〜苔の緑。石の上は水面の 12cm 上（build.mjs）。形の種類が無い古いデータは、前の丸めた石
+  const stoneKinds = { n: 0, byKind: [0, 0, 0, 0] }
   {
     const st = view(data.buf.misc, meta.files.misc.secs.stones), n = st.length / 4
-    if (n) {
+    const sk = meta.files.misc.secs.stoneKind ? view(data.buf.misc, meta.files.misc.secs.stoneKind) : null
+    if (n && sk) {
+      const shade = (g) => { // 水に浸かる下の方を濃く・苔の色に（頂点の色）
+        const p = g.attributes.position, col = new Float32Array(p.count * 3), lo = new THREE.Color(0x5a6152), hi = new THREE.Color(SNOW ? 0xd8dadc : 0xc4c1b8), c = new THREE.Color()
+        for (let i = 0; i < p.count; i++) { c.copy(lo).lerp(hi, THREE.MathUtils.smoothstep(p.getY(i), -0.26, -0.06)); col.set([c.r, c.g, c.b], i * 3) }
+        g.setAttribute('color', new THREE.BufferAttribute(col, 3)); return g
+      }
+      const rect = () => { const g = new RoundedBoxGeometry(1.0, 0.55, 0.58, 2, 0.09); g.translate(0, -0.275, 0); return shade(g) }
+      const turtle = () => {
+        const parts = []
+        const base = new RoundedBoxGeometry(0.95, 0.42, 1.2, 2, 0.12); base.translate(0, -0.42, 0); parts.push(base)
+        const shell = new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2); shell.scale(0.5, 0.24, 0.62); shell.translate(0, -0.24, -0.02); parts.push(shell)
+        const head = new THREE.SphereGeometry(0.15, 12, 8); head.scale(1, 0.8, 1.25); head.translate(0, -0.16, 0.74); parts.push(head)
+        for (const [sx, sz] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) { const f = new THREE.SphereGeometry(1, 10, 6); f.scale(0.2, 0.06, 0.12); f.rotateY(sx * sz * 0.5); f.translate(sx * 0.5, -0.2, sz * 0.36); parts.push(f) }
+        const tail = new THREE.ConeGeometry(0.07, 0.2, 8); tail.rotateX(-Math.PI / 2); tail.translate(0, -0.2, -0.7); parts.push(tail)
+        const g = BGU.mergeGeometries(parts.map((x) => x.toNonIndexed())); parts.forEach((x) => x.dispose()); g.computeVertexNormals(); return shade(g)
+      }
+      const plover = () => { // 上から見た千鳥（丸い胴・丸い頭・短いくちばし・とがった尾）を、平たく押し出した石
+        const s = new THREE.Shape()
+        s.moveTo(0, -0.62); s.lineTo(0.16, -0.36); s.quadraticCurveTo(0.42, -0.1, 0.36, 0.18); s.quadraticCurveTo(0.3, 0.36, 0.17, 0.42)
+        s.absarc(0, 0.52, 0.2, -0.55, Math.PI + 0.55, false); s.quadraticCurveTo(-0.3, 0.36, -0.36, 0.18); s.quadraticCurveTo(-0.42, -0.1, -0.16, -0.36); s.lineTo(0, -0.62)
+        const g = new THREE.ExtrudeGeometry(s, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2, curveSegments: 10 })
+        g.rotateX(Math.PI / 2); g.translate(0, -0.05, 0)
+        const beak = new THREE.ConeGeometry(0.06, 0.16, 8); beak.rotateX(Math.PI / 2); beak.translate(0, -0.12, 0.78)
+        const m = BGU.mergeGeometries([g.toNonIndexed(), beak.toNonIndexed()]); g.dispose(); beak.dispose(); m.computeVertexNormals(); return shade(m)
+      }
+      const geos = [keep(rect()), keep(turtle()), keep(plover())]
+      const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.45 : 0.82 }))
+      useTex(m, { a: 'concrete_wall_004', tile: 1.2, mode: 'tri', ns: 0.6 })
+      const lists = [[], [], []]
+      for (let i = 0; i < n; i++) { const k = sk[i] === 3 ? 0 : Math.min(2, sk[i]); lists[k].push(i); stoneKinds.byKind[sk[i]]++ }
+      stoneKinds.n = n
+      const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1), at = new THREE.Vector3()
+      lists.forEach((L, k) => {
+        if (!L.length) return
+        const im = new THREE.InstancedMesh(geos[k], m, L.length)
+        L.forEach((i, j) => { q.setFromAxisAngle(up, st[i * 4 + 3]); m4.compose(at.set(st[i * 4], st[i * 4 + 1], st[i * 4 + 2]), q, one); im.setMatrixAt(j, m4) })
+        im.castShadow = im.receiveShadow = true; im.userData.part = 'stones'; im.computeBoundingSphere(); scene.add(im)
+      })
+    } else if (n) {
       const g = keep(new THREE.IcosahedronGeometry(1, 2)), p = g.attributes.position
       for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, x * 0.62, Math.max(-0.2, y) * 0.32, z * 0.48) }
       g.computeVertexNormals()
@@ -576,7 +699,8 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   }
   const wetK = (X, Z) => gridAt(X, Z, (k) => (zone[k] === 2 ? 1 : 0)) // 水面の度合い（0.5 以上を水とする）
   const zoneK = (X, Z) => zone[Math.round(Math.min(nNZ - 1, Math.max(0, (Z - NZ0) / nS))) * nN + Math.round(Math.min(nN - 1, Math.max(0, (X - NX0) / nS)))]
-  const floorK = (X, Z) => terrK(X, Z) + Math.min(1, wetK(X, Z) * 2) * 0.6 // 目の下限の元（水の上は水面＝川底の 0.6m 上・build.mjs）
+  // ~~目の下限の元（水の上は水面＝川底の 0.6m 上・build.mjs）~~（【便21】川底は水の深さの図のとおり＝水面は川底＋その深さ）
+  const floorK = wdepA ? (X, Z) => terrK(X, Z) + gridAt(X, Z, (k) => wdepA[k] * WDS) : (X, Z) => terrK(X, Z) + Math.min(1, wetK(X, Z) * 2) * 0.6
   const EDGE = 40 // 近くの地形の網の縁から 40m 内側まで（網の縁は遠くの網との継ぎ目）
   const outK = (X, Z) => X < NX0 + EDGE || X > NX1 - EDGE || Z < NZ0 + EDGE || Z > NZ1 - EDGE
   const GC = 2, GN = Math.ceil(NW / GC), GNZ = Math.ceil(ND / GC) // 便21: 表は東西 GN 升・南北 GNZ 升
@@ -677,9 +801,16 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   const farK = (X, Z) => { const u = Math.min(fN - 1.001, Math.max(0, (X + fR) / fS)), v = Math.min(fN - 1.001, Math.max(0, (Z + fR) / fS)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * fN + i
     return ((farH[k] * (1 - fu) + farH[k + 1] * fu) * (1 - fv) + (farH[k + fN] * (1 - fu) + farH[k + fN + 1] * fu) * fv) * fQ }
   let life = null, lifeMs = null
+  // 便21: 渡る人が跳ぶ石（すれ違いの石＝形 3 は渡る列に入れない）
+  function hopStones() {
+    const st = view(data.buf.misc, meta.files.misc.secs.stones), sk = meta.files.misc.secs.stoneKind ? view(data.buf.misc, meta.files.misc.secs.stoneKind) : null
+    if (!sk) return st
+    const out = []; for (let i = 0; i < st.length / 4; i++) if (sk[i] !== 3) out.push(st[i * 4], st[i * 4 + 1], st[i * 4 + 2], st[i * 4 + 3])
+    return new Float32Array(out)
+  }
   try {
     const tL0 = performance.now()
-    if (data.life && !/[?&]kamolife=0/.test(location.search)) life = buildLife({ scene, camera, renderer, life: data.life, terrK: terrFull, farK, wetK, zoneK, WY, stones: view(data.buf.misc, meta.files.misc.secs.stones), S, TK, sky, low, reduceMotion, onSound, keep })
+    if (data.life && !/[?&]kamolife=0/.test(location.search)) life = buildLife({ scene, camera, renderer, life: data.life, terrK: terrFull, farK, wetK, zoneK, WY, stones: hopStones(), S, TK, sky, low, reduceMotion, onSound, keep })
     lifeMs = Math.round(performance.now() - tL0)
   } catch (e) { console.warn('鴨川の町の動く物を組めなかったので、動く物なしで開きます:', e && e.message); life = null }
 
@@ -702,6 +833,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     tAcc += dt
     water.material.uniforms.time.value += dt * 0.35
     for (const u of windU) u.value = tAcc
+    causU.value = tAcc // 便21: 川底の光の網の時計
     if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null; scene.traverse((o) => { if (o.userData && /^(people|birds|train|okuribi)$/.test(o.userData.part)) o.visible = false }) } } // 【便20・外の目】止めた時は、動く物をその場で固まらせずに隠す
   }
 
@@ -770,7 +902,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {

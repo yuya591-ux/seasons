@@ -41,7 +41,8 @@ const nearH = new Int16Array(nearP.length / 3), farH = new Int16Array(farP.lengt
 for (let i = 0; i < nearH.length; i++) nearH[i] = q16(nearP[i * 3 + 1], NEAR_H)
 for (let i = 0; i < farH.length; i++) farH[i] = q16(farP[i * 3 + 1], FAR_H)
 const zone = new Uint8Array(fs.readFileSync(`${D}/geo/near-zone.bin`))
-const terrain = write('terrain.bin', { near: nearH, zone, far: farH })
+const wdepth = new Uint8Array(fs.readFileSync(`${D}/geo/near-wdepth.bin`)) // 便21: 水の深さ（0.25cm 刻み）
+const terrain = write('terrain.bin', { near: nearH, zone, far: farH, wdepth })
 
 // ── 建物（焼いた図の位置つき・三角形ごとに角3つ） ──
 // 便21: 範囲を東へ広げて ±819m（0.025m 刻み）に収まらなくなったので、範囲の中心（POFF）を引いてから 0.045m 刻みで詰める
@@ -70,6 +71,7 @@ const misc = write('misc.bin', {
   widx: Uint16Array.from(new Uint32Array(wb.buffer.slice(wb.byteOffset + wnv * 12, wb.byteOffset + wnv * 12 + wni * 4))),
   trees: f32('geo/trees.bin'),
   stones: f32('geo/stones.bin'),
+  stoneKind: new Uint8Array(fs.readFileSync(`${D}/geo/stones-kind.bin`)), // 便21: 石の形
 })
 
 // ── 焼いた光の図（灰色の JPEG）・質感の素材 ──
@@ -101,7 +103,9 @@ const meta = {
   roads: { nv: rnv, ni: rni, pStep: ROAD_P, pOff: POFF },
   water: { nv: wnv, ni: wni },
   trees: { n: geo.trees.n },
-  stones: { n: geo.stones.n },
+  stones: { n: geo.stones.n, rows: geo.stones.rows }, // 便21: rows＝飛び石の列の両端
+  weirs: geo.weirs, // 便21: 堰の線分
+  wdepthStep: 0.0025, // 便21: 水の深さの刻み（m）
   view: geo.views.window, // 角部屋の窓（西岸の建物の東の壁の上の階）。yawDeg＝窓の向き（北から東回りの度・便17 #5=1 の東）
   files: { terrain, bldg, roads, misc },
   tex: TEX,

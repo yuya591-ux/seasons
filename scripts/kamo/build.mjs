@@ -151,10 +151,21 @@ for (const r of waterRings) {
 function same2(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.01 }
 function waterAt(x, z) { let m = 1e9; for (let dz = -16; dz <= 16; dz += 4) for (let dx = -16; dx <= 16; dx += 4) { const g = ground(x + dx, z + dz); if (!Number.isNaN(g)) m = Math.min(m, g) } return Math.min(m === 1e9 ? WATER_Y : m + 0.2, WATER_Y + 4) } // 水面の縁はまわりの低い所＋0.2m（川は北の上流ほど少し高い）
 log.push(`川の水面: 輪 ${waterRings.length}・三角形 ${widx.length / 3}・水面の高さの基準 ${WATER_Y.toFixed(2)} m`)
+// 便21: 堰（落差工・帯工＝waterway=weir）。水の中の所だけを、3 本までの線分にして渡す（下流の白いさざ波に使う・調べ §6）
+const weirs = []
+for (const e of osm) {
+  if (e.type !== 'way' || !e.geometry || tag(e, 'waterway') !== 'weir') continue
+  const pts = P(e.geometry).filter(([x, z]) => inNear(x, z, 6) && (inWater(x, z) || inWater(x + 3, z) || inWater(x - 3, z) || inWater(x, z + 3) || inWater(x, z - 3)))
+  if (pts.length < 2) continue
+  const step = Math.max(1, Math.ceil((pts.length - 1) / 3))
+  for (let i = 0; i < pts.length - 1; i += step) { const j = Math.min(pts.length - 1, i + step); weirs.push(+pts[i][0].toFixed(2), +pts[i][1].toFixed(2), +pts[j][0].toFixed(2), +pts[j][1].toFixed(2)) }
+}
+log.push(`堰: 線分 ${weirs.length / 4}`)
 
 // 河川敷の範囲: 近くの地形の網の点のうち、水面の内側から、水面の高さ＋3.5m より低い所を 70m まで広げた所（堤の壁で止まる）
 const zone = new Uint8Array(near.nx * near.nz) // 0 町・1 河川敷・2 水面
 const wyAt = new Float32Array(near.nx * near.nz) // 便21: 網の点ごとの水面の高さ（水面と河川敷の点だけ）。川底の深さを決めるのに使う
+const wdepth = new Uint8Array(near.nx * near.nz) // 便21: 水面の点の水の深さ（0.25cm 刻み・水でない所は 0）
 {
   const n = near.nx, nz = near.nz, q = [], dist = new Float32Array(n * nz).fill(1e9)
   for (let j = 0; j < nz; j++) for (let i = 0; i < n; i++) { const k = j * n + i, x = EXT.x0 + i * NEAR_STEP, z = EXT.z0 + j * NEAR_STEP; if (inWater(x, z)) { zone[k] = 2; wyAt[k] = waterAt(x, z); dist[k] = 0; q.push(k) } }
@@ -167,8 +178,21 @@ const wyAt = new Float32Array(near.nx * near.nz) // 便21: 網の点ごとの水
       zone[kk] = 1; wyAt[kk] = wyAt[k]; dist[kk] = d; q.push(kk)
     }
   }
-  // 水面の内側の地面は、水面の 0.6m 下へ下げる（10m の粗い標高で埋めた所が水面より高く、川が隠れるため）
-  for (let k = 0; k < n * nz; k++) if (zone[k] === 2) near.pos[k * 3 + 1] = Math.min(near.pos[k * 3 + 1], wyAt[k] - 0.6)
+  // ~~水面の内側の地面は、水面の 0.6m 下へ下げる（10m の粗い標高で埋めた所が水面より高く、川が隠れるため）~~（【便21】下の浅瀬の形にした）
+  // 便21: 鴨川はふだん くるぶし〜すね の浅瀬（調べ §6・写真で 10〜30cm）。川底は水際から離れるほど深く（水際の次の点 12cm → 中ほど 42cm まで）、
+  //   瀬と淵のゆるいうねり（0.75〜1.25 倍）を掛ける。深さ（wdepth・0.25cm 刻み）は本体へ渡し、水の透け方・川底の光の網・目の下限に使う
+  const dEdge = new Float32Array(n * nz).fill(1e9), q2 = []
+  for (let k = 0; k < n * nz; k++) if (zone[k] !== 2) { dEdge[k] = 0; q2.push(k) }
+  for (let h = 0; h < q2.length; h++) {
+    const k = q2[h], i = k % n, j = (k - i) / n
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= n || jj >= nz) continue; const kk = jj * n + ii; if (dEdge[kk] <= dEdge[k] + NEAR_STEP) continue; dEdge[kk] = dEdge[k] + NEAR_STEP; q2.push(kk) }
+  }
+  for (let k = 0; k < n * nz; k++) if (zone[k] === 2) {
+    const x = EXT.x0 + (k % n) * NEAR_STEP, z = EXT.z0 + Math.floor(k / n) * NEAR_STEP
+    const swell = 1 + 0.25 * Math.sin(x * 0.043 + z * 0.061) * Math.sin(x * 0.017 - z * 0.029 + 1.3)
+    const deep = Math.min(0.42, 0.02 + dEdge[k] * 0.025) * swell
+    near.pos[k * 3 + 1] = wyAt[k] - deep; wdepth[k] = Math.min(255, Math.round(deep * 400))
+  }
   let c1 = 0, c2 = 0; for (const z of zone) { if (z === 1) c1++; if (z === 2) c2++ }
   log.push(`河川敷の範囲: 水面 ${c2} 点・河川敷 ${c1} 点（${NEAR_STEP}m 間隔）`)
 }
@@ -178,15 +202,33 @@ const ROADW = { trunk: 14, primary: 13, secondary: 11, tertiary: 9, unclassified
 const rpos = [], ridx = [], rkind = [] // kind: 0 車道 1 小道 2 橋の床 3 線路
 let nRoad = 0, nBridge = 0
 const stones = [] // 飛び石（ford=stepping_stones）: x, y, z, 向き
+const stoneKind = [] // 便21: 石の形 0 角の丸い長方形・1 亀・2 千鳥・3 すれ違いの石（渡る列に入れない）
+const stoneRows = [] // 便21: 飛び石の列の両端（水の中の所）[ax, az, bx, bz]。下流の白いさざ波に使う
 for (const e of osm) {
   if (e.type !== 'way' || !e.geometry) continue
   const hw = tag(e, 'highway'), rw = tag(e, 'railway')
   if (!(hw in ROADW) && !(rw === 'rail' || rw === 'light_rail')) continue
   if (tag(e, 'tunnel') === 'yes' || tag(e, 'layer') && +tag(e, 'layer') < 0) continue
-  if (tag(e, 'ford') === 'stepping_stones') { // 帯にせず、水面の少し上に 1.7m ごとに石を並べる（水の外は小道と同じ扱いにしない）
-    const pts = P(e.geometry)
-    for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / 1.7)), rot = Math.atan2(bx - ax, bz - az)
-      for (let k = 0; k <= n; k++) { const x = ax + ((bx - ax) * k) / n, z = az + ((bz - az) * k) / n; if (inWater(x, z)) stones.push(x, waterAt(x, z) + 0.28, z, rot) } }
+  if (tag(e, 'ford') === 'stepping_stones') {
+    // ~~帯にせず、水面の少し上に 1.7m ごとに石を並べる（水の外は小道と同じ扱いにしない）~~（【便21】下の形にした）
+    // 便21: 鴨川デルタの飛び石は2列・計83基・約90m（調べ §7）＝石の中心は約 1.1m おき。まっすぐでなく、左右へ 0.15〜0.3m ずつ千鳥にずらし（人の歩幅で渡れる＝石と石の間は 0.6m 以内）、
+    //   ところどころに下流側へ並べた「すれ違いの石」を置く。形は長方形が多く、ときどき亀（甲羅と頭）と千鳥（鳥）。石の上は水面の 12cm 上
+    const pts = P(e.geometry).filter(([x, z]) => inNear(x, z, 6))
+    if (pts.length < 2) continue
+    const dense = []; for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1], L = Math.hypot(bx - ax, bz - az), m = Math.max(1, Math.ceil(L / 0.25)); for (let k = 0; k < m; k++) dense.push([ax + ((bx - ax) * k) / m, az + ((bz - az) * k) / m]) }
+    dense.push(pts[pts.length - 1])
+    const wet = dense.filter(([x, z]) => inWater(x, z)); if (wet.length < 2) continue
+    stoneRows.push(+wet[0][0].toFixed(2), +wet[0][1].toFixed(2), +wet[wet.length - 1][0].toFixed(2), +wet[wet.length - 1][1].toFixed(2))
+    let acc = 0, idx = 0
+    for (let i = 1; i < wet.length; i++) {
+      acc += Math.hypot(wet[i][0] - wet[i - 1][0], wet[i][1] - wet[i - 1][1]); if (acc < 1.1 && i !== 1) continue
+      acc = 0; idx++
+      const [x0, z0] = wet[i], [xp, zp] = wet[i - 1], tx = x0 - xp, tz = z0 - zp, tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl, rot = Math.atan2(tx, tz)
+      const side = (idx % 2 ? 1 : -1) * (0.15 + 0.15 * Math.abs(Math.sin(idx * 2.31))), kind = idx % 7 === 3 ? 1 : idx % 11 === 6 ? 2 : 0
+      const x = x0 + nx * side, z = z0 + nz * side
+      stones.push(x, waterAt(x, z) + 0.12, z, rot + (Math.sin(idx * 1.7) * 0.12)); stoneKind.push(kind)
+      if (idx % 9 === 5) { const fx = tx / tl, fz = tz / tl, bxx = x - nx * side * 2.6 + fx * 0.1, bzz = z - nz * side * 2.6 + fz * 0.1; stones.push(bxx, waterAt(bxx, bzz) + 0.12, bzz, rot); stoneKind.push(3) } // すれ違いの石（列の反対側）
+    }
     continue
   }
   const w = rw ? 4 : ROADW[hw], kind = rw ? 3 : tag(e, 'bridge') === 'yes' ? 2 : /footway|path|cycleway|track|steps|pedestrian/.test(hw) ? 1 : 0
@@ -338,7 +380,9 @@ const meta = {
   water: { nv: wpos.length / 3, ni: widx.length, bytes: wr('water.bin', [new Float32Array(wpos), new Uint32Array(widx)]) },
   roads: { nv: rpos.length / 3, ni: ridx.length, bytes: wr('roads.bin', [new Float32Array(rpos), new Uint32Array(ridx), new Uint8Array(rkind)]) },
   trees: { n: trees.length, bytes: wr('trees.bin', [new Float32Array(trees.flat())]) },
-  stones: { n: stones.length / 4, bytes: wr('stones.bin', [new Float32Array(stones)]) },
+  stones: { n: stones.length / 4, bytes: wr('stones.bin', [new Float32Array(stones)]), kindBytes: wr('stones-kind.bin', [new Uint8Array(stoneKind)]), rows: stoneRows },
+  wdepthBytes: wr('near-wdepth.bin', [wdepth]), // 便21: 水の深さ（0.25cm 刻み）
+  weirs, // 便21: 堰（落差工・帯工）の線分 [ax, az, bx, bz]
   views,
 }
 fs.writeFileSync(`${OUT}/geo.json`, JSON.stringify(meta))
