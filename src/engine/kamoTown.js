@@ -266,6 +266,69 @@ vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z 
     addKey(mat, 'tex:' + key)
   }
 
+  // ── 便21: 京都らしい家並みの描き方（建物ごとの形の種類 aKB.z: 0 今の家・1 京町家・2 古民家・3 集合住宅とビル・4 大きな施設・5 寺社） ──
+  //   町家の表（通りに面する壁）: 足もとの石・1階の縦格子（細い木の格子 7.5cm おき・中に横の桟）・通り庇の陰・2階（厨子二階）の土壁と虫籠窓（縦の格子の細い窓）。横と裏は腰板と土壁
+  //   古民家: 腰板（下 0.9m）・土壁か白い漆喰・一間（1.82m）おきの柱・格子のガラス戸。寺社: 白壁と太い柱
+  //   屋根（build.mjs が足した切妻と寄棟）: いぶし銀の桟瓦（瓦の段の陰と桟の波）。今の家の一部は黒や茶のスレート
+  //   夕方と夜は、町家の格子と虫籠窓、古民家のガラス戸の一部に、内の灯りが温かく透ける
+  let KYO = false
+  const kyoCount = [0, 0, 0, 0, 0, 0]
+  function useKyo(mat, isWall) {
+    mat.onBeforeCompile = chain(mat.onBeforeCompile, (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aKB; varying vec4 vKB;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvKB = aKB;')
+      const wallCode = `
+    if (abs(kN.y) < 0.3) {
+      vec2 wn = normalize(kN.xz + vec2(1e-5)); float isF = step(0.8, dot(wn, fd)); float al = dot(vGW.xz, vec2(wn.y, -wn.x));
+      vec3 c = vec3(-1.0); float glowOK = step(1.0 - uLit * 1.1, fract(kR * 7.31)); // 夜は 3割ほどの家に内の灯り
+      if (kS == 1) {
+        if (isF > 0.5) {
+          if (hl < 0.32) c = vec3(0.16, 0.16, 0.15) * kDet;
+          else if (hl < 2.72) { // 間口を 1.8m ごとに分け、3つに1つは出入り口の戸（濃い木の板戸と上の明かり取り）、ほかは千本格子（4.5cm おき・遠くは平均の色にならす）
+            float bay = floor(al / 1.82 + kR * 3.0), door = step(fract(bay * 0.37 + kR) , 0.3), fw = fwidth(al / 0.045);
+            float bar = mix(smoothstep(0.38, 0.52, fract(al / 0.045)), 0.55, smoothstep(0.12, 0.45, fw)); float rail = max(step(abs(hl - 1.0), 0.025), step(abs(hl - 2.42), 0.035)); float frm = step(fract(al / 1.82 + kR * 3.0), 0.035);
+            vec3 lat = mix(vec3(0.03, 0.021, 0.015), vec3(0.17, 0.104, 0.058), max(max(bar, rail), frm));
+            vec3 dr = mix(vec3(0.07, 0.042, 0.024), vec3(0.11, 0.07, 0.04), step(0.5, fract(al / 0.3))) * (hl > 2.05 ? 0.5 : 1.0);
+            c = mix(lat, max(dr, frm * vec3(0.13, 0.078, 0.043)), door); kGlowC += vec3(1.0, 0.62, 0.3) * 0.2 * (1.0 - max(bar, rail)) * glowOK * step(0.55, hl) * (1.0 - door); }
+          else if (hl < 3.12) c = vec3(0.035, 0.03, 0.026);
+          else { c = vec3(0.6, 0.54, 0.43) * kDet; float wy = step(3.55, hl) * step(hl, 4.2), wx = step(0.18, fract(al / 2.4)) * step(fract(al / 2.4), 0.62); if (wy * wx > 0.5) { float gp = step(0.5, fract(al / 0.11)); c = mix(vec3(0.03, 0.024, 0.02), c, gp); kGlowC += vec3(1.0, 0.66, 0.34) * 0.22 * (1.0 - gp) * glowOK; } }
+        } else c = hl < 1.0 ? vec3(0.085, 0.052, 0.03) * (0.8 + 0.2 * step(0.1, fract(al / 0.2))) : vec3(0.64, 0.58, 0.48) * kDet;
+        kWin = 0.0;
+      } else if (kS == 2) {
+        float pil = step(fract(al / 1.82), 0.07);
+        if (hl < 0.9) c = vec3(0.08, 0.05, 0.03) * (0.8 + 0.2 * step(0.1, fract(al / 0.21)));
+        else { c = (kR < 0.5 ? vec3(0.48, 0.38, 0.26) : vec3(0.66, 0.62, 0.54)) * kDet;
+          float g = step(1.0, hl) * step(hl, 2.25) * step(0.2, fract(al / 3.64 + kR)) * step(fract(al / 3.64 + kR), 0.62);
+          if (g > 0.5) { float lat = max(step(0.9, fract(al / 0.3)), step(0.88, fract(hl / 0.36))); c = mix(vec3(0.06, 0.065, 0.07), vec3(0.08, 0.05, 0.03), lat); kGlowC += vec3(1.0, 0.7, 0.4) * 0.3 * (1.0 - lat) * glowOK; } }
+        c = mix(c, vec3(0.06, 0.035, 0.02), pil); kWin = 0.0;
+      } else if (kS == 5) {
+        float pil = step(fract(al / 2.5), 0.12); c = mix(vec3(0.7, 0.68, 0.62) * kDet, vec3(0.1, 0.06, 0.035), max(pil, step(hl, 0.6))); kWin = 0.0;
+      }
+      if (c.x >= 0.0) diffuseColor.rgb = c;
+    } else`
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec4 vKB;')
+        .replace('vec2 tuv = gmix > 0.5 ? tuvB : tuvA;', `vec2 tuv = gmix > 0.5 ? tuvB : tuvA;
+  float kWin = 1.0; vec3 kGlowC = vec3(0.0);
+  { int kS = int(vKB.z + 0.5); float hl = vGW.y - vKB.x, kR = vKB.w; vec2 fd = vec2(sin(vKB.y), cos(vKB.y)); vec3 kN = normalize(vGN);
+    float kDet = mix(1.0, clamp(dot(mix(detA, detB, gmix), vec3(0.3333)), 0.65, 1.35), 0.45); // 壁の写真の模様のむらは半分に（土壁や漆喰がまだらに汚れて見えた）
+    ${isWall ? wallCode : ''}
+    if (kS == 1 || kS == 2 || kS == 5 || (kS == 0 && kN.y < 0.985)) {
+      vec2 sd = length(kN.xz) > 0.05 ? normalize(kN.xz) : fd, pd = vec2(sd.y, -sd.x);
+      float v = dot(vGW.xz, sd) / max(0.3, kN.y), u = dot(vGW.xz, pd);
+      float row = smoothstep(0.72, 0.97, fract(v / 0.26)), wave = 0.78 + 0.22 * sin(u / 0.29 * 6.2832);
+      vec3 tile = (kS == 0 && kR > 0.6) ? (kR > 0.82 ? vec3(0.05, 0.065, 0.09) : vec3(0.09, 0.06, 0.042)) : vec3(0.1, 0.108, 0.122) * (0.88 + kR * 0.25);
+      diffuseColor.rgb = tile * wave * mix(1.0, 0.42, row) * kDet;
+      ${SNOW ? 'if (kN.y > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.88, 0.9), 0.65);' : ''}
+    } else if (kN.y >= 0.45) { // 平らな屋上（集合住宅・ビル・大きな施設・平屋根の家）: コンクリートや防水の灰色（前は瓦の模様と暗い色が当たり、夕方に真っ黒に沈んだ）
+      diffuseColor.rgb = vec3(0.3, 0.29, 0.27) * (0.82 + 0.36 * kR) * kDet;
+      ${SNOW ? 'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.88, 0.9), 0.65);' : ''}
+    }
+  }`)
+      if (isWall) sh.fragmentShader = sh.fragmentShader.replace('winMask *= step(0.25, wHash(wcell + floor(vWW.xz * 0.05)));', 'winMask *= step(0.25, wHash(wcell + floor(vWW.xz * 0.05))) * kWin;')
+        .replace('totalEmissiveRadiance += winMask *', 'totalEmissiveRadiance += kGlowC * uLitI; totalEmissiveRadiance += winMask *')
+    })
+    addKey(mat, 'kyo' + (isWall ? 'W' : 'R'))
+  }
+
   // 壁の窓（計算で描く）: 階は 3.0m・柱の間は 3.2m（住宅は 4.0m）。夕方と夜は一部が灯る
   const lit = LIT[TK] || [0, 0]
   function useWindows(mat, tall) {
@@ -522,6 +585,9 @@ void main() {`)
     const sec = meta.files.bldg.secs, ps = 1, bq = view(data.buf.bldg, sec.pos), bStep = meta.bldg.pStep, bOff = meta.bldg.pOff || [0, 0, 0]
     const p16 = new Float32Array(bq.length); for (let i = 0; i < bq.length; i++) p16[i] = bq[i] * bStep + bOff[i % 3]
     const uv16 = view(data.buf.bldg, sec.uv), bidA = view(data.buf.bldg, sec.bid), nv = meta.bldg.nv
+    // 便21: 京都らしい家並み（build.mjs の形の種類と通りに面する向き）。古いデータ（無い時）と kamokyo=0（外し回し用）は前の描き方
+    const styleA = sec.style ? view(data.buf.bldg, sec.style) : null, frontA = sec.front ? view(data.buf.bldg, sec.front) : null
+    KYO = !!(styleA && frontA) && !/[?&]kamokyo=0/.test(location.search)
     const H = meta.bldg.heights
     // 建物ごとの箱（鴨川の座標）。部屋のあるマンションの箱と重なる建物を外す
     const bb = new Map()
@@ -538,10 +604,12 @@ void main() {`)
       if (k.startsWith('wall')) useWindows(m, k === 'wallC')
       useBake(m, data.lm.bldg, { fill: !/[?&]kamofill=0/.test(location.search) }) // kamofill=0 は外し回し用（埋めを外す）
       useTex(m, { roofT: { a: 'grey_roof_tiles', tile: 3, mode: 'xz' }, roofF: { a: 'concrete_wall_004', tile: 6, mode: 'xz', ns: 0.4 }, wallP: { a: 'grey_plaster_02', tile: 3, mode: 'tri', ns: 0.5 }, wallC: { a: 'concrete_wall_004', tile: 4, mode: 'tri', ns: 0.5 } }[k])
+      if (KYO) useKyo(m, k.startsWith('wall'))
       mats[k] = m
     }
     const groups = new Map()
     const a = new THREE.Vector3(), b = new THREE.Vector3(), cc = new THREE.Vector3(), nrm = new THREE.Vector3()
+    for (const [bid, e] of bb) if (styleA && styleA[bid] !== undefined) kyoCount[styleA[bid]]++
     for (let t = 0; t < nv; t += 3) {
       const bid = bidA[t]; if (drop.has(bid)) continue
       a.set(p16[t * 3], p16[t * 3 + 1], p16[t * 3 + 2]); b.set(p16[t * 3 + 3], p16[t * 3 + 4], p16[t * 3 + 5]); cc.set(p16[t * 3 + 6], p16[t * 3 + 7], p16[t * 3 + 8])
@@ -554,18 +622,36 @@ void main() {`)
     const c = new THREE.Color()
     for (const [key, tris] of groups) {
       const k = key.split('|')[0]
-      const cnt = tris.length * 3, pos = new Float32Array(cnt * 3), uv1 = new Float32Array(cnt * 2), col = new Float32Array(cnt * 3)
+      const cnt = tris.length * 3, pos = new Float32Array(cnt * 3), uv1 = new Float32Array(cnt * 2), col = new Float32Array(cnt * 3), kb = KYO ? new Float32Array(cnt * 4) : null
       let o = 0
       for (const t of tris) for (let q = 0; q < 3; q++) {
         const s = t + q, bid = bidA[s]
         pos[o * 3] = p16[s * 3] * ps; pos[o * 3 + 1] = p16[s * 3 + 1] * ps; pos[o * 3 + 2] = p16[s * 3 + 2] * ps
+        if (kb) { const e = bb.get(bid); kb[o * 4] = e ? e.min.y : 0; kb[o * 4 + 1] = (frontA[bid] / 255) * Math.PI * 2 - Math.PI; kb[o * 4 + 2] = styleA[bid]; kb[o * 4 + 3] = hash(bid * 1.37 + 0.21) } // 便21: 建物の足もとの高さ・通りに面する向き・形の種類・建物ごとのゆらぎ
         uv1[o * 2] = uv16[s * 2] / 65535; uv1[o * 2 + 1] = uv16[s * 2 + 1] / 65535
         if (k.startsWith('roof')) { c.setHex(ROOF[Math.floor(hash(bid) * ROOF.length)]); if (SNOW) c.lerp(WHITE, 0.6) } else c.setHex(WALL[Math.floor(hash(bid + 0.5) * WALL.length)])
         col[o * 3] = c.r; col[o * 3 + 1] = c.g; col[o * 3 + 2] = c.b; o++
       }
-      const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals()
+      const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); if (kb) g.setAttribute('aKB', new THREE.BufferAttribute(kb, 4)); g.computeVertexNormals()
       const mesh = new THREE.Mesh(g, mats[k]); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'bldg'; scene.add(mesh)
     }
+  }
+  // 便21: 町家の通り庇（いぶし銀の瓦）と、軒裏と庇の先（濃い木）、犬矢来（竹の囲い）。build.mjs が町家の表の壁から作った形
+  let eaveN = 0
+  if (KYO && meta.files.misc.secs.eaves) {
+    const ep = view(data.buf.misc, meta.files.misc.secs.eaves), ek = view(data.buf.misc, meta.files.misc.secs.eaveKind)
+    const col = new Float32Array(ek.length * 3), c = new THREE.Color(), CK = [0x5c626b, 0x2a2018, 0x4a3a28]
+    for (let i = 0; i < ek.length; i++) { c.setHex(CK[ek[i]]); if (SNOW && ek[i] === 0) c.lerp(WHITE, 0.6); col.set([c.r, c.g, c.b], i * 3) }
+    const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(Float32Array.from(ep), 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals()
+    const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide }))
+    m.onBeforeCompile = (sh) => { // 庇の瓦の段と、犬矢来の竹の縦すじ（頂点の色の暗さで見分ける）
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vEW;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvEW = (modelMatrix * vec4(transformed, 1.0)).xyz;')
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vEW;').replace('#include <color_fragment>', `#include <color_fragment>
+  if (diffuseColor.r > 0.08 && diffuseColor.b > 0.1) diffuseColor.rgb *= (0.78 + 0.22 * sin((vEW.x + vEW.z) / 0.29 * 6.2832)) * (0.6 + 0.4 * step(0.25, fract(vEW.y / 0.07)));
+  else if (diffuseColor.r > 0.05 && diffuseColor.b < 0.03) diffuseColor.rgb *= 0.7 + 0.3 * step(0.3, fract((vEW.x - vEW.z) / 0.045));`)
+    }
+    addKey(m, 'eaves')
+    const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'eaves'; scene.add(mesh); eaveN = ek.length / 3
   }
   // 部屋のあるマンションの外壁。部屋の座標で板を並べ、部屋の前（窓の面）と左（左の窓の面）は部屋の所だけ空ける（窓の外を塞がない）
   {
@@ -954,7 +1040,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {

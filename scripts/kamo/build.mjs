@@ -201,6 +201,7 @@ const wdepth = new Uint8Array(near.nx * near.nz) // 便21: 水面の点の水の
 const ROADW = { trunk: 14, primary: 13, secondary: 11, tertiary: 9, unclassified: 6, residential: 5.5, living_street: 4.5, service: 3.5, pedestrian: 5, footway: 2.2, path: 2.2, cycleway: 2.5, track: 3, steps: 2 }
 const rpos = [], ridx = [], rkind = [] // kind: 0 車道 1 小道 2 橋の床 3 線路
 let nRoad = 0, nBridge = 0
+const roadPts = [] // 便21: 車道と小道の中心の点（x, z, 種類）
 const stones = [] // 飛び石（ford=stepping_stones）: x, y, z, 向き
 const stoneKind = [] // 便21: 石の形 0 角の丸い長方形・1 亀・2 千鳥・3 すれ違いの石（渡る列に入れない）
 const stoneRows = [] // 便21: 飛び石の列の両端（水の中の所）[ax, az, bx, bz]。下流の白いさざ波に使う
@@ -242,6 +243,7 @@ for (const e of osm) {
   while (dense.length && !inNear(dense[0][0], dense[0][1], 6)) dense.shift()
   while (dense.length && !inNear(dense[dense.length - 1][0], dense[dense.length - 1][1], 6)) dense.pop()
   if (dense.length < 2) continue
+  if (kind === 0 || kind === 1) for (let i = 0; i < dense.length; i += 1) roadPts.push(dense[i][0], dense[i][1], kind) // 便21: 建物の表（通りに面する向き）を決める道の点
   const ys = dense.map(([x, z]) => ground(x, z))
   if (kind === 2) { const y0 = ys[0], y1 = ys[ys.length - 1]; for (let i = 0; i < ys.length; i++) ys[i] = Math.max(y0 + ((y1 - y0) * i) / (ys.length - 1), WATER_Y + 3) + 0.6; nBridge++ } else nRoad++
   const base = rpos.length / 3
@@ -327,6 +329,108 @@ for (const b of blds) {
 }
 offs.sort((a, b) => a - b)
 log.push(`PLATEAU の建物: ${blds.length} 棟（網の縁から ${BLDG_M}m 内側・段の重なりを除いた）・楕円体の高さと標高の差の中央値 ${(-offs[Math.floor(offs.length / 2)]).toFixed(2)} m（ジオイドの高さの目安）`)
+
+// ── 便21: 京都らしい家並み。建物ごとに「形の種類」と「通りに面する向き」を決める（描き方は本体の kamoTown.js） ──
+//   種類: 0 今の家（モルタルや板の壁・瓦かスレートの屋根）／1 京町家（通りに面して隣と接し、1階に格子・2階に虫籠窓・通り庇・いぶし銀の桟瓦）／
+//         2 古民家（離れて建つ古い木造・腰板と土壁・柱・瓦）／3 集合住宅・ビル（今のまま）／4 大きな施設（学校・大学・病院など）／5 寺社（木の柱と白壁・大きな瓦屋根）
+//   2000年頃は今より町家と古い木造が多かった（京都市の町家の調べ: 1998年度に都心4区で約28,000軒・その後は年に約2%ずつ減った＝調べ §10）。
+//   町家は上京区側（鴨川の西）と出町の商店街のまわりに多く、左京区の吉田や京大の北は戦後の家が多い（調べ §10 の推測）＝西 60%・東 35%（隣と接し、通りに近い2階建ての家のうち）。
+//   乱数は町の R と分ける（木の形を変えない）
+let ks = 777001; const RK = () => { ks = (ks * 1664525 + 1013904223) >>> 0; return ks / 4294967296 }
+const worship = []; for (const e of osm) if (tag(e, 'amenity') === 'place_of_worship') for (const r of rings(e)) if (r.length > 3) worship.push(r)
+const RC = 12, rcell = new Map() // 道の点を 12m 升に入れる
+for (let i = 0; i < roadPts.length; i += 3) { const k = Math.floor(roadPts[i] / RC) * 100003 + Math.floor(roadPts[i + 1] / RC); let a = rcell.get(k); if (!a) { a = []; rcell.set(k, a) } a.push(roadPts[i], roadPts[i + 1]) }
+const nearRoad = (x, z) => { let best = null, bd = 1e9; const ci = Math.floor(x / RC), cj = Math.floor(z / RC); for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) { const arr = rcell.get((ci + a) * 100003 + cj + b); if (!arr) continue; for (let q = 0; q < arr.length; q += 2) { const d = Math.hypot(arr[q] - x, arr[q + 1] - z); if (d < bd) { bd = d; best = [arr[q], arr[q + 1]] } } } return best ? { d: bd, x: best[0], z: best[1] } : null }
+const BC = 20, bcell = new Map() // 建物の箱を 20m 升に入れて、隣と接するかを見る
+const bbox = blds.map((b, n) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, y0 = 1e9, y1 = -1e9; for (let i = 0; i < b.pos.length; i += 3) { x0 = Math.min(x0, b.pos[i]); x1 = Math.max(x1, b.pos[i]); y0 = Math.min(y0, b.pos[i + 1]); y1 = Math.max(y1, b.pos[i + 1]); z0 = Math.min(z0, b.pos[i + 2]); z1 = Math.max(z1, b.pos[i + 2]) } for (let a = Math.floor(x0 / BC); a <= Math.floor(x1 / BC); a++) for (let c = Math.floor(z0 / BC); c <= Math.floor(z1 / BC); c++) { const k = a * 100003 + c; let l = bcell.get(k); if (!l) { l = []; bcell.set(k, l) } l.push(n) } return { x0, x1, z0, z1, y0, y1 } })
+const style = new Uint8Array(blds.length), front = new Uint8Array(blds.length), cnt = [0, 0, 0, 0, 0, 0]
+let nRoof = 0
+// 屋根を足す: 町家＝通りに平行な棟の切妻（平入り）・古民家＝寄棟・今の家＝切妻か寄棟・寺社＝深い軒の寄棟。軒は壁の上の端（平らな屋上）から始める
+function addRoof(b, bb, s, r) {
+  const top = []; for (let i = 0; i < b.pos.length; i += 3) if (b.pos[i + 1] > bb.y1 - 0.4) top.push(b.pos[i], b.pos[i + 2])
+  if (top.length < 6) return
+  const fa = r ? Math.atan2(r.x - b.cx, r.z - b.cz) : 0
+  let ax = Math.cos(fa), az = -Math.sin(fa) // 棟の向き（通りに平行）
+  const ext = (ux, uz) => { let a0 = 1e9, a1 = -1e9; for (let i = 0; i < top.length; i += 2) { const v = top[i] * ux + top[i + 1] * uz; a0 = Math.min(a0, v); a1 = Math.max(a1, v) } return [a0, a1] }
+  let [s0, s1] = ext(ax, az), [d0, d1] = ext(-az, ax)
+  if (s !== 1 && d1 - d0 > s1 - s0) { const t = ax; ax = -az; az = t; [s0, s1] = ext(ax, az); [d0, d1] = ext(-az, ax) } // 町家でなければ長い方に棟を通す
+  const cx_ = -az, cz_ = ax
+  const os = s === 1 ? 0.08 : s === 5 ? 1.4 : 0.45, od = s === 1 ? 0.55 : s === 5 ? 1.4 : 0.45
+  s0 -= os; s1 += os; d0 -= od; d1 += od
+  const pitch = s === 5 ? 0.62 : s === 2 ? 0.5 : s === 1 ? 0.45 : 0.4 + RK() * 0.12
+  const hip = s === 2 || s === 5 || (s === 0 && RK() < 0.4)
+  const yE = bb.y1 + 0.03, half = (d1 - d0) / 2, dm = (d0 + d1) / 2, yR = yE + pitch * half
+  const W = (sv, dv, y) => [sv * ax + dv * cx_, y, sv * az + dv * cz_]
+  const add = (A, B, C) => { // 上か外を向くように回りをそろえて足す
+    const ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2], vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2]
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, mx = (A[0] + B[0] + C[0]) / 3 - b.cx, mz = (A[2] + B[2] + C[2]) / 3 - b.cz
+    const out = Math.abs(ny) > 0.3 ? ny > 0 : nx * mx + nz * mz > 0
+    const base = b.pos.length / 3; b.pos.push(...A, ...(out ? B : C), ...(out ? C : B)); b.idx.push(base, base + 1, base + 2)
+  }
+  if (!hip) {
+    add(W(s0, d0, yE), W(s1, d0, yE), W(s1, dm, yR)); add(W(s0, d0, yE), W(s1, dm, yR), W(s0, dm, yR))
+    add(W(s0, d1, yE), W(s1, dm, yR), W(s1, d1, yE)); add(W(s0, d1, yE), W(s0, dm, yR), W(s1, dm, yR))
+    add(W(s0 + os, d0 + od, yE), W(s0 + os, dm, yR - pitch * od), W(s0 + os, d1 - od, yE)); add(W(s1 - os, d0 + od, yE), W(s1 - os, d1 - od, yE), W(s1 - os, dm, yR - pitch * od)) // 妻の壁
+  } else {
+    const r0 = Math.min(s0 + half, (s0 + s1) / 2), r1 = Math.max(s1 - half, (s0 + s1) / 2)
+    add(W(s0, d0, yE), W(s1, d0, yE), W(r1, dm, yR)); add(W(s0, d0, yE), W(r1, dm, yR), W(r0, dm, yR))
+    add(W(s0, d1, yE), W(r1, dm, yR), W(s1, d1, yE)); add(W(s0, d1, yE), W(r0, dm, yR), W(r1, dm, yR))
+    add(W(s0, d0, yE), W(r0, dm, yR), W(s0, d1, yE)); add(W(s1, d0, yE), W(s1, d1, yE), W(r1, dm, yR))
+  }
+}
+const eaves = [] // 町家の通り庇と犬矢来の三角形（x, y, z と 種類 0 庇の上・1 庇の下と縁・2 犬矢来）
+const ekind = []
+const tri3 = (a, b, c, k) => { eaves.push(...a, ...b, ...c); ekind.push(k, k, k) }
+const quad = (a, b, c, d, k) => { tri3(a, b, c, k); tri3(a, c, d, k) }
+blds.forEach((b, n) => {
+  const bb = bbox[n], h = b.h ?? bb.y1 - bb.y0, ht = bb.y1 - bb.y0, cx = b.cx, cz = b.cz
+  let roofA = 0, pitchA = 0
+  for (let t = 0; t < b.idx.length; t += 3) { const A = b.idx[t] * 3, B = b.idx[t + 1] * 3, C = b.idx[t + 2] * 3, ux = b.pos[B] - b.pos[A], uy = b.pos[B + 1] - b.pos[A + 1], uz = b.pos[B + 2] - b.pos[A + 2], vx = b.pos[C] - b.pos[A], vy = b.pos[C + 1] - b.pos[A + 1], vz = b.pos[C + 2] - b.pos[A + 2]
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, L = Math.hypot(nx, ny, nz) || 1, ay = Math.abs(ny / L), area = L / 2
+    if (ay > 0.3) { roofA += area * ay; if (ay < 0.97) pitchA += area * ay } }
+  // PLATEAU の京都の建物は家も含めて屋根が平らな箱（傾いた屋根の面が無い＝便21 で数えた）。低い家には下の addRoof で屋根を足す
+  const r = nearRoad(cx, cz), u = b.usage || ''
+  front[n] = r ? Math.round(((Math.atan2(r.x - cx, r.z - cz) + Math.PI) / (2 * Math.PI)) * 255) : 0
+  let attached = 0
+  for (let a = Math.floor(bb.x0 / BC); a <= Math.floor(bb.x1 / BC); a++) for (let c = Math.floor(bb.z0 / BC); c <= Math.floor(bb.z1 / BC); c++) for (const m of bcell.get(a * 100003 + c) || []) { if (m === n) continue; const o = bbox[m]; const gx = Math.max(o.x0 - bb.x1, bb.x0 - o.x1), gz = Math.max(o.z0 - bb.z1, bb.z0 - o.z1); if (Math.max(gx, gz) < 0.9) attached++ }
+  const holy = worship.some((w) => pip([cx, cz], w))
+  let s = 0
+  if (holy && roofA > 60 && roofA < 2500 && h < 20) s = 5
+  else if (h > 12 || ht > 13 || /共同住宅/.test(u) && h > 8) s = 3
+  else if (roofA > 700 || /文教|官公庁|業務|商業施設|運輸|工場|供給/.test(u)) s = 4
+  let house = false
+  if (s === 0 && h <= 10.5 && ht <= 11 && roofA > 12 && roofA < 260 && /住宅|不明|その他/.test(u)) {
+    house = true
+    const west = cx < -30, rowHouse = attached >= 1 && r && r.d < 9
+    if (rowHouse && RK() < (west ? 0.6 : 0.35) + (/店舗/.test(u) ? 0.15 : 0)) s = 1
+    else if (RK() < 0.3) s = 2
+  }
+  style[n] = s; cnt[s]++
+  if (house || s === 5) { addRoof(b, bb, s, r); nRoof++ }
+  if (s !== 1 || !r) return
+  // 通り庇（1階の上 2.7m・外へ 0.85m・先が 0.22m 下がる）と、半分の町家に犬矢来（足もとの竹の囲い・外へ 0.45m・高さ 0.9m）。表の壁＝外向きの法線が通りの向きに近い壁
+  const fa = Math.atan2(r.x - cx, r.z - cz), fx = Math.sin(fa), fz = Math.cos(fa), px = fz, pz = -fx
+  let s0 = 1e9, s1 = -1e9, d0 = -1e9
+  for (let t = 0; t < b.idx.length; t += 3) {
+    const A = b.idx[t] * 3, B = b.idx[t + 1] * 3, C = b.idx[t + 2] * 3, ux = b.pos[B] - b.pos[A], uy = b.pos[B + 1] - b.pos[A + 1], uz = b.pos[B + 2] - b.pos[A + 2], vx = b.pos[C] - b.pos[A], vy = b.pos[C + 1] - b.pos[A + 1], vz = b.pos[C + 2] - b.pos[A + 2]
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz) || 1; nx /= L; ny /= L; nz /= L
+    if (Math.abs(ny) > 0.3) continue
+    const mx = (b.pos[A] + b.pos[B] + b.pos[C]) / 3 - cx, mz = (b.pos[A + 2] + b.pos[B + 2] + b.pos[C + 2]) / 3 - cz; if (nx * mx + nz * mz < 0) { nx = -nx; nz = -nz }
+    if (nx * fx + nz * fz < 0.8) continue
+    for (const V of [A, B, C]) { const sx = b.pos[V] * px + b.pos[V + 2] * pz, dd = b.pos[V] * fx + b.pos[V + 2] * fz; s0 = Math.min(s0, sx); s1 = Math.max(s1, sx); d0 = Math.max(d0, dd) }
+  }
+  if (!(s1 - s0 > 2.5 && s1 - s0 < 30)) return
+  const base = bb.y0 + 0.2, P2 = (s, d, y) => [s * px + d * fx, y, s * pz + d * fz]
+  const e0 = d0 + 0.02, e1 = d0 + 0.85, y0 = base + 2.75, y1 = base + 2.53
+  quad(P2(s0 - 0.08, e0, y0), P2(s1 + 0.08, e0, y0), P2(s1 + 0.08, e1, y1), P2(s0 - 0.08, e1, y1), 0) // 庇の瓦の面
+  quad(P2(s0 - 0.08, e1, y1), P2(s1 + 0.08, e1, y1), P2(s1 + 0.08, e1, y1 - 0.1), P2(s0 - 0.08, e1, y1 - 0.1), 1) // 庇の先の縁
+  quad(P2(s1 + 0.08, e0, y0 - 0.12), P2(s0 - 0.08, e0, y0 - 0.12), P2(s0 - 0.08, e1, y1 - 0.1), P2(s1 + 0.08, e1, y1 - 0.1), 1) // 庇の下（軒裏）
+  if (RK() < 0.5) { // 犬矢来: 4 枚の帯で丸い反りを作る
+    const prof = [[0, 0.9], [0.18, 0.55], [0.36, 0.25], [0.45, 0.0]]
+    for (let i = 0; i < 3; i++) { const [a0, h0] = prof[i], [a1, h1] = prof[i + 1]; quad(P2(s0 + 0.2, e0 + a0, base + h0), P2(s1 - 0.2, e0 + a0, base + h0), P2(s1 - 0.2, e0 + a1, base + h1), P2(s0 + 0.2, e0 + a1, base + h1), 2) }
+  }
+})
+log.push(`家並みの種類: 今の家 ${cnt[0]}・町家 ${cnt[1]}・古民家 ${cnt[2]}・集合住宅とビル ${cnt[3]}・大きな施設 ${cnt[4]}・寺社 ${cnt[5]}・屋根を足した ${nRoof} 棟・通り庇と犬矢来の三角形 ${eaves.length / 9}`)
 let bv = 0, bi = 0; for (const b of blds) { bv += b.pos.length / 3; bi += b.idx.length }
 const bpos = new Float32Array(bv * 3), bidx = new Uint32Array(bi), bbid = new Uint16Array(bv)
 { let vo = 0, io = 0; blds.forEach((b, n) => { bpos.set(b.pos, vo * 3); for (let i = 0; i < b.idx.length; i++) bidx[io + i] = b.idx[i] + vo; bbid.fill(n, vo, vo + b.pos.length / 3); vo += b.pos.length / 3; io += b.idx.length }) }
@@ -376,7 +480,8 @@ const meta = {
   H0: +H0.toFixed(2), waterY: +WATER_Y.toFixed(2),
   near: { n: near.nx, nx: near.nx, nz: near.nz, x0: EXT.x0, x1: EXT.x1, z0: EXT.z0, z1: EXT.z1, step: NEAR_STEP, bytes: wr('near.bin', [near.pos]), zoneBytes: wr('near-zone.bin', [zone]) },
   far: { n: far.n, R: FAR_R, step: FAR_STEP, bytes: wr('far.bin', [far.pos]) },
-  bldg: { nv: bv, ni: bi, count: blds.length, bytes: wr('bldg.bin', [bpos, bidx, bbid]), heights: blds.map((b) => b.h ?? null), usage: blds.map((b) => b.usage ?? null) },
+  bldg: { nv: bv, ni: bi, count: blds.length, bytes: wr('bldg.bin', [bpos, bidx, bbid]), heights: blds.map((b) => b.h ?? null), usage: blds.map((b) => b.usage ?? null), kyoBytes: wr('bldg-kyo.bin', [style, front]) }, // 便21: 形の種類・通りに面する向き（0〜255＝一周）
+  eaves: { n: eaves.length / 3, bytes: wr('eaves.bin', [new Float32Array(eaves), new Uint8Array(ekind)]) }, // 便21: 町家の通り庇と犬矢来
   water: { nv: wpos.length / 3, ni: widx.length, bytes: wr('water.bin', [new Float32Array(wpos), new Uint32Array(widx)]) },
   roads: { nv: rpos.length / 3, ni: ridx.length, bytes: wr('roads.bin', [new Float32Array(rpos), new Uint32Array(ridx), new Uint8Array(rkind)]) },
   trees: { n: trees.length, bytes: wr('trees.bin', [new Float32Array(trees.flat())]) },

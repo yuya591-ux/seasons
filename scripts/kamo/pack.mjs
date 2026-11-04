@@ -54,7 +54,8 @@ for (let i = 0; i < nv; i++) {
   buv[i * 2] = Math.round(Math.min(1, Math.max(0, bl[i * 6 + 3])) * 65535); buv[i * 2 + 1] = Math.round(Math.min(1, Math.max(0, bl[i * 6 + 4])) * 65535)
   bid[i] = bl[i * 6 + 5]
 }
-const bldg = write('bldg.bin', { pos: bp, uv: buv, bid })
+const kyo = fs.readFileSync(`${D}/geo/bldg-kyo.bin`), nB = geo.bldg.count // 便21: 建物ごとの形の種類と通りに面する向き
+const bldg = write('bldg.bin', { pos: bp, uv: buv, bid, style: new Uint8Array(kyo.subarray(0, nB)), front: new Uint8Array(kyo.subarray(nB, nB * 2)) })
 
 // ── 道・橋・小道・線路 ──
 const ROAD_P = 0.045 // 便21: 中心（POFF）を引いてから詰める
@@ -72,6 +73,7 @@ const misc = write('misc.bin', {
   trees: f32('geo/trees.bin'),
   stones: f32('geo/stones.bin'),
   stoneKind: new Uint8Array(fs.readFileSync(`${D}/geo/stones-kind.bin`)), // 便21: 石の形
+  ...(() => { const e = fs.readFileSync(`${D}/geo/eaves.bin`), n = geo.eaves.n; return { eaves: new Float32Array(e.buffer.slice(e.byteOffset, e.byteOffset + n * 12)), eaveKind: new Uint8Array(e.subarray(n * 12, n * 13)) } })(), // 便21: 町家の通り庇と犬矢来
 })
 
 // ── 焼いた光の図（灰色の JPEG）・質感の素材 ──
