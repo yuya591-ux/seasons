@@ -12,6 +12,7 @@ const M0 = [
   { id: 'M6', what: '外の町の道案内（地面・水・建物・居場所）へ分けない', file: 'src/engine/kamoTown.js', a: "for (const [k, w] of Object.entries(W)) { const f0 = nav[k], wf = w(f0); nav[k] = (...a) => (ON ? wf(...a) : f0(...a)) }", b: "void W", k: ['K35'] },
   { id: 'M7', what: '鴨川の町に低く溜まる霧を戻す', file: 'src/engine/town3dViewer.js', a: "MIST_A[3] = kamo ? 0 : (mistPin.amount ?? MIST.amount)", b: "MIST_A[3] = mistPin.amount ?? MIST.amount", k: ['K34'] },
   { id: 'M8', what: '鴨川の町の網の外の崩れた水面を落とさない', file: 'src/engine/kamoTown.js', a: "waterCut = ix.length / 3 - keepI.length / 3; g.setIndex(keepI); g.computeBoundingSphere() }", b: "waterCut = 0 }", k: ['K34'] },
+  { id: 'M10', what: '（K38）iPhone の段の外の町の地形を間引けない数で間引く（範囲の南北が 16m で割り切れなかった時と同じ NaN）', file: 'src/engine/kamoOuter.js', a: 'dec: low ? 2 : 1, tiles: [8, 8]', b: 'dec: low ? 3 : 1, tiles: [8, 8]', k: ['K38'] },
   { id: 'M9', what: '外の町を読めない時の受けを外す', file: 'src/engine/town3dViewer.js', a: ".catch((e) => console.warn('外の町を読めなかったので、鴨川の町だけで開きます:', e && e.message)) }", b: " }", k: ['K37'] },
 ]
 const M = ONLY.length ? M0.filter((m) => ONLY.includes(m.id)) : M0

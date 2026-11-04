@@ -19,7 +19,7 @@ const toX = (lon) => (lon - LON0) * MLON, toZ = (lat) => -(lat - LAT0) * MLAT
 const toLon = (x) => LON0 + x / MLON, toLat = (z) => LAT0 - z / MLAT
 const core = JSON.parse(fs.readFileSync('public/kamo/kamo.json', 'utf8'))
 const C = { x0: core.near.x0, x1: core.near.x1, z0: core.near.z0, z1: core.near.z1 }
-const OX = { x0: -4400, x1: 2400, z0: -1600, z1: 5400 }, STEP = 8 // 8m の網（鴨川の町の 4m の網の縁と点がそろう）
+const OX = { x0: -4400, x1: 2400, z0: -1600, z1: 5408 }, STEP = 8 // 8m の網（鴨川の町の 4m の網の縁と点がそろう）。【便22】幅と奥行きは 16m の倍数（iPhone の段は網を1つおきに間引く＝奥行き 7000m では間引けずに NaN が出た）
 const inCore = (x, z, m = 0) => x >= C.x0 + m && x <= C.x1 - m && z >= C.z0 + m && z <= C.z1 - m
 const inOX = (x, z, m = 0) => x >= OX.x0 + m && x <= OX.x1 - m && z >= OX.z0 + m && z <= OX.z1 - m
 const log = []

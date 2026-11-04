@@ -8,7 +8,7 @@
 import fs from 'node:fs'
 const D = process.env.KAMO_DATA || 'scripts/kamo/_data', OUT = D + '/outer'
 const LAT0 = 35.0300, LON0 = 135.7725
-export const OX = { x0: -4400, x1: 2400, z0: -1600, z1: 5400 } // 外の町の四角（原点からの m・x 東・z 南）。金閣寺は西 3.9km・京都駅は南 4.9km
+export const OX = { x0: -4400, x1: 2400, z0: -1600, z1: 5408 } // 外の町の四角（原点からの m・x 東・z 南）。金閣寺は西 3.9km・京都駅は南 4.9km
 fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(D + '/dem5', { recursive: true }); fs.mkdirSync(D + '/bldg', { recursive: true })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 async function dl(url, file, tries = 4) {

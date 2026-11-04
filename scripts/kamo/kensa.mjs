@@ -40,6 +40,7 @@
 //   K35 外の町へ飛べる: 金閣寺・京都タワー・京都駅・祇園・八坂の塔・南の鴨川が飛べる箱の中で、居場所の名が合い、京都タワーの頂は地面から 125m 以上・金閣は建物の当たり・南の鴨川は水（便22）
 //   K36 外の町の地面: 外の町の中の地面の高さが外の町の網と合い（祇園は原点より低い・金閣寺は 40m 以上高い）、四条大橋の床の上は水の上でも歩ける（便22）
 //   K37 外の町を読めない時（データを止めた時・?kamoouter=0）は、鴨川の町だけで開き、飛べる箱は鴨川の町のまま・エラー 0（便22）
+//   K38 iPhone の画面（402×874・指で触る＝軽い段）でも外の町を組めて、エラーと GL 0・木は PC の半分ほど（便22・iPhone の段の地形の間引きで NaN が出た）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 //   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
@@ -326,6 +327,13 @@ if (run('K37')) {
   const a = await open('summer-morning-corner-room', { q: 'kamoouter=0' }); await a.p.waitForTimeout(6000); const ka = await kamoInfo(a.p); const ba = (await a.p.evaluate(() => { window.__town3dFly(true); return new Promise((r) => setTimeout(() => r(window.__town3dNav().bound), 2600)) })); await a.ctx.close()
   const c = await open('summer-morning-corner-room', { blockOuter: true }); await c.p.waitForTimeout(8000); const kc = await kamoInfo(c.p); await c.ctx.close()
   check('K37', ka && ka.outer === null && ba && ba.zMax - ba.zMin < 3000 && kc && kc.outer === null && !a.errs.length && !c.errs.filter((e) => !/kamo\/outer|Failed to load resource/.test(e)).length, `?kamoouter=0 の外の町 ${ka && ka.outer}・飛べる箱の奥行き ${ba && (ba.zMax - ba.zMin).toFixed(0)}m（3000 未満）・外の町のデータを止めた時 ${kc && kc.outer}・エラー ${a.errs.length + c.errs.length}`)
+}
+if (run('K38')) { // 【便22】
+  const o = await open('summer-morning-corner-room', { dev: { viewport: { width: 402, height: 874 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true } })
+  const got = await outerWait(o.p), k = await kamoInfo(o.p), O = k && k.outer
+  await o.p.waitForTimeout(1500)
+  check('K38', got && k.low === true && O && O.boxes >= 100000 && O.trees > 10000 && O.trees < 35000 && !o.errs.length && !o.gl.length, `組めた ${got}・段 ${k && k.low ? '軽い' : '通常'}・箱 ${O && O.boxes}・木 ${O && O.trees}（1 万〜3.5 万）・エラー ${o.errs.length}${o.errs.length ? '（' + o.errs[0].slice(0, 80) + '）' : ''}・GL ${o.gl.length}`)
+  await o.ctx.close()
 }
 if (run('K24')) {
   // 【便20・外の目】夏の夜は帯の出来事がもともと起きない（昼の物・冬の物）ので、帯の時計が進まないことを春の夕で見る。送り火の待ちが進むことは夏の夜で見る
