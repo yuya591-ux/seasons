@@ -327,12 +327,13 @@ if (run('K27') || run('K28') || run('K29') || run('K30') || run('K31') || run('K
   if (run('K30')) { const br = k.bridges || {}; check('K30', br.lanterns === 14 && br.rails >= 10 && br.lamps >= 500, `賀茂大橋の石灯籠 ${br.lanterns}（14 で合格）・欄干 ${br.rails}・街灯 ${br.lamps}`) }
   if (run('K31')) { const p0 = k.people || {}; await o.p.waitForTimeout(2000); const p1 = (await kamoInfo(o.p)).people || {}; const moved = (p0.sample || []).some((s, i) => p1.sample && p1.sample[i] && (s[1] !== p1.sample[i][1] || s[2] !== p1.sample[i][2])); const n = (p0.walk || 0) + (p0.jog || 0) + (p0.bike || 0); o.k31 = { ok: n >= 15 && moved && p0.wade >= 4 && p0.stoneSit >= 3, msg: `夏の朝 歩く ${p0.walk}・走る ${p0.jog}・自転車 ${p0.bike}（15 以上）・2 秒で動いた ${moved}・浅瀬の子ども ${p0.wade}（4 以上）・飛び石に座る ${p0.stoneSit}（3 以上）` } }
   if (run('K32')) { const m = k.marks || {}; check('K32', m.tower && m.gate && m.daigengu && m.moan && m.torii >= 15 && m.benches >= 100 && m.play >= 3 && m.shelters >= 1, `時計塔 ${m.tower}・正門 ${m.gate}・大元宮 ${m.daigengu}・茂庵 ${m.moan}・鳥居 ${m.torii}・ベンチ ${m.benches}・遊具 ${m.play}・東屋 ${m.shelters}`) }
+  if (run('K27')) check('K27', !o.errs.length && !o.gl.length, `夏の朝の角部屋のエラー ${o.errs.length}・GL の食い違い ${o.gl.length}（便21 のシェーダー〈浅瀬・川底・雲・家並み・道〉が組めない時に落ちる＝【便21・外の目】）${o.errs.slice(0, 2).join(' ／ ')}`)
   const k31 = o.k31; await o.ctx.close()
   if (run('K28') || run('K31')) {
-    const o2 = await open('summer-night-corner-room'); await o2.p.waitForTimeout(3000); const n2 = await kamoInfo(o2.p); await o2.ctx.close()
+    const o2 = await open('summer-night-corner-room'); await o2.p.waitForTimeout(3000); const n2 = await kamoInfo(o2.p); const e2 = o2.errs.length + o2.gl.length; await o2.ctx.close()
     const o3 = await open('winter-snow-dusk-corner-room'); const n3 = await kamoInfo(o3.p); await o3.ctx.close()
     const o4 = run('K28') ? await open('autumn-rain-night-corner-room') : null; const n4 = o4 ? await kamoInfo(o4.p) : null; if (o4) await o4.ctx.close()
-    if (run('K28')) check('K28', n2.clouds === true && n4.clouds === true, `夏の夜の雲 ${n2.clouds}・秋の雨の夜の雲 ${n4.clouds}`)
+    if (run('K28')) check('K28', n2.clouds === true && n4.clouds === true && e2 === 0, `夏の夜の雲 ${n2.clouds}・秋の雨の夜の雲 ${n4.clouds}・夏の夜のエラーと GL の食い違い ${e2}`)
     if (run('K31')) { const h = n2.people || {}, w = n3.people || {}; check('K31', k31 && k31.ok && h.hanabi >= 6 && h.sparks > 0 && w.wade === 0 && w.hanabi === 0, `${k31 ? k31.msg : '夏の朝を測れていない'}／夏の夜 花火の人 ${h.hanabi}（6 以上）・火花の出ている人 ${h.sparks}／冬の雪の夕 子ども ${w.wade}・花火 ${w.hanabi}（0）`) }
   }
 }

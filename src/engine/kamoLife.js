@@ -189,7 +189,7 @@ export function buildLife(ctx) {
     const a = land(s0, dIn), b = land(sN, dOut)
     // 道のり: 岸を 7m 歩く → 石を跳ぶ → 向こう岸を 8m 歩いて消える
     const path = [{ x: a[0] + dIn.x * 7, z: a[1] + dIn.y * 7, mode: 'walk' }, { x: a[0], z: a[1], mode: 'walk' }]
-    for (const s of stones) path.push({ x: s[0], z: s[2], y: s[1] + 0.12, mode: 'hop' })
+    for (const s of stones) path.push({ x: s[0], z: s[2], y: s[1] + 0.01, mode: 'hop' }) // 【便21・外の目】便21 の石は上の面が置き場の高さ（前の丸めた石は 0.32 上）＝足を石の上に
     path.push({ x: b[0], z: b[1], mode: 'hop' }, { x: b[0] + dOut.x * 8, z: b[1] + dOut.y * 8, mode: 'walk' })
     const n = rnd() < 0.35 ? 2 : 1
     for (let i = 0; i < n; i++) walkers.push({ path, seg: 0, u: 0, delay: i * 1.3, color: pick(CLOTH), hair: pick(HAIR), x: path[0].x, z: path[0].z, y: terrK(path[0].x, path[0].z), yaw: 0, done: false })

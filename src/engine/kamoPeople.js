@@ -19,6 +19,7 @@ export function buildPeople(ctx) {
   const HAIR = [0x1a1614, 0x241c18, 0x3a2a20, 0x14120f, 0x5a4232]
   const info = { walk: 0, jog: 0, bike: 0, wade: 0, stoneSit: 0, hanabi: 0, sparks: 0, paths: paths ? paths.length : 0 }
   const merge = (gs) => { const g = BGU.mergeGeometries(gs.map((x) => (x.index ? x.toNonIndexed() : x))); gs.forEach((x) => x.dispose()); return keep(g) }
+  const q3 = new THREE.Quaternion(), w3 = new THREE.Vector3(), w4 = new THREE.Vector3() // 毎こまの使い回し（【便21・外の目】毎こま new していた）
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), q2 = new THREE.Quaternion(), v3 = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), xAx = new THREE.Vector3(1, 0, 0), col = new THREE.Color()
   const bodyMat = keep(new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 }))
   const metalMat = keep(new THREE.MeshStandardMaterial({ color: 0x3a3e44, roughness: 0.5, metalness: 0.5 }))
@@ -72,7 +73,7 @@ export function buildPeople(ctx) {
       q.setFromAxisAngle(up, m.yaw)
       if (m.kind === 'jog') q.multiply(q2.setFromAxisAngle(xAx, 0.12))
       m4.compose(v3.set(m.x, m.y + bob, m.z), q, one); W.torso.setMatrixAt(i, m4)
-      for (const [im, s] of [[W.legL, 1], [W.legR, -1]]) { const qq = q2.setFromAxisAngle(up, m.yaw).multiply(new THREE.Quaternion().setFromAxisAngle(xAx, sw * s)); const off = new THREE.Vector3(0.08 * s, 0, 0).applyAxisAngle(up, m.yaw); m4.compose(v3.set(m.x + off.x, m.y + bob + 0.86, m.z + off.z), qq, one); im.setMatrixAt(i, m4) }
+      for (let li = 0; li < 2; li++) { const im = li ? W.legR : W.legL, s = li ? -1 : 1; const qq = q2.setFromAxisAngle(up, m.yaw).multiply(q3.setFromAxisAngle(xAx, sw * s)); const off = w3.set(0.08 * s, 0, 0).applyAxisAngle(up, m.yaw); m4.compose(v3.set(m.x + off.x, m.y + bob + 0.86, m.z + off.z), qq, one); im.setMatrixAt(i, m4) }
       m4.compose(v3.set(m.x, m.y + bob + 1.6, m.z), q, one); W.head.setMatrixAt(i, m4)
       if (W.umb) { m4.compose(v3.set(m.x, m.y + bob, m.z), q, one); W.umb.setMatrixAt(i, m4) }
     })
@@ -80,8 +81,8 @@ export function buildPeople(ctx) {
       placeMover(m, dt)
       q.setFromAxisAngle(up, m.yaw)
       m4.compose(v3.set(m.x, m.y, m.z), q, one); B.bike.setMatrixAt(i, m4); B.body.setMatrixAt(i, m4)
-      const hd = new THREE.Vector3(0, 0, 0.32).applyAxisAngle(up, m.yaw); m4.compose(v3.set(m.x + hd.x, m.y + 1.72, m.z + hd.z), q, one); B.head.setMatrixAt(i, m4)
-      if (bikeGlow) { const fwd = new THREE.Vector3(0, 0, 0.62).applyAxisAngle(up, m.yaw); bikeGlow.geometry.attributes.position.setXYZ(i, m.x + fwd.x, m.y + 0.95, m.z + fwd.z) }
+      const hd = w3.set(0, 0, 0.32).applyAxisAngle(up, m.yaw); m4.compose(v3.set(m.x + hd.x, m.y + 1.72, m.z + hd.z), q, one); B.head.setMatrixAt(i, m4)
+      if (bikeGlow) { const fwd = w4.set(0, 0, 0.62).applyAxisAngle(up, m.yaw); bikeGlow.geometry.attributes.position.setXYZ(i, m.x + fwd.x, m.y + 0.95, m.z + fwd.z) }
     })
     for (const im of [W.torso, W.legL, W.legR, W.head, W.umb, B.body, B.bike, B.head]) if (im) { im.instanceMatrix.needsUpdate = true }
     if (bikeGlow) bikeGlow.geometry.attributes.position.needsUpdate = true
@@ -134,12 +135,12 @@ export function buildPeople(ctx) {
   let splI = 0
   function stepWaders(dt, t) {
     waders.forEach((w, i) => {
-      const s = (w.kid ? 0.72 : 1), bend = 0.25 + 0.25 * Math.sin(t * 0.9 + w.ph)
+      const s = (w.kid ? 0.72 : 1), bend = 0.08 + 0.08 * Math.sin(t * 0.9 + w.ph) // 【便21・外の目】胴は足もとで回すので、かがみを浅く（深いと胴が脚から浮いた）
       sc.set(s, s, s)
       q.setFromAxisAngle(up, w.yaw + Math.sin(t * 0.3 + w.ph) * 0.6).multiply(q2.setFromAxisAngle(xAx, bend))
       m4.compose(v3.set(w.x, w.y, w.z), q, sc); WD.torso.setMatrixAt(i, m4)
-      for (const [im, sd] of [[WD.legL, 1], [WD.legR, -1]]) { const off = new THREE.Vector3(0.08 * sd * s, 0, 0).applyAxisAngle(up, w.yaw); m4.compose(v3.set(w.x + off.x, w.y + 0.86 * s, w.z + off.z), q2.setFromAxisAngle(up, w.yaw), sc); im.setMatrixAt(i, m4) }
-      const hp = new THREE.Vector3(0, 1.6 * s, 0).applyQuaternion(q); m4.compose(v3.set(w.x + hp.x, w.y + hp.y, w.z + hp.z), q, sc); WD.head.setMatrixAt(i, m4)
+      for (let li = 0; li < 2; li++) { const im = li ? WD.legR : WD.legL, sd = li ? -1 : 1; const off = w3.set(0.08 * sd * s, 0, 0).applyAxisAngle(up, w.yaw); m4.compose(v3.set(w.x + off.x, w.y + 0.86 * s, w.z + off.z), q2.setFromAxisAngle(up, w.yaw), sc); im.setMatrixAt(i, m4) }
+      const hp = w4.set(0, 1.6 * s, 0).applyQuaternion(q); m4.compose(v3.set(w.x + hp.x, w.y + hp.y, w.z + hp.z), q, sc); WD.head.setMatrixAt(i, m4)
       if (!reduceMotion && splash) { w.splash -= dt; if (w.splash <= 0) { w.splash = 2.5 + rnd() * 6; for (let k = 0; k < 14; k++) { const j = splI++ % SPL, an = rnd() * 6.283, sp = 0.6 + rnd() * 1.4; splP.set([w.x + Math.cos(an) * 0.3, w.y + depthK(w.x, w.z) + 0.05, w.z + Math.sin(an) * 0.3], j * 3); splV.set([Math.cos(an) * sp, 1.6 + rnd() * 1.8, Math.sin(an) * sp], j * 3); splL[j] = 0.6 + rnd() * 0.4 } } }
     })
     for (const im of Object.values(WD)) im.instanceMatrix.needsUpdate = true

@@ -21,6 +21,7 @@ import { buildMarks } from './kamoMarks.js'
 const TIMES = {
   morning: { el: 7, az: 115, turb: 6, ray: 1.6, exp: 0.42, sun: 0xffe2c0, sunI: 2.4, hemi: [0xbfd2e6, 0x5a5040, 0.55], fog: 0xd2d6da, fogD: 0.00018 },
   noon: { el: 38, az: 0, turb: 3.5, ray: 1.0, exp: 0.32, sun: 0xfff6ea, sunI: 3.2, hemi: [0xcfe0f2, 0x6a6050, 0.7], fog: 0xc6d4e2, fogD: 0.00014 },
+  // 【便21】夕方の空の光 0.45 → 1.2（日の反対側の壁と町家の格子が真っ暗に沈んだ）
   dusk: { el: 4.5, az: 290, turb: 5.5, ray: 1.3, exp: 0.4, sun: 0xffa66a, sunI: 2.0, hemi: [0xa8a8c8, 0x403028, 1.2], fog: 0xc6b2a6, fogD: 0.00016 },
   night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232, fogD: 0.0002 },
 }
@@ -45,16 +46,18 @@ async function gunzip(url) {
 const view = (buf, sec) => new globalThis[sec.type](buf, sec.off, sec.n)
 
 /** 鴨川の町のデータと図を取ってくる。low＝iPhone の段（光の図 2048・素材の写真は縦横半分） */
+// 【便21・外の目】データの版の印。控え（service worker）が前の版の kamo.json と .bin を先に返すと、新しい本体と古いデータが混ざって崩れる（便21 で範囲の形を替えた）。版ごとに読み先を分ける
+const KAMO_V = '?v=21'
 export async function loadKamo(base, { low = false } = {}) {
-  const meta = await (await fetch(base + 'kamo.json')).json()
+  const meta = await (await fetch(base + 'kamo.json' + KAMO_V)).json()
   const F = meta.files
   const loader = new THREE.TextureLoader()
   const sfx = low ? '_s' : ''
-  const img = (p) => loader.loadAsync(base + p)
+  const img = (p) => loader.loadAsync(base + p + KAMO_V)
   // 便20: 人や電車が動く所と名所の位置（life.json・小さい）。読めなくても町は開く（動く物と時々の出来事が無いだけ）
-  const lifeP = fetch(base + 'life.json').then((r) => (r.ok ? r.json() : null)).catch(() => null)
+  const lifeP = fetch(base + 'life.json' + KAMO_V).then((r) => (r.ok ? r.json() : null)).catch(() => null)
   const [terrain, bldg, roads, misc, lmT, lmB, ...tex] = await Promise.all([
-    gunzip(base + F.terrain.file), gunzip(base + F.bldg.file), gunzip(base + F.roads.file), gunzip(base + F.misc.file),
+    gunzip(base + F.terrain.file + KAMO_V), gunzip(base + F.bldg.file + KAMO_V), gunzip(base + F.roads.file + KAMO_V), gunzip(base + F.misc.file + KAMO_V),
     img(`lm_terrain${sfx}.jpg`), img(`lm_bldg${sfx}.jpg`),
     ...meta.tex.flatMap((n) => [img(`tex/${n}_d${sfx}.jpg`), img(`tex/${n}_n${sfx}.jpg`)]),
   ])
@@ -87,7 +90,7 @@ export function buildKamo(data, { renderer, toKamo, roomBox, season = 'autumn', 
   const keep = (x) => { disposables.push(x); return x }
 
   const scene = new THREE.Scene()
-  if (/[?&]dev=1/.test(location.search)) window.__kamoScene = scene // 検証用（便21・?dev=1 の時だけ）: 鴨川の舞台（光と材を切り分けて調べる）
+  if (/[?&]dev=1/.test(location.search)) window.__kamoScene = scene // 検証用（便21・?dev=1 の時だけ）: 鴨川の舞台（光と材を切り分けて調べる）。片付ける時に外す
   scene.fog = new THREE.FogExp2(T.fog, T.fogD)
   const camera = new THREE.PerspectiveCamera(60, 1, 1, 26000)
   camera.matrixAutoUpdate = false
@@ -163,7 +166,7 @@ void main() {
     vec2 uv = d.xz / (d.y + 0.12) * 1.6;
     float c = dens(uv);
     if (c > 0.002) {
-      float sh = dens(uv + normalize(uSun.xz + vec2(1e-4)) * 0.18); // 日の向きへずらした所の濃さ＝陰
+      float sh = ${low ? 'c * 0.8' : 'dens(uv + normalize(uSun.xz + vec2(1e-4)) * 0.18)'}; // 日の向きへずらした所の濃さ＝陰（【便21・外の目】iPhone の段は2回目の雲の雑音を省く）
       float sunSide = pow(max(dot(d, uSun), 0.0), 6.0) * uSunK;
       vec3 cc = mix(uLit, uShd, clamp(sh * 1.1 - c * 0.15, 0.0, 1.0) * 0.85 + c * 0.15);
       cc += uLit * sunSide * (1.0 - c) * 0.35; // 日の側の縁の光
@@ -434,9 +437,9 @@ float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
     if (kd > 0.01) { float cs = kCaus(vGW.xz, uCT * 1.3) * kCaus(vGW.xz * 0.7 + 3.1, uCT * 1.1 + 2.0);
       diffuseColor.rgb *= 0.9 + cs * ${f5(4.0 * CAUS)} * smoothstep(0.01, 0.06, kd) * (1.0 - smoothstep(0.25, 0.5, kd) * 0.5);
       vec2 g = vGW.xz * 4.5, ip = floor(g), fp = fract(g); float d1 = 8.0, d2 = 8.0, tone = 0.5;
-      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) { vec2 o = vec2(float(i), float(j)), cc = ip + o; vec2 h = fract(sin(vec2(dot(cc, vec2(127.1, 311.7)), dot(cc, vec2(269.5, 183.3)))) * 43758.5453); vec2 r = o + h * 0.8 + 0.1 - fp; float d = dot(r, r); if (d < d1) { d2 = d1; d1 = d; tone = h.x; } else if (d < d2) d2 = d; }
-      float near = 1.0 - smoothstep(0.25, 0.7, length(fwidth(g)));
-      diffuseColor.rgb *= mix(1.0, mix(0.5, 1.0, smoothstep(0.0, 0.14, sqrt(d2) - sqrt(d1))) * (0.8 + 0.4 * tone), near * smoothstep(0.0, 0.03, kd)); } }`)
+      ${low ? '' : `for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) { vec2 o = vec2(float(i), float(j)), cc = ip + o; vec2 h = fract(sin(vec2(dot(cc, vec2(127.1, 311.7)), dot(cc, vec2(269.5, 183.3)))) * 43758.5453); vec2 r = o + h * 0.8 + 0.1 - fp; float d = dot(r, r); if (d < d1) { d2 = d1; d1 = d; tone = h.x; } else if (d < d2) d2 = d; }`} // 【便21・外の目】iPhone の段は礫の網を省く
+      ${low ? '' : `float near = 1.0 - smoothstep(0.25, 0.7, length(fwidth(g)));
+      diffuseColor.rgb *= mix(1.0, mix(0.5, 1.0, smoothstep(0.0, 0.14, sqrt(d2) - sqrt(d1))) * (0.8 + 0.4 * tone), near * smoothstep(0.0, 0.03, kd));`} } }`)
       })
       addKey(m, 'caus')
     }
@@ -561,7 +564,7 @@ float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
     //   ・流れ: 賀茂川と高野川はデルタの先へ、合流の後は南へ。波の模様を流れの向きに運ぶ（2つの位相を交互に混ぜて、模様が伸びない形）
     //   ・白いさざ波: 堰（落差工・帯工）と飛び石の列の下流 7m に、流れに沿った白い筋（調べ §6「滝のような白い帯ではなく、さざ波の白い筋」）
     if (depthTex && !/[?&]kamoshallow=0/.test(location.search)) {
-      const segs = [...(meta.weirs || []), ...((meta.stones && meta.stones.rows) || [])], NSEG = Math.min(32, segs.length / 4)
+      const segs = [...((meta.stones && meta.stones.rows) || []), ...(meta.weirs || [])], NSEG = Math.min(32, segs.length / 4) // 【便21・外の目】飛び石の列を先に（堰が増えて 32 を超えても飛び石の下流の白い筋は消えない）
       const segU = []; for (let i = 0; i < 32; i++) segU.push(i < NSEG ? new THREE.Vector4(segs[i * 4], segs[i * 4 + 1], segs[i * 4 + 2], segs[i * 4 + 3]) : new THREE.Vector4())
       const clar = NIGHT ? 0.9 : RAIN ? 0.72 : SNOW ? 0.62 : TK === 'dusk' ? 0.42 : 0.3
       const foamLit = NIGHT ? new THREE.Color(0.05, 0.055, 0.065) : new THREE.Color(T.sun).multiplyScalar(0.55 * SK.sunK).add(new THREE.Color(T.hemi[0]).multiplyScalar(0.35))
@@ -830,8 +833,8 @@ void main() {`)
     addKey(leafMat, 'leaf')
     const coreGeo = keep(new THREE.IcosahedronGeometry(0.55, low ? 0 : 1)), coreMat = keep(new THREE.MeshStandardMaterial({ roughness: 1 }))
     const bark = texKit('japanese_zelkova_bark')
-    const TREE21 = !/[?&]kamotree=0/.test(location.search) // 便21: kamotree=0 は外し回し用（前の樹冠と幹）
-    const trunkMat = keep(new THREE.MeshStandardMaterial({ color: TREE21 ? 0x6e6358 : 0xffffff, roughness: 1, map: bark.d.clone(), normalMap: bark.n.clone() })); // 便21: 幹を暗く（明るい棒に見えた） trunkMat.map.repeat.set(1, 2); trunkMat.normalMap.repeat.set(1, 2); trunkMat.map.needsUpdate = trunkMat.normalMap.needsUpdate = true; keep(trunkMat.map); keep(trunkMat.normalMap)
+    const TREE21 = !/[?&]kamotree=0/.test(location.search) // 便21: kamotree=0 は外し回し用（前の樹冠と幹）。幹の色を暗くした（明るい棒に見えた）。【便21・外の目】前はこの注を幹の材の行の途中に置き、後ろの模様の繰り返しと片付けが注に呑まれていた
+    const trunkMat = keep(new THREE.MeshStandardMaterial({ color: TREE21 ? 0x6e6358 : 0xffffff, roughness: 1, map: bark.d.clone(), normalMap: bark.n.clone() })); trunkMat.map.repeat.set(1, 2); trunkMat.normalMap.repeat.set(1, 2); trunkMat.map.needsUpdate = trunkMat.normalMap.needsUpdate = true; keep(trunkMat.map); keep(trunkMat.normalMap)
     const trunkGeo = keep(new THREE.CylinderGeometry(0.1, 0.18, 1, low ? 5 : 8, 1, true).translate(0, 0.5, 0))
     // 1本ずつの形と色を先に決める（乱数の順は木の並びのまま＝区画の分け方で木の形が変わらない）
     const CELL = 400, cells = new Map()
@@ -842,7 +845,8 @@ void main() {`)
       // 便21: 樹冠をもう一回り大きく低く（前は細い幹の上に丸い樹冠が乗った「棒付きの飴」に見えた）。川岸の桜と柳（種類 1）は横へ広く低い。乱数の回る数は前のまま
       const wide = TREE21 ? (kind === 1 ? 1.32 : 1.16) : 1
       sc.set(sR * (0.9 + R() * 0.25) * wide, Math.max(sR * 0.9, h * (TREE21 ? 0.44 : 0.36)) * (0.85 + R() * 0.25), sR * (0.9 + R() * 0.25) * wide) // 樹冠は低く大きく（幹が見えるのは下の 3〜4 割）
-      const crownM = m4.compose(at.set(tx, ty + h - sc.y * (TREE21 ? 0.98 : 0.8), tz), q, sc).clone()
+      if (TREE21) sc.y = Math.min(sc.y, h * 0.55) // 【便21・外の目】幅が高さに近い木（川岸の桜・クスノキ）は樹冠の下の端が地面の下へ出た
+      const crownM = m4.compose(at.set(tx, ty + (TREE21 ? Math.max(h - sc.y * 0.98, sc.y * 0.95 + 1.0) : h - sc.y * 0.8), tz), q, sc).clone()
       const base = kind === 1 && S === 'spring' ? LEAF[0] : R() < (S === 'autumn' ? 0.55 : 0.3) ? LEAF[0] : LEAF[1]
       c.setHex(base).offsetHSL((R() - 0.5) * 0.03, (R() - 0.5) * 0.1, (R() - 0.5) * 0.08)
       if (SNOW) c.lerp(WHITE, 0.35)
@@ -1177,6 +1181,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
         if (sunL.shadow && sunL.shadow.map) sunL.shadow.map.dispose()
         scene.traverse((o) => { if (o.isInstancedMesh) o.dispose() })
         for (const d of disposables) { try { d.dispose() } catch (e) { /* 無視 */ } }
+        if (window.__kamoScene === scene) window.__kamoScene = null
       } catch (e) { /* 無視 */ }
     },
   }
