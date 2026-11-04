@@ -1214,6 +1214,7 @@ void main() {`)
     for (const t of [sd.lmT, sd.lmB]) { t.colorSpace = THREE.SRGBColorSpace; t.channel = 1; t.flipY = true; t.needsUpdate = true; keep(t) }
     SOUTH_ON = true
     const info = { ms: 0 }
+    sd.before = new Set(scene.children) // 南の四角で足した物を見分ける（映り込みの描き直しで描かない物）
     addNearTerrain(RGB, sd.lmT, uvB, [3, 6], true)
     info.roadPts = buildRoads({ p16: v('rpos'), idx: v('ridx'), kind: v('rkind'), al: v('ralong'), wd: v('rwidth'), ps: Sm.roads.pStep, po: Sm.roads.pOff, lmTex: sd.lmT, uvf: uvB })
     { // 水面: 北の水面の板に南の水面の網を足す（映り込みを描く Water は1つのまま＝映り込みの重さは変えない）
@@ -1237,6 +1238,11 @@ void main() {`)
     info.trees = v('trees').length / 6; info.canals = (Sm.canals || []).length // 細い水路（高瀬川など・帯の水面は水面の網に入っている）
     buildStones(v('stones'), sec.stoneKind ? v('stoneKind') : null, false)
     try { if (!/[?&]kamomarks=0/.test(location.search)) info.benches = buildMarks({ scene, marks: { benches: Sm.benches || [] }, keep, NIGHT, DUSK: TK === 'dusk', SNOW }).benches } catch (e) { console.warn('南の四角のベンチを組めなかった:', e && e.message) }
+    // 映り込みの描き直し（Water がもう一度描く舞台）では、目が水面から 60m より高い時だけ、南の四角の建物・木・庇・欄干・灯り・ベンチ・飛び石を描かない（重さのため。高い所からの川の映り込みはほぼ空。川べりの低い目では今のまま映る）。kamomirrorS=0 は外し回し用
+    { const before = sd.before, southObjs = scene.children.filter((o) => !before.has(o) && /^(bldg|crown|core|trunk|eaves|bridgeRail|lamps|lantern|glow|marks|stones)$/.test(o.userData.part || ''))
+      info.mirrorSkip = southObjs.length
+      if (!/[?&]kamomirrorS=0/.test(location.search)) { const ob = water.onBeforeRender
+        water.onBeforeRender = function (...a) { const hi = camera.position.y - water.position.y > 60, vis = hi ? southObjs.map((o) => o.visible) : null; if (hi) for (const o of southObjs) o.visible = false; try { ob.apply(this, a) } finally { if (hi) southObjs.forEach((o, i) => { o.visible = vis[i] }) } } } }
     // 遠くの網を、南の四角の内側（縁から 10m）で 6m 下げる（近くの網の下に隠す。北の四角は前から下げてある）。外の町はこの後で残りを下げる
     scene.traverse((o) => { if (o.userData.part !== 'terrainFar') return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); if (inK(x, z, 10) && !inRA(x, z, 10)) p.setY(i, p.getY(i) - 6) } p.needsUpdate = true; o.geometry.computeBoundingSphere(); o.geometry.computeBoundingBox() })
     // 道案内の表を網の全部へ広げて、次に聞かれた時に作り直す。飛べる箱も網の全部へ（外の町を足すと外の町の四角へ広がる）
@@ -1419,7 +1425,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     addSouth, // 便23: 南の四角を足す（外の町より先に）
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, south, waterOut: (() => { const g = water.geometry, p = g.attributes.position, ix = g.index.array; let n = 0; for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (!inK(cx, cz, -0.5)) n++ } return n })(), outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, south, mirrorY: +water.position.y.toFixed(2), waterOut: (() => { const g = water.geometry, p = g.attributes.position, ix = g.index.array; let n = 0; for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (!inK(cx, cz, -0.5)) n++ } return n })(), outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {

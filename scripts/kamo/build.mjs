@@ -152,9 +152,10 @@ const inWater = (x, z) => waterRings.some((r) => pip([x, z], r))
 // 便23: 南の便は、河川敷を鴨川の面（water=river・riverbank）からだけ広げる（疏水・白川・池のまわりまで 70m の草の帯が広がった）
 const bankRings = []; if (SOUTH) for (const e of osm) if (tag(e, 'natural') === 'water' && tag(e, 'water') === 'river' || tag(e, 'waterway') === 'riverbank') for (const r of rings(e)) if (r.length > 3) bankRings.push(r)
 const bankSeed = (x, z) => !SOUTH || bankRings.some((r) => pip([x, z], r))
-// 便23: 南の便は、橋の床（5m の標高に入っている）の上の点を、水面の高さの元（waterAt のまわりの低い所）から除く（橋の下で水面と川底が 4m 盛り上がった）。KAMO_MUT=bridge は外し回し用
+// ~~便23: 南の便は、橋の床（5m の標高に入っている）の上の点を、水面の高さの元（waterAt のまわりの低い所）から除く（橋の下で水面と川底が 4m 盛り上がった）。KAMO_MUT=bridge は外し回し用~~
+// （【便23】働かせない＝コードは残す: 鴨川の本流では効かず〈南北の帯の基準と横の一番低い水面で済んだ〉、岡崎の細い疏水では橋の下の水面を逆に 4m 下げた）
 const BRC = 8, bridgeCell = new Map()
-if (SOUTH && process.env.KAMO_MUT !== 'bridge') for (const e of osm) {
+if (false && SOUTH && process.env.KAMO_MUT !== 'bridge') for (const e of osm) {
   if (e.type !== 'way' || !e.geometry || tag(e, 'bridge') !== 'yes' || !(tag(e, 'highway') || tag(e, 'railway'))) continue
   const hw = (+(tag(e, 'width') || 0) || 16) / 2 + 3, pts = P(e.geometry)
   for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1]; for (let a = Math.floor((Math.min(ax, bx) - hw) / BRC); a <= Math.floor((Math.max(ax, bx) + hw) / BRC); a++) for (let c = Math.floor((Math.min(az, bz) - hw) / BRC); c <= Math.floor((Math.max(az, bz) + hw) / BRC); c++) { const k = a * 100003 + c; if (!bridgeCell.has(k)) bridgeCell.set(k, []); bridgeCell.get(k).push([ax, az, bx, bz, hw]) } }

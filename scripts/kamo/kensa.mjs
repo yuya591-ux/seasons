@@ -47,6 +47,8 @@
 //   K42 北と南の継ぎ目（z 904）: 継ぎ目の北 4m と南 20m（合わせる時に 16m でなめらかにつないだ所の外）の地面の高さの差が 1m 未満（東西 5 か所・東 −90 は鴨川の中。東 ±600 と 300 は元の地形の坂と窪み）・継ぎ目の上で道案内が網の縁と見なさない（便23）
 //   K43 ?kamosouth=0 の時は南の四角を足さず、外の町は前と同じ（箱 15 万以上・抜いた箱 0）。エラー 0（便23）
 //   K44 南の四角の居場所の名: 先斗町・木屋町・河原町・祇園・南の鴨川の上（水）（便23）
+//   K45 映り込みの鏡（便23）: 南の鴨川（三条の南）の上で目を水面の 6m 上に置くと、映り込みの鏡の高さがその所の水面（−15〜−20m）に合う（北の四角の窓辺の時は前と同じ −4.56m）。前は北の水面の高さのままで、南の川の映り込みに地面が写った
+//   K46 南の鴨川の水面に段が無い（便23）: 継ぎ目の南（東 −90・南北 860〜1000m）で、下流へ 20m ごとの水面の上がりが 1m 未満（標高の欠けで、下流が上流より 4m 高い所があった）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 //   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
@@ -357,7 +359,7 @@ if (run('K39')) { // 【便22】
   await ctx.close()
 }
 // 【便23】南の四角
-if (run('K40') || run('K41') || run('K42') || run('K44')) {
+if (run('K40') || run('K41') || run('K42') || run('K44') || run('K45') || run('K46')) {
   const o = await open('summer-morning-corner-room')
   const got = await outerWait(o.p), k = await kamoInfo(o.p), Sx = k && k.south, O = k && k.outer, cut = O && O.southCut
   if (run('K40')) check('K40', got && Sx && Sx.bldgTris >= 300000 && Sx.water >= 10000 && Sx.trees >= 2000 && Sx.roadPts >= 50000 && Sx.benches >= 100 && Sx.canals >= 10 && cut && cut.boxes >= 10000 && cut.trees > 0 && cut.roads > 0 && cut.water > 0 && cut.terrain > 0 && !o.errs.length && !o.gl.length, `組めた ${got}・南の四角 ${Sx ? `建物の三角形 ${Sx.bldgTris}・水面 ${Sx.water}・木 ${Sx.trees}・道の点 ${Sx.roadPts}・ベンチ ${Sx.benches}・細い水路 ${Sx.canals}（10 以上）・組む時間 ${Sx.ms}ms` : '無し'}・外の町が抜いた ${cut ? JSON.stringify(cut) : '無し'}・エラー ${o.errs.length}・GL ${o.gl.length}`)
@@ -365,12 +367,24 @@ if (run('K40') || run('K41') || run('K42') || run('K44')) {
     const lm = await o.p.evaluate(() => { const c = { bldg2: 0, terr2: 0, bldgA: 0, terrA: 0, uvBad: 0 }; window.__kamoScene.traverse((m) => { if (!m.isMesh || !m.material || !m.material.aoMap) return; const im = m.material.aoMap.image, src = (im && (im.currentSrc || im.src)) || ''; const p = m.userData.part; if (p === 'bldg') { if (/lm_bldg2/.test(src)) c.bldg2++; else if (/lm_bldg/.test(src)) c.bldgA++ } if (p === 'terrainNear') { if (/lm_terrain2/.test(src)) c.terr2++; else if (/lm_terrain/.test(src)) c.terrA++ } if (/lm_(bldg|terrain)2/.test(src) && (p === 'bldg' || p === 'terrainNear')) { const u = m.geometry.attributes.uv1; if (!u) c.uvBad++; else { let lo = 1, hi = 0; for (let i = 0, st = Math.max(1, Math.floor(u.count / 60)); i < u.count; i += st) { lo = Math.min(lo, u.getX(i)); hi = Math.max(hi, u.getX(i)) } if (!(lo >= 0 && hi <= 1 && hi > lo)) c.uvBad++ } } }); return c })
     check('K41', lm.bldg2 >= 10 && lm.terr2 >= 6 && lm.bldgA >= 10 && lm.terrA >= 6 && lm.uvBad === 0, `南の建物の図 ${lm.bldg2} 塊・南の地形の図 ${lm.terr2} 塊・北の建物の図 ${lm.bldgA} 塊・北の地形の図 ${lm.terrA} 塊・図の位置の崩れ ${lm.uvBad}`)
   }
-  if (run('K42') || run('K44')) {
+  if (run('K42') || run('K44') || run('K45') || run('K46')) {
+    if (run('K45')) o.winMirror = await o.p.evaluate(() => window.__town3dKamo().mirrorY)
     await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
     const at = (X, Z) => o.p.evaluate(([X, Z]) => { const e = window.__town3dKamoTown(X, Z); return window.__town3dNavAt(e.x, e.z) }, [X, Z])
     if (run('K42')) {
       const d = []; for (const X of [-500, -300, -90, 20, 500]) { const a = await at(X, 900), c = await at(X, 924); d.push({ X, dy: +Math.abs(a.ground - c.ground).toFixed(2), blocked: a.blocked && c.blocked && a.top - a.ground < 2 }) }
       check('K42', d.every((q) => q.dy < 1 && !q.blocked), `継ぎ目の両側の地面の差 ${d.map((q) => `東 ${q.X}: ${q.dy}m`).join('・')}（1m 未満）・縁と見なした所 ${d.filter((q) => q.blocked).length}`)
+    }
+    if (run('K46')) {
+      const f = []; for (let Z = 860; Z <= 1000; Z += 20) { const q = await at(-90, Z); f.push(+q.floor.toFixed(2)) }
+      let up = 0; for (let i = 1; i < f.length; i++) up = Math.max(up, f[i] - f[i - 1])
+      check('K46', up < 1, `継ぎ目の南の鴨川の水面（南北 860〜1000m・20m ごと） ${f.join(' → ')}・下流へ上がった一番大きい所 ${up.toFixed(2)}m（1 未満）`)
+    }
+    if (run('K45')) {
+      const win = o.winMirror
+      await o.p.evaluate(() => { window.__kamoCam = { p: [-60, -14, 2200], l: [-110, -18, 2700], fov: 60 } }); await o.p.waitForTimeout(1500)
+      const sw = await o.p.evaluate(() => window.__town3dKamo().mirrorY); await o.p.evaluate(() => { window.__kamoCam = null })
+      check('K45', sw <= -15 && sw >= -21 && Math.abs(win - -4.56) < 0.01, `窓辺の鏡の高さ ${win}（−4.56）・南の鴨川の上の鏡の高さ ${sw}（−15〜−21）`)
     }
     if (run('K44')) {
       const P = await o.p.evaluate(() => { const q = (X, Z) => { const e = window.__town3dKamoTown(X, Z); return window.__town3dNavAt(e.x, e.z) }; return { ponto: q(-140, 2600).place, kiya: q(-190, 2500).place, kawa: q(-330, 2400).place, gion: q(250, 2800).place, ponto2: q(-150, 2650).place, riv: q(-60, 2600) } })
