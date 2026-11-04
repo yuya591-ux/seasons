@@ -18,6 +18,8 @@ for (const s of SCENES) {
   for (const snd of s.sounds || []) if (snd.src) used.add(snd.src.replace(/^audio\//, ''))
   if (s.bg) usedBg.add(s.bg)
 }
+// 【便22】音の部品（src/audio/audio.js）が名前で読む素材（鴨川デルタの子どもの声 audio/kamo/asobi.mp3 など）も「鳴らす音」に入れる
+for (const m of fs.readFileSync(new URL('../src/audio/audio.js', import.meta.url), 'utf8').matchAll(/'audio\/([^']+\.mp3)'/g)) used.add(m[1])
 const credited = new Set(CREDIT_SOUNDS.map((c) => c.file))
 for (const f of used) if (!credited.has(f)) bad.push(`アプリ内の出典に無い音: ${f}`)
 for (const c of CREDIT_SOUNDS) if (!used.has(c.file)) bad.push(`どの情景も鳴らさない音がアプリ内の出典にある: ${c.file}`)
