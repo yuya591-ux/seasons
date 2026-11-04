@@ -124,5 +124,21 @@
   "failed": [
    "× qa-credits どの情景も鳴らさない音がアプリ内の出典にある: kamo/nai.mp3"
   ]
+ },
+ {
+  "id": "M15",
+  "name": "（K39）町を片付ける時に three の使い回しの図（DFG_LUT）を解放しない",
+  "k": "K39",
+  "caught": true,
+  "failed": [
+   "× K39 JS のメモリ 角部屋 490MB → 北寺尾 722MB → 角部屋 950MB → 北寺尾 1183MB（2回目の北寺尾の増え 461MB・200 未満）・エラー 0"
+  ]
+ },
+ {
+  "id": "M16",
+  "name": "（K39）検証の口 __girlPNG2 を片付けで外さない",
+  "k": "K39",
+  "caught": false,
+  "failed": []
  }
 ]

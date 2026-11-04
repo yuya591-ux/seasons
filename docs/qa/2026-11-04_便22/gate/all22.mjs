@@ -1,7 +1,7 @@
 // 便22 の全テスト（便21 の all21 を写した）: ビルド・スモーク（34情景・出典の照らし）・鴨川の検査 K1〜K37・音の確かめ A1〜A5（開発用のサーバー）・前後の画素の差
 //   前後の差は、鴨川の時だけ分かれる直しが、ほかの情景（谷戸・北寺尾の窓辺・北寺尾の空・前の角部屋）を変えていないかを見る
 //   【便20】便19 の範囲外「今どうしの揺れが回ごとに大きく違う（2枚だけの揺れの幅では比べにならない）」を受けて、揺れを2組（ato と ato2・ato と ato3）でとり、大きい方の揺れで比べる
-// 前に: 今のコードの vite preview を 4961、復元地点 e6c4347（便21 の終わり）の作業フォルダ（../_tmp_bin22_mae）の vite preview を 4962、今のコードの開発用のサーバー（vite）を 4970 に立てる
+// 前に: 今のコードの vite preview を 4961、復元地点 e6c4347（便21 の終わり）の作業フォルダ（../_tmp_bin22_mae）の vite preview を 4962、（開発用のサーバーは音の確かめの段が自分で立てて止める）
 // zentest で包む: node ~/.claude/skills/_shared/zentest.mjs --end "全テストの終わり" --count "全テストの終わり: (\d+)/" -- node docs/qa/2026-11-04_便22/gate/all22.mjs
 import { spawnSync } from 'node:child_process'
 const OUT = 'docs/qa/2026-11-04_便22/shots/ma'
@@ -19,7 +19,7 @@ const steps = [
   { name: 'ビルド', cmd: 'npm', args: ['run', 'build'] },
   { name: 'スモーク', cmd: 'npm', args: ['run', 'smoke'] },
   { name: '鴨川の検査 K1〜K37', cmd: 'node', args: ['scripts/kamo/kensa.mjs'], env: { PORT: '4961' } },
-  { name: '音の確かめ A1〜A5', cmd: 'node', args: ['docs/qa/2026-11-04_便22/gate/audio22.mjs'], env: { AUDIO_PORT: '4970' } },
+  { name: '音の確かめ A1〜A5', cmd: 'node', args: ['docs/qa/2026-11-04_便22/gate/audio22-run.mjs'], env: { AUDIO_PORT: '4970' } }, // 開発用のサーバーはこの段の間だけ立てる
   ...four(sh, 'shishigaya-window-3d', 'all-yato', ''),
   ...four(sh, 'kitaterao-window-3d', 'all-kita', ''),
   ...four(shF, 'kitaterao-window-3d', 'all-kitafly', FLY),
