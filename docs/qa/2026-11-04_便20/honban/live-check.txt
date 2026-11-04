@@ -1,6 +1,6 @@
-公開と手元の precache-manifest が同じ: false
-× assets/index-BP5PeS9s.js assets/index-BP5PeS9s.js 404
-× assets/kamoTown-CSzMEeEh.js assets/kamoTown-CSzMEeEh.js 404
-× assets/town3dViewer-Cv1WU2a8.js assets/town3dViewer-Cv1WU2a8.js 404
-× kamo/life.json kamo/life.json 404
-× thumbs/summer-night-corner-room.jpg thumbs/summer-night-corner-room.jpg 404
+公開と手元の precache-manifest が同じ: true
+SHA-256 assets/index-CI1tY_pM.js 公開・手元 一致 833b461ff43a177a
+SHA-256 assets/kamoTown-CSzMEeEh.js 公開・手元 一致 dbd674ca49488806
+SHA-256 assets/town3dViewer-CiCKAJoR.js 公開・手元 一致 448518231e0aa469
+SHA-256 kamo/life.json 公開・手元 一致 92207aac66d7ce63
+SHA-256 thumbs/summer-night-corner-room.jpg 公開・手元 一致 ae300ddda99745b2

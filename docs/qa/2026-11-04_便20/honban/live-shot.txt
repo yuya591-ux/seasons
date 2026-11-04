@@ -1,0 +1,2 @@
+pc: 出来事 ok・送り火 t 60・灯り [75,103,63,45.5,0,0]・座る人 59・電車 arrive・段 {"low":false,"time":"night"}・エラー 0
+iphone: 出来事 ok・送り火 t 60・灯り [75,103,63,46,0,0]・座る人 33・電車 arrive・段 {"low":true,"time":"night"}・エラー 0
