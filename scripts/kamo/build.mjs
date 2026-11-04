@@ -374,8 +374,17 @@ for (let i = 0; i < roadPts.length; i += 3) { const k = Math.floor(roadPts[i] / 
 const nearRoad = (x, z) => { let best = null, bd = 1e9; const ci = Math.floor(x / RC), cj = Math.floor(z / RC); for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) { const arr = rcell.get((ci + a) * 100003 + cj + b); if (!arr) continue; for (let q = 0; q < arr.length; q += 2) { const d = Math.hypot(arr[q] - x, arr[q + 1] - z); if (d < bd) { bd = d; best = [arr[q], arr[q + 1]] } } } return best ? { d: bd, x: best[0], z: best[1] } : null }
 const BC = 20, bcell = new Map() // 建物の箱を 20m 升に入れて、隣と接するかを見る
 const bbox = blds.map((b, n) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, y0 = 1e9, y1 = -1e9; for (let i = 0; i < b.pos.length; i += 3) { x0 = Math.min(x0, b.pos[i]); x1 = Math.max(x1, b.pos[i]); y0 = Math.min(y0, b.pos[i + 1]); y1 = Math.max(y1, b.pos[i + 1]); z0 = Math.min(z0, b.pos[i + 2]); z1 = Math.max(z1, b.pos[i + 2]) } for (let a = Math.floor(x0 / BC); a <= Math.floor(x1 / BC); a++) for (let c = Math.floor(z0 / BC); c <= Math.floor(z1 / BC); c++) { const k = a * 100003 + c; let l = bcell.get(k); if (!l) { l = []; bcell.set(k, l) } l.push(n) } return { x0, x1, z0, z1, y0, y1 } })
-const style = new Uint8Array(blds.length), front = new Uint8Array(blds.length), cnt = [0, 0, 0, 0, 0, 0]
+const style = new Uint8Array(blds.length), front = new Uint8Array(blds.length), cnt = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 let nRoof = 0
+// 便21: 名所の形（OSM の番号は scripts/kamo/../docs/qa/2026-11-04_便21/調べ/名所と鴨川の調べ.md）
+const byId = (type, id) => osm.find((e) => e.type === type && e.id === id)
+const ringOf = (type, id) => { const e = byId(type, id); return e ? rings(e).find((r) => r.length > 3) || null : null }
+const inPoly = (polys, x, z) => polys.some((r) => r && pip([x, z], r))
+const KU = osm.filter((e) => tag(e, 'amenity') === 'university').flatMap((e) => rings(e)).filter((r) => r.length > 3 && pip([760, 428], r)) // 京大の本部構内（時計台を含む大学の囲み）
+const YOSHIDA = [ringOf('way', 369017538)] // 吉田神社の境内
+const TOWER_POLY = ringOf('way', 165921963) // 百周年時計台記念館
+const MOAN = (() => { const e = byId('node', 4344305189); return e ? [toX(e.lon), toZ(e.lat)] : null })() // 茂庵
+const towerB = []
 // 屋根を足す: 町家＝通りに平行な棟の切妻（平入り）・古民家＝寄棟・今の家＝切妻か寄棟・寺社＝深い軒の寄棟。軒は壁の上の端（平らな屋上）から始める
 function addRoof(b, bb, s, r) {
   const top = []; for (let i = 0; i < b.pos.length; i += 3) if (b.pos[i + 1] > bb.y1 - 0.4) top.push(b.pos[i], b.pos[i + 2])
@@ -386,10 +395,10 @@ function addRoof(b, bb, s, r) {
   let [s0, s1] = ext(ax, az), [d0, d1] = ext(-az, ax)
   if (s !== 1 && d1 - d0 > s1 - s0) { const t = ax; ax = -az; az = t; [s0, s1] = ext(ax, az); [d0, d1] = ext(-az, ax) } // 町家でなければ長い方に棟を通す
   const cx_ = -az, cz_ = ax
-  const os = s === 1 ? 0.08 : s === 5 ? 1.4 : 0.45, od = s === 1 ? 0.55 : s === 5 ? 1.4 : 0.45
+  const os = s === 1 ? 0.08 : s === 5 ? 1.4 : s === 7 ? 0.8 : s === 8 ? 0.7 : 0.45, od = s === 1 ? 0.55 : s === 5 ? 1.4 : s === 7 ? 0.8 : s === 8 ? 0.7 : 0.45
   s0 -= os; s1 += os; d0 -= od; d1 += od
-  const pitch = s === 5 ? 0.62 : s === 2 ? 0.5 : s === 1 ? 0.45 : 0.4 + RK() * 0.12
-  const hip = s === 2 || s === 5 || (s === 0 && RK() < 0.4)
+  const pitch = s === 5 ? 0.62 : s === 7 ? 0.6 : s === 8 ? 0.48 : s === 2 ? 0.5 : s === 1 ? 0.45 : 0.4 + RK() * 0.12
+  const hip = s === 2 || s === 5 || s === 8 || (s === 0 && RK() < 0.4)
   const yE = bb.y1 + 0.03, half = (d1 - d0) / 2, dm = (d0 + d1) / 2, yR = yE + pitch * half
   const W = (sv, dv, y) => [sv * ax + dv * cx_, y, sv * az + dv * cz_]
   const add = (A, B, C) => { // 上か外を向くように回りをそろえて足す
@@ -436,8 +445,13 @@ blds.forEach((b, n) => {
     if (rowHouse && RK() < (west ? 0.6 : 0.35) + (/店舗/.test(u) ? 0.15 : 0)) s = 1
     else if (RK() < 0.3) s = 2
   }
+  // 便21: 名所の建物（調べ §1・§2・§4）: 京大の本部構内＝赤茶のタイル（6）・吉田神社の境内の小さな社＝朱塗りの社（7）・茂庵＝大正の木造二階（8）
+  if (inPoly(KU, cx, cz) && ht > 4) s = 6
+  else if (inPoly(YOSHIDA, cx, cz) && roofA < 400 && h < 15) { s = 7; house = false }
+  else if (MOAN && Math.hypot(cx - MOAN[0], cz - MOAN[1]) < 14 && h < 12) { s = 8; house = false }
   style[n] = s; cnt[s]++
-  if (house || s === 5) { addRoof(b, bb, s, r); nRoof++ }
+  if (s === 6 && TOWER_POLY && inPoly([TOWER_POLY], cx, cz)) towerB.push(n)
+  if (house || s === 5 || s === 7 || s === 8) { addRoof(b, bb, s, r); nRoof++ }
   if (s !== 1 || !r) return
   // 通り庇（1階の上 2.7m・外へ 0.85m・先が 0.22m 下がる）と、半分の町家に犬矢来（足もとの竹の囲い・外へ 0.45m・高さ 0.9m）。表の壁＝外向きの法線が通りの向きに近い壁
   const fa = Math.atan2(r.x - cx, r.z - cz), fx = Math.sin(fa), fz = Math.cos(fa), px = fz, pz = -fx
@@ -461,7 +475,45 @@ blds.forEach((b, n) => {
     for (let i = 0; i < 3; i++) { const [a0, h0] = prof[i], [a1, h1] = prof[i + 1]; quad(P2(s0 + 0.2, e0 + a0, base + h0), P2(s1 - 0.2, e0 + a0, base + h0), P2(s1 - 0.2, e0 + a1, base + h1), P2(s0 + 0.2, e0 + a1, base + h1), 2) }
   }
 })
-log.push(`家並みの種類: 今の家 ${cnt[0]}・町家 ${cnt[1]}・古民家 ${cnt[2]}・集合住宅とビル ${cnt[3]}・大きな施設 ${cnt[4]}・寺社 ${cnt[5]}・屋根を足した ${nRoof} 棟・通り庇と犬矢来の三角形 ${eaves.length / 9}`)
+log.push(`家並みの種類: 今の家 ${cnt[0]}・町家 ${cnt[1]}・古民家 ${cnt[2]}・集合住宅とビル ${cnt[3]}・大きな施設 ${cnt[4]}・寺社 ${cnt[5]}・京大の赤茶 ${cnt[6] || 0}・吉田神社の社 ${cnt[7] || 0}・茂庵 ${cnt[8] || 0}・屋根を足した ${nRoof} 棟・通り庇と犬矢来の三角形 ${eaves.length / 9}`)
+// ── 便21: 名所の書き出し（本体の kamoMarks.js が形を作る） ──
+const marks = { tower: null, kusu: null, gate: null, torii: [], daigengu: null, moan: MOAN ? [+MOAN[0].toFixed(1), +ground(...MOAN).toFixed(2), +MOAN[1].toFixed(1)] : null, shelters: [], benches: [], play: [] }
+{ // 時計台の塔: 時計台の建物の点のうち、足もとから 18m より上の点の箱
+  let base = 1e9, top = -1e9; const P2 = []; for (const n of towerB) { const b = blds[n]; for (let i = 0; i < b.pos.length; i += 3) { base = Math.min(base, b.pos[i + 1]); top = Math.max(top, b.pos[i + 1]); P2.push(b.pos[i], b.pos[i + 1], b.pos[i + 2]) } }
+  // PLATEAU の時計台は 15m の箱で、31m の時計塔が無い（便21 で確かめた）。塔は正面（南）の棟の真ん中に 7.6m 角・地面から 31m で立てる（調べ §1）
+  let zf = -1e9; for (let i = 0; i < P2.length; i += 3) zf = Math.max(zf, P2[i + 2])
+  let xa = 1e9, xb = -1e9; for (let i = 0; i < P2.length; i += 3) if (P2[i + 2] > zf - 3) { xa = Math.min(xa, P2[i]); xb = Math.max(xb, P2[i]) }
+  if (P2.length) { const cxT = (xa + xb) / 2, czT = zf - 6.5, g0 = ground(cxT, zf); marks.tower = { x0: +(cxT - 3.8).toFixed(2), x1: +(cxT + 3.8).toFixed(2), z0: +(czT - 3.8).toFixed(2), z1: +(czT + 3.8).toFixed(2), top: +(g0 + 31).toFixed(2), base: +g0.toFixed(2), roof: +top.toFixed(2), front: +zf.toFixed(2) } }
+  // 正門（東一条通の上・時計台の南）とクスノキ（正門と時計台のあいだ）
+  const hig = osm.filter((e) => e.type === 'way' && tag(e, 'name') === '東一条通' && e.geometry).flatMap((e) => P(e.geometry))
+  if (marks.tower && hig.length) {
+    const tx = (marks.tower.x0 + marks.tower.x1) / 2, tz = (marks.tower.z0 + marks.tower.z1) / 2
+    let g = null, gd = 1e9; for (const [x, z] of hig) { if (z < tz) continue; const d = Math.abs(x - tx) + Math.abs(z - tz) * 0.2; if (d < gd) { gd = d; g = [x, z] } }
+    if (g) { const gz = g[1] - 9; marks.gate = [+tx.toFixed(1), +ground(tx, gz).toFixed(2), +gz.toFixed(1), 0]; const kz = (gz + marks.tower.z1 + 14) / 2; marks.kusu = [+tx.toFixed(1), +ground(tx, kz).toFixed(2), +kz.toFixed(1)] }
+    // 吉田神社の大鳥居: 東一条通の東の端
+    let ex = null; for (const p of hig) if (!ex || p[0] > ex[0]) ex = p
+    if (ex) marks.torii.push([+ex[0].toFixed(1), +ground(ex[0], ex[1]).toFixed(2), +ex[1].toFixed(1), Math.PI / 2, 1.5])
+  }
+  // 鳥居（地図の点）: 開きは近くの社（本殿・大元宮）へ向ける
+  const shrineC = [[1117, 510], [1130, 685]]
+  for (const e of osm) if (e.type === 'node' && tag(e, 'man_made') === 'ceremonial_gate' && tag(e, 'ceremonial_gate') === 'torii') { const x = toX(e.lon), z = toZ(e.lat); if (!inNear(x, z, 20)) continue; const c = shrineC.reduce((a, s) => (Math.hypot(s[0] - x, s[1] - z) < Math.hypot(a[0] - x, a[1] - z) ? s : a)); marks.torii.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1), +Math.atan2(c[0] - x, c[1] - z).toFixed(3), 1]) }
+  for (const id of [462893259, 462893260]) { const r = ringOf('way', id); if (r) { const x = r.reduce((s, p) => s + p[0], 0) / r.length, z = r.reduce((s, p) => s + p[1], 0) / r.length; marks.torii.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1), +Math.atan2(1130 - x, 685 - z).toFixed(3), 0.8]) } }
+  const dg = ringOf('way', 441720350); if (dg) { const x = dg.reduce((s, p) => s + p[0], 0) / dg.length, z = dg.reduce((s, p) => s + p[1], 0) / dg.length; marks.daigengu = [+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1)] }
+  const sh = ringOf('way', 445132028); if (sh) { const x = sh.reduce((s, p) => s + p[0], 0) / sh.length, z = sh.reduce((s, p) => s + p[1], 0) / sh.length; marks.shelters.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1)]) }
+  // ベンチ（地図の点・川べりと吉田山）。向きは近くの道へ背を向ける
+  for (const e of osm) if (e.type === 'node' && tag(e, 'amenity') === 'bench') { const x = toX(e.lon), z = toZ(e.lat); if (!inNear(x, z, 10) || inWater(x, z)) continue; const r = nearRoad(x, z); marks.benches.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1), r ? +Math.atan2(r.x - x, r.z - z).toFixed(3) : 0]) }
+  // 吉田山公園の遊具（地図に点が無いので、公園の中ほどに すべり台・ブランコ・鉄棒）
+  const pk = ringOf('way', 1148710336); if (pk) { const x = pk.reduce((s, p) => s + p[0], 0) / pk.length, z = pk.reduce((s, p) => s + p[1], 0) / pk.length; for (const [dx, dz, k] of [[-6, -10, 0], [5, -4, 1], [-3, 8, 2]]) marks.play.push([+(x + dx).toFixed(1), +ground(x + dx, z + dz).toFixed(2), +(z + dz).toFixed(1), k]) }
+}
+// 木: 広場と公園の中・山の小道の上（1.6m 以内）・名所の上は木を立てない。時計台の前にクスノキ（樹高 14m・横に大きく広がる＝調べ §1）
+{ const clear = [ringOf('way', 445136125), ringOf('way', 1148710336)].filter(Boolean)
+  const PC = 4, pcell = new Map(); for (let i = 0; i < roadPts.length; i += 3) if (roadPts[i + 2] === 1) { const k = Math.floor(roadPts[i] / PC) * 100003 + Math.floor(roadPts[i + 1] / PC); let a = pcell.get(k); if (!a) { a = []; pcell.set(k, a) } a.push(roadPts[i], roadPts[i + 1]) }
+  const onPath = (x, z) => { for (let a = -1; a <= 1; a++) for (let c = -1; c <= 1; c++) { const arr = pcell.get((Math.floor(x / PC) + a) * 100003 + Math.floor(z / PC) + c); if (arr) for (let q = 0; q < arr.length; q += 2) if (Math.hypot(arr[q] - x, arr[q + 1] - z) < 1.6) return true } return false }
+  const spots = [marks.daigengu, marks.gate, ...marks.torii].filter(Boolean)
+  const before = trees.length
+  for (let i = trees.length - 1; i >= 0; i--) { const [x, , z, , , kind] = trees[i]; if (inPoly(clear, x, z) || (kind === 2 && onPath(x, z)) || spots.some((s) => Math.hypot(s[0] - x, s[2] - z) < 7) || [marks.daigengu, marks.moan].some((s) => s && Math.hypot(s[0] - x, s[2] - z) < 16)) trees.splice(i, 1) } // 大元宮の砂利の境内と茂庵の庭は 16m
+  if (marks.kusu) trees.push([marks.kusu[0], marks.kusu[1], marks.kusu[2], 14, 22, 3])
+  log.push(`名所: 時計台の塔 ${marks.tower ? 'あり' : 'なし'}・正門 ${marks.gate ? 'あり' : 'なし'}・鳥居 ${marks.torii.length}・大元宮 ${marks.daigengu ? 'あり' : 'なし'}・茂庵 ${marks.moan ? 'あり' : 'なし'}・東屋 ${marks.shelters.length}・ベンチ ${marks.benches.length}・遊具 ${marks.play.length}・除いた木 ${before - trees.length + (marks.kusu ? 1 : 0)}`) }
 let bv = 0, bi = 0; for (const b of blds) { bv += b.pos.length / 3; bi += b.idx.length }
 const bpos = new Float32Array(bv * 3), bidx = new Uint32Array(bi), bbid = new Uint16Array(bv)
 { let vo = 0, io = 0; blds.forEach((b, n) => { bpos.set(b.pos, vo * 3); for (let i = 0; i < b.idx.length; i++) bidx[io + i] = b.idx[i] + vo; bbid.fill(n, vo, vo + b.pos.length / 3); vo += b.pos.length / 3; io += b.idx.length }) }
@@ -517,6 +569,7 @@ const meta = {
   roads: { nv: rpos.length / 3, ni: ridx.length, bytes: wr('roads.bin', [new Float32Array(rpos), new Uint32Array(ridx), new Uint8Array(rkind)]), auxBytes: wr('roads-aux.bin', [new Float32Array(ralong), new Uint8Array(rwidth)]) }, // 便21: 道の長さの位置・幅（0.1m 刻み）
   riverPath, // 便21: 河川敷の小道の折れ線
   bridgeEdges, lamps, // 便21: 橋の欄干の線・街灯
+  marks, // 便21: 名所（時計台の塔・正門・クスノキ・鳥居・大元宮・茂庵・東屋・ベンチ・遊具）
   trees: { n: trees.length, bytes: wr('trees.bin', [new Float32Array(trees.flat())]) },
   stones: { n: stones.length / 4, bytes: wr('stones.bin', [new Float32Array(stones)]), kindBytes: wr('stones-kind.bin', [new Uint8Array(stoneKind)]), rows: stoneRows },
   wdepthBytes: wr('near-wdepth.bin', [wdepth]), // 便21: 水の深さ（0.25cm 刻み）

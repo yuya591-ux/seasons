@@ -15,6 +15,7 @@ import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { buildLife } from './kamoLife.js'
 import { buildPeople } from './kamoPeople.js'
+import { buildMarks } from './kamoMarks.js'
 
 // ── 時刻（便17 の試作と同じ値。京都の向き: x 東・z 南。太陽の向きは three の角度で 0＝南） ──
 const TIMES = {
@@ -304,6 +305,12 @@ vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z 
         c = mix(c, vec3(0.06, 0.035, 0.02), pil); kWin = 0.0;
       } else if (kS == 5) {
         float pil = step(fract(al / 2.5), 0.12); c = mix(vec3(0.7, 0.68, 0.62) * kDet, vec3(0.1, 0.06, 0.035), max(pil, step(hl, 0.6))); kWin = 0.0;
+      } else if (kS == 6) { // 京大の本部構内: えんじ〜赤茶のタイル（目地が縦横に通る）と、明るいベージュの柱形と階の帯（調べ §1）
+        float tl = max(step(0.93, fract(al / 0.6)), step(0.9, fract(hl / 0.3)));
+        c = mix(vec3(0.25, 0.08, 0.05), vec3(0.17, 0.06, 0.04), tl) * kDet;
+        c = mix(c, vec3(0.6, 0.53, 0.4) * kDet, min(1.0, step(fract(hl / 4.2), 0.07) + step(fract(al / 4.0 + kR), 0.06)));
+      } else if (kS == 7) { // 吉田神社の社: 朱の柱と長押・白い壁（調べ §2）
+        float pil = step(fract(al / 1.8), 0.1); c = mix(vec3(0.72, 0.7, 0.64) * kDet, vec3(0.5, 0.06, 0.025), min(1.0, max(pil, step(hl, 0.5) + step(2.6, hl)))); kWin = 0.0;
       }
       if (c.x >= 0.0) diffuseColor.rgb = c;
     } else`
@@ -313,11 +320,11 @@ vec2 tUV(float tl) { ${mode === 'tri' ? 'vec3 an = abs(vGN); return an.x > an.z 
   { int kS = int(vKB.z + 0.5); float hl = vGW.y - vKB.x, kR = vKB.w; vec2 fd = vec2(sin(vKB.y), cos(vKB.y)); vec3 kN = normalize(vGN);
     float kDet = mix(1.0, clamp(dot(mix(detA, detB, gmix), vec3(0.3333)), 0.65, 1.35), 0.45); // 壁の写真の模様のむらは半分に（土壁や漆喰がまだらに汚れて見えた）
     ${isWall ? wallCode : ''}
-    if (kS == 1 || kS == 2 || kS == 5 || (kS == 0 && kN.y < 0.985)) {
+    if (kS == 1 || kS == 2 || kS == 5 || kS == 7 || (kS == 0 && kN.y < 0.985)) {
       vec2 sd = length(kN.xz) > 0.05 ? normalize(kN.xz) : fd, pd = vec2(sd.y, -sd.x);
       float v = dot(vGW.xz, sd) / max(0.3, kN.y), u = dot(vGW.xz, pd);
       float row = smoothstep(0.72, 0.97, fract(v / 0.26)), wave = 0.78 + 0.22 * sin(u / 0.29 * 6.2832);
-      vec3 tile = (kS == 0 && kR > 0.6) ? (kR > 0.82 ? vec3(0.05, 0.065, 0.09) : vec3(0.09, 0.06, 0.042)) : vec3(0.1, 0.108, 0.122) * (0.88 + kR * 0.25);
+      vec3 tile = kS == 7 ? vec3(0.075, 0.055, 0.042) : (kS == 0 && kR > 0.6) ? (kR > 0.82 ? vec3(0.05, 0.065, 0.09) : vec3(0.09, 0.06, 0.042)) : vec3(0.1, 0.108, 0.122) * (0.88 + kR * 0.25);
       diffuseColor.rgb = tile * wave * mix(1.0, 0.42, row) * kDet;
       ${SNOW ? 'if (kN.y > 0.5) diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.88, 0.9), 0.65);' : ''}
     } else if (kN.y >= 0.45) { // 平らな屋上（集合住宅・ビル・大きな施設・平屋根の家）: コンクリートや防水の灰色（前は瓦の模様と暗い色が当たり、夕方に真っ黒に沈んだ）
@@ -629,6 +636,8 @@ void main() {`)
     const bb = new Map()
     for (let i = 0; i < nv; i++) { const b = bidA[i]; let e = bb.get(b); if (!e) { e = new THREE.Box3(); bb.set(b, e) } e.expandByPoint(new THREE.Vector3(p16[i * 3] * ps, p16[i * 3 + 1] * ps, p16[i * 3 + 2] * ps)) }
     const drop = new Set(); for (const [b, e] of bb) if (e.intersectsBox(hostK)) drop.add(b)
+    // 便21: 大元宮は名所の部品（kamoMarks.js）が八角の社を作るので、そこの PLATEAU の形は描かない（重なって暗い箱が二重に出た）
+    const dgm = meta.marks && meta.marks.daigengu; if (dgm && !/[?&]kamomarks=0/.test(location.search)) for (const [b, e] of bb) { const c = e.getCenter(new THREE.Vector3()); if (Math.hypot(c.x - dgm[0], c.z - dgm[2]) < 9) drop.add(b) }
     for (const b of drop) removed.push(b)
     navSrc.bldg = { p16, bidA, drop, ps, nv }
     const WALL = [0xddd6c8, 0xcfc6b4, 0xe8e4da, 0xbcae98, 0xc8ccd0, 0xd4c8b0, 0x9a8a78, 0xa8b0b4, 0xe2d8c0, 0x8a7a6a, 0xc4b8a0, 0xb8b4a8]
@@ -1056,6 +1065,9 @@ void main() {`)
     if (data.life && !/[?&]kamolife=0/.test(location.search)) life = buildLife({ scene, camera, renderer, life: data.life, terrK: terrFull, farK, wetK, zoneK, WY, stones: hopStones(), S, TK, sky, low, reduceMotion, onSound, keep })
     lifeMs = Math.round(performance.now() - tL0)
   } catch (e) { console.warn('鴨川の町の動く物を組めなかったので、動く物なしで開きます:', e && e.message); life = null }
+  // ── 便21: 名所の形（時計塔・正門・鳥居・大元宮・茂庵・東屋・ベンチ・遊具＝kamoMarks.js・kamomarks=0 は外し回し用） ──
+  let marksInfo = null
+  try { if (meta.marks && !/[?&]kamomarks=0/.test(location.search)) marksInfo = buildMarks({ scene, marks: meta.marks, keep, NIGHT, DUSK: TK === 'dusk', SNOW }) } catch (e) { console.warn('鴨川の名所の形を組めなかった:', e && e.message) }
   // 便21: 河川敷を歩く人・走る人・自転車、浅瀬で遊ぶ子どもと飛び石に座る学生、夏の夜のデルタの手持ち花火（kamoPeople.js・kamopeople=0 は外し回し用）
   let people = null
   try {
@@ -1152,7 +1164,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     setBright(b) { state.bright = b || 1 },
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {

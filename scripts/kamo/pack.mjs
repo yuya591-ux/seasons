@@ -110,6 +110,7 @@ const meta = {
   weirs: geo.weirs, // 便21: 堰の線分
   riverPath: geo.riverPath, // 便21: 河川敷の小道の折れ線（歩く人・走る人・自転車）
   bridgeEdges: geo.bridgeEdges, lamps: geo.lamps, // 便21: 橋の欄干の線・街灯（x, y, z, 向き）
+  marks: geo.marks, // 便21: 名所
   wdepthStep: 0.0025, // 便21: 水の深さの刻み（m）
   view: geo.views.window, // 角部屋の窓（西岸の建物の東の壁の上の階）。yawDeg＝窓の向き（北から東回りの度・便17 #5=1 の東）
   files: { terrain, bldg, roads, misc },
