@@ -293,7 +293,7 @@ if (run('K24')) {
 if (run('K25')) {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' }), p = await ctx.newPage(), errs = []
   p.on('pageerror', (e) => errs.push('PE ' + e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)) })
-  await ctx.route('**/kamo/life.json', (r) => r.abort())
+  await ctx.route('**/kamo/life.json*', (r) => r.abort()) // 【便21】読み先に版の印（?v=21）が付いたので、後ろに何が付いても塞ぐ
   await p.goto(`${BASE}?dev=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }); await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(800)
   await p.evaluate(() => window.__applyScene('summer-night-corner-room'))
   await p.waitForFunction(() => window.__town3dStats && window.__town3dStats() && window.__town3dStats().frames > 3, null, { timeout: 120000 }).catch(() => {})
@@ -307,7 +307,7 @@ if (run('K26')) {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' }), p = await ctx.newPage(), errs = []
   p.on('pageerror', (e) => errs.push('PE ' + e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)) })
   await ctx.addInitScript(() => { try { localStorage.setItem('seasons.state.v1', JSON.stringify({ version: 2, sceneId: 'autumn-dusk-corner-room', sceneAt: Date.now() })) } catch (e) { /* 無視 */ } })
-  await ctx.route('**/kamo/kamo.json', async (r) => { await new Promise((res) => setTimeout(res, 20000)); r.continue().catch(() => {}) }) // 鴨川のデータの読み込みを 20 秒遅らせる
+  await ctx.route('**/kamo/kamo.json*', async (r) => /* 【便21】版の印 ?v=21 が付いても遅らせる */ { await new Promise((res) => setTimeout(res, 20000)); r.continue().catch(() => {}) }) // 鴨川のデータの読み込みを 20 秒遅らせる
   await p.goto(`${BASE}?dev=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }); await p.locator('.gate').click().catch(() => {}); await p.waitForTimeout(2500)
   await p.evaluate(() => window.__applyScene('kitaterao-window-3d'))
   await p.waitForFunction(() => window.__town3dDraw && window.__town3dDraw(), null, { timeout: 60000 }).catch(() => {})

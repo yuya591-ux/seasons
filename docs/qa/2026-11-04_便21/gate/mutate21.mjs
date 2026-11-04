@@ -13,6 +13,8 @@ const M0 = [
   { id: 'M7', what: '名所の形（時計塔・正門・鳥居・大元宮・茂庵…）を作らない', file: 'src/engine/kamoTown.js', a: "if (meta.marks && !/[?&]kamomarks=0/.test(location.search)) marksInfo = buildMarks(", b: "if (false) marksInfo = buildMarks(", k: ['K32'] },
   { id: 'M8', what: '飛び石の形（亀・千鳥・すれ違い）を前の丸めた石に戻す', file: 'src/engine/kamoTown.js', a: "    if (n && sk) {", b: "    if (false) {", k: ['K27'] },
   { id: 'M9', what: '（K11 の書き換え）橋の床に乗れない形にする', file: 'src/engine/kamoTown.js', a: "const deckOk = (X, Z, feetK) => { const k = cellK(X, Z); if (k < 0) return NaN;", b: "const deckOk = (X, Z, feetK) => { const k = cellK(X, Z); if (k >= -1) return NaN;", k: ['K11'] },
+  { id: 'M11', what: '（K25 の書き換え＝版の印）動く物の表が読めない時の受けを外す', file: 'src/engine/kamoTown.js', a: "const lifeP = fetch(base + 'life.json' + KAMO_V).then((r) => (r.ok ? r.json() : null)).catch(() => null)", b: "const lifeP = fetch(base + 'life.json' + KAMO_V).then((r) => r.json())", k: ['K25'] },
+  { id: 'M12', what: '（K26 の書き換え＝版の印）鴨川のデータを読み終えるまで片付けない（便20 の前の形）', file: 'src/engine/town3dViewer.js', a: "const got = await Promise.race([kamoP, gone])", b: "const got = await kamoP", k: ['K26'] },
   { id: 'M10', what: '（K9 の書き換え）水の上へも歩いて入れる形にする', file: 'src/engine/kamoTown.js', a: "return wetK(X, Z) < 0.5 },", b: "return true },", k: ['K9'] },
 ]
 const M = ONLY.length ? M0.filter((m) => ONLY.includes(m.id)) : M0
