@@ -13,6 +13,8 @@ const M0 = [
   { id: 'M7', what: '鴨川の町に低く溜まる霧を戻す', file: 'src/engine/town3dViewer.js', a: "MIST_A[3] = kamo ? 0 : (mistPin.amount ?? MIST.amount)", b: "MIST_A[3] = mistPin.amount ?? MIST.amount", k: ['K34'] },
   { id: 'M8', what: '鴨川の町の網の外の崩れた水面を落とさない', file: 'src/engine/kamoTown.js', a: "waterCut = ix.length / 3 - keepI.length / 3; g.setIndex(keepI); g.computeBoundingSphere() }", b: "waterCut = 0 }", k: ['K34'] },
   { id: 'M10', what: '（K38）iPhone の段の外の町の地形を間引けない数で間引く（範囲の南北が 16m で割り切れなかった時と同じ NaN）', file: 'src/engine/kamoOuter.js', a: 'dec: low ? 2 : 1, tiles: [8, 8]', b: 'dec: low ? 3 : 1, tiles: [8, 8]', k: ['K38'] },
+  { id: 'M11', what: '（K36 の書き換え）外の町の橋の床の高さを答えない', file: 'src/engine/kamoTown.js', a: 'deckAt: (X, Z) => { const k = cell(X, Z); return k < 0 ? NaN : build().deck[k] },', b: 'deckAt: () => NaN,', k: ['K36'] },
+  { id: 'M12', what: '（K36 の書き換え・外の目 #1）鴨川の町の網の中の縁の帯も外の町の下げた網で答える', file: 'src/engine/kamoTown.js', a: 'const terr = (X, Z) => (inGrid(X, Z) ? terrK(X, Z) : terrO(X, Z))', b: 'const terr = (X, Z) => terrO(X, Z)', k: ['K36'] },
   { id: 'M9', what: '外の町を読めない時の受けを外す', file: 'src/engine/town3dViewer.js', a: ".catch((e) => console.warn('外の町を読めなかったので、鴨川の町だけで開きます:', e && e.message)) }", b: " }", k: ['K37'] },
 ]
 const M = ONLY.length ? M0.filter((m) => ONLY.includes(m.id)) : M0

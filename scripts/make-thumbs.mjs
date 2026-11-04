@@ -30,7 +30,7 @@ for (const id of ids) {
     // 一覧のカードは画の真ん中を横長に切り出すので、真ん中に外の景色が来る高さ（0.45）にする。0.7 まで上げると谷戸は天井が写る。
     // 角部屋は正面だと右に二つの窓の間の柱の面（暗い）が写るので、少し左（−0.35）を向く（便2 V56）
     // 【便22】角部屋（窓の外＝鴨川の町）は、鴨川の町と外の町を組み終えるまで待つ（待たずに撮ると、前の北寺尾の町や組む前の空の画になった＝裕也さん「サムネイル画像が前のままで違和感」）
-    if (/corner-room/.test(id)) for (let k = 0; k < 120; k++) { const ok = await page.evaluate(() => { const k2 = window.__town3dKamo && window.__town3dKamo(); return !!(k2 && k2.outer) }).catch(() => false); if (ok) break; await page.waitForTimeout(500) }
+    if (/corner-room/.test(id)) { let ok = false; for (let k = 0; k < 120 && !ok; k++) { ok = await page.evaluate(() => { const k2 = window.__town3dKamo && window.__town3dKamo(); return !!(k2 && k2.outer) }).catch(() => false); if (!ok) await page.waitForTimeout(500) } if (!ok) console.log('注意:', id, 'は 60 秒待っても外の町が組めなかった（外の町の無いサムネイルになる）') } // 【便22・外の目 #19】
     const yaw = /corner-room/.test(id) ? -0.35 : 0
     await page.evaluate((y) => { window.__town3dWindow && window.__town3dWindow(true); window.__town3dZoom && window.__town3dZoom(0.4); window.__town3dSetView && window.__town3dSetView(y, 0.45) }, yaw)
     await page.waitForTimeout(3500)

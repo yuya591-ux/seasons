@@ -1083,6 +1083,7 @@ void main() {`)
       blocked: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z); if (!ON.inside(X, Z)) return true; return (inC(X, Z) && f(x, z)) || ON.blocked(X, Z) },
       groundAt: (f) => (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (inC(X, Z)) return f(x, z, feetY); const d = ON.deck(X, Z, feetY + dY); return (d === d ? d + 0.05 : ON.terr(X, Z)) - dY },
       canStep: (f) => (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (!ON.inside(X, Z) || ON.blocked(X, Z)) return false; if (inC(X, Z)) return f(x, z, feetY); if (!Number.isNaN(ON.deck(X, Z, feetY + dY))) return true; return ON.zone(X, Z) !== 2 },
+      deck: (f) => (x, z) => { const X = KX(x, z), Z = KZ(x, z); if (inC(X, Z)) return f(x, z); const d = ON.deckAt(X, Z); return d === d ? d - dY : null }, // 【便22・外の目 #2】橋の床の高さ（外の町の橋も）
       place: (f) => (x, z, y) => { const X = KX(x, z), Z = KZ(x, z); if (inC(X, Z)) return f(x, z, y); const alt = y + dY - ON.terr(X, Z); if (alt > 90) return '京都の上空'; const p = ON.placeOf(X, Z); if (p) return p; if (ON.zone(X, Z) === 2) return Z > 900 && Math.abs(X + 40) < 220 ? '鴨川の上' : '水の上'; if (ON.zone(X, Z) === 3) return '鴨川の河川敷'; return '京のまちなか' },
     }
     for (const [k, w] of Object.entries(W)) { const f0 = nav[k], wf = w(f0); nav[k] = (...a) => (ON ? wf(...a) : f0(...a)) }
@@ -1172,10 +1173,14 @@ void main() {`)
   function makeOuterNav(od, places) {
     const M = od.meta, OX = M.OX, st = M.step, nx = M.nx, nz = M.nz, hq = M.hStep
     const hs = view(od.buf.terrain, M.files.terrain.secs.h), zn = view(od.buf.terrain, M.files.terrain.secs.zone)
-    const terr = (X, Z) => { const u = Math.min(nx - 1.001, Math.max(0, (X - OX.x0) / st)), v = Math.min(nz - 1.001, Math.max(0, (Z - OX.z0) / st)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nx + i
+    // 【便22・外の目 #1】外の町の網は鴨川の町の範囲の内側を 6m 下げてある。鴨川の町の網の中（縁から EDGE の帯を含む）は、鴨川の町の地面・水・地面の種類で答える（前は縁から 4〜40m の帯で地面が 6m 下に沈んだ）
+    const inGrid = (X, Z) => X >= NX0 && X <= NX1 && Z >= NZ0 && Z <= NZ1
+    const terrO = (X, Z) => { const u = Math.min(nx - 1.001, Math.max(0, (X - OX.x0) / st)), v = Math.min(nz - 1.001, Math.max(0, (Z - OX.z0) / st)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nx + i
       return ((hs[k] * (1 - fu) + hs[k + 1] * fu) * (1 - fv) + (hs[k + nx] * (1 - fu) + hs[k + nx + 1] * fu) * fv) * hq }
-    const zone = (X, Z) => zn[Math.round(Math.min(nz - 1, Math.max(0, (Z - OX.z0) / st))) * nx + Math.round(Math.min(nx - 1, Math.max(0, (X - OX.x0) / st)))]
-    const floor = (X, Z) => terr(X, Z) + (zone(X, Z) === 2 ? 1.0 : 0)
+    const terr = (X, Z) => (inGrid(X, Z) ? terrK(X, Z) : terrO(X, Z))
+    const zoneO = (X, Z) => zn[Math.round(Math.min(nz - 1, Math.max(0, (Z - OX.z0) / st))) * nx + Math.round(Math.min(nx - 1, Math.max(0, (X - OX.x0) / st)))]
+    const zone = (X, Z) => { if (!inGrid(X, Z)) return zoneO(X, Z); const q = zoneK(X, Z); return q === 2 ? 2 : q === 1 ? 3 : 0 }
+    const floor = (X, Z) => (inGrid(X, Z) ? floorK(X, Z) : terrO(X, Z) + (zoneO(X, Z) === 2 ? 1.0 : 0))
     const GCo = low ? 8 : 4, GX = Math.ceil((OX.x1 - OX.x0) / GCo), GZ = Math.ceil((OX.z1 - OX.z0) / GCo)
     let tb = null
     const build = () => {
@@ -1232,6 +1237,7 @@ void main() {`)
       soft: (X, Z) => { const g = build(), u = Math.min(GX - 1.001, Math.max(0, (X - OX.x0) / GCo - 0.5)), v = Math.min(GZ - 1.001, Math.max(0, (Z - OX.z0) / GCo - 0.5)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * GX + i; return (g.S[k] * (1 - fu) + g.S[k + 1] * fu) * (1 - fv) + (g.S[k + GX] * (1 - fu) + g.S[k + GX + 1] * fu) * fv },
       blocked: (X, Z) => { const k = cell(X, Z); return k >= 0 && build().bld[k] === 1 },
       deck: (X, Z, feetK) => { const k = cell(X, Z); if (k < 0) return NaN; const d = build().deck[k]; return d === d && Math.abs(d - feetK) < 1.3 ? d : NaN },
+      deckAt: (X, Z) => { const k = cell(X, Z); return k < 0 ? NaN : build().deck[k] },
       placeOf: (X, Z) => { for (const p of places) if (X >= p.x0 && X <= p.x1 && Z >= p.z0 && Z <= p.z1) return p.name; return null },
       info: () => ({ ms: tb ? tb.ms : null, cells: GX * GZ }),
     }

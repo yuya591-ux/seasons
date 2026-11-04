@@ -314,11 +314,16 @@ if (run('K34') || run('K35') || run('K36')) {
     const kin = await navAt(o.p, -4022, 80, -1056), tow = await navAt(o.p, -1202, 60, 4709), sta = await navAt(o.p, -1280, 60, 4986), gion = await navAt(o.p, 459, 30, 2914), yas = await navAt(o.p, 616, 60, 3488), riv = await navAt(o.p, -60, 20, 2600)
     if (run('K35')) check('K35', [kin, tow, sta, gion, yas, riv].every((q) => q.inBound) && kin.place === '金閣寺' && sta.place === '京都駅' && gion.place === '祇園' && yas.place === '八坂の塔' && riv.place === '鴨川の上' && kin.blocked && riv.wet && !riv.blocked && tow.top - tow.ground >= 125, `箱の中 ${[kin, tow, sta, gion, yas, riv].map((q) => q.inBound ? 1 : 0).join('')}・居場所 ${[kin, sta, gion, yas, riv].map((q) => q.place).join('・')}・金閣の当たり ${kin.blocked}・南の鴨川 水 ${riv.wet} 当たり ${riv.blocked}・京都タワーの頂 ${(tow.top - tow.ground).toFixed(1)}m`)
     if (run('K36')) {
-      // 四条大橋（東 −88・南 2902）の床の上へ歩いて降りる＝床の高さ（水面＋3m 以上）に立つ
-      const br = await o.p.evaluate(async () => { const e = window.__town3dKamoTown(-88, 2902, 0); window.__town3dWalkPose(e.x, e.z, 0); await new Promise((r) => setTimeout(r, 1800)); const n = window.__town3dNav(); return { mode: n.mode, y: n.y, ground: n.ground, wet: n.wet } })
+      // ~~四条大橋の床の上へ歩いて降りる（歩く形になったかだけを見ていた）~~（【便22・外の目 #2】床の高さを足の高さとして渡して歩かせ、足もとが床の高さか・川の地面より 3m 上かを見る）
       const water = await navAt(o.p, -60, 20, 2600)
-      const deck = await navAt(o.p, -88, 30, 2902)
-      check('K36', kin.ground - gion.ground > 40 && br.mode === 'walk' && deck.top - water.ground > 3, `金閣寺の地面 − 祇園の地面 ${(kin.ground - gion.ground).toFixed(1)}m（40 超＝金閣寺は高い）・四条大橋で歩く ${br.mode}・橋の床の上 ${deck.top}（川の地面 ${water.ground}＋3 より上）`)
+      // 四条大橋（東 −88・南 2902）の西の端の近く（東 −112）の床の上に立たせ、東へ 5 秒歩く。水の上のこまで、足もと（目 − 1.6m）が床の高さから 0.6m 以内か
+      const br = await o.p.evaluate(async () => { const e = window.__town3dKamoTown(-112, 2902, 0), t = window.__town3dKamoTown(-60, 2902, 0), d0 = window.__town3dNavAt(e.x, e.z).deck; if (d0 === null) return { mode: 'no-deck', on: 0, off: 0, wet: 0 }
+        window.__town3dWalkPose(e.x, e.z, Math.atan2(t.x - e.x, -(t.z - e.z)), d0); await new Promise((r) => setTimeout(r, 900)); window.__town3dMove(0, 1)
+        let on = 0, off = 0, wet = 0, mode = null; for (let i = 0; i < 25; i++) { await new Promise((r) => setTimeout(r, 200)); const n = window.__town3dNav(), q = window.__town3dNavAt(n.x, n.z); mode = n.mode; if (!q.wet) continue; wet++; if (q.deck !== null && Math.abs(n.y - 1.6 - q.deck) < 0.6) on++; else off++ }
+        window.__town3dMove(0, 0); return { mode, on, off, wet } })
+      // 【便22・外の目 #1】鴨川の町の範囲の縁の帯（縁から 14m・外の町の道案内で答える所）の地面が、50m 内側（鴨川の町の道案内）と続いている（前は 6m 下に沈んだ）
+      const band = await navAt(o.p, -300, 30, 890), inner = await navAt(o.p, -300, 30, 850)
+      check('K36', kin.ground - gion.ground > 40 && br.mode === 'walk' && br.wet >= 3 && br.off === 0 && Math.abs(band.ground - inner.ground) < 3, `金閣寺の地面 − 祇園の地面 ${(kin.ground - gion.ground).toFixed(1)}m（40 超）・四条大橋を東へ歩く ${br.mode}・水の上のこま ${br.wet}（3 以上）のうち床の上 ${br.on}・床から外れた ${br.off}（0）・川の地面 ${water.ground}・縁の帯の地面 ${band.ground} と内側 ${inner.ground}（差 3m 未満）`)
     }
   }
   await o.ctx.close()

@@ -589,10 +589,10 @@ export function createAudio(opts) {
   let voiceNode = null
   const voiceState = { amt: 0, loading: false }
   async function ensureVoices() {
-    if (voiceNode || voiceState.loading || !ctx || !ctx.createBiquadFilter) return
+    if (voiceNode || voiceState.loading || voiceState.failed || !ctx || !ctx.createBiquadFilter) return
     voiceState.loading = true
     const buf = await loadBuffer('audio/kamo/asobi.mp3')
-    if (!buf || !ctx || voiceNode) { voiceState.loading = false; return }
+    if (!buf || !ctx || voiceNode) { voiceState.loading = false; if (!buf) voiceState.failed = true; return } // 【便22・外の目 #9】読めなかった時は覚えておき、0.25 秒ごとに読み直し続けない（情景を替えると読み直す）
     const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true // 素材の端は継ぎ目の無いように重ねてある
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 240; hp.Q.value = 0.6
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.4
