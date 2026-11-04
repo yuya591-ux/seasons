@@ -38,6 +38,9 @@ export function buildOuter(od, h) {
   const group = new THREE.Group(); group.userData.part = 'outer'; group.name = 'kamoOuter'
   const info = { boxes: 0, polys: 0, trees: 0, roads: 0, water: 0, chunks: 0, styles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], roofs: [0, 0, 0] }
   const inCore = (x, z, m = 0) => x >= C.x0 + m && x <= C.x1 - m && z >= C.z0 + m && z <= C.z1 - m
+  // 便23: 鴨川の町の南の四角（河原町・木屋町・先斗町・祇園）を足した時だけ、その中（データで抜いてある北の四角の外の分）を描かない・地形を下げる。足していない時は前のまま
+  const inS = h.inSouth || (() => false)
+  info.southCut = { boxes: 0, polys: 0, roads: 0, water: 0, trees: 0, terrain: 0 }
   let rs = 2205; const R = () => { rs = (rs * 1664525 + 1013904223) >>> 0; return rs / 4294967296 }
 
   // ── 空の光の届き方の代わり: 壁は足もとほど暗く（路地と軒下）、屋根と屋上はほぼ開けた空。夜は弱く ──
@@ -51,7 +54,9 @@ export function buildOuter(od, h) {
 
   // ── 地形（8m の網・鴨川の町の範囲の内側は 6m 下げてある）。地面の種類で色: 0 町・1 緑・2 水の底・3 河川敷 ──
   {
-    const hs = view(od.buf.terrain, meta.files.terrain.secs.h), zone = view(od.buf.terrain, meta.files.terrain.secs.zone)
+    const hs0 = view(od.buf.terrain, meta.files.terrain.secs.h), zone = view(od.buf.terrain, meta.files.terrain.secs.zone)
+    let hs = hs0 // 便23: 南の四角の内側（縁から 4m）を 6m 下げて鴨川の町の網の下に隠す（北の四角はデータで下げてある）
+    if (h.inSouth) { hs = Int16Array.from(hs0); const d = Math.round(6 / meta.hStep); for (let j = 0; j < meta.nz; j++) for (let i = 0; i < meta.nx; i++) if (inS(OX.x0 + i * meta.step, OX.z0 + j * meta.step, 4)) { hs[j * meta.nx + i] -= d; info.southCut.terrain++ } }
     const cTown = new THREE.Color(0x8a867e), cGrass = new THREE.Color(GRASS(S)), cForest = new THREE.Color(S === 'autumn' ? 0x4e5a34 : S === 'winter' ? 0x3e4a3a : 0x34502e), cBed = new THREE.Color(0x7d7a68), cBank = new THREE.Color(GRASS(S)).lerp(new THREE.Color(0x8a8272), 0.35), cWall = new THREE.Color(0x8c877c), WHITE = new THREE.Color(0xf2f4f6)
     const vn = (x, z) => { const s = Math.sin(x * 0.071 + z * 0.113) * 0.5 + Math.sin(x * 0.023 - z * 0.041) * 0.5; return s * 0.5 + 0.5 }
     const paint = (c, x, y, z, ny, k) => {
@@ -83,7 +88,7 @@ export function buildOuter(od, h) {
       rd.set([i % 2 ? -1 : 1, al[i] * q.along, wd[i] / 10, kind[i] === 3 ? 4 : kind[i]], i * 4)
     }
     const idx = []; let base = 0
-    for (const L of runs) { for (let i = 0; i < L - 1; i++) { const a = base + i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3) } base += L * 2 }
+    for (const L of runs) { for (let i = 0; i < L - 1; i++) { const a = base + i * 2; if (h.inSouth) { const mx = (pos[a * 3] + pos[a * 3 + 3] + pos[a * 3 + 6] + pos[a * 3 + 9]) / 4, mz = (pos[a * 3 + 2] + pos[a * 3 + 5] + pos[a * 3 + 8] + pos[a * 3 + 11]) / 4; if (inS(mx, mz, -3)) { info.southCut.roads++; continue } } idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3) } base += L * 2 }
     const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('aRd', new THREE.BufferAttribute(rd, 4)); g.setIndex(new THREE.BufferAttribute(new Uint32Array(idx), 1)); g.computeVertexNormals()
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.42 : 0.9, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }))
     useTex(m, { a: 'asphalt_02', b: 'gravel_road', tile: 5, tileB: 2.2 }); useRoad(m)
@@ -94,7 +99,8 @@ export function buildOuter(od, h) {
   let waterU = null
   // ── 水（池・堀・水路）。空の色を映す軽い水（鴨川の本流は鴨川の町の Water が描く） ──
   {
-    const sec = meta.files.water.secs, wp = view(od.buf.water, sec.pos), wi = view(od.buf.water, sec.idx)
+    const sec = meta.files.water.secs, wp = view(od.buf.water, sec.pos), wi0 = view(od.buf.water, sec.idx)
+    const wi = h.inSouth ? (() => { const o = []; for (let t = 0; t < wi0.length; t += 3) { const cx = (wp[wi0[t] * 3] + wp[wi0[t + 1] * 3] + wp[wi0[t + 2] * 3]) / 3, cz = (wp[wi0[t] * 3 + 2] + wp[wi0[t + 1] * 3 + 2] + wp[wi0[t + 2] * 3 + 2]) / 3; if (inS(cx, cz, 0)) { info.southCut.water++; continue } o.push(wi0[t], wi0[t + 1], wi0[t + 2]) } return o })() : wi0
     const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(Float32Array.from(wp), 3)); g.setIndex(new THREE.BufferAttribute(Uint32Array.from(wi), 1))
     const sky = new THREE.Color(h.fogColor).lerp(new THREE.Color(h.T.hemi[0]), NIGHT ? 0.2 : 0.45)
     const m = keep(new THREE.ShaderMaterial({
@@ -140,9 +146,10 @@ void main() {
   {
     const sec = meta.files.bldg.secs, q = meta.boxQ, st = meta.boxStride
     const bi = view(od.buf.bldg, sec.box), bu = new Uint16Array(bi.buffer, bi.byteOffset, bi.length), nB = bi.length / st
-    const CELL = 1400, cells = new Map()
+    const CELL = 1400, cells = new Map(), skip = new Uint8Array(nB) // 便23: 南の四角で描かない箱（道案内の表でも当たらない）
     const m4 = new THREE.Matrix4(), qt = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), v = new THREE.Vector3(), sc = new THREE.Vector3()
     for (let i = 0; i < nB; i++) {
+      if (h.inSouth && inS(bi[i * st] * q.xz, bi[i * st + 1] * q.xz, 100)) { skip[i] = 1; info.southCut.boxes++; continue } // 鴨川の町が描く建物（和の縁から 100m 内側＝build.mjs の BLDG_M）
       const o = i * st, cx = bi[o] * q.xz, cz = bi[o + 1] * q.xz, w = bu[o + 2] * q.size, d = bu[o + 3] * q.size, hh = bu[o + 4] * q.size, base = bi[o + 5] * q.base, ang = (bu[o + 6] / 65535) * Math.PI, sr = bu[o + 7], style = sr & 15, roof = (sr >> 4) & 3, front = (bu[o + 8] / 255) * Math.PI * 2 - Math.PI
       if (low && hh < 4 && w * d < 30) continue // iPhone の段: 物置ほどの小さな建物は描かない
       const key = Math.floor(cx / CELL) + ',' + Math.floor(cz / CELL)
@@ -176,6 +183,7 @@ void main() {
     for (let i = 0; i < pp.length / PS; i++) {
       const base = pp[i * PS] * q.base, hh = pp[i * PS + 1] * q.size, style = pp[i * PS + 2], front = (pp[i * PS + 3] / 255) * Math.PI * 2 - Math.PI, n = pp[i * PS + 4], o = pp[i * PS + 5]
       const ring = []; for (let k = 0; k < n; k++) ring.push(new Vector2(pts[(o + k) * 2] * q.xz, pts[(o + k) * 2 + 1] * q.xz))
+      if (h.inSouth) { let mx = 0, mz = 0; for (const r of ring) { mx += r.x; mz += r.y } if (inS(mx / n, mz / n, 100)) { info.southCut.polys++; continue } }
       if (ShapeUtils.isClockWise(ring)) ring.reverse()
       const kb = [base, front, style, (i * 0.618) % 1]
       for (let k = 0; k < n; k++) { const a = ring[k], b = ring[(k + 1) % n], v0 = P.length / 3; P.push(a.x, base, a.y, b.x, base, b.y, b.x, base + hh, b.y, a.x, base + hh, a.y); for (let r = 0; r < 4; r++) KB.push(...kb); I.push(v0, v0 + 2, v0 + 1, v0, v0 + 3, v0 + 2) }
@@ -187,7 +195,7 @@ void main() {
       const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('aKB', new THREE.Float32BufferAttribute(KB, 4)); g.setIndex(I); g.computeVertexNormals()
       const mesh = new THREE.Mesh(g, wallHi); mesh.userData.part = 'outerBldg'; group.add(mesh)
     }
-    od.boxes = { bi, bu, nB, st, q } // 道案内の表（建物の上の高さ）に使う
+    od.boxes = { bi, bu, nB, st, q, skip } // 道案内の表（建物の上の高さ）に使う
   }
 
   // ── 名所（金閣・京都タワー・西楼門・八坂の塔・大鳥居・応天門＝kamoMeisho.js）。outermeisho=0 は外し回し用 ──
@@ -220,6 +228,7 @@ void main() {
       const trunk = m4.compose(v.set(x, y, z), qt, sc.set(r * 0.75, Math.max(1, hh - cy * 1.5), r * 0.75)).clone()
       c.setHex(kind === 1 && S === 'spring' ? LEAFS[0] : R() < (S === 'autumn' ? 0.55 : 0.25) ? LEAFS[0] : LEAFS[1]).offsetHSL((R() - 0.5) * 0.03, (R() - 0.5) * 0.1, (R() - 0.5) * 0.1).multiplyScalar(0.8)
       if (SNOW) c.lerp(new THREE.Color(0xf2f4f6), 0.35)
+      if (h.inSouth && inS(x, z, -2)) { info.southCut.trees++; continue } // 便23: 南の四角の中の木は鴨川の町が植える（乱数は回してから抜く＝ほかの木の形を変えない）
       cell.list.push({ crown, trunk, col: c.clone() })
     }
     for (const cell of cells.values()) {

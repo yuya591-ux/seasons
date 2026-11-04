@@ -13,7 +13,9 @@ import fs from 'node:fs'
 import zlib from 'node:zlib'
 import { ShapeUtils, Vector2 } from 'three'
 
-const D = process.env.KAMO_DATA || 'scripts/kamo/_data', OUT = D + '/geo'
+// 便23: KAMO_REGION=s で南の四角（河原町・木屋町・先斗町・祇園）を組む（出す物は geo-s/）。何も付けない北の便は前と同じ物を出す（KAMO_GEO_OUT で出し先を変えて照らせる）
+const REG = process.env.KAMO_REGION === 's' ? 's' : 'n', SOUTH = REG === 's', SFX = SOUTH ? '-s' : ''
+const D = process.env.KAMO_DATA || 'scripts/kamo/_data', OUT = D + (process.env.KAMO_GEO_OUT || (SOUTH ? '/geo-s' : '/geo'))
 fs.mkdirSync(OUT, { recursive: true })
 const LAT0 = 35.0300, LON0 = 135.7725
 const phi = (LAT0 * Math.PI) / 180
@@ -22,8 +24,18 @@ const toX = (lon) => (lon - LON0) * MLON, toZ = (lat) => -(lat - LAT0) * MLAT
 const toLon = (x) => LON0 + x / MLON, toLat = (z) => LAT0 - z / MLAT
 const NEAR_STEP = 4, FAR_R = 11000, FAR_STEP = 50
 // 便21: 近くの範囲は四角（原点からの m・x 東・z 南）。京都大学・吉田神社・吉田山・茂庵まで入れるため東へ広げた（fetch.mjs の EXT と同じ）
-const EXT = { x0: -800, x1: 1904, z0: -800, z1: 904 } // 幅と奥行きは 8m の倍数（iPhone の段が網を1つおきに間引くため）
+// 便23: 北の四角（A＝前の範囲）と南の四角（B）。継ぎ目は z 904（B の東西の幅の所だけ）。南の便の網は B
+const EXT_A = { x0: -800, x1: 1904, z0: -800, z1: 904 }, EXT_B = { x0: -640, x1: 760, z0: 904, z1: 3608 }
+const EXT = SOUTH ? EXT_B : EXT_A // 幅と奥行きは 8m の倍数（iPhone の段が網を1つおきに間引くため）
 const inNear = (x, z, m = 0) => x >= EXT.x0 + m && x <= EXT.x1 - m && z >= EXT.z0 + m && z <= EXT.z1 - m
+const inA = (x, z, m = 0) => x >= EXT_A.x0 + m && x <= EXT_A.x1 - m && z >= EXT_A.z0 + m && z <= EXT_A.z1 - m
+const inB = (x, z, m = 0) => x >= EXT_B.x0 + m && x <= EXT_B.x1 - m && z >= EXT_B.z0 + m && z <= EXT_B.z1 - m
+// 便23: 2つの四角の和の内側か（縁から m 内側）。m の正方形の4つの角がどれも和の中なら中（継ぎ目をまたいでも中）。m が 0 以下は外へ広げた和
+const inU = (x, z, m = 0) => { if (m <= 0) return inA(x, z, m) || inB(x, z, m); const c = (a, b) => inA(a, b) || inB(a, b); return c(x - m, z - m) && c(x + m, z - m) && c(x - m, z + m) && c(x + m, z + m) }
+const SEAM = EXT_A.z1, seamX = (x) => x > EXT_B.x0 + 6 && x < EXT_B.x1 - 6
+// 便23: 南の四角の名所（外の町の名所の部品が作る＝西楼門・八坂の塔）。そのまわりの建物（半径 12m・9m＝outer-build.mjs の MARK_CLEAR）と木（12m）は組まない
+const MEI = SOUTH ? (() => { try { const m = JSON.parse(fs.readFileSync('public/kamo/outer/outer.json', 'utf8')).marks; return [['romon', 12], ['yasakaTo', 9]].filter(([k]) => m[k]).map(([k, r]) => [m[k].x, m[k].z, r]) } catch (e) { return [] } })() : []
+const nearMeisho = (x, z, r0) => MEI.some(([mx, mz, r]) => Math.hypot(x - mx, z - mz) < (r0 ?? r))
 const BLDG_M = 100 // 建物は網の縁から 100m 内側まで（便20 までは ±640m＝縁から 160m）
 const log = []
 
@@ -80,10 +92,11 @@ function mosaic(dir, t) {
   }
   return sample
 }
-const tiles = JSON.parse(fs.readFileSync(`${D}/dem-tiles.json`, 'utf8'))
+const tiles = JSON.parse(fs.readFileSync(`${D}/dem-tiles${SFX}.json`, 'utf8'))
 const H5 = mosaic('dem5', tiles.dem5), H10 = mosaic('dem10', tiles.dem10)
 const Hraw = (x, z) => { const la = toLat(z), lo = toLon(x); const v = H5(la, lo); return Number.isNaN(v) ? H10(la, lo) : v }
-const H0 = Hraw(0, 0)
+// 便23: 南の便の細かい標高は原点を含まない（遠くの 10m の標高になり 0.27m ずれた）＝北の便の基準の高さをそのまま使う
+const H0 = SOUTH ? JSON.parse(fs.readFileSync(`${D}/geo/geo.json`, 'utf8')).H0 : Hraw(0, 0)
 log.push(`基準の高さ H0（原点の標高）: ${H0.toFixed(2)} m`)
 const ground = (x, z) => Hraw(x, z) - H0
 
@@ -106,7 +119,7 @@ log.push(`近くの地形: ${near.nx}×${near.nz} 点（${NEAR_STEP}m 間隔・x
 log.push(`遠くの地形: ${far.n}×${far.n} 点（${FAR_STEP}m 間隔・±${FAR_R}m・無い点 ${far.nan}）`)
 
 // ── OpenStreetMap ──
-const osm = JSON.parse(fs.readFileSync(`${D}/osm.json`, 'utf8')).elements
+const osm = JSON.parse(fs.readFileSync(`${D}/osm${SFX}.json`, 'utf8')).elements
 const P = (g) => g.map((p) => [toX(p.lon), toZ(p.lat)])
 function rings(el) { // 道の形と、複数の道から成る面（multipolygon）の外側の輪
   if (el.type === 'way') return el.geometry ? [P(el.geometry)] : []
@@ -136,12 +149,28 @@ const pip = (pt, ring) => { let c = false; for (let i = 0, j = ring.length - 1; 
 const waterRings = []
 for (const e of osm) if (tag(e, 'natural') === 'water' && /river|stream|canal/.test(tag(e, 'water') || 'river') || tag(e, 'waterway') === 'riverbank') for (const r of rings(e)) if (r.length > 3) waterRings.push(r)
 const inWater = (x, z) => waterRings.some((r) => pip([x, z], r))
+// 便23: 南の便は、河川敷を鴨川の面（water=river・riverbank）からだけ広げる（疏水・白川・池のまわりまで 70m の草の帯が広がった）
+const bankRings = []; if (SOUTH) for (const e of osm) if (tag(e, 'natural') === 'water' && tag(e, 'water') === 'river' || tag(e, 'waterway') === 'riverbank') for (const r of rings(e)) if (r.length > 3) bankRings.push(r)
+const bankSeed = (x, z) => !SOUTH || bankRings.some((r) => pip([x, z], r))
+// 便23: 南の便は、橋の床（5m の標高に入っている）の上の点を、水面の高さの元（waterAt のまわりの低い所）から除く（橋の下で水面と川底が 4m 盛り上がった）。KAMO_MUT=bridge は外し回し用
+const BRC = 8, bridgeCell = new Map()
+if (SOUTH && process.env.KAMO_MUT !== 'bridge') for (const e of osm) {
+  if (e.type !== 'way' || !e.geometry || tag(e, 'bridge') !== 'yes' || !(tag(e, 'highway') || tag(e, 'railway'))) continue
+  const hw = (+(tag(e, 'width') || 0) || 16) / 2 + 3, pts = P(e.geometry)
+  for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1]; for (let a = Math.floor((Math.min(ax, bx) - hw) / BRC); a <= Math.floor((Math.max(ax, bx) + hw) / BRC); a++) for (let c = Math.floor((Math.min(az, bz) - hw) / BRC); c <= Math.floor((Math.max(az, bz) + hw) / BRC); c++) { const k = a * 100003 + c; if (!bridgeCell.has(k)) bridgeCell.set(k, []); bridgeCell.get(k).push([ax, az, bx, bz, hw]) } }
+}
+const onBridge = (x, z) => { const l = bridgeCell.get(Math.floor(x / BRC) * 100003 + Math.floor(z / BRC)); if (!l) return false; for (const [ax, az, bx, bz, hw] of l) { const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2)); if (Math.hypot(x - ax - dx * t, z - az - dz * t) < hw) return true } return false }
 // 水面の高さ: 水面の内側の地面の低い方（2割の所）
-const wy = []; for (let z = -800; z <= 800; z += 8) for (let x = -800; x <= 800; x += 8) if (inWater(x, z)) { const g = ground(x, z); if (!Number.isNaN(g)) wy.push(g) } // 原点のまわりの水面の内側の地面だけ
+const WR = SOUTH ? EXT_B : { x0: -800, x1: 800, z0: -800, z1: 800 } // 便23: 南の便は南の四角の水面の内側
+const wy = []; for (let z = WR.z0; z <= WR.z1; z += 8) for (let x = WR.x0; x <= WR.x1; x += 8) if (inWater(x, z)) { const g = ground(x, z); if (!Number.isNaN(g)) wy.push(g) } // 原点のまわりの水面の内側の地面だけ
 wy.sort((a, b) => a - b)
 const WATER_Y = wy.length ? wy[Math.floor(wy.length * 0.3)] + 0.1 : 0
+// 便23: 南の便は川が南へ 10m ほど下るので、水面の基準を南北 200m の帯ごとに持つ（1つの基準＋4m で頭打ちにすると、継ぎ目の近くの川底が 4m 深く掘られた）
+const WYZ = []; if (SOUTH) { const band = new Map(); for (let z = WR.z0; z <= WR.z1; z += 8) for (let x = WR.x0; x <= WR.x1; x += 8) if (inWater(x, z)) { const g = ground(x, z); if (Number.isNaN(g)) continue; const b = Math.floor((z - WR.z0) / 200); if (!band.has(b)) band.set(b, []); band.get(b).push(g) } for (let b = 0; b <= Math.floor((WR.z1 - WR.z0) / 200); b++) { const a = (band.get(b) || []).sort((p, q) => p - q); WYZ.push(a.length >= 8 ? a[Math.floor(a.length * 0.3)] + 0.1 : null) } for (let b = 0; b < WYZ.length; b++) if (WYZ[b] === null) { let n = null; for (let d = 1; d < WYZ.length && n === null; d++) n = WYZ[b - d] ?? WYZ[b + d] ?? null; WYZ[b] = n ?? WATER_Y } }
+const waterRef = (z) => { if (!SOUTH || process.env.KAMO_MUT === 'wy') return WATER_Y; // KAMO_MUT=wy は外し回し用（便23・1つの基準に戻す）
+  const u = Math.min(WYZ.length - 1.001, Math.max(0, (z - WR.z0) / 200 - 0.5)), b = Math.floor(u), f = u - b; return WYZ[b] * (1 - f) + WYZ[Math.min(WYZ.length - 1, b + 1)] * f }
 const wpos = [], widx = []
-for (const r of waterRings) {
+for (const r of SOUTH ? [] : waterRings) { // 便23: 南の便は川の輪を三角形に分けない（崩れる）。下の「水面の網」で張る
   const pts = r.slice(0, same2(r[0], r[r.length - 1]) ? -1 : undefined).map(([x, z]) => new Vector2(x, z))
   if (pts.length < 3) continue
   const base = wpos.length / 3
@@ -149,7 +178,7 @@ for (const r of waterRings) {
   for (const t of ShapeUtils.triangulateShape(pts, [])) widx.push(base + t[0], base + t[1], base + t[2])
 }
 function same2(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.01 }
-function waterAt(x, z) { let m = 1e9; for (let dz = -16; dz <= 16; dz += 4) for (let dx = -16; dx <= 16; dx += 4) { const g = ground(x + dx, z + dz); if (!Number.isNaN(g)) m = Math.min(m, g) } return Math.min(m === 1e9 ? WATER_Y : m + 0.2, WATER_Y + 4) } // 水面の縁はまわりの低い所＋0.2m（川は北の上流ほど少し高い）
+function waterAt(x, z) { let m = 1e9; for (let dz = -16; dz <= 16; dz += 4) for (let dx = -16; dx <= 16; dx += 4) { const g = ground(x + dx, z + dz); if (!Number.isNaN(g) && !(SOUTH && onBridge(x + dx, z + dz))) m = Math.min(m, g) } return Math.min(m === 1e9 ? waterRef(z) : m + 0.2, waterRef(z) + 4) } // 水面の縁はまわりの低い所＋0.2m（川は北の上流ほど少し高い）
 log.push(`川の水面: 輪 ${waterRings.length}・三角形 ${widx.length / 3}・水面の高さの基準 ${WATER_Y.toFixed(2)} m`)
 // 便21: 堰（落差工・帯工＝waterway=weir）。水の中の所だけを、3 本までの線分にして渡す（下流の白いさざ波に使う・調べ §6）
 const weirs = []
@@ -167,14 +196,17 @@ const zone = new Uint8Array(near.nx * near.nz) // 0 町・1 河川敷・2 水面
 const wyAt = new Float32Array(near.nx * near.nz) // 便21: 網の点ごとの水面の高さ（水面と河川敷の点だけ）。川底の深さを決めるのに使う
 const wdepth = new Uint8Array(near.nx * near.nz) // 便21: 水面の点の水の深さ（0.25cm 刻み・水でない所は 0）
 {
-  const n = near.nx, nz = near.nz, q = [], dist = new Float32Array(n * nz).fill(1e9)
-  for (let j = 0; j < nz; j++) for (let i = 0; i < n; i++) { const k = j * n + i, x = EXT.x0 + i * NEAR_STEP, z = EXT.z0 + j * NEAR_STEP; if (inWater(x, z)) { zone[k] = 2; wyAt[k] = waterAt(x, z); dist[k] = 0; q.push(k) } }
+  const n = near.nx, nz = near.nz, q = [], dist = new Float32Array(n * nz).fill(1e9), isRiver = new Uint8Array(n * nz)
+  for (let j = 0; j < nz; j++) for (let i = 0; i < n; i++) { const k = j * n + i, x = EXT.x0 + i * NEAR_STEP, z = EXT.z0 + j * NEAR_STEP; if (inWater(x, z)) { zone[k] = 2; wyAt[k] = waterAt(x, z); dist[k] = 0; if (bankSeed(x, z)) { q.push(k); isRiver[k] = 1; if (SOUTH && process.env.KAMO_MUT !== 'wy') wyAt[k] = Math.min(wyAt[k], waterRef(z) + 1.2) } } }
+  // 便23: 南の便の鴨川の面の水面を、まわり 12m の鴨川の水の点の一番低い水面にそろえる（標高が川の真ん中を平らな面で埋めた所で、1列だけ水面が 4m 高く出た。川の水面は横に平らなので下げるだけ）
+  if (SOUTH && process.env.KAMO_MUT !== 'wy') { const src = Float32Array.from(wyAt); for (let j = 0; j < nz; j++) for (let i = 0; i < n; i++) { const k = j * n + i; if (!isRiver[k]) continue; let m = src[k]; for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= n || jj >= nz) continue; const kk = jj * n + ii; if (isRiver[kk] && src[kk] < m) m = src[kk] } wyAt[k] = m } }
+  // 便23: 南の便の鴨川の面の水面は、その南北の帯の基準＋1.2m を超えない（標高の欠けを 10m の標高で補った所で、下流が上流より 4m 高く出た）
   for (let h = 0; h < q.length; h++) {
     const k = q[h], i = k % n, j = (k - i) / n
     for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= n || jj >= nz) continue
       const kk = jj * n + ii, d = dist[k] + NEAR_STEP; if (zone[kk] || d > 70) continue
-      if (near.pos[kk * 3 + 1] > wyAt[k] + 3.5) continue
+      if (near.pos[kk * 3 + 1] > wyAt[k] + (SOUTH ? 2.6 : 3.5)) continue // 便23: 南の便は堤が低く、先斗町の家の並ぶ所まで河川敷になった＝水面＋2.6m まで
       zone[kk] = 1; wyAt[kk] = wyAt[k]; dist[kk] = d; q.push(kk)
     }
   }
@@ -201,6 +233,53 @@ const wdepth = new Uint8Array(near.nx * near.nz) // 便21: 水面の点の水の
   log.push(`河川敷と川の中の尖った点をならした: ${nSpike}`)
   let c1 = 0, c2 = 0; for (const z of zone) { if (z === 1) c1++; if (z === 2) c2++ }
   log.push(`河川敷の範囲: 水面 ${c2} 点・河川敷 ${c1} 点（${NEAR_STEP}m 間隔）`)
+}
+// 便23: 南の便の細い水路（高瀬川・白川・みそそぎ川など・地図に面が無く線だけの物）。外の町は帯で描いていた（南の四角では外の町の水を抜くので、ここで作る）。
+//   帯の水面（岸の高さ − 落差）を張り、帯のまわり（W/2+1.5m）の網の点を水面の 0.35m 下まで下げる（急な所は護岸の色になる）。水の深さの図は 25cm（川底の光の網と透け方）。
+//   焼く時は下げる前の網（near-bake.bin）を使う（下げた所の暗がりが、上に重なる道へ映らないように）
+const nearBake = SOUTH ? Float32Array.from(near.pos) : null, canalRuns = []
+if (SOUTH) {
+  const n = near.nx
+  for (const e of osm) {
+    if (e.type !== 'way' || !e.geometry) continue
+    const ww = tag(e, 'waterway'); if (!/^(canal|stream|river|ditch|drain)$/.test(ww || '')) continue
+    if (tag(e, 'tunnel') || tag(e, 'covered') === 'yes' || (tag(e, 'layer') && +tag(e, 'layer') < 0) || tag(e, 'location') === 'underground') continue
+    const nm = tag(e, 'name') || ''; if (ww === 'river' && /鴨川|賀茂川|高野川/.test(nm)) continue
+    const W = +(tag(e, 'width') || 0) || (/高瀬川/.test(nm) ? 6 : /白川/.test(nm) ? 5 : /みそそぎ/.test(nm) ? 4 : ww === 'canal' ? 5 : 3); if (W > 12) continue
+    const drop = /白川/.test(nm) ? 1.3 : /高瀬川/.test(nm) ? 0.9 : 1.0
+    const pts = P(e.geometry), dense = []
+    for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1], L = Math.hypot(bx - ax, bz - az), m = Math.max(1, Math.ceil(L / 2)); for (let k = 0; k < m; k++) dense.push([ax + ((bx - ax) * k) / m, az + ((bz - az) * k) / m]) }
+    dense.push(pts[pts.length - 1])
+    let run = []
+    const flush = () => {
+      if (run.length >= 3) {
+        const tan = run.map((p, i) => { const a = run[Math.max(0, i - 1)], b = run[Math.min(run.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return [dx / l, dz / l] })
+        const bank = run.map(([x, z], i) => { const [dx, dz] = tan[i], o = W / 2 + 3; return Math.max(ground(x - dz * o, z + dx * o), ground(x + dz * o, z - dx * o)) })
+        const wl = bank.map((_, i) => { let s = 0, c = 0; for (let d = -3; d <= 3; d++) { const q = bank[i + d]; if (q !== undefined && !Number.isNaN(q)) { s += q; c++ } } return s / Math.max(1, c) - drop }) // 岸の高さを前後 6m でならしてから落差を引く
+        const base = wpos.length / 3
+        for (let i = 0; i < run.length; i++) { const [x, z] = run[i], [dx, dz] = tan[i]; wpos.push(x - dz * W / 2, wl[i], z + dx * W / 2, x + dz * W / 2, wl[i], z - dx * W / 2) }
+        for (let i = 0; i < run.length - 1; i++) { const a = base + i * 2; widx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3) }
+        for (let i = 0; i < run.length; i++) { const [x, z] = run[i], r = W / 2 + 1.5, i0 = Math.ceil((x - r - EXT.x0) / NEAR_STEP), i1 = Math.floor((x + r - EXT.x0) / NEAR_STEP), j0 = Math.ceil((z - r - EXT.z0) / NEAR_STEP), j1 = Math.floor((z + r - EXT.z0) / NEAR_STEP)
+          for (let jj = Math.max(0, j0); jj <= Math.min(near.nz - 1, j1); jj++) for (let ii = Math.max(0, i0); ii <= Math.min(n - 1, i1); ii++) { const px = EXT.x0 + ii * NEAR_STEP, pz = EXT.z0 + jj * NEAR_STEP; if (Math.hypot(px - x, pz - z) > r) continue; const k = jj * n + ii; if (zone[k] === 2) continue; near.pos[k * 3 + 1] = Math.min(near.pos[k * 3 + 1], wl[i] - 0.35); wdepth[k] = Math.max(wdepth[k], 100) } }
+        canalRuns.push({ name: nm, W, pts: run.map(([x, z]) => [+x.toFixed(1), +z.toFixed(1)]) })
+      }
+      run = []
+    }
+    for (const p of dense) { if (!inNear(p[0], p[1], 4) || p[1] <= SEAM + 2 || inWater(p[0], p[1])) flush(); else run.push(p) }
+    flush()
+  }
+  log.push(`南の便の細い水路: ${canalRuns.length} 本（${[...new Set(canalRuns.map((c) => c.name).filter(Boolean))].join('・')}）・帯の水面の三角形 ${widx.length / 3}`)
+}
+// 便23: 南の便の水面の網: 4m の升の角の 2 つ以上が水の点なら、その升に水面を張る。高さは水の点の水面（wyAt）、水でない角はその升の水の点の平均（便22 の外の町と同じ作り）
+if (SOUTH) {
+  const n = near.nx, nz = near.nz, vid = new Int32Array(n * nz).fill(-1)
+  for (let j = 0; j < nz - 1; j++) for (let i = 0; i < n - 1; i++) {
+    const ks = [j * n + i, j * n + i + 1, (j + 1) * n + i, (j + 1) * n + i + 1], w = ks.filter((k) => zone[k] === 2); if (w.length < 2) continue
+    const avg = w.reduce((a, k) => a + wyAt[k], 0) / w.length
+    const id = ks.map((k) => { if (zone[k] === 2 && vid[k] >= 0) return vid[k]; const ii = k % n, jj = (k - ii) / n; wpos.push(EXT.x0 + ii * NEAR_STEP, zone[k] === 2 ? wyAt[k] : avg, EXT.z0 + jj * NEAR_STEP); const v = wpos.length / 3 - 1; if (zone[k] === 2) vid[k] = v; return v })
+    widx.push(id[0], id[2], id[1], id[1], id[2], id[3])
+  }
+  log.push(`南の便の水面の網: 三角形 ${widx.length / 3}`)
 }
 
 // 道・橋・線路・小道（帯）
@@ -245,18 +324,16 @@ for (const e of osm) {
   // 便21: 河川敷の小道（点の 6 割以上が河川敷の範囲）は、幅 3.4m の真砂土の道（種類 5）。歩く人・走る人・自転車が通る（調べ §6）
   if (kind === 1 && hw !== 'steps') { let zr = 0, zn = 0; for (const [x, z] of pts) { if (!inNear(x, z)) continue; zn++; const i = Math.round((x - EXT.x0) / NEAR_STEP), j = Math.round((z - EXT.z0) / NEAR_STEP); if (zone[j * near.nx + i] === 1) zr++ } if (zn && zr / zn >= 0.6) { kind = 5; w = 3.4 } }
   // 4m ごとに点を足して地面に沿わせる。橋は両端の高さを結ぶ
-  const dense = []
-  for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 4)); for (let k = 0; k < n; k++) dense.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]) }
-  dense.push(pts[pts.length - 1])
+  const dense0 = []
+  for (let i = 0; i < pts.length - 1; i++) { const [ax, az] = pts[i], [bx, bz] = pts[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 4)); for (let k = 0; k < n; k++) dense0.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]) }
+  dense0.push(pts[pts.length - 1])
   // 近くの範囲（地形の網）の外の点は落とす（外へはみ出して宙に浮かないように）。途中で切れた所は別の帯にする
-  if (dense.every(([x, z]) => !inNear(x, z, 6))) continue
-  while (dense.length && !inNear(dense[0][0], dense[0][1], 6)) dense.shift()
-  while (dense.length && !inNear(dense[dense.length - 1][0], dense[dense.length - 1][1], 6)) dense.pop()
-  if (dense.length < 2) continue
+  // 便23: 北と南の継ぎ目（z 904）をまたぐ道は、継ぎ目でちょうど切って、北の便は北側・南の便は南側を組む（継ぎ目の帯では縁の 6m を空けない）。北の便の継ぎ目をまたがない道は前のまま
+  for (const dense of cutRoad(dense0)) {
   if (kind === 0 || kind === 1) for (let i = 0; i < dense.length; i += 1) roadPts.push(dense[i][0], dense[i][1], kind) // 便21: 建物の表（通りに面する向き）を決める道の点
   if (kind === 5 && dense.length > 3) riverPath.push(dense.map(([x, z]) => [+x.toFixed(1), +z.toFixed(1)])) // 便21: 河川敷の小道（歩く人・走る人・自転車の道筋・1本ずつの折れ線）
   const ys = dense.map(([x, z]) => ground(x, z))
-  if (kind === 2) { const y0 = ys[0], y1 = ys[ys.length - 1]; for (let i = 0; i < ys.length; i++) ys[i] = Math.max(y0 + ((y1 - y0) * i) / (ys.length - 1), WATER_Y + 3) + 0.6; nBridge++ } else nRoad++
+  if (kind === 2) { const y0 = ys[0], y1 = ys[ys.length - 1]; for (let i = 0; i < ys.length; i++) ys[i] = Math.max(y0 + ((y1 - y0) * i) / (ys.length - 1), waterRef(dense[i][1]) + 3) + 0.6; nBridge++ } else nRoad++
   const base = rpos.length / 3
   let acc = 0
   for (let i = 0; i < dense.length; i++) {
@@ -280,6 +357,23 @@ for (const e of osm) {
   if (kind === 0 && w >= 9) { let a2 = 0, next = 16, side = 1; for (let i = 1; i < dense.length; i++) { a2 += Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]); if (a2 < next) continue; next += 32; side = -side
     const dx = dense[i][0] - dense[i - 1][0], dz = dense[i][1] - dense[i - 1][1], l = Math.hypot(dx, dz) || 1, nx = (-dz / l) * side, nz = (dx / l) * side, x = dense[i][0] + nx * (w / 2 + 0.6), z = dense[i][1] + nz * (w / 2 + 0.6)
     if (!inWater(x, z) && inNear(x, z, 10)) lamps.push(+x.toFixed(2), +ground(x, z).toFixed(2), +z.toFixed(2), +Math.atan2(-nx, -nz).toFixed(3)) } }
+  }
+}
+// 便23: 道を継ぎ目で切る（上の for の中で使う）
+function cutRoad(dense) {
+  const inRoad = SOUTH ? (x, z) => inNear(x, z, 6) || (seamX(x) && z >= SEAM - 1e-6 && z <= SEAM + 6) : (x, z) => inNear(x, z, 6) || (seamX(x) && z >= SEAM - 6 && z <= SEAM + 1e-6)
+  const crosses = dense.some(([x, z], i) => i > 0 && seamX((x + dense[i - 1][0]) / 2) && (z - SEAM) * (dense[i - 1][1] - SEAM) <= 0 && z !== dense[i - 1][1])
+  if (!SOUTH && !crosses) { // 北の便の、継ぎ目をまたがない道は前のまま（端だけ落とす）
+    if (dense.every(([x, z]) => !inNear(x, z, 6))) return []
+    const d = dense.slice(); while (d.length && !inNear(d[0][0], d[0][1], 6)) d.shift(); while (d.length && !inNear(d[d.length - 1][0], d[d.length - 1][1], 6)) d.pop()
+    return d.length < 2 ? [] : [d]
+  }
+  const d2 = []
+  for (let i = 0; i < dense.length; i++) { if (i) { const [ax, az] = dense[i - 1], [bx, bz] = dense[i]; if ((az - SEAM) * (bz - SEAM) < 0) { const t = (SEAM - az) / (bz - az), x = ax + (bx - ax) * t; if (seamX(x)) d2.push([x, SEAM]) } } d2.push(dense[i]) }
+  const runs = []; let run = []
+  for (const p of d2) { if (inRoad(p[0], p[1])) run.push(p); else { if (run.length >= 2) runs.push(run); run = [] } }
+  if (run.length >= 2) runs.push(run)
+  return runs
 }
 for (const e of osm) if (e.type === 'node' && tag(e, 'highway') === 'street_lamp') { const x = toX(e.lon), z = toZ(e.lat); if (inNear(x, z, 10) && !inWater(x, z)) lamps.push(+x.toFixed(2), +ground(x, z).toFixed(2), +z.toFixed(2), 0) } // 地図の街灯の点（向きは決めない）
 // 便21: 橋の縁のうち、すぐ外 2m に別の橋の床がある縁（車道の橋と並ぶ歩道の橋のあいだ）には欄干を立てない
@@ -290,23 +384,26 @@ log.push(`橋の欄干: ${bridgeEdges.length} 本（賀茂大橋 ${bridgeEdges.f
 log.push(`道の帯: 道 ${nRoad}・橋 ${nBridge}・点 ${rpos.length / 3}・飛び石 ${stones.length / 4} 個`)
 
 // 木: 森・公園の中に散らす＋木の点＋川岸（水面の輪の外側 6〜14m）に並べる
-let seed = 1103; const R = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296 }
+let seed = SOUTH ? 2303 : 1103; const R = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296 }
 const trees = [] // x, y, z, 高さ, 幅, 種類（0 広葉 1 桜・柳の川岸 2 森の大木）
+const inT = SOUTH ? (x, z) => inNear(x, z) && z > SEAM && !nearMeisho(x, z, 12) : (x, z) => inNear(x, z) // 便23: 南の便の木は継ぎ目より南だけ（北の便と重ねない）。名所（西楼門・八坂の塔）のまわり 12m は空ける
 const woods = []; for (const e of osm) if (/forest|wood/.test(tag(e, 'landuse') || '') || tag(e, 'natural') === 'wood' || tag(e, 'leisure') === 'park' || tag(e, 'leisure') === 'garden') for (const r of rings(e)) woods.push({ r, park: !!tag(e, 'leisure') })
 for (const { r, park } of woods) {
   let minx = 1e9, maxx = -1e9, minz = 1e9, maxz = -1e9; for (const [x, z] of r) { minx = Math.min(minx, x); maxx = Math.max(maxx, x); minz = Math.min(minz, z); maxz = Math.max(maxz, z) }
   if (maxx < EXT.x0 || minx > EXT.x1 || maxz < EXT.z0 || minz > EXT.z1) continue
   const area = (maxx - minx) * (maxz - minz), n = Math.min(4000, Math.round(area / (park ? 160 : 55)))
-  for (let i = 0; i < n; i++) { const x = minx + R() * (maxx - minx), z = minz + R() * (maxz - minz); if (!inNear(x, z) || !pip([x, z], r) || inWater(x, z)) continue; const big = !park; trees.push([x, ground(x, z), z, big ? 13 + R() * 12 : 7 + R() * 6, big ? 7 + R() * 6 : 5 + R() * 4, big ? 2 : 0]) }
+  for (let i = 0; i < n; i++) { const x = minx + R() * (maxx - minx), z = minz + R() * (maxz - minz); if (!inT(x, z) || !pip([x, z], r) || inWater(x, z)) continue; const big = !park; trees.push([x, ground(x, z), z, big ? 13 + R() * 12 : 7 + R() * 6, big ? 7 + R() * 6 : 5 + R() * 4, big ? 2 : 0]) }
 }
-for (const e of osm) if (e.type === 'node' && tag(e, 'natural') === 'tree') { const x = toX(e.lon), z = toZ(e.lat); if (inNear(x, z)) trees.push([x, ground(x, z), z, 7 + R() * 5, 5 + R() * 3, 0]) }
+for (const e of osm) if (e.type === 'node' && tag(e, 'natural') === 'tree') { const x = toX(e.lon), z = toZ(e.lat); if (inT(x, z)) trees.push([x, ground(x, z), z, 7 + R() * 5, 5 + R() * 3, 0]) }
 for (const r of waterRings) for (let i = 0; i < r.length - 1; i++) { // 川岸の並木（12m ごと・外へ 9m）
   const [ax, az] = r[i], [bx, bz] = r[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.floor(L / 12)
   for (let k = 0; k < n; k++) {
     const t = (k + R()) / Math.max(1, n), x0 = ax + (bx - ax) * t, z0 = az + (bz - az) * t, nx = -(bz - az) / L, nz = (bx - ax) / L
-    for (const s of [1, -1]) { const x = x0 + nx * 9 * s, z = z0 + nz * 9 * s; if (!inNear(x, z) || inWater(x, z) || R() < 0.35) continue; const g = ground(x, z); if (g - WATER_Y > 5) continue; trees.push([x, g, z, 6 + R() * 4, 6 + R() * 3, 1]); break }
+    for (const s of [1, -1]) { const x = x0 + nx * 9 * s, z = z0 + nz * 9 * s; if (!inT(x, z) || inWater(x, z) || R() < 0.35) continue; const g = ground(x, z); if (g - (SOUTH ? waterAt(x0, z0) : WATER_Y) > 5) continue; trees.push([x, g, z, 6 + R() * 4, 6 + R() * 3, 1]); break }
   }
 }
+// 便23: 南の便の高瀬川（木屋町）と白川（祇園）の並木: 柳と桜を 9m おきに、左右を交互に岸から 1.2m 外へ（outer-build.mjs の高瀬川の並木と同じ間）
+for (const c of canalRuns) { if (!/高瀬川|白川/.test(c.name)) continue; let acc = 0, side = 1; for (let i = 1; i < c.pts.length; i++) { const [ax, az] = c.pts[i - 1], [bx, bz] = c.pts[i], L = Math.hypot(bx - ax, bz - az) || 1; acc += L; if (acc < 9) continue; acc = 0; side = -side; const nx = -(bz - az) / L, nz = (bx - ax) / L, x = bx + nx * (c.W / 2 + 1.2) * side, z = bz + nz * (c.W / 2 + 1.2) * side; if (!inT(x, z) || inWater(x, z)) continue; trees.push([x, ground(x, z), z, 6 + R() * 2.5, 6 + R() * 2, 1]) } }
 log.push(`木: ${trees.length} 本（森と公園 ${woods.length} か所・川岸の並木）`)
 
 // ── PLATEAU の建物 ──
@@ -315,7 +412,7 @@ const mod = { exports: {} }; new Function('module', 'exports', 'require', '__dir
 const draco = await mod.exports()
 const A = 6378137, E2 = 6.69437999014e-3
 function ecef2geo(x, y, z) { const p = Math.hypot(x, y), lon = Math.atan2(y, x); let lat = Math.atan2(z, p * (1 - E2)), h = 0; for (let i = 0; i < 5; i++) { const N = A / Math.sqrt(1 - E2 * Math.sin(lat) ** 2); h = p / Math.cos(lat) - N; lat = Math.atan2(z, p * (1 - (E2 * N) / (N + h))) } return [(lat * 180) / Math.PI, (lon * 180) / Math.PI, h] }
-const list = JSON.parse(fs.readFileSync(`${D}/bldg-list.json`, 'utf8'))
+const list = JSON.parse(fs.readFileSync(`${D}/bldg-list${SFX}.json`, 'utf8'))
 const seen = new Set(), blds = [] // { pos: Float32Array（local）, idx, h, usage }
 for (const w of list) for (const t of [...w.tiles].sort((a, b) => b.depth - a.depth)) {
   const b = fs.readFileSync(t.file), ftj = b.readUInt32LE(12), ftb = b.readUInt32LE(16), btj = b.readUInt32LE(20), btb = b.readUInt32LE(24)
@@ -344,7 +441,7 @@ for (const w of list) for (const t of [...w.tiles].sort((a, b) => b.depth - a.de
       const vmap = new Map(), P3 = [], I = []
       for (const f of fs_) for (let c = 0; c < 3; c++) { const v = faces[f * 3 + c]; if (!vmap.has(v)) { vmap.set(v, P3.length / 3); P3.push(lp[v * 3], lp[v * 3 + 1], lp[v * 3 + 2]) } I.push(vmap.get(v)) }
       let cx = 0, cz = 0; for (let i = 0; i < P3.length; i += 3) { cx += P3[i]; cz += P3[i + 2] } cx /= P3.length / 3; cz /= P3.length / 3
-      if (!inNear(cx, cz, BLDG_M)) continue
+      if (SOUTH ? !(inU(cx, cz, BLDG_M) && !inA(cx, cz, BLDG_M)) || nearMeisho(cx, cz) : !inNear(cx, cz, BLDG_M)) continue // 便23: 南の便は、和の縁から 100m 内側のうち北の便が組まない物（南の四角と北の四角の継ぎ目の帯）。名所のまわりは組まない
       seen.add(id)
       blds.push({ pos: P3, idx: I, cx, cz, h: bt['bldg:measuredHeight'][k], usage: bt['bldg:usage'][k], cls: bt['bldg:class'][k] })
     }
@@ -367,7 +464,7 @@ log.push(`PLATEAU の建物: ${blds.length} 棟（網の縁から ${BLDG_M}m 内
 //   2000年頃は今より町家と古い木造が多かった（京都市の町家の調べ: 1998年度に都心4区で約28,000軒・その後は年に約2%ずつ減った＝調べ §10）。
 //   町家は上京区側（鴨川の西）と出町の商店街のまわりに多く、左京区の吉田や京大の北は戦後の家が多い（調べ §10 の推測）＝西 60%・東 35%（隣と接し、通りに近い2階建ての家のうち）。
 //   乱数は町の R と分ける（木の形を変えない）
-let ks = 777001; const RK = () => { ks = (ks * 1664525 + 1013904223) >>> 0; return ks / 4294967296 }
+let ks = SOUTH ? 230501 : 777001; const RK = () => { ks = (ks * 1664525 + 1013904223) >>> 0; return ks / 4294967296 }
 const worship = []; for (const e of osm) if (tag(e, 'amenity') === 'place_of_worship') for (const r of rings(e)) if (r.length > 3) worship.push(r)
 const RC = 12, rcell = new Map() // 道の点を 12m 升に入れる
 for (let i = 0; i < roadPts.length; i += 3) { const k = Math.floor(roadPts[i] / RC) * 100003 + Math.floor(roadPts[i + 1] / RC); let a = rcell.get(k); if (!a) { a = []; rcell.set(k, a) } a.push(roadPts[i], roadPts[i + 1]) }
@@ -442,7 +539,9 @@ blds.forEach((b, n) => {
   if (s === 0 && h <= 10.5 && ht <= 11 && roofA > 12 && roofA < 260 && /住宅|不明|その他/.test(u)) {
     house = true
     const west = cx < -30, rowHouse = attached >= 1 && r && r.d < 9
-    if (rowHouse && RK() < (west ? 0.6 : 0.35) + (/店舗/.test(u) ? 0.15 : 0)) s = 1
+    // 便23: 南の便は祇園（花見小路・新橋・八坂）と木屋町・先斗町は町家が多い（outer-build.mjs の GION・PONTO と同じ 85%）・河原町より西 55%・ほか 35%
+    const pM = SOUTH ? ((cx > 250 && cx < 1000 && cz > 2700 && cz < 3700) || (cx > -260 && cx < -40 && cz > 2050 && cz < 3150) ? 0.85 : cx < -60 ? 0.55 : 0.35) : west ? 0.6 : 0.35
+    if (rowHouse && RK() < pM + (/店舗/.test(u) ? 0.15 : 0)) s = 1
     else if (RK() < 0.3) s = 2
   }
   // 便21: 名所の建物（調べ §1・§2・§4）: 京大の本部構内＝赤茶のタイル（6）・吉田神社の境内の小さな社＝朱塗りの社（7）・茂庵＝大正の木造二階（8）
@@ -496,8 +595,8 @@ const marks = { tower: null, kusu: null, gate: null, torii: [], daigengu: null, 
   }
   // 鳥居（地図の点）: 開きは近くの社（本殿・大元宮）へ向ける
   const shrineC = [[1117, 510], [1130, 685]]
-  for (const e of osm) if (e.type === 'node' && tag(e, 'man_made') === 'ceremonial_gate' && tag(e, 'ceremonial_gate') === 'torii') { const x = toX(e.lon), z = toZ(e.lat); if (!inNear(x, z, 20)) continue; const c = shrineC.reduce((a, s) => (Math.hypot(s[0] - x, s[1] - z) < Math.hypot(a[0] - x, a[1] - z) ? s : a)); marks.torii.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1), +Math.atan2(c[0] - x, c[1] - z).toFixed(3), 1]) }
-  for (const id of [462893259, 462893260]) { const r = ringOf('way', id); if (r) { const x = r.reduce((s, p) => s + p[0], 0) / r.length, z = r.reduce((s, p) => s + p[1], 0) / r.length; marks.torii.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1), +Math.atan2(1130 - x, 685 - z).toFixed(3), 0.8]) } }
+  if (!SOUTH) for (const e of osm) if (e.type === 'node' && tag(e, 'man_made') === 'ceremonial_gate' && tag(e, 'ceremonial_gate') === 'torii') { const x = toX(e.lon), z = toZ(e.lat); if (!inNear(x, z, 20)) continue; const c = shrineC.reduce((a, s) => (Math.hypot(s[0] - x, s[1] - z) < Math.hypot(a[0] - x, a[1] - z) ? s : a)); marks.torii.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1), +Math.atan2(c[0] - x, c[1] - z).toFixed(3), 1]) }
+  if (!SOUTH) for (const id of [462893259, 462893260]) { const r = ringOf('way', id); if (r) { const x = r.reduce((s, p) => s + p[0], 0) / r.length, z = r.reduce((s, p) => s + p[1], 0) / r.length; marks.torii.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1), +Math.atan2(1130 - x, 685 - z).toFixed(3), 0.8]) } }
   const dg = ringOf('way', 441720350); if (dg) { const x = dg.reduce((s, p) => s + p[0], 0) / dg.length, z = dg.reduce((s, p) => s + p[1], 0) / dg.length; marks.daigengu = [+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1)] }
   const sh = ringOf('way', 445132028); if (sh) { const x = sh.reduce((s, p) => s + p[0], 0) / sh.length, z = sh.reduce((s, p) => s + p[1], 0) / sh.length; marks.shelters.push([+x.toFixed(1), +ground(x, z).toFixed(2), +z.toFixed(1)]) }
   // ベンチ（地図の点・川べりと吉田山）。向きは近くの道へ背を向ける
@@ -561,7 +660,8 @@ const wr = (name, parts) => { const bufs = parts.map((p) => Buffer.from(p.buffer
 const meta = {
   note: '原点（鴨川デルタ）からのメートル。x 東・y 上・z 南。経緯度は入れていない',
   H0: +H0.toFixed(2), waterY: +WATER_Y.toFixed(2),
-  near: { n: near.nx, nx: near.nx, nz: near.nz, x0: EXT.x0, x1: EXT.x1, z0: EXT.z0, z1: EXT.z1, step: NEAR_STEP, bytes: wr('near.bin', [near.pos]), zoneBytes: wr('near-zone.bin', [zone]) },
+  near: { n: near.nx, nx: near.nx, nz: near.nz, x0: EXT.x0, x1: EXT.x1, z0: EXT.z0, z1: EXT.z1, step: NEAR_STEP, bytes: wr('near.bin', [near.pos]), zoneBytes: wr('near-zone.bin', [zone]), ...(nearBake ? { bakeBytes: wr('near-bake.bin', [nearBake]) } : {}) }, // 便23: near-bake.bin＝水路で下げる前の網（焼く時に使う）
+  ...(SOUTH ? { canals: canalRuns.map((c) => ({ name: c.name, W: c.W, n: c.pts.length })) } : {}),
   far: { n: far.n, R: FAR_R, step: FAR_STEP, bytes: wr('far.bin', [far.pos]) },
   bldg: { nv: bv, ni: bi, count: blds.length, bytes: wr('bldg.bin', [bpos, bidx, bbid]), heights: blds.map((b) => b.h ?? null), usage: blds.map((b) => b.usage ?? null), kyoBytes: wr('bldg-kyo.bin', [style, front]) }, // 便21: 形の種類・通りに面する向き（0〜255＝一周）
   eaves: { n: eaves.length / 3, bytes: wr('eaves.bin', [new Float32Array(eaves), new Uint8Array(ekind)]) }, // 便21: 町家の通り庇と犬矢来

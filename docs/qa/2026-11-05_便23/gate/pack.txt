@@ -1,0 +1,12 @@
+terrain.bin: 3.38MB → gzip 1.23MB
+bldg.bin: 11.30MB → gzip 4.38MB
+roads.bin: 2.40MB → gzip 1.01MB
+misc.bin: 0.61MB → gzip 0.26MB
+south.bin: 18.70MB → gzip 6.93MB
+南の四角: 建物の角 1277091・道の点 95024・水面の三角形 28950・木 3620・飛び石 41・町家の庇の三角形 11154
+lm_terrain.jpg: 1.37MB・lm_terrain_s.jpg: 0.58MB
+lm_bldg.jpg: 4.37MB・lm_bldg_s.jpg: 1.68MB
+lm_terrain2.jpg: 1.15MB・lm_terrain2_s.jpg: 0.48MB
+lm_bldg2.jpg: 4.40MB・lm_bldg2_s.jpg: 1.71MB
+質感の素材 7 種: PC と iPad 11.34MB・iPhone 1.12MB
+public/kamo（素材を除く）: 29.82MB

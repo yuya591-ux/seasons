@@ -8128,7 +8128,17 @@ export async function mountTown3d(parent, opts = {}) {
           if (outPass) { const u = outPass.uniforms; u.gAtm.value = 0; u.gWashA.value = 0; u.gPaperA.value = 0; u.gSat.value = 1; u.gSepia.value = 0; u.gContrast.value = 1 } // 水彩の層を掛けない（便16 の決め）
           renderer.toneMapping = THREE.NoToneMapping // 色の圧縮は、鴨川＝1枚目の中（ACES）・部屋＝材の中（Neutral）で済ませる
           // 便22: 外の町（西は金閣寺・南は京都駅と京都タワー・木屋町・河原町・祇園まで）を裏で読み、読めたら足す（読めなくても鴨川の町はそのまま）。kamoouter=0 は外し回し用
-          if (!/[?&]kamoouter=0/.test(location.search)) { const k0 = kamo; import('./kamoOuter.js').then((m) => m.loadOuter(import.meta.env.BASE_URL + 'kamo/outer/').then((od) => { if (kamo === k0 && my === token) { try { k0.addOuter(od, m) } catch (e) { console.warn('外の町を組めなかったので、鴨川の町だけで開きます:', e && e.message) } } })).catch((e) => console.warn('外の町を読めなかったので、鴨川の町だけで開きます:', e && e.message)) }
+          // ~~if (!/[?&]kamoouter=0/.test(location.search)) { … k0.addOuter(od, m) … }~~（【便23】下の形にした: 南の四角と外の町を並べて裏で読み、南の四角を先に足してから外の町を足す。片方が読めなくても、もう片方は足す）
+          // 便23: 南の四角（河原町・木屋町・先斗町・祇園・南の鴨川の岸＝光を焼いた細かい作り）。kamosouth=0 は外し回し用（足さない＝前と同じ）
+          { const k0 = kamo, wantS = !!k0.loadSouth, wantO = !/[?&]kamoouter=0/.test(location.search)
+            if (wantS || wantO) Promise.all([
+              wantS ? k0.loadSouth().catch((e) => { console.warn('南の四角を読めなかったので、北の四角だけで開きます:', e && e.message); return null }) : null,
+              wantO ? import('./kamoOuter.js').then((m) => m.loadOuter(import.meta.env.BASE_URL + 'kamo/outer/').then((od) => ({ m, od }))).catch((e) => { console.warn('外の町を読めなかったので、鴨川の町だけで開きます:', e && e.message); return null }) : null,
+            ]).then(([sd, o]) => {
+              if (kamo !== k0 || my !== token) return
+              if (sd) { try { k0.addSouth(sd) } catch (e) { console.warn('南の四角を組めなかったので、北の四角だけで開きます:', e && e.message) } }
+              if (o) { try { k0.addOuter(o.od, o.m) } catch (e) { console.warn('外の町を組めなかったので、鴨川の町だけで開きます:', e && e.message) } }
+            }) }
         } catch (e) { console.warn('鴨川の町を組めなかったので、前の角部屋で開きます:', e && e.message); if (kamo) { try { kamo.dispose() } catch (e2) { /* 無視 */ } } kamo = null }
       }
     }

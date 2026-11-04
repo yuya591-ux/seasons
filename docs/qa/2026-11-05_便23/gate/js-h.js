@@ -1,0 +1,1 @@
+(() => { const k = window.__town3dKamo(); const n = window.__town3dKamoNav ? 1 : 0; const sc = window.__kamoScene; if (!sc) return 'no scene'; const ray = new (sc.constructor.prototype.constructor === undefined ? Object : Object)(); return Object.keys(k.south || {}) })()

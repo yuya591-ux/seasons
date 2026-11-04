@@ -1,0 +1,21 @@
+形: 近くの地形 677×1103・遠くの地形 441×441・建物 739126 三角形・木 9655 本（193100 三角形）
+C:\Users\yuya.satake\ClaudeCode\seasons\scripts\kamo\bake.py:74: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  m.use_nodes = True
+Info: Removed 709769 vertices
+建物の図の位置（bldg）: 230203 点にまとめて島に分けた（6 秒）
+Info: Removed 1002065 vertices
+建物の図の位置（bldg2）: 275341 点にまとめて島に分けた（9 秒）
+C:\Users\yuya.satake\ClaudeCode\seasons\scripts\kamo\bake.py:221: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+00:10.672  cycles           | WARNING HIPEW initialization failed: Error opening HIP dynamic library
+00:10.734  cycles           | WARNING Driver version for device "Intel(R) Arc(TM) Graphics" is too old. Expected "35716" or newer, but got "34938".
+焼く道具: Cycles・OPTIX（NVIDIA GeForce RTX 4050 Laptop GPU）・光の数 128・照り返し 3 回・図 4096×4096
+Info: Baking map saved to internal image, save it externally or pack it
+焼いた: lm_terrain（23 秒・明るさ 平均 0.610・1% 0.003・99% 0.997）
+Info: Baking map saved to internal image, save it externally or pack it
+焼いた: lm_bldg（21 秒・明るさ 平均 0.280・1% 0.002・99% 0.963）
+Info: Baking map saved to internal image, save it externally or pack it
+焼いた: lm_terrain2（20 秒・明るさ 平均 0.595・1% 0.002・99% 0.995）
+Info: Baking map saved to internal image, save it externally or pack it
+焼いた: lm_bldg2（21 秒・明るさ 平均 0.301・1% 0.002・99% 0.929）
+建物を書き出した: 角 2216967（北 939876・53.2MB）・全体 99 秒

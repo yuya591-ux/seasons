@@ -14,7 +14,10 @@ const OUT = process.env.KAMO_DATA || 'scripts/kamo/_data'
 const LAT0 = 35.0300, LON0 = 135.7725 // 鴨川デルタ（賀茂川と高野川の合流）の南の先のあたり
 const NEAR = 900 // 5m の標高と建物と OSM を取る半径の目安（m）・便17〜20
 // 便21: 京都大学・吉田神社・吉田山・茂庵まで入れるため、東へ広げた四角（原点からの m・x 東・z 南）。build.mjs の範囲（EXT）と同じ
-const EXT = { x0: -800, x1: 1904, z0: -800, z1: 904 } // 幅と奥行きは 8m の倍数（iPhone の段が網を1つおきに間引くため）
+// 便23: KAMO_REGION=s で南の四角（河原町・木屋町・先斗町・南座・祇園・建仁寺・八坂の塔まで＝x -640〜760・z 904〜3608）を取る。
+//   建物は北の四角の縁の 100m の帯（z 804〜904）も南の便で組むので、取る範囲は北へ 100m 広げる。出す物の名に -s を付ける（北の物は変えない）
+const REG = process.env.KAMO_REGION === 's' ? 's' : 'n', SFX = REG === 's' ? '-s' : ''
+const EXT = REG === 's' ? { x0: -640, x1: 760, z0: 804, z1: 3608 } : { x0: -800, x1: 1904, z0: -800, z1: 904 } // 幅と奥行きは 8m の倍数（iPhone の段が網を1つおきに間引くため）
 const FAR = 11000 // 遠くの山（比叡山・大文字山・北山・東山）まで
 fs.mkdirSync(OUT + '/dem5', { recursive: true }); fs.mkdirSync(OUT + '/dem10', { recursive: true }); fs.mkdirSync(OUT + '/bldg', { recursive: true })
 
@@ -50,16 +53,16 @@ async function demTiles(kind, z, r, dir) {
 }
 const dem5 = await demTiles('dem5a_png', 15, rect(100), 'dem5')
 const dem10 = await demTiles('dem_png', 13, FAR, 'dem10')
-fs.writeFileSync(`${OUT}/dem-tiles.json`, JSON.stringify({ dem5, dem10 }))
+fs.writeFileSync(`${OUT}/dem-tiles${SFX}.json`, JSON.stringify({ dem5, dem10 }))
 
 // 2. PLATEAU の建物（3区の LOD2 模様なし）。範囲に掛かるタイルを全部の段で取り、作る台本で建物の ID の重なりを除く
 const cat = JSON.parse(fs.existsSync(`${OUT}/plateau-catalog.json`) ? fs.readFileSync(`${OUT}/plateau-catalog.json`, 'utf8') : await (async () => { const t = await (await fetch('https://api.plateau.reearth.io/datacatalog/plateau-datasets')).text(); fs.writeFileSync(`${OUT}/plateau-catalog.json`, t); return t })())
-const wards = ['北区', '上京区', '左京区']
+const wards = REG === 's' ? ['上京区', '左京区', '中京区', '東山区', '下京区'] : ['北区', '上京区', '左京区']
 const bb = rect(-60), rad = (d) => (d * Math.PI) / 180
 const inter = (reg) => !(reg[2] < rad(bb.w) || reg[0] > rad(bb.e) || reg[3] < rad(bb.s) || reg[1] > rad(bb.n))
 const bldgList = []
 for (const w of wards) {
-  const d = (cat.datasets || cat).find((d) => d.type_en === 'bldg' && String(d.year) === '2025' && d.name === `建築物モデル（${w}）` && String(d.lod) === '2' && String(d.texture) === 'false')
+  const d = (cat.datasets || cat).find((d) => d.type_en === 'bldg' && String(d.year) === '2025' && (REG === 's' ? d.ward === w && String(d.ward_code || '').startsWith('261') : d.name === `建築物モデル（${w}）`) && /* 便23: 南の便は京都市の区（番号 261）だけ */ String(d.lod) === '2' && String(d.texture) === 'false')
   if (!d) { log.push(`PLATEAU ${w}: 見つからない`); continue }
   const base = d.url.replace(/tileset\.json$/, ''), tsFile = `${OUT}/bldg/${d.ward_code}-tileset.json`
   await dl(d.url, tsFile)
@@ -78,7 +81,7 @@ for (const w of wards) {
   bldgList.push({ ward: w, code: d.ward_code, url: d.url, tiles: picks })
   log.push(`PLATEAU ${w}（${d.ward_code}・LOD2 模様なし・2025）: 範囲に掛かるタイル ${picks.length}（末端 ${picks.filter((p) => p.leaf).length}）・${(bytes / 1e6).toFixed(1)}MB`)
 }
-fs.writeFileSync(`${OUT}/bldg-list.json`, JSON.stringify(bldgList, null, 1))
+fs.writeFileSync(`${OUT}/bldg-list${SFX}.json`, JSON.stringify(bldgList, null, 1))
 
 // 3. OpenStreetMap（Overpass）
 const ob = rect(180)
@@ -93,7 +96,7 @@ nwr["amenity"](${ob.s},${ob.w},${ob.n},${ob.e});nwr["tourism"](${ob.s},${ob.w},$
 nwr["man_made"](${ob.s},${ob.w},${ob.n},${ob.e});way["building"]["name"](${ob.s},${ob.w},${ob.n},${ob.e});way["natural"](${ob.s},${ob.w},${ob.n},${ob.e});
 node["natural"="peak"](${ob.s},${ob.w},${ob.n},${ob.e});node["highway"="street_lamp"](${ob.s},${ob.w},${ob.n},${ob.e});way["barrier"](${ob.s},${ob.w},${ob.n},${ob.e});
 );out body geom;` // 便21: 名所（寺社・大学・カフェ・公園）・堰・灯り・塀を足した
-if (!fs.existsSync(`${OUT}/osm.json`)) {
+if (!fs.existsSync(`${OUT}/osm${SFX}.json`)) {
   // 混んでいると 504 が返るので、配り口を順に回す（2026-11-03 の1回目は overpass-api.de が 504、2回目で返った）
   let got = null
   for (const ep of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter']) {
@@ -102,9 +105,9 @@ if (!fs.existsSync(`${OUT}/osm.json`)) {
     log.push(`Overpass ${ep}: ${r.status}`)
   }
   if (!got) throw new Error('Overpass のどの配り口も返らない')
-  fs.writeFileSync(`${OUT}/osm.json`, got)
+  fs.writeFileSync(`${OUT}/osm${SFX}.json`, got)
 }
-const osm = JSON.parse(fs.readFileSync(`${OUT}/osm.json`, 'utf8'))
-log.push(`OpenStreetMap（Overpass・${new Date().toISOString().slice(0, 10)}）: 要素 ${osm.elements.length}・${(fs.statSync(`${OUT}/osm.json`).size / 1e6).toFixed(1)}MB`)
-fs.writeFileSync(`${OUT}/fetch-log.txt`, log.join('\n') + '\n')
+const osm = JSON.parse(fs.readFileSync(`${OUT}/osm${SFX}.json`, 'utf8'))
+log.push(`OpenStreetMap（Overpass・${new Date().toISOString().slice(0, 10)}）: 要素 ${osm.elements.length}・${(fs.statSync(`${OUT}/osm${SFX}.json`).size / 1e6).toFixed(1)}MB`)
+fs.writeFileSync(`${OUT}/fetch-log${SFX}.txt`, log.join('\n') + '\n')
 console.log(log.join('\n'))

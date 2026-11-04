@@ -47,7 +47,7 @@ const view = (buf, sec) => new globalThis[sec.type](buf, sec.off, sec.n)
 
 /** 鴨川の町のデータと図を取ってくる。low＝iPhone の段（光の図 2048・素材の写真は縦横半分） */
 // 【便21・外の目】データの版の印。控え（service worker）が前の版の kamo.json と .bin を先に返すと、新しい本体と古いデータが混ざって崩れる（便21 で範囲の形を替えた）。版ごとに読み先を分ける
-const KAMO_V = '?v=21'
+const KAMO_V = '?v=23' // 便23: 網を北と南の四角の外接の四角に広げ、南の物を south.bin に分けた
 export async function loadKamo(base, { low = false } = {}) {
   const meta = await (await fetch(base + 'kamo.json' + KAMO_V)).json()
   const F = meta.files
@@ -63,7 +63,14 @@ export async function loadKamo(base, { low = false } = {}) {
   ])
   const texMap = {}
   meta.tex.forEach((n, i) => { texMap[n] = { d: tex[i * 2], n: tex[i * 2 + 1] } })
-  return { meta, low, buf: { terrain, bldg, roads, misc }, lm: { terrain: lmT, bldg: lmB }, tex: texMap, life: await lifeP }
+  return { meta, low, base, buf: { terrain, bldg, roads, misc }, lm: { terrain: lmT, bldg: lmB }, tex: texMap, life: await lifeP }
+}
+/** 便23: 南の四角（河原町・木屋町・先斗町・祇園）のデータと焼いた図を取ってくる（窓辺が開いた後に裏で読む）。無い時は null */
+async function loadSouthData(data) {
+  const S = data.meta.south; if (!S) return null
+  const loader = new THREE.TextureLoader(), sfx = data.low ? '_s' : ''
+  const [buf, lmT, lmB] = await Promise.all([gunzip(data.base + S.file + KAMO_V), loader.loadAsync(data.base + `${S.lm.terrain}${sfx}.jpg` + KAMO_V), loader.loadAsync(data.base + `${S.lm.bldg}${sfx}.jpg` + KAMO_V)])
+  return { buf, lmT, lmB }
 }
 
 /**
@@ -204,7 +211,17 @@ void main() {
 
   // 便21: 近くの範囲は四角（x0..x1・z0..z1）。京都大学・吉田山まで東へ広げた。焼いた地形の図の位置は u＝西の端 0・v＝南の端 0
   const NX0 = meta.near.x0, NX1 = meta.near.x1, NZ0 = meta.near.z0, NZ1 = meta.near.z1, NW = NX1 - NX0, ND = NZ1 - NZ0, WY = meta.waterY
-  const lmU = (x) => (x - NX0) / NW, lmV = (z) => (-z + NZ1) / ND
+  // 便23: 網は北の四角（RGA＝前の範囲）と南の四角（RGB）に外接する四角。南の四角は addSouth で足すまで描かず、道案内も北の四角だけで答える（SOUTH_ON）
+  const RGA = meta.near.regions ? meta.near.regions.A : { x0: NX0, x1: NX1, z0: NZ0, z1: NZ1 }, RGB = meta.near.regions ? meta.near.regions.B : null
+  let SOUTH_ON = false
+  const inRA = (x, z, m = 0) => x >= RGA.x0 + m && x <= RGA.x1 - m && z >= RGA.z0 + m && z <= RGA.z1 - m
+  const inRB = (x, z, m = 0) => !!RGB && x >= RGB.x0 + m && x <= RGB.x1 - m && z >= RGB.z0 + m && z <= RGB.z1 - m
+  // 鴨川の町（描いている四角の和）の内側か（縁から m 内側）。m の正方形の4つの角がどれも和の中なら中（継ぎ目をまたいでも中）。m が 0 以下は外へ広げた和
+  const inK = (x, z, m = 0) => { if (!SOUTH_ON) return inRA(x, z, m); if (m <= 0) return inRA(x, z, m) || inRB(x, z, m); const c = (a, b) => inRA(a, b) || inRB(a, b); return c(x - m, z - m) && c(x + m, z - m) && c(x - m, z + m) && c(x + m, z + m) }
+  // 焼いた地形の図の位置（四角ごとに u＝西の端 0・v＝南の端 0）。北の四角は前と同じ
+  const uvOf = (rc) => (x, z) => [(x - rc.x0) / (rc.x1 - rc.x0), (-z + rc.z1) / (rc.z1 - rc.z0)]
+  const uvA = uvOf(RGA), uvB = RGB ? uvOf(RGB) : null
+  const lmU = (x) => uvA(x, 0)[0], lmV = (z) => uvA(0, z)[1]
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy())
 
   // 焼いた光（空の光の届き方＋照り返し）を、空と照り返しの光（間接の光）にだけ掛ける。開けた所＝1.0
@@ -408,10 +425,14 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   // iPhone の段は網を1つおきに間引く（近く 8m・遠く 100m 間隔）。法線は全体の網で求めてから分ける（区画の境に陰の継ぎ目を出さない）
   const terrain = view(data.buf.terrain, meta.files.terrain.secs.near), zone = view(data.buf.terrain, meta.files.terrain.secs.zone), farH = view(data.buf.terrain, meta.files.terrain.secs.far)
   // 便21: 東西 nx 点・南北 nz 点の四角の網（x0・z0 が北西の角）。tiles＝[東西の区画の数, 南北の区画の数]
-  function gridTiles({ nx, nz, x0, z0, step, hs, hq, dec, tiles, paint, withUv1 }) {
-    const m = (nx - 1) / dec + 1, mz = (nz - 1) / dec + 1, st = step * dec
+  // 便23: sub＝描く所の点の範囲（間引く前の網の i0..i1・j0..j1）。法線はその外へ1つ広げた網で求める（継ぎ目に陰の段を出さない）。uvf＝焼いた図の位置（無い時は北の四角の図）。sub が無い時は前と同じ
+  function gridTiles({ nx, nz, x0, z0, step, hs, hq, dec, tiles, paint, withUv1, sub = null, uvf = null }) {
+    const M = (nx - 1) / dec + 1, MZ = (nz - 1) / dec + 1, st = step * dec
+    const S0 = sub ? { i0: sub.i0 / dec, i1: sub.i1 / dec, j0: sub.j0 / dec, j1: sub.j1 / dec } : { i0: 0, i1: M - 1, j0: 0, j1: MZ - 1 }
+    const E0 = { i0: Math.max(0, S0.i0 - (sub ? 1 : 0)), i1: Math.min(M - 1, S0.i1 + (sub ? 1 : 0)), j0: Math.max(0, S0.j0 - (sub ? 1 : 0)), j1: Math.min(MZ - 1, S0.j1 + (sub ? 1 : 0)) }
+    const m = E0.i1 - E0.i0 + 1, mz = E0.j1 - E0.j0 + 1, gi = (i) => (E0.i0 + i) * dec, gj = (j) => (E0.j0 + j) * dec
     const pos = new Float32Array(m * mz * 3)
-    for (let j = 0; j < mz; j++) for (let i = 0; i < m; i++) { const k = j * m + i; pos[k * 3] = x0 + i * st; pos[k * 3 + 1] = hs[j * dec * nx + i * dec] * hq; pos[k * 3 + 2] = z0 + j * st }
+    for (let j = 0; j < mz; j++) for (let i = 0; i < m; i++) { const k = j * m + i; pos[k * 3] = x0 + gi(i) * step; pos[k * 3 + 1] = hs[gj(j) * nx + gi(i)] * hq; pos[k * 3 + 2] = z0 + gj(j) * step }
     const full = new THREE.BufferGeometry(); full.setAttribute('position', new THREE.BufferAttribute(pos, 3))
     const fi = new Uint32Array((m - 1) * (mz - 1) * 6); let q = 0
     for (let j = 0; j < mz - 1; j++) for (let i = 0; i < m - 1; i++) { const a = j * m + i, b = a + 1, c = a + m, d = c + 1; fi[q++] = a; fi[q++] = c; fi[q++] = b; fi[q++] = b; fi[q++] = c; fi[q++] = d }
@@ -420,12 +441,13 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     const col = new Float32Array(m * mz * 3), uv1 = withUv1 ? new Float32Array(m * mz * 2) : null, c = new THREE.Color()
     for (let j = 0; j < mz; j++) for (let i = 0; i < m; i++) {
       const k = j * m + i, x = pos[k * 3], y = pos[k * 3 + 1], z = pos[k * 3 + 2]
-      paint(c, x, y, z, nrm[k * 3 + 1], j * dec * nx + i * dec); col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b
-      if (uv1) { uv1[k * 2] = lmU(x); uv1[k * 2 + 1] = lmV(z) }
+      paint(c, x, y, z, nrm[k * 3 + 1], gj(j) * nx + gi(i)); col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b
+      if (uv1) { if (uvf) { const u = uvf(x, z); uv1[k * 2] = u[0]; uv1[k * 2 + 1] = u[1] } else { uv1[k * 2] = lmU(x); uv1[k * 2 + 1] = lmV(z) } }
     }
-    const out = [], [tX, tZ] = tiles, tq = Math.ceil((m - 1) / tX), tqz = Math.ceil((mz - 1) / tZ)
+    const oi = S0.i0 - E0.i0, oj = S0.j0 - E0.j0
+    const out = [], [tX, tZ] = tiles, tq = Math.ceil((S0.i1 - S0.i0) / tX), tqz = Math.ceil((S0.j1 - S0.j0) / tZ)
     for (let tj = 0; tj < tZ; tj++) for (let ti = 0; ti < tX; ti++) {
-      const i0 = ti * tq, i1 = Math.min(m - 1, i0 + tq), j0 = tj * tqz, j1 = Math.min(mz - 1, j0 + tqz); if (i0 >= i1 || j0 >= j1) continue
+      const i0 = oi + ti * tq, i1 = Math.min(oi + S0.i1 - S0.i0, i0 + tq), j0 = oj + tj * tqz, j1 = Math.min(oj + S0.j1 - S0.j0, j0 + tqz); if (i0 >= i1 || j0 >= j1) continue
       const w = i1 - i0 + 1, h = j1 - j0 + 1, P = new Float32Array(w * h * 3), N = new Float32Array(w * h * 3), C = new Float32Array(w * h * 3), U = uv1 ? new Float32Array(w * h * 2) : null
       for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const s = (j0 + j) * m + i0 + i, d = j * w + i; for (let e = 0; e < 3; e++) { P[d * 3 + e] = pos[s * 3 + e]; N[d * 3 + e] = nrm[s * 3 + e]; C[d * 3 + e] = col[s * 3 + e] } if (U) { U[d * 2] = uv1[s * 2]; U[d * 2 + 1] = uv1[s * 2 + 1] } }
       const I = new Uint16Array((w - 1) * (h - 1) * 6); let r = 0
@@ -446,19 +468,22 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
   // 川底に揺れる光の網（日なたの浅い水の底）。強さは時刻と空で決める（朝と昼 1・夕 0.45・曇り 0.4 倍・雨と雪と夜 0）
   const CAUS = NIGHT || RAIN || SNOW ? 0 : (TK === 'dusk' ? 0.45 : 1) * (sky === 'cloudy' ? 0.4 : 1)
   const causU = { value: 0 } // 時計は update() で進める
+  let addNearTerrain = null // 便23: 近くの地形を四角ごとに描く（北は組む時・南は addSouth）
   {
     const cGrass = new THREE.Color(GRASS), cGravel = new THREE.Color(0x8a8272), cWet = new THREE.Color(0x5e5a50), cWall = new THREE.Color(0x8c877c), cTown = new THREE.Color(0x8a867e)
     const cBed = new THREE.Color(0xa89e8a), cBed2 = new THREE.Color(0x7d8462), cBed3 = new THREE.Color(0xbdb4a0) // 便21: 川底の丸い礫（灰〜茶灰）・苔の緑・明るい礫
+    let southPaint = false // 便23: 南の四角は川が南へ下るので、水際の砂利（北の水面の高さから測る）を塗らない
     const paint = (c, x, y, z, ny, k) => {
-      const h = y - WY, nz = vn(x, z)
+      const h = southPaint ? 99 : y - WY, nz = vn(x, z)
       if (zone[k] === 2) { if (wdepA) { const d = wdepA[k] * WDS; c.copy(cBed).lerp(cBed3, vn(x * 3.1, z * 2.7) * 0.6).lerp(cBed2, Math.min(1, d / 0.42) * 0.55 * vn(x * 1.3 + 7, z * 1.7)).multiplyScalar(0.92 - d * 0.35) } else c.copy(cWet).lerp(cGravel, 0.4) } // 水面の下（浅い所の川底の石）。便21: 浅瀬の川底は明るい礫、深い所ほど苔の緑がかる
       else if (zone[k] === 1) { if (ny < 0.8) c.copy(cWall); else c.copy(cGrass).offsetHSL(0, 0, (nz - 0.5) * 0.1).lerp(cGravel, Math.max(0, 1 - Math.abs(h - 0.4)) * 0.6) } // 河川敷の草・水際の砂利・護岸
       else if (ny < 0.8) c.copy(cWall)
       else c.copy(cTown).lerp(cGrass, nz * 0.12) // 町の地面（道と建物の間）
       if (SNOW && zone[k] !== 2 && ny > 0.6) c.lerp(WHITE, 0.62)
     }
+    const makeMat = (lmTex) => {
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.6 : 0.95, metalness: 0 }))
-    useBake(m, data.lm.terrain)
+    useBake(m, lmTex)
     useTex(m, { a: 'gravel_road', b: 'grass_path_2', tile: 3.2, tileB: 3.5 })
     if (depthTex) { // 便21: 川底のこぶし大の丸い礫（近くだけ）と、日なたの光の網（水の深さが 1cm 以上の所だけ・浅い所から深い所へ薄れる）
       m.onBeforeCompile = chain(m.onBeforeCompile, (sh) => {
@@ -479,9 +504,18 @@ float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
       })
       addKey(m, 'caus')
     }
-    for (const g of gridTiles({ nx: meta.near.nx, nz: meta.near.nz, x0: NX0, z0: NZ0, step: meta.near.step, hs: terrain, hq: meta.near.hStep, dec: low ? 2 : 1, tiles: [6, 4], paint, withUv1: true })) {
-      const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.castShadow = true; mesh.userData.part = 'terrainNear'; scene.add(mesh)
+    return m
     }
+    // 便23: 四角（rc）の所の点の範囲。網が北の四角だけ（前のデータ）の時は sub を渡さない＝前と同じ描き方
+    const subOf = (rc) => ({ i0: Math.round((rc.x0 - NX0) / meta.near.step), i1: Math.round((rc.x1 - NX0) / meta.near.step), j0: Math.round((rc.z0 - NZ0) / meta.near.step), j1: Math.round((rc.z1 - NZ0) / meta.near.step) })
+    addNearTerrain = (rc, lmTex, uvf, tiles, south) => {
+      const m = makeMat(lmTex); southPaint = !!south
+      for (const g of gridTiles({ nx: meta.near.nx, nz: meta.near.nz, x0: NX0, z0: NZ0, step: meta.near.step, hs: terrain, hq: meta.near.hStep, dec: low ? 2 : 1, tiles, paint, withUv1: true, sub: meta.near.regions ? subOf(rc) : null, uvf })) {
+        const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.castShadow = !south; mesh.userData.part = 'terrainNear'; scene.add(mesh)
+      }
+      southPaint = false
+    }
+    addNearTerrain(RGA, data.lm.terrain, null, [6, 4], false)
   }
   {
     // 近くの地形の範囲は 6m 下げてある（build.mjs）。遠くの網は近くの網の下に隠れる
@@ -497,14 +531,13 @@ float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
     }
   }
 
-  const navSrc = {} // 便19: 飛ぶ・歩くの道案内（下の makeNav）が使う、建物と橋の形
+  const navSrc = { roadsL: [], bldgL: [], treesL: [] } // 便19: 飛ぶ・歩くの道案内（下の makeNav）が使う、建物と橋の形。便23: 北と南の物を並べる
   // ── 道・小道・橋・線路（地形の焼いた光をそのまま使う） ──
-  {
-    const sec = meta.files.roads.secs, ps = meta.roads.pStep, po = meta.roads.pOff || [0, 0, 0] // 便21: 範囲の中心を引いて詰めてある
-    const p16 = view(data.buf.roads, sec.pos), idx = view(data.buf.roads, sec.idx), kind = view(data.buf.roads, sec.kind)
+  // 便23: 北の道（組む時）と南の道（addSouth・南の四角の地形の図と図の位置）を同じ関数で描く
+  function buildRoads({ p16, idx, kind, al, wd, ps, po, lmTex, uvf }) {
     const P = new Array(p16.length); for (let i = 0; i < p16.length; i++) P[i] = p16[i] * ps + po[i % 3]
     const I = Array.from(idx), K = Array.from(kind), pos = P.slice()
-    navSrc.roads = { pos, idx, kind }
+    navSrc.roadsL.push({ pos, idx, kind })
     for (let t = 0; t < idx.length; t += 6) { // 橋の床の両側に、下へ 1.5m の桁を足す
       const a = idx[t]; if (kind[a] !== 2) continue
       for (const [e0, e1] of [[a, a + 2], [a + 1, a + 3]]) { const b = P.length / 3; P.push(pos[e0 * 3], pos[e0 * 3 + 1], pos[e0 * 3 + 2], pos[e1 * 3], pos[e1 * 3 + 1], pos[e1 * 3 + 2], pos[e0 * 3], pos[e0 * 3 + 1] - 1.5, pos[e0 * 3 + 2], pos[e1 * 3], pos[e1 * 3 + 1] - 1.5, pos[e1 * 3 + 2]); K.push(4, 4, 4, 4); I.push(b, b + 2, b + 1, b + 1, b + 2, b + 3) }
@@ -513,22 +546,27 @@ float kCaus(vec2 p, float t) { vec2 q = p * 0.9; float c = 0.0;
     const col = new Float32Array(K.length * 3), uv1 = new Float32Array(K.length * 2), c = new THREE.Color()
     // 便21: 5＝河川敷の真砂土の道（明るいベージュ・少し緑に寄せた頂点の色で、写真の模様を砂利の素材に切り替える）
     const CK = [0x55575a, 0xb0a690, 0x8d8a84, 0x6a5e52, 0x7c7a76, 0xc0b490]
-    for (let i = 0; i < K.length; i++) { c.setHex(CK[K[i]]); if (SNOW && K[i] !== 4) c.lerp(WHITE, K[i] === 0 ? 0.35 : 0.55); col.set([c.r, c.g, c.b], i * 3); uv1.set([lmU(P[i * 3]), lmV(P[i * 3 + 2])], i * 2) }
+    for (let i = 0; i < K.length; i++) { c.setHex(CK[K[i]]); if (SNOW && K[i] !== 4) c.lerp(WHITE, K[i] === 0 ? 0.35 : 0.55); col.set([c.r, c.g, c.b], i * 3); uv1.set(uvf(P[i * 3], P[i * 3 + 2]), i * 2) }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2)); g.computeVertexNormals()
     // 便21: 道の細かさ（kamoroad=0 は外し回し用）: 車道の白い外側線（縁から 0.3m）と、幅 9m 以上の道の破線の中央線（6m 引いて 3m あける）／歩道の平板の目地／
     //   河川敷の真砂土の道は縁の草際を濃く・まん中を踏み固めた明るさに／橋の床は両側 2m を歩道（明るい平板と縁石の段の陰）。aRd＝(左 -1・右 +1, 道の長さの位置 m, 幅 m, 種類)
-    const ra = meta.files.roads.secs.along && !/[?&]kamoroad=0/.test(location.search) ? { al: view(data.buf.roads, meta.files.roads.secs.along), wd: view(data.buf.roads, meta.files.roads.secs.width) } : null
+    const ra = al && !/[?&]kamoroad=0/.test(location.search) ? { al, wd } : null
     if (ra) {
       const rd = new Float32Array(K.length * 4)
       for (let i = 0; i < p16.length / 3; i++) rd.set([i % 2 ? -1 : 1, ra.al[i], ra.wd[i] / 10, K[i]], i * 4)
       g.setAttribute('aRd', new THREE.BufferAttribute(rd, 4))
     }
     const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.42 : 0.9, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }))
-    useBake(m, data.lm.terrain)
+    useBake(m, lmTex)
     useTex(m, ra ? { a: 'asphalt_02', b: 'gravel_road', tile: 5, tileB: 2.2 } : { a: 'asphalt_02', tile: 5 })
     if (ra) useRoad(m)
 
     const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.castShadow = true; mesh.userData.part = 'roads'; scene.add(mesh)
+    return K.length
+  }
+  {
+    const sec = meta.files.roads.secs // 便21: 範囲の中心を引いて詰めてある
+    buildRoads({ p16: view(data.buf.roads, sec.pos), idx: view(data.buf.roads, sec.idx), kind: view(data.buf.roads, sec.kind), al: sec.along ? view(data.buf.roads, sec.along) : null, wd: sec.width ? view(data.buf.roads, sec.width) : null, ps: meta.roads.pStep, po: meta.roads.pOff || [0, 0, 0], lmTex: data.lm.terrain, uvf: uvA })
   }
 
   // ── 川の水面（OpenStreetMap の水面の形・映り込みは three の Water） ──
@@ -623,8 +661,16 @@ void main() {`)
       water.material.fragmentShader = fs; water.material.transparent = true; water.material.needsUpdate = true
     }
     water.rotation.x = -Math.PI / 2; water.position.y = WY; water.material.uniforms.size.value = 2.2
+    // 便23: 映り込みの鏡の高さを動かせるようにする（鏡は物の位置で決まる＝物を上下へ動かし、頂点の側で同じだけ戻す。水面は動かない）。
+    //   南の四角を足した時だけ、目の見ている所の川の水面へ鏡を合わせる（update）。北の四角の中は前と同じ（WY）
+    water.material.uniforms.uShift = { value: 0 }
+    water.material.vertexShader = water.material.vertexShader.replace('uniform float time;', 'uniform float time;\nuniform float uShift;').replace(/vec4\( position, 1\.0 \)/g, 'vec4( position - vec3( 0.0, 0.0, uShift ), 1.0 )')
+    water.material.needsUpdate = true
     keep(water.material); water.userData.part = 'water'; scene.add(water)
   }
+  // 便23: 南の四角の川の水面の高さ（南北 100m の帯ごとの中央値。addSouth が作る）と、その南北の位置での高さ（北の四角の中は WY・継ぎ目の北 200m で WY から寄せる）
+  let waterProf = null
+  const waterLevelAt = (z) => { if (!waterProf) return WY; const { z0, step, v } = waterProf; if (z <= z0 - 200) return WY; if (z <= z0) return WY + (v[0] - WY) * ((z - (z0 - 200)) / 200); const u = Math.min(v.length - 1.001, (z - z0) / step), i = Math.floor(u), f = u - i; return v[i] * (1 - f) + v[i + 1] * f }
 
   // ── 建物（PLATEAU LOD2）。壁と屋根で分け、建物ごとに色を変える。区画（400m）ごとに描く ──
   // 部屋のある建物: 窓を置いた建物（PLATEAU）は高さの記録が 24.8m なのに形が 5.6m しかなく、部屋がその屋根の 16m 上に浮いていた（便18 で見つけた）。
@@ -639,23 +685,21 @@ void main() {`)
   const HOST = { x0: rb.x0, x1: rb.x1 + 16, y0: groundL, y1: rb.y1 + 0.3, z0: 0, z1: rb.z1 + 6 } // 部屋は北東の角（右＝南と奥＝西へ建物が続く）
   const toK = (x, y, z) => new THREE.Vector3(x, y, z).add(roomO).applyMatrix4(toKamo)
   const hostK = new THREE.Box3(); for (const x of [HOST.x0, HOST.x1]) for (const y of [HOST.y0, HOST.y1]) for (const z of [HOST.z0 - 0.3, HOST.z1]) hostK.expandByPoint(toK(x, y, z))
-  {
+  // 便23: 北の建物（組む時）と南の建物（addSouth・南の建物の図）を同じ関数で描く。isA＝北（部屋のあるマンション・大元宮で外す建物を探す・家並みの有無を決める）。idOff＝色のゆらぎの番号をずらす
+  function buildBldg({ bq, uv16, bidA, styleA, frontA, H, bStep, bOff, nv, lmTex, isA, idOff = 0 }) {
     // 便21: 位置は範囲の中心（pOff）を引いて詰めてあるので、ここでメートルに戻してから使う（以下の p16 はメートル・ps は 1）
-    const sec = meta.files.bldg.secs, ps = 1, bq = view(data.buf.bldg, sec.pos), bStep = meta.bldg.pStep, bOff = meta.bldg.pOff || [0, 0, 0]
+    const ps = 1
     const p16 = new Float32Array(bq.length); for (let i = 0; i < bq.length; i++) p16[i] = bq[i] * bStep + bOff[i % 3]
-    const uv16 = view(data.buf.bldg, sec.uv), bidA = view(data.buf.bldg, sec.bid), nv = meta.bldg.nv
     // 便21: 京都らしい家並み（build.mjs の形の種類と通りに面する向き）。古いデータ（無い時）と kamokyo=0（外し回し用）は前の描き方
-    const styleA = sec.style ? view(data.buf.bldg, sec.style) : null, frontA = sec.front ? view(data.buf.bldg, sec.front) : null
-    KYO = !!(styleA && frontA) && !/[?&]kamokyo=0/.test(location.search)
-    const H = meta.bldg.heights
+    if (isA) KYO = !!(styleA && frontA) && !/[?&]kamokyo=0/.test(location.search)
     // 建物ごとの箱（鴨川の座標）。部屋のあるマンションの箱と重なる建物を外す
     const bb = new Map()
     for (let i = 0; i < nv; i++) { const b = bidA[i]; let e = bb.get(b); if (!e) { e = new THREE.Box3(); bb.set(b, e) } e.expandByPoint(new THREE.Vector3(p16[i * 3] * ps, p16[i * 3 + 1] * ps, p16[i * 3 + 2] * ps)) }
-    const drop = new Set(); for (const [b, e] of bb) if (e.intersectsBox(hostK)) drop.add(b)
+    const drop = new Set(); if (isA) for (const [b, e] of bb) if (e.intersectsBox(hostK)) drop.add(b)
     // 便21: 大元宮は名所の部品（kamoMarks.js）が八角の社を作るので、そこの PLATEAU の形は描かない（重なって暗い箱が二重に出た）
-    const dgm = meta.marks && meta.marks.daigengu; if (dgm && !/[?&]kamomarks=0/.test(location.search)) for (const [b, e] of bb) { const c = e.getCenter(new THREE.Vector3()); if (Math.hypot(c.x - dgm[0], c.z - dgm[2]) < 9) drop.add(b) }
-    for (const b of drop) removed.push(b)
-    navSrc.bldg = { p16, bidA, drop, ps, nv }
+    const dgm = isA && meta.marks && meta.marks.daigengu; if (dgm && !/[?&]kamomarks=0/.test(location.search)) for (const [b, e] of bb) { const c = e.getCenter(new THREE.Vector3()); if (Math.hypot(c.x - dgm[0], c.z - dgm[2]) < 9) drop.add(b) }
+    if (isA) for (const b of drop) removed.push(b)
+    navSrc.bldgL.push({ p16, bidA, drop, ps, nv })
     const WALL = [0xddd6c8, 0xcfc6b4, 0xe8e4da, 0xbcae98, 0xc8ccd0, 0xd4c8b0, 0x9a8a78, 0xa8b0b4, 0xe2d8c0, 0x8a7a6a, 0xc4b8a0, 0xb8b4a8]
     const ROOF = [0x4a4f57, 0x5a6878, 0x4e463e, 0x6a5444, 0x3e444c, 0x7a6a5a, 0x2e3238]
     const KINDS = ['wallP', 'wallC', 'roofT', 'roofF'], CELL = 400
@@ -663,7 +707,7 @@ void main() {`)
     for (const k of KINDS) {
       const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: k === 'roofT' ? (RAIN ? 0.45 : 0.7) : 0.88, metalness: 0, side: THREE.DoubleSide }))
       if (k.startsWith('wall')) useWindows(m, k === 'wallC')
-      useBake(m, data.lm.bldg, { fill: !/[?&]kamofill=0/.test(location.search) }) // kamofill=0 は外し回し用（埋めを外す）
+      useBake(m, lmTex, { fill: !/[?&]kamofill=0/.test(location.search) }) // kamofill=0 は外し回し用（埋めを外す）
       useTex(m, { roofT: { a: 'grey_roof_tiles', tile: 3, mode: 'xz' }, roofF: { a: 'concrete_wall_004', tile: 6, mode: 'xz', ns: 0.4 }, wallP: { a: 'grey_plaster_02', tile: 3, mode: 'tri', ns: 0.5 }, wallC: { a: 'concrete_wall_004', tile: 4, mode: 'tri', ns: 0.5 } }[k])
       if (KYO) useKyo(m, k.startsWith('wall'))
       mats[k] = m
@@ -688,19 +732,23 @@ void main() {`)
       for (const t of tris) for (let q = 0; q < 3; q++) {
         const s = t + q, bid = bidA[s]
         pos[o * 3] = p16[s * 3] * ps; pos[o * 3 + 1] = p16[s * 3 + 1] * ps; pos[o * 3 + 2] = p16[s * 3 + 2] * ps
-        if (kb) { const e = bb.get(bid); kb[o * 4] = e ? e.min.y : 0; kb[o * 4 + 1] = (frontA[bid] / 255) * Math.PI * 2 - Math.PI; kb[o * 4 + 2] = styleA[bid]; kb[o * 4 + 3] = hash(bid * 1.37 + 0.21) } // 便21: 建物の足もとの高さ・通りに面する向き・形の種類・建物ごとのゆらぎ
+        if (kb) { const e = bb.get(bid); kb[o * 4] = e ? e.min.y : 0; kb[o * 4 + 1] = (frontA[bid] / 255) * Math.PI * 2 - Math.PI; kb[o * 4 + 2] = styleA[bid]; kb[o * 4 + 3] = hash((bid + idOff) * 1.37 + 0.21) } // 便21: 建物の足もとの高さ・通りに面する向き・形の種類・建物ごとのゆらぎ
         uv1[o * 2] = uv16[s * 2] / 65535; uv1[o * 2 + 1] = uv16[s * 2 + 1] / 65535
-        if (k.startsWith('roof')) { c.setHex(ROOF[Math.floor(hash(bid) * ROOF.length)]); if (SNOW) c.lerp(WHITE, 0.6) } else c.setHex(WALL[Math.floor(hash(bid + 0.5) * WALL.length)])
+        if (k.startsWith('roof')) { c.setHex(ROOF[Math.floor(hash(bid + idOff) * ROOF.length)]); if (SNOW) c.lerp(WHITE, 0.6) } else c.setHex(WALL[Math.floor(hash(bid + idOff + 0.5) * WALL.length)])
         col[o * 3] = c.r; col[o * 3 + 1] = c.g; col[o * 3 + 2] = c.b; o++
       }
       const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv1', new THREE.BufferAttribute(uv1, 2)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); if (kb) g.setAttribute('aKB', new THREE.BufferAttribute(kb, 4)); g.computeVertexNormals()
-      const mesh = new THREE.Mesh(g, mats[k]); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'bldg'; scene.add(mesh)
+      const mesh = new THREE.Mesh(g, mats[k]); mesh.castShadow = isA; mesh.receiveShadow = true; mesh.userData.part = 'bldg'; scene.add(mesh)
     }
+    return groups.size
+  }
+  {
+    const sec = meta.files.bldg.secs
+    buildBldg({ bq: view(data.buf.bldg, sec.pos), uv16: view(data.buf.bldg, sec.uv), bidA: view(data.buf.bldg, sec.bid), styleA: sec.style ? view(data.buf.bldg, sec.style) : null, frontA: sec.front ? view(data.buf.bldg, sec.front) : null, H: meta.bldg.heights, bStep: meta.bldg.pStep, bOff: meta.bldg.pOff || [0, 0, 0], nv: meta.bldg.nv, lmTex: data.lm.bldg, isA: true })
   }
   // 便21: 町家の通り庇（いぶし銀の瓦）と、軒裏と庇の先（濃い木）、犬矢来（竹の囲い）。build.mjs が町家の表の壁から作った形
   let eaveN = 0
-  if (KYO && meta.files.misc.secs.eaves) {
-    const ep = view(data.buf.misc, meta.files.misc.secs.eaves), ek = view(data.buf.misc, meta.files.misc.secs.eaveKind)
+  function buildEaves(ep, ek) { // 便23: 北（組む時）と南（addSouth）を同じ関数で
     const col = new Float32Array(ek.length * 3), c = new THREE.Color(), CK = [0x5c626b, 0x2a2018, 0x4a3a28]
     for (let i = 0; i < ek.length; i++) { c.setHex(CK[ek[i]]); if (SNOW && ek[i] === 0) c.lerp(WHITE, 0.6); col.set([c.r, c.g, c.b], i * 3) }
     const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(Float32Array.from(ep), 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals()
@@ -712,14 +760,15 @@ void main() {`)
   else if (diffuseColor.r > 0.05 && diffuseColor.b < 0.03) diffuseColor.rgb *= 0.7 + 0.3 * step(0.3, fract((vEW.x - vEW.z) / 0.045));`)
     }
     addKey(m, 'eaves')
-    const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'eaves'; scene.add(mesh); eaveN = ek.length / 3
+    const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'eaves'; scene.add(mesh); eaveN += ek.length / 3
   }
+  if (KYO && meta.files.misc.secs.eaves) buildEaves(view(data.buf.misc, meta.files.misc.secs.eaves), view(data.buf.misc, meta.files.misc.secs.eaveKind))
   // ── 便21: 橋の欄干と石灯籠・街灯（kamobridge=0 は外し回し用） ──
   //   賀茂大橋（今出川通）: 白っぽい石の高欄（1m おきの束と笠石）と、歩道の外側に 20m おきの石灯籠（台・竿・中台・火袋・六角の笠・宝珠）。夕方と夜は火袋が灯る（調べ §8「欄干の石灯籠が夜に灯る」）
   //   出町橋: 灰色のコンクリートの低い壁と薄緑の手すり（調べ §8 の写真）／ほかの橋: コンクリートの欄干 1.05m
   //   街灯: 幅 9m 以上の車道に 32m おき（左右を交互に）と、地図の街灯の点。夕方と夜は灯る（灯りの暈は点の光で描く）
   const lampsInfo = { rails: 0, lanterns: 0, lamps: 0 }
-  if (meta.bridgeEdges && !/[?&]kamobridge=0/.test(location.search)) {
+  function buildRails(bridgeEdges, lampList) { // 便23: 北（組む時）と南（addSouth）を同じ関数で
     const LITE = NIGHT || TK === 'dusk'
     const parts = { stone: [], conc: [], pipe: [], glowL: [], pole: [], head: [] }, glowL = [], glowS = []
     const box = (list, a, b, w, h, yb) => { const dx = b[0] - a[0], dz = b[2] - a[2], L = Math.hypot(dx, dz); if (L < 0.05) return; const g = new THREE.BoxGeometry(L + 0.02, h, w); g.translate(0, h / 2 + yb, 0); g.rotateY(-Math.atan2(dz, dx)); g.translate((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2); list.push(g) }
@@ -732,9 +781,9 @@ void main() {`)
       const hoju = new THREE.SphereGeometry(0.1, 8, 6); hoju.translate(p[0], p[1] + 1.98, p[2]); parts.stone.push(hoju)
       glowL.push(p[0], p[1] + 1.38, p[2]); lampsInfo.lanterns++
     }
-    const carK = meta.bridgeEdges.filter((b) => b.style === 'kamo' && !b.foot).flatMap((b) => [...b.l, ...b.r])
+    const carK = bridgeEdges.filter((b) => b.style === 'kamo' && !b.foot).flatMap((b) => [...b.l, ...b.r])
     const dCar = (E) => E.reduce((s, p) => s + Math.min(...carK.map((q) => Math.hypot(q[0] - p[0], q[2] - p[2]))), 0) / E.length
-    for (const b of meta.bridgeEdges) {
+    for (const b of bridgeEdges) {
       const outer = b.style === 'kamo' && b.foot && carK.length ? (dCar(b.l) > dCar(b.r) ? 'l' : 'r') : null
       for (const side of ['l', 'r']) {
         if (b[side + 'In']) continue
@@ -753,7 +802,7 @@ void main() {`)
       }
     }
     // 街灯: 柱・腕・灯具
-    const lp = meta.lamps || []
+    const lp = lampList || []
     for (let i = 0; i < lp.length; i += 4) {
       const x = lp[i], y = lp[i + 1], z = lp[i + 2], a = lp[i + 3], arm = a ? 1.3 : 0.35, hx = x + Math.sin(a) * arm, hz = z + Math.cos(a) * arm
       const pole = new THREE.CylinderGeometry(0.055, 0.08, 6.6, 6); pole.translate(x, y + 3.3, z); parts.pole.push(pole)
@@ -781,6 +830,7 @@ void main() {`)
       }
     }
   }
+  if (meta.bridgeEdges && !/[?&]kamobridge=0/.test(location.search)) buildRails(meta.bridgeEdges, meta.lamps)
   // 部屋のあるマンションの外壁。部屋の座標で板を並べ、部屋の前（窓の面）と左（左の窓の面）は部屋の所だけ空ける（窓の外を塞がない）
   {
     const P = [], add = (a, b, c, d) => { for (const v of [a, b, c, a, c, d]) { const k = toK(...v); P.push(k.x, k.y, k.z) } }
@@ -810,8 +860,9 @@ void main() {`)
   // iPhone の段は芯の球と幹の面も減らす
   const windU = []
   const view0 = new THREE.Vector3(meta.view.x, meta.view.y, meta.view.z)
+  let placeTrees = null // 便23: 木を植える（北は組む時に町の乱数 R で・南は addSouth で別の乱数で）。葉の小片の形と材は北と南で同じ物
   {
-    const tr = view(data.buf.misc, meta.files.misc.secs.trees), n = tr.length / 6
+    const tr = view(data.buf.misc, meta.files.misc.secs.trees)
     const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d')
     for (let k = 0; k < 26; k++) { const px = 10 + R() * 108, py = 10 + R() * 108, a = R() * 6.283, l = 7 + R() * 9
       x.save(); x.translate(px, py); x.rotate(a); x.fillStyle = 'rgb(' + (200 + R() * 55 | 0) + ',' + (200 + R() * 55 | 0) + ',' + (190 + R() * 40 | 0) + ')'; x.beginPath(); x.ellipse(0, 0, l, l * 0.42, 0, 0, 6.283); x.fill()
@@ -849,6 +900,8 @@ void main() {`)
     const TREE21 = !/[?&]kamotree=0/.test(location.search) // 便21: kamotree=0 は外し回し用（前の樹冠と幹）。幹の色を暗くした（明るい棒に見えた）。【便21・外の目】前はこの注を幹の材の行の途中に置き、後ろの模様の繰り返しと片付けが注に呑まれていた
     const trunkMat = keep(new THREE.MeshStandardMaterial({ color: TREE21 ? 0x6e6358 : 0xffffff, roughness: 1, map: bark.d.clone(), normalMap: bark.n.clone() })); trunkMat.map.repeat.set(1, 2); trunkMat.normalMap.repeat.set(1, 2); trunkMat.map.needsUpdate = trunkMat.normalMap.needsUpdate = true; keep(trunkMat.map); keep(trunkMat.normalMap)
     const trunkGeo = keep(new THREE.CylinderGeometry(0.1, 0.18, 1, low ? 5 : 8, 1, true).translate(0, 0.5, 0))
+    placeTrees = (tr, R) => {
+    const n = tr.length / 6; navSrc.treesL.push(tr)
     // 1本ずつの形と色を先に決める（乱数の順は木の並びのまま＝区画の分け方で木の形が変わらない）
     const CELL = 400, cells = new Map()
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(), up = new THREE.Vector3(0, 1, 0), sc = new THREE.Vector3(), at = new THREE.Vector3()
@@ -882,15 +935,16 @@ void main() {`)
       core.castShadow = true; trunk.castShadow = true; core.userData.part = 'core'; trunk.userData.part = 'trunk'
       core.computeBoundingSphere(); trunk.computeBoundingSphere(); scene.add(core, trunk)
     }
+    }
+    placeTrees(tr, R)
   }
 
   // ── 飛び石（鴨川デルタの亀と千鳥の石。形は計算で丸めた平たい石） ──
   // 便21: 本物は明るい灰色のコンクリートの石で、角の丸い長方形が多く、ときどき亀（丸い甲羅と頭）と千鳥（鳥）の形（調べ §7）。
   //   水に浸かる下の方は濃い灰〜苔の緑。石の上は水面の 12cm 上（build.mjs）。形の種類が無い古いデータは、前の丸めた石
   const stoneKinds = { n: 0, byKind: [0, 0, 0, 0] }
-  {
-    const st = view(data.buf.misc, meta.files.misc.secs.stones), n = st.length / 4
-    const sk = meta.files.misc.secs.stoneKind ? view(data.buf.misc, meta.files.misc.secs.stoneKind) : null
+  function buildStones(st, sk, stat) { // 便23: 北（組む時・数を数える）と南（addSouth）を同じ関数で
+    const n = st.length / 4
     if (n && sk) {
       const shade = (g) => { // 水に浸かる下の方を濃く・苔の色に（頂点の色）
         const p = g.attributes.position, col = new Float32Array(p.count * 3), lo = new THREE.Color(0x5a6152), hi = new THREE.Color(SNOW ? 0xd8dadc : 0xc4c1b8), c = new THREE.Color()
@@ -920,12 +974,12 @@ void main() {`)
       const m = keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: RAIN ? 0.45 : 0.82 }))
       useTex(m, { a: 'concrete_wall_004', tile: 1.2, mode: 'tri', ns: 0.6 })
       const lists = [[], [], []]
-      for (let i = 0; i < n; i++) { const k = sk[i] === 3 ? 0 : Math.min(2, sk[i]); lists[k].push(i); stoneKinds.byKind[sk[i]]++ }
-      stoneKinds.n = n
+      for (let i = 0; i < n; i++) { const k = sk[i] === 3 ? 0 : Math.min(2, sk[i]); lists[k].push(i); if (stat) stoneKinds.byKind[sk[i]]++ }
+      if (stat) stoneKinds.n = n
       // 検査用（便21）: 渡る石が列の線から左右へずれた量（千鳥）の一番小さい所と大きい所（m）
       const rows = (meta.stones && meta.stones.rows) || []; let zmin = 1e9, zmax = 0
       for (let i = 0; i < n; i++) { if (sk[i] === 3) continue; let best = 1e9; for (let r = 0; r < rows.length; r += 4) { const ax = rows[r], az = rows[r + 1], bx = rows[r + 2], bz = rows[r + 3], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((st[i * 4] - ax) * dx + (st[i * 4 + 2] - az) * dz) / L2)); best = Math.min(best, Math.hypot(st[i * 4] - ax - dx * u, st[i * 4 + 2] - az - dz * u)) } zmin = Math.min(zmin, best); zmax = Math.max(zmax, best) }
-      stoneKinds.zig = [+zmin.toFixed(2), +zmax.toFixed(2)]
+      if (stat) stoneKinds.zig = [+zmin.toFixed(2), +zmax.toFixed(2)]
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1), at = new THREE.Vector3()
       lists.forEach((L, k) => {
         if (!L.length) return
@@ -944,6 +998,7 @@ void main() {`)
       im.castShadow = im.receiveShadow = true; im.userData.part = 'stones'; scene.add(im)
     }
   }
+  buildStones(view(data.buf.misc, meta.files.misc.secs.stones), meta.files.misc.secs.stoneKind ? view(data.buf.misc, meta.files.misc.secs.stoneKind) : null, true)
 
   // 影を焼く範囲: 窓のまわり（窓の正面へ 300m 寄せた所を中心に ±620m）。太陽は動かないので、影は最初に1回だけ焼く
   {
@@ -975,8 +1030,11 @@ void main() {`)
   // ~~目の下限の元（水の上は水面＝川底の 0.6m 上・build.mjs）~~（【便21】川底は水の深さの図のとおり＝水面は川底＋その深さ）
   const floorK = wdepA ? (X, Z) => terrK(X, Z) + gridAt(X, Z, (k) => wdepA[k] * WDS) : (X, Z) => terrK(X, Z) + Math.min(1, wetK(X, Z) * 2) * 0.6
   const EDGE = 40 // 近くの地形の網の縁から 40m 内側まで（網の縁は遠くの網との継ぎ目）
-  const outK = (X, Z) => X < NX0 + EDGE || X > NX1 - EDGE || Z < NZ0 + EDGE || Z > NZ1 - EDGE
-  const GC = 2, GN = Math.ceil(NW / GC), GNZ = Math.ceil(ND / GC) // 便21: 表は東西 GN 升・南北 GNZ 升
+  const SOUTH_PLACES = [{ name: '祇園', x0: 200, x1: 750, z0: 2750, z1: 3350 }, { name: '先斗町', x0: -170, x1: -90, z0: 2200, z1: 2930 }, { name: '木屋町', x0: -240, x1: -150, z0: 1950, z1: 3300 }, { name: '河原町', x0: -480, x1: -240, z0: 1300, z1: 3400 }, { name: '八坂の塔', x0: 520, x1: 720, z0: 3380, z1: 3600 }] // 便23: kamoOuter.js の OUTER_PLACES と同じ四角
+  const outK = (X, Z) => !inK(X, Z, EDGE) // 便23: 鴨川の町の四角の和（南を足すまでは北の四角）の縁から EDGE より外
+  // 便21: 表は東西 GN 升・南北 GNZ 升。便23: 南北は南を足すまで北の四角の分だけ（前と同じ大きさ）。addSouth で網の全部に広げて作り直す
+  const GC = 2, GN = Math.ceil(NW / GC)
+  let GNZ = Math.ceil((RGA.z1 - NZ0) / GC)
   let G = null
   function ensureNav() {
     if (G) return G
@@ -998,21 +1056,18 @@ void main() {`)
     const trunks = new Map()
     try { // 【便19・外の目】建物・橋・木の表を組めなかった時は、地面と水だけで飛ぶ・歩く（窓辺に戻れなくならない）
     { // 建物（描かない建物は除く）と、部屋のあるマンション
-      const { p16, bidA, drop, ps, nv } = navSrc.bldg
       const mark = (k, y, yMax) => { if (yMax > top[k]) top[k] = yMax; bld[k] = 1 }
-      for (let t = 0; t < nv; t += 3) { if (drop.has(bidA[t])) continue; const o = t * 3; tri(p16[o] * ps, p16[o + 1] * ps, p16[o + 2] * ps, p16[o + 3] * ps, p16[o + 4] * ps, p16[o + 5] * ps, p16[o + 6] * ps, p16[o + 7] * ps, p16[o + 8] * ps, mark) }
+      for (const { p16, bidA, drop, ps, nv } of navSrc.bldgL) for (let t = 0; t < nv; t += 3) { if (drop.has(bidA[t])) continue; const o = t * 3; tri(p16[o] * ps, p16[o + 1] * ps, p16[o + 2] * ps, p16[o + 3] * ps, p16[o + 4] * ps, p16[o + 5] * ps, p16[o + 6] * ps, p16[o + 7] * ps, p16[o + 8] * ps, mark) }
       for (let j = Math.max(0, cj(hostK.min.z)); j <= Math.min(GNZ - 1, cj(hostK.max.z)); j++) for (let i = Math.max(0, ci(hostK.min.x)); i <= Math.min(GN - 1, ci(hostK.max.x)); i++) { const k = j * GN + i; top[k] = Math.max(top[k], hostK.max.y); bld[k] = 1 }
       // 建物の升でも、地面から 1.8m より低い物（塀・段・屋根の無い小さな形）は歩ける
       for (let j = 0; j < GNZ; j++) for (let i = 0; i < GN; i++) { const k = j * GN + i; if (bld[k] && top[k] - terrK(NX0 + (i + 0.5) * GC, NZ0 + (j + 0.5) * GC) < 1.8) bld[k] = 0 }
     }
     { // 橋の床（歩いて渡れる・飛ぶ時は欄干の分だけ上を通る）
-      const { pos, idx, kind } = navSrc.roads
       const mark = (k, y) => { if (!(deck[k] >= y)) deck[k] = y; if (y + 1.2 > top[k]) top[k] = y + 1.2 }
-      for (let q = 0; q < idx.length; q += 3) { const a = idx[q], b = idx[q + 1], c = idx[q + 2]; if (kind[a] !== 2) continue; tri(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2], pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2], mark) }
+      for (const { pos, idx, kind } of navSrc.roadsL) for (let q = 0; q < idx.length; q += 3) { const a = idx[q], b = idx[q + 1], c = idx[q + 2]; if (kind[a] !== 2) continue; tri(pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2], pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2], pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2], mark) }
     }
     // 木: 樹冠の上の高さ（飛ぶ時）と幹（歩く時の当たり・8m 四方の箱に入れる）
-    const tr = view(data.buf.misc, meta.files.misc.secs.trees)
-    for (let q = 0; q < tr.length; q += 6) {
+    for (const tr of navSrc.treesL) for (let q = 0; q < tr.length; q += 6) {
       const X = tr[q], Y = tr[q + 1], Z = tr[q + 2], h = tr[q + 3], r = tr[q + 4] * 0.5
       for (let j = Math.max(0, cj(Z - r)); j <= Math.min(GNZ - 1, cj(Z + r)); j++) for (let i = Math.max(0, ci(X - r)); i <= Math.min(GN - 1, ci(X + r)); i++) { const k = j * GN + i; if (Y + h > top[k]) top[k] = Y + h }
       const key = Math.floor(X / 8) * 100003 + Math.floor(Z / 8); let a = trunks.get(key); if (!a) { a = []; trunks.set(key, a) } a.push(X, Z)
@@ -1040,7 +1095,7 @@ void main() {`)
   // 便21: 飛べる箱＝鴨川の四角（縁から EDGE 内側）に入る、町の3Dの軸に沿った一番大きい箱。町の3Dの (dx, dz) は鴨川の (m0 dx + m8 dz, m2 dx + m10 dz) へ写る
   //   |m0| hx + |m8| hz ≤ 幅/2・|m2| hx + |m10| hz ≤ 奥行き/2 を等しく置いて解く（解が負なら、細い方に合わせた正方形）
   const cX = TX(0, 0), cZ = TZ(0, 0) // 鴨川デルタ（原点）の町の3Dの座標
-  const bW = NW / 2 - EDGE, bD = ND / 2 - EDGE, bCX = TX((NX0 + NX1) / 2, (NZ0 + NZ1) / 2), bCZ = TZ((NX0 + NX1) / 2, (NZ0 + NZ1) / 2)
+  const bW = (RGA.x1 - RGA.x0) / 2 - EDGE, bD = (RGA.z1 - RGA.z0) / 2 - EDGE, bCX = TX((RGA.x0 + RGA.x1) / 2, (RGA.z0 + RGA.z1) / 2), bCZ = TZ((RGA.x0 + RGA.x1) / 2, (RGA.z0 + RGA.z1) / 2) // 便23: 北の四角（前の範囲）
   const a0 = Math.abs(navM[0]), a8 = Math.abs(navM[8]), a2 = Math.abs(navM[2]), a10 = Math.abs(navM[10]), det = a0 * a10 - a8 * a2
   let hx = (bW * a10 - a8 * bD) / det, hz = (a0 * bD - a2 * bW) / det
   if (!(hx > 0 && hz > 0)) { hx = hz = Math.min(bW, bD) / (a0 + a8 + a2 + a10) * 2 }
@@ -1061,6 +1116,10 @@ void main() {`)
     canStep: (x, z, feetY) => { const X = KX(x, z), Z = KZ(x, z); if (blockedK(X, Z)) return false; if (!Number.isNaN(deckOk(X, Z, feetY + dY))) return true; return wetK(X, Z) < 0.5 },
     aim: (x, z) => Math.atan2(cX - x, -(cZ - z)), // その所から鴨川デルタを向く向き（町の3Dの向き: 0＝-z）
     place: (x, z, y) => { const X = KX(x, z), Z = KZ(x, z), alt = y + dY - terrK(X, Z)
+      if (SOUTH_ON && !inRA(X, Z)) { // 便23: 南の四角（外の町の居場所の名と同じ四角＝kamoOuter.js の OUTER_PLACES）
+        if (alt > 90) return '京都の上空'; if (wetK(X, Z) >= 0.5) return '鴨川の上'; if (zoneK(X, Z) === 1) return '鴨川の河川敷'
+        for (const p of SOUTH_PLACES) if (X >= p.x0 && X <= p.x1 && Z >= p.z0 && Z <= p.z1) return p.name
+        return '京のまちなか' }
       const river = Z < -20 ? (X < 0 ? '賀茂川' : '高野川') : '鴨川' // 【便19・外の目】合流（原点）より北は、西が賀茂川・東が高野川
       if (alt > 70) return '鴨川の上空'; if (wetK(X, Z) >= 0.5) return river + 'の上'; if (Math.hypot(X, Z) < 130) return '鴨川デルタ'; if (zoneK(X, Z) === 1) return river + 'の河川敷'; return 'まちなか' },
     gauge: (y) => Math.max(0, Math.min(1, (y + dY - meta.view.groundY) / 150)), // 高さのゲージ（地面から 150m で満ちる）
@@ -1136,26 +1195,74 @@ void main() {`)
     water.material.uniforms.time.value += dt * 0.35
     for (const u of windU) u.value = tAcc
     causU.value = tAcc // 便21: 川底の光の網の時計
+    if (waterProf) { // 便23: 映り込みの鏡を、目の見ている所の川の水面の高さへ（北の四角の中は前のまま WY）
+      const cp = camera.position, f = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion), h = Math.max(0, cp.y - WY), fl = Math.hypot(f.x, f.z), zl = cp.z + (fl > 1e-3 ? f.z / fl : 0) * Math.min(600, h * 1.5)
+      const Y = waterLevelAt(zl); if (Math.abs(Y - water.position.y) > 0.01) { water.position.y = Y; water.material.uniforms.uShift.value = Y - WY; water.updateMatrixWorld(true) }
+    }
     cloudU.value = tAcc // 便21: 雲の流れの時計
     if (people) { try { people.update(dt) } catch (e) { console.warn('鴨川の河川敷の人を止めました:', e && e.message); people = null; scene.traverse((o) => { if (o.userData && /^(people|fireworks)$/.test(o.userData.part)) o.visible = false }) } }
     if (outer) { try { outer.update(dt, camera) } catch (e) { console.warn('外の町の更新を止めました:', e && e.message); outer = null } }
     if (life) { try { life.update(dt) } catch (e) { console.warn('鴨川の町の動く物を止めました:', e && e.message); life = null; scene.traverse((o) => { if (o.userData && /^(people|birds|train|okuribi)$/.test(o.userData.part)) o.visible = false }) } } // 【便20・外の目】止めた時は、動く物をその場で固まらせずに隠す
   }
 
+  // ── 便23: 南の四角（河原町・木屋町・先斗町・南座・祇園・建仁寺・南の鴨川の岸）を足す。窓辺が開いた後に裏で読んだ south.bin と焼いた図を渡す（外の町より先に足す）。
+  //   北の四角と同じ作り（PLATEAU の形のまま・Blender で焼いた光の回り方・京町家の庇・道の白線・川の浅瀬の水）。影は落とさない（日の影の図は窓のまわりだけ＝前から）。kamosouth=0 は外し回し用（足さない）
+  let south = null
+  function addSouth(sd) {
+    if (south || !meta.south || !RGB || !sd || outer) return south // 外の町を足した後には足さない（外の町の地形と遠くの網の下げ方が変わるため）
+    const t0 = performance.now(), Sm = meta.south, sec = Sm.secs, v = (k) => view(sd.buf, sec[k])
+    for (const t of [sd.lmT, sd.lmB]) { t.colorSpace = THREE.SRGBColorSpace; t.channel = 1; t.flipY = true; t.needsUpdate = true; keep(t) }
+    SOUTH_ON = true
+    const info = { ms: 0 }
+    addNearTerrain(RGB, sd.lmT, uvB, [3, 6], true)
+    info.roadPts = buildRoads({ p16: v('rpos'), idx: v('ridx'), kind: v('rkind'), al: v('ralong'), wd: v('rwidth'), ps: Sm.roads.pStep, po: Sm.roads.pOff, lmTex: sd.lmT, uvf: uvB })
+    { // 水面: 北の水面の板に南の水面の網を足す（映り込みを描く Water は1つのまま＝映り込みの重さは変えない）
+      const g0 = water.geometry, p0 = g0.attributes.position.array, i0 = g0.index.array, wp = v('wpos'), wi = v('widx'), n0 = p0.length / 3, n1 = wp.length / 3
+      const P = new Float32Array((n0 + n1) * 3); P.set(p0); for (let i = 0; i < n1; i++) { P[(n0 + i) * 3] = wp[i * 3]; P[(n0 + i) * 3 + 1] = -wp[i * 3 + 2]; P[(n0 + i) * 3 + 2] = wp[i * 3 + 1] - WY }
+      const I = new Uint32Array(i0.length + wi.length); I.set(i0); for (let k = 0; k < wi.length; k++) I[i0.length + k] = wi[k] + n0
+      const g = keep(new THREE.BufferGeometry()); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setIndex(new THREE.BufferAttribute(I, 1)); g.computeVertexNormals(); g.computeBoundingSphere()
+      water.geometry = g; g0.dispose(); info.water = wi.length / 3
+      // 映り込みの鏡の高さの表: 南の水面の点の高さの、南北 100m の帯ごとの中央値（水の無い帯は前の帯の値）
+      const STP = 100, nb = Math.ceil((RGB.z1 - RGB.z0) / STP) + 1, bands = Array.from({ length: nb }, () => [])
+      for (let i = 0; i < n1; i++) { const b = Math.round((wp[i * 3 + 2] - RGB.z0) / STP); if (b >= 0 && b < nb) bands[b].push(wp[i * 3 + 1]) }
+      const lv = []; for (let b = 0; b < nb; b++) { const a = bands[b].sort((p, q) => p - q); lv.push(a.length ? a[Math.floor(a.length / 2)] : (lv.length ? lv[lv.length - 1] : WY)) }
+      if (!/[?&]kamomirror=0/.test(location.search)) waterProf = { z0: RGB.z0, step: STP, v: lv } // kamomirror=0 は外し回し用（鏡を WY のまま）
+      info.mirror = lv.map((y) => +y.toFixed(1))
+    }
+    info.bldgGroups = buildBldg({ bq: v('bpos'), uv16: v('buv'), bidA: v('bid'), styleA: sec.style ? v('style') : null, frontA: sec.front ? v('front') : null, H: Sm.bldg.heights, bStep: Sm.bldg.pStep, bOff: Sm.bldg.pOff, nv: Sm.bldg.nv, lmTex: sd.lmB, isA: false, idOff: 50000 })
+    info.bldgTris = Sm.bldg.nv / 3
+    if (KYO && sec.eaves) buildEaves(v('eaves'), v('eaveKind'))
+    if (!/[?&]kamobridge=0/.test(location.search)) buildRails(Sm.bridgeEdges || [], Sm.lamps || [])
+    { let s = 230501; const RS = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }; placeTrees(v('trees'), RS) } // 南の木は別の乱数（町の R を回さない＝北の物の形を変えない）
+    info.trees = v('trees').length / 6; info.canals = (Sm.canals || []).length // 細い水路（高瀬川など・帯の水面は水面の網に入っている）
+    buildStones(v('stones'), sec.stoneKind ? v('stoneKind') : null, false)
+    try { if (!/[?&]kamomarks=0/.test(location.search)) info.benches = buildMarks({ scene, marks: { benches: Sm.benches || [] }, keep, NIGHT, DUSK: TK === 'dusk', SNOW }).benches } catch (e) { console.warn('南の四角のベンチを組めなかった:', e && e.message) }
+    // 遠くの網を、南の四角の内側（縁から 10m）で 6m 下げる（近くの網の下に隠す。北の四角は前から下げてある）。外の町はこの後で残りを下げる
+    scene.traverse((o) => { if (o.userData.part !== 'terrainFar') return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); if (inK(x, z, 10) && !inRA(x, z, 10)) p.setY(i, p.getY(i) - 6) } p.needsUpdate = true; o.geometry.computeBoundingSphere(); o.geometry.computeBoundingBox() })
+    // 道案内の表を網の全部へ広げて、次に聞かれた時に作り直す。飛べる箱も網の全部へ（外の町を足すと外の町の四角へ広がる）
+    GNZ = Math.ceil(ND / GC); G = null
+    { const W2 = NW / 2 - EDGE, D2 = ND / 2 - EDGE, cx = TX((NX0 + NX1) / 2, (NZ0 + NZ1) / 2), cz = TZ((NX0 + NX1) / 2, (NZ0 + NZ1) / 2)
+      let hx2 = (W2 * a10 - a8 * D2) / det, hz2 = (a0 * D2 - a2 * W2) / det
+      if (!(hx2 > 0 && hz2 > 0)) { hx2 = hz2 = Math.min(W2, D2) / (a0 + a8 + a2 + a10) * 2 }
+      Object.assign(nav.bound, { x: hx2 - cx, xMax: cx + hx2, zMin: cz - hz2, zMax: cz + hz2 }) }
+    info.ms = Math.round(performance.now() - t0)
+    south = info
+    return info
+  }
   // ── 便22: 外の町を足す（町の3Dが鴨川の町を組んだ後に、裏で読んだ外の町のデータを渡す） ──
   function addOuter(od, mod) {
     if (outer) return outer.info
     const t0 = performance.now()
     const OX = od.meta.OX
-    outer = mod.buildOuter(od, { keep, useTex, useWindows, useKyo, useRoad, gridTiles, chain, addKey, S, TK, SNOW, RAIN, NIGHT, LEAF, WHITE, T, waterNormalTex: water.material.uniforms.normalSampler.value, low, sunDir, fogColor: scene.fog.color.getHex() })
+    outer = mod.buildOuter(od, { keep, useTex, useWindows, useKyo, useRoad, gridTiles, chain, addKey, S, TK, SNOW, RAIN, NIGHT, LEAF, WHITE, T, waterNormalTex: water.material.uniforms.normalSampler.value, low, sunDir, fogColor: scene.fog.color.getHex(), inSouth: SOUTH_ON ? (x, z, m) => inK(x, z, m) && !inRA(x, z, m) : null })
     scene.add(outer.group)
     // 遠くの網（50m 間隔）を、外の町の範囲で 6m 下げて外の町の網の下に隠す（鴨川の町の範囲の中は前から下げてある）
-    const inN = (x, z, m) => x >= NX0 + m && x <= NX1 - m && z >= NZ0 + m && z <= NZ1 - m
+    const inN = (x, z, m) => inK(x, z, m) // 便23: 鴨川の町の四角の和（南を足した後は南の四角も下げてある）
     scene.traverse((o) => { if (o.userData.part !== 'terrainFar') return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); if (x > OX.x0 + 10 && x < OX.x1 - 10 && z > OX.z0 + 10 && z < OX.z1 - 10 && !inN(x, z, 10)) p.setY(i, p.getY(i) - 6) } p.needsUpdate = true; o.geometry.computeBoundingSphere(); o.geometry.computeBoundingBox() })
     // 鴨川の町の水面のうち、網の外（南の五条まで延びていた）の三角形を落とす。川の面の輪の三角形分けが崩れて、祇園や河原町の町の上に水の板がかかっていた（外の町を足すと白いもやに見えた）。
     //   網の外の川の水面は外の町が網から作る。外の町が無い時は前のまま（kamoouter=0）
     { const g = water.geometry, p = g.attributes.position, ix = g.index.array, keepI = []
-      for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (cx >= NX0 && cx <= NX1 && cz >= NZ0 && cz <= NZ1) keepI.push(ix[t], ix[t + 1], ix[t + 2]) }
+      for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (inK(cx, cz, -0.5)) keepI.push(ix[t], ix[t + 1], ix[t + 2]) } // 便23: 鴨川の町の四角の和の中だけ（北の水面は北の四角で切ってある）
       waterCut = ix.length / 3 - keepI.length / 3; g.setIndex(keepI); g.computeBoundingSphere() }
     // 水の映り込み（Water がもう一度描く舞台）には外の町を描かない（重さのため・遠くて映り込みに小さい）
     const ob = water.onBeforeRender
@@ -1174,7 +1281,7 @@ void main() {`)
     const M = od.meta, OX = M.OX, st = M.step, nx = M.nx, nz = M.nz, hq = M.hStep
     const hs = view(od.buf.terrain, M.files.terrain.secs.h), zn = view(od.buf.terrain, M.files.terrain.secs.zone)
     // 【便22・外の目 #1】外の町の網は鴨川の町の範囲の内側を 6m 下げてある。鴨川の町の網の中（縁から EDGE の帯を含む）は、鴨川の町の地面・水・地面の種類で答える（前は縁から 4〜40m の帯で地面が 6m 下に沈んだ）
-    const inGrid = (X, Z) => X >= NX0 && X <= NX1 && Z >= NZ0 && Z <= NZ1
+    const inGrid = (X, Z) => inK(X, Z, 0) // 便23: 鴨川の町の四角の和の中
     const terrO = (X, Z) => { const u = Math.min(nx - 1.001, Math.max(0, (X - OX.x0) / st)), v = Math.min(nz - 1.001, Math.max(0, (Z - OX.z0) / st)), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, k = j * nx + i
       return ((hs[k] * (1 - fu) + hs[k + 1] * fu) * (1 - fv) + (hs[k + nx] * (1 - fu) + hs[k + nx + 1] * fu) * fv) * hq }
     const terr = (X, Z) => (inGrid(X, Z) ? terrK(X, Z) : terrO(X, Z))
@@ -1190,6 +1297,7 @@ void main() {`)
       try {
         const B = od.boxes, q = B.q
         for (let i = 0; i < B.nB; i++) { // 箱: 升の中心が回した長方形の中か
+          if (B.skip && B.skip[i]) continue // 便23: 南の四角で描かない箱
           const o = i * B.st, cx = B.bi[o] * q.xz, cz = B.bi[o + 1] * q.xz, w = B.bu[o + 2] * q.size, d = B.bu[o + 3] * q.size, hh = B.bu[o + 4] * q.size, base = B.bi[o + 5] * q.base, ang = (B.bu[o + 6] / 65535) * Math.PI, roof = (B.bu[o + 7] >> 4) & 3
           const c = Math.cos(ang), sn = Math.sin(ang), R0 = Math.hypot(w, d) / 2 + 1, yT = base + hh + (roof ? 0.5 * Math.min(w, d) / 2 + 0.5 : 0)
           for (let j = Math.max(0, cj(cz - R0)); j <= Math.min(GZ - 1, cj(cz + R0)); j++) for (let ii = Math.max(0, ci(cx - R0)); ii <= Math.min(GX - 1, ci(cx + R0)); ii++) {
@@ -1307,9 +1415,11 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     townOf: (X, Z, Y = 0) => ({ x: TX(X, Z), y: Y - dY, z: TZ(X, Z) }), // 検証用（便20）: 鴨川の座標 → 町の3Dの座標
     setBright(b) { state.bright = b || 1 },
     addOuter, // 便22: 外の町を足す（kamoOuter.js が読んだデータ）
+    loadSouth: meta.south && !/[?&]kamosouth=0/.test(location.search) ? () => loadSouthData(data) : null, // 便23: 南の四角のデータを裏で読む（無い時・kamosouth=0 は null）
+    addSouth, // 便23: 南の四角を足す（外の町より先に）
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, south, waterOut: (() => { const g = water.geometry, p = g.attributes.position, ix = g.index.array; let n = 0; for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (!inK(cx, cz, -0.5)) n++ } return n })(), outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {
