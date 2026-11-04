@@ -1,0 +1,7 @@
+便21 本番（2026-11-04）
+push: 9bb5d64..a6bac14 main -> main（本番の問いに「はい」）
+GitHub の公開の処理: 41779476078 completed success（a6bac14）
+公開のページの precache-manifest.json: /seasons/assets/index-DpbvusAr.js（手元の dist と同じ）
+公開のページで開いた: 夏の朝の角部屋（PC）エラー 0・人 歩く 9 走る 8 自転車 5 子ども 7 飛び石に座る 6／夏の夜の角部屋（PC）エラー 0・花火の人 9 火花 7／夏の夜の角部屋（iPhone 402×874・軽い段）エラー 0
+鴨川のデータの読み先: 22 本すべて ?v=21 つき（kamo.json・life.json・terrain.bin・bldg.bin・roads.bin・misc.bin・図と質感）
+画: honban/live-summer-morning-win.png・live-summer-night-win.png・live-iphone-win.png（git に入れない決まり）

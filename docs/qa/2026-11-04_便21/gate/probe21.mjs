@@ -12,9 +12,11 @@ const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11
 const p = await (await b.newContext({ ...DEV, serviceWorkers: 'block' })).newPage()
 const errs = [], warns = []
 p.on('pageerror', (e) => errs.push('PE ' + e.message))
+const kamoUrls = [] // 便21: 鴨川のデータの読み先（公開の照らし）
+p.on('request', (r) => { if (/\/kamo\//.test(r.url())) kamoUrls.push(r.url().split('/seasons/')[1]) })
 p.on('console', (m) => { const t = m.text(); if (m.type() === 'error') errs.push(t.slice(0, 300)); if (m.type() === 'warning' && /鴨川|GL_/.test(t)) warns.push(t.slice(0, 300)) })
 const port = process.env.PORT || 4961
-await p.goto(`http://localhost:${port}/seasons/?dev=1${process.env.Q ? '&' + process.env.Q : ''}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
+await p.goto(`${process.env.BASE || `http://localhost:${port}/seasons/`}?dev=1${process.env.Q ? '&' + process.env.Q : ''}`, { waitUntil: 'domcontentloaded', timeout: 60000 })
 await p.locator('.gate').click().catch(() => {})
 await p.waitForTimeout(800)
 const t0 = Date.now()
@@ -73,5 +75,6 @@ for (const s of steps) {
   else if (k === 'eval') console.log('eval', JSON.stringify(await p.evaluate(a)))
   else if (k === 'jsf') console.log('js', JSON.stringify(await p.evaluate(fs.readFileSync(a, 'utf8')))) // 便21: ファイルに書いた式を読んで回す（コロンを含む式のため）
 }
+console.log('鴨川のデータの読み先', kamoUrls.slice(0, 6).join(' '), '・数', kamoUrls.length, '・版の印つき', kamoUrls.filter((u) => u.includes('?v=21')).length)
 console.log('エラー', errs.length, errs.slice(0, 5).join(' ／ '), '注意', warns.slice(0, 5).join(' ／ '))
 await b.close()
