@@ -16,6 +16,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { buildLife } from './kamoLife.js'
 import { buildPeople } from './kamoPeople.js'
 import { buildMarks } from './kamoMarks.js'
+import { buildMachiyaFronts, buildYuka, buildOchayaFronts, GION as KGION, PONTO as KPONTO, frontsAt as kyoFrontsAt } from './kamoKyo.js' // 便24: 町家の表の細かい物と納涼床
 
 // ── 時刻（便17 の試作と同じ値。京都の向き: x 東・z 南。太陽の向きは three の角度で 0＝南） ──
 const TIMES = {
@@ -678,6 +679,7 @@ void main() {`)
   //   部屋のあるマンションの外壁（窓の下と横・屋上）を足し、その中に入る PLATEAU の建物は描かない（重なる面のちらつきも出さない）
   const fromKamo = toKamo.clone().invert()
   const removed = []
+  const ochayaSegs = [] // 便24: 描く時に町家（お茶屋）へ替えた家の表の壁の線（buildBldg が足す・使ったら空にする）
   let plug = null, plugForce = null // 便19: 部屋の窓の所を塞ぐ壁（部屋が隠れている間だけ出す）・検証で決め打ちする値
   // 部屋の原点（町の3Dの座標）と、部屋の箱の部屋の座標（窓の中心が原点・正面 -z・左 -x）での広がり
   const roomO = new THREE.Vector3().setFromMatrixPosition(fromKamo.clone().multiply(new THREE.Matrix4().makeTranslation(meta.view.x - 0.6, meta.view.y - 1.5, meta.view.z)))
@@ -715,7 +717,28 @@ void main() {`)
     }
     const groups = new Map()
     const a = new THREE.Vector3(), b = new THREE.Vector3(), cc = new THREE.Vector3(), nrm = new THREE.Vector3()
-    for (const [bid, e] of bb) if (styleA && styleA[bid] !== undefined) kyoCount[styleA[bid]]++
+    // 便24: お茶屋の町（祇園・先斗町）の低い家（高さ 11.5m 以下の今の家と古民家）は、町家（お茶屋）として描く（データは「今の家」が多く、漆喰の壁と窓の並びで祇園らしくなかった）。
+    //   その家の表の壁の線（通りに向く壁）をここで求め、庇・出格子・暖簾・行灯・2階の手すりを kamoKyo.js が足す。kamokyo2=0 は外し回し用（前のまま）
+    const ovr = new Set()
+    if (KYO && styleA && frontA && !/[?&]kamokyo2=0/.test(location.search)) for (const [b, e] of bb) { if (drop.has(b) || (styleA[b] !== 0 && styleA[b] !== 2)) continue; const cx = (e.min.x + e.max.x) / 2, cz = (e.min.z + e.max.z) / 2; if ((KGION(cx, cz) || KPONTO(cx, cz)) && e.max.y - e.min.y < 11.5 && e.max.x - e.min.x < 40 && e.max.z - e.min.z < 40) ovr.add(b) }
+    const sty = (b) => (ovr.has(b) ? 1 : styleA[b])
+    if (ovr.size) {
+      const seg = new Map(), n0 = new THREE.Vector3(), u = new THREE.Vector3(), w = new THREE.Vector3()
+      for (let t = 0; t < nv; t += 3) {
+        const b = bidA[t]; if (!ovr.has(b)) continue
+        const ax = p16[t * 3], ay = p16[t * 3 + 1], az = p16[t * 3 + 2]
+        u.set(p16[t * 3 + 3] - ax, p16[t * 3 + 4] - ay, p16[t * 3 + 5] - az); w.set(p16[t * 3 + 6] - ax, p16[t * 3 + 7] - ay, p16[t * 3 + 8] - az); n0.crossVectors(u, w).normalize()
+        if (Math.abs(n0.y) > 0.3) continue
+        const e = bb.get(b), cx = (e.min.x + e.max.x) / 2, cz = (e.min.z + e.max.z) / 2, mx = (ax * 3 + u.x + w.x) / 3 - cx, mz = (az * 3 + u.z + w.z) / 3 - cz
+        if (n0.x * mx + n0.z * mz < 0) n0.negate()
+        const fa = (frontA[b] / 255) * Math.PI * 2 - Math.PI, fx = Math.sin(fa), fz = Math.cos(fa)
+        if (n0.x * fx + n0.z * fz < 0.8) continue
+        let q = seg.get(b); if (!q) { q = { s0: 1e9, s1: -1e9, d0: -1e9, fx, fz, y0: e.min.y }; seg.set(b, q) }
+        for (let k = 0; k < 3; k++) { const x = p16[(t + k) * 3], z = p16[(t + k) * 3 + 2], ss = x * fz - z * fx, dd = x * fx + z * fz; q.s0 = Math.min(q.s0, ss); q.s1 = Math.max(q.s1, ss); q.d0 = Math.max(q.d0, dd) }
+      }
+      for (const q of seg.values()) if (q.s1 - q.s0 > 2.5 && q.s1 - q.s0 < 30) { const P = (ss, dd) => [ss * q.fz + dd * q.fx, ss * -q.fx + dd * q.fz]; const [Ax, Az] = P(q.s0, q.d0), [Bx, Bz] = P(q.s1, q.d0); ochayaSegs.push({ A: [Ax, Az], B: [Bx, Bz], f: [q.fx, q.fz], base: q.y0 + 0.2 }) }
+    }
+    for (const [bid, e] of bb) if (styleA && styleA[bid] !== undefined) kyoCount[sty(bid)]++
     for (let t = 0; t < nv; t += 3) {
       const bid = bidA[t]; if (drop.has(bid)) continue
       a.set(p16[t * 3], p16[t * 3 + 1], p16[t * 3 + 2]); b.set(p16[t * 3 + 3], p16[t * 3 + 4], p16[t * 3 + 5]); cc.set(p16[t * 3 + 6], p16[t * 3 + 7], p16[t * 3 + 8])
@@ -733,7 +756,7 @@ void main() {`)
       for (const t of tris) for (let q = 0; q < 3; q++) {
         const s = t + q, bid = bidA[s]
         pos[o * 3] = p16[s * 3] * ps; pos[o * 3 + 1] = p16[s * 3 + 1] * ps; pos[o * 3 + 2] = p16[s * 3 + 2] * ps
-        if (kb) { const e = bb.get(bid); kb[o * 4] = e ? e.min.y : 0; kb[o * 4 + 1] = (frontA[bid] / 255) * Math.PI * 2 - Math.PI; kb[o * 4 + 2] = styleA[bid]; kb[o * 4 + 3] = hash((bid + idOff) * 1.37 + 0.21) } // 便21: 建物の足もとの高さ・通りに面する向き・形の種類・建物ごとのゆらぎ
+        if (kb) { const e = bb.get(bid); kb[o * 4] = e ? e.min.y : 0; kb[o * 4 + 1] = (frontA[bid] / 255) * Math.PI * 2 - Math.PI; kb[o * 4 + 2] = sty(bid); kb[o * 4 + 3] = hash((bid + idOff) * 1.37 + 0.21) } // 便21: 建物の足もとの高さ・通りに面する向き・形の種類・建物ごとのゆらぎ
         uv1[o * 2] = uv16[s * 2] / 65535; uv1[o * 2 + 1] = uv16[s * 2 + 1] / 65535
         if (k.startsWith('roof')) { c.setHex(ROOF[Math.floor(hash(bid + idOff) * ROOF.length)]); if (SNOW) c.lerp(WHITE, 0.6) } else c.setHex(WALL[Math.floor(hash(bid + idOff + 0.5) * WALL.length)])
         col[o * 3] = c.r; col[o * 3 + 1] = c.g; col[o * 3 + 2] = c.b; o++
@@ -747,6 +770,8 @@ void main() {`)
     const sec = meta.files.bldg.secs
     buildBldg({ bq: view(data.buf.bldg, sec.pos), uv16: view(data.buf.bldg, sec.uv), bidA: view(data.buf.bldg, sec.bid), styleA: sec.style ? view(data.buf.bldg, sec.style) : null, frontA: sec.front ? view(data.buf.bldg, sec.front) : null, H: meta.bldg.heights, bStep: meta.bldg.pStep, bOff: meta.bldg.pOff || [0, 0, 0], nv: meta.bldg.nv, lmTex: data.lm.bldg, isA: true })
   }
+  // 便24: 描く時に町家へ替えた家の庇と表の細かい物（北の四角には祇園・先斗町が無いので、ふつうは 0 軒）
+  function addOchaya(seed) { if (!ochayaSegs.length) return; try { kyo2.ochaya.push(buildOchayaFronts({ scene, keep, NIGHT, DUSK: TK === 'dusk', SNOW, low }, ochayaSegs.splice(0), seed)) } catch (e) { console.warn('お茶屋の表を組めなかった:', e && e.message) } }
   // 便21: 町家の通り庇（いぶし銀の瓦）と、軒裏と庇の先（濃い木）、犬矢来（竹の囲い）。build.mjs が町家の表の壁から作った形
   let eaveN = 0
   function buildEaves(ep, ek) { // 便23: 北（組む時）と南（addSouth）を同じ関数で
@@ -762,7 +787,11 @@ void main() {`)
     }
     addKey(m, 'eaves')
     const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.part = 'eaves'; scene.add(mesh); eaveN += ek.length / 3
+    // 便24: 町家の表の細かい物（出格子・暖簾・行灯・駒寄せ・2階の手すり）。庇のデータの表の壁の線から作る（町の乱数は回さない）
+    try { const r = buildMachiyaFronts({ scene, keep, NIGHT, DUSK: TK === 'dusk', SNOW, low }, ep, ek, kyo2.fronts.length + 1); kyo2.fronts.push(r) } catch (e) { console.warn('町家の表の細かい物を組めなかった:', e && e.message) }
   }
+  const kyo2 = { fronts: [], yuka: null, ochaya: [] } // 便24
+  addOchaya(1)
   if (KYO && meta.files.misc.secs.eaves) buildEaves(view(data.buf.misc, meta.files.misc.secs.eaves), view(data.buf.misc, meta.files.misc.secs.eaveKind))
   // ── 便21: 橋の欄干と石灯籠・街灯（kamobridge=0 は外し回し用） ──
   //   賀茂大橋（今出川通）: 白っぽい石の高欄（1m おきの束と笠石）と、歩道の外側に 20m おきの石灯籠（台・竿・中台・火袋・六角の笠・宝珠）。夕方と夜は火袋が灯る（調べ §8「欄干の石灯籠が夜に灯る」）
@@ -1223,8 +1252,12 @@ void main() {`)
       info.roadPts = buildRoads({ p16: v('rpos'), idx: v('ridx'), kind: v('rkind'), al: v('ralong'), wd: v('rwidth'), ps: Sm.roads.pStep, po: Sm.roads.pOff, lmTex: sd.lmT, uvf: uvB })
         info.bldgGroups = buildBldg({ bq: v('bpos'), uv16: v('buv'), bidA: v('bid'), styleA: sec.style ? v('style') : null, frontA: sec.front ? v('front') : null, H: Sm.bldg.heights, bStep: Sm.bldg.pStep, bOff: Sm.bldg.pOff, nv: Sm.bldg.nv, lmTex: sd.lmB, isA: false, idOff: 50000 })
       info.bldgTris = Sm.bldg.nv / 3
+      addOchaya(2)
       if (/[?&]dev=1/.test(location.search) && /[?&]kamosouthfail=1/.test(location.search)) throw new Error('検証用の失敗（kamosouthfail=1）') // K48 の検証用（?dev=1 の時だけ）
       if (KYO && sec.eaves) buildEaves(v('eaves'), v('eaveKind'))
+      // 便24: 納涼床（鴨川の西岸の川に面した家から東へ張り出す木の床・夏と秋）。南の四角の建物の箱から決める
+      try { const L = navSrc.bldgL[navSrc.bldgL.length - 1], boxes = new Map(); for (let i = 0; i < L.nv; i++) { const b = L.bidA[i]; if (L.drop.has(b)) continue; let e = boxes.get(b); if (!e) { e = { x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9, z0: 1e9, z1: -1e9 }; boxes.set(b, e) } const x = L.p16[i * 3], y = L.p16[i * 3 + 1], z = L.p16[i * 3 + 2]; if (x < e.x0) e.x0 = x; if (x > e.x1) e.x1 = x; if (y < e.y0) e.y0 = y; if (y > e.y1) e.y1 = y; if (z < e.z0) e.z0 = z; if (z > e.z1) e.z1 = z }
+        kyo2.yuka = buildYuka({ scene, keep, NIGHT, DUSK: TK === 'dusk', S, low }, [...boxes.values()], terrK, wetK) } catch (e) { console.warn('納涼床を組めなかった:', e && e.message) }
       if (!/[?&]kamobridge=0/.test(location.search)) buildRails(Sm.bridgeEdges || [], Sm.lamps || [])
       { let s = 230501; const RS = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }; placeTrees(v('trees'), RS) } // 南の木は別の乱数（町の R を回さない＝北の物の形を変えない）
       info.trees = v('trees').length / 6; info.canals = (Sm.canals || []).length // 細い水路（高瀬川など・帯の水面は水面の網に入っている）
@@ -1251,7 +1284,7 @@ void main() {`)
       info.mirror = lv.map((y) => +y.toFixed(1))
     }
     // 映り込みの描き直し（Water がもう一度描く舞台）では、目が水面から 60m より高い時だけ、南の四角の建物・木・庇・欄干・灯り・ベンチ・飛び石を描かない（重さのため。高い所からの川の映り込みはほぼ空。川べりの低い目では今のまま映る）。kamomirrorS=0 は外し回し用
-    { const before = sd.before, southObjs = scene.children.filter((o) => !before.has(o) && /^(bldg|crown|core|trunk|eaves|bridgeRail|lamps|lantern|glow|marks|stones)$/.test(o.userData.part || ''))
+    { const before = sd.before, southObjs = scene.children.filter((o) => !before.has(o) && /^(bldg|crown|core|trunk|eaves|bridgeRail|lamps|lantern|glow|marks|stones|kyoFront|yuka)$/.test(o.userData.part || ''))
       info.mirrorSkip = southObjs.length
       if (!/[?&]kamomirrorS=0/.test(location.search)) { const ob = water.onBeforeRender
         water.onBeforeRender = function (...a) { const hi = camera.position.y - water.position.y > 60, vis = hi ? southObjs.map((o) => o.visible) : null; if (hi) for (const o of southObjs) o.visible = false; try { ob.apply(this, a) } finally { if (hi) southObjs.forEach((o, i) => { o.visible = vis[i] }) } } } }
@@ -1437,7 +1470,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     addSouth, // 便23: 南の四角を足す（外の町より先に）
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, south, mirrorY: +water.position.y.toFixed(2), waterOut: (() => { const g = water.geometry, p = g.attributes.position, ix = g.index.array; let n = 0; for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (!inK(cx, cz, -0.5)) n++ } return n })(), outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN, fronts: kyo2.fronts, yuka: kyo2.yuka, ochaya: kyo2.ochaya, ochayaAt: kyoFrontsAt } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, south, mirrorY: +water.position.y.toFixed(2), waterOut: (() => { const g = water.geometry, p = g.attributes.position, ix = g.index.array; let n = 0; for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (!inK(cx, cz, -0.5)) n++ } return n })(), outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {

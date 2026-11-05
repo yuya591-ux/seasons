@@ -1,0 +1,76 @@
+/** 町家の表の細かい物。ep＝庇の三角形の頂点（x,y,z）・ek＝三角形ごとの種類（頂点ごとに同じ値が 3 つ）。庇の上の面（種類 0）から表の壁の線を読む */
+export function buildMachiyaFronts(ctx, ep, ek, seed = 1) {
+  if (/[?&]kamokyo2=0/.test(location.search)) return { n: 0, tris: 0 }
+  const segs = [], nT = ek.length / 3
+  for (let t = 0; t < nT; t++) {
+    if (ek[t * 3] !== 0) continue
+    // 庇の面は quad＝三角形 2 枚（a,b,c）（a,c,d）。1枚目だけを見る（a＝表の壁の線の始め・b＝終わり・c＝外の先）
+    const o = t * 9, A = [ep[o], ep[o + 1], ep[o + 2]], B = [ep[o + 3], ep[o + 4], ep[o + 5]], Cc = [ep[o + 6], ep[o + 7], ep[o + 8]]
+    if (Math.abs(A[1] - B[1]) > 0.01) continue // 2枚目（a,c,d）は a と c の高さが違う
+    t++ // 2枚目を飛ばす
+    let fx = Cc[0] - B[0], fz = Cc[2] - B[2]; const fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl
+    // 庇は壁から 2cm 外・幅は両端 8cm ずつ広い（build.mjs）
+    segs.push({ A: [A[0] - fx * 0.02, A[2] - fz * 0.02], B: [B[0] - fx * 0.02, B[2] - fz * 0.02], f: [fx, fz], base: A[1] - 2.75, inset: 0.08 })
+  }
+  return frontsFromSegs(ctx, segs, seed, false)
+}
+/** 描く時に町家（お茶屋）へ替えた家の表（庇も足す）。segs＝{ A:[x,z], B:[x,z], f:[x,z], base } */
+export function buildOchayaFronts(ctx, segs, seed = 1) {
+  if (/[?&]kamokyo2=0/.test(location.search)) return { n: 0, tris: 0 }
+  return frontsFromSegs(ctx, segs.map((q) => ({ ...q, inset: 0 })), 100 + seed, true)
+}
+function frontsFromSegs(ctx, segs, seed, withEave) {
+  const { keep, NIGHT, DUSK, SNOW, low } = ctx
+  const LITE = NIGHT || DUSK
+  const R = rng(24000 + seed)
+  const lat = Sink(), wood = Sink(), noren = Sink(), lamp = Sink(), rail = Sink(), tile = Sink()
+  let n = 0
+  for (const q of segs) {
+    let sx = q.B[0] - q.A[0], sz = q.B[1] - q.A[1]; const L = Math.hypot(sx, sz); if (L < 2.4) continue; sx /= L; sz /= L
+    const s = [sx, 0, sz], f = [q.f[0], 0, q.f[1]], base = q.base
+    const O = [q.A[0], 0, q.A[1]], s0 = q.inset, s1 = L - q.inset
+    const cx = (q.A[0] + q.B[0]) / 2, cz = (q.A[1] + q.B[1]) / 2, ochaya = GION(cx, cz) || PONTO(cx, cz)
+    n++
+    if (withEave) tile.box(O, s, f, s0 - 0.08, s1 + 0.08, 0, 0.85, base + 2.55, base + 2.72, SNOW ? [0.82, 0.84, 0.86] : [0.32, 0.34, 0.37]) // 通り庇（いぶし銀の瓦・外へ 0.85m）
+    // 出入り口（1.6m）: 左か右の端
+    const doorL = R() < 0.5, dw = Math.min(1.7, L * 0.3), d0 = doorL ? s0 + 0.15 : s1 - 0.15 - dw, d1 = d0 + dw
+    const la0 = doorL ? d1 + 0.12 : s0 + 0.15, la1 = doorL ? s1 - 0.15 : d0 - 0.12
+    const bengara = ochaya ? [0.22, 0.075, 0.05] : R() < 0.5 ? [0.2, 0.09, 0.055] : [0.12, 0.08, 0.05] // 紅殻（べんがら）の深い赤茶と、焦げ茶
+    if (la1 - la0 > 0.8) {
+      // 出格子: 格子の箱（足もと 0.45m から 2.15m・壁から 0.32m）と、上の笠木・下の台
+      lat.box(O, s, f, la0, la1, 0.02, 0.32, base + 0.45, base + 2.15, bengara, { top: false })
+      wood.box(O, s, f, la0 - 0.06, la1 + 0.06, 0, 0.4, base + 2.15, base + 2.24, [0.1, 0.065, 0.04]) // 笠木
+      wood.box(O, s, f, la0 - 0.04, la1 + 0.04, 0, 0.36, base + 0.3, base + 0.45, [0.1, 0.08, 0.06]) // 台（腰）
+    }
+    // 出入り口の戸の枠と、暖簾（6割）
+    wood.box(O, s, f, d0 - 0.06, d0, 0, 0.08, base, base + 2.2, [0.08, 0.055, 0.035]); wood.box(O, s, f, d1, d1 + 0.06, 0, 0.08, base, base + 2.2, [0.08, 0.055, 0.035])
+    wood.box(O, s, f, d0 - 0.06, d1 + 0.06, 0, 0.1, base + 2.2, base + 2.32, [0.08, 0.055, 0.035])
+    if (R() < 0.6) {
+      const nc = [[0.05, 0.07, 0.17], [0.06, 0.08, 0.2], [0.42, 0.38, 0.32], [0.24, 0.07, 0.06], [0.14, 0.13, 0.11]][Math.floor(R() * 5)] // 藍・生成り・えんじ・墨
+      const nw = (d1 - d0) / 3
+      for (let k = 0; k < 3; k++) noren.box(O, s, f, d0 + k * nw + 0.02, d0 + (k + 1) * nw - 0.02, 0.12, 0.13, base + 1.5, base + 2.18, nc, { top: false, back: true })
+    }
+    // 軒の行灯（お茶屋の所は 9 割・ほかは 2 割）: 戸の横の壁に小さな箱。夕と夜は灯る
+    if (R() < (ochaya ? 0.9 : 0.2)) {
+      const lsP = doorL ? d1 + 0.25 : d0 - 0.55
+      lamp.box(O, s, f, lsP, lsP + 0.3, 0.1, 0.36, base + 1.75, base + 2.1, [1, 0.93, 0.8])
+      wood.box(O, s, f, lsP - 0.02, lsP + 0.32, 0.08, 0.38, base + 2.1, base + 2.14, [0.07, 0.05, 0.035])
+    }
+    // 駒寄せ（2割・お茶屋の所は無し）: 足もとの低い木の柵（高さ 0.75m・外へ 0.5m）
+    if (!ochaya && R() < 0.2 && la1 - la0 > 1) { rail.box(O, s, f, la0, la1, 0.48, 0.52, base, base + 0.75, [0.12, 0.08, 0.05], { top: true, back: true }); wood.box(O, s, f, la0, la1, 0.42, 0.56, base + 0.75, base + 0.82, [0.09, 0.06, 0.04]) }
+    // 2階の手すり（お茶屋の所は 6 割・ほか 1 割）: 虫籠窓の前に低い欄干（高さ 0.6m・外へ 0.45m）
+    if (R() < (ochaya ? 0.6 : 0.1) && !low) {
+      const y2 = base + 3.25
+      rail.box(O, s, f, s0 + 0.3, s1 - 0.3, 0.42, 0.46, y2, y2 + 0.62, [0.13, 0.07, 0.045], { top: false, back: true })
+      wood.box(O, s, f, s0 + 0.25, s1 - 0.25, 0.38, 0.5, y2 + 0.62, y2 + 0.69, [0.1, 0.06, 0.035]) // 笠木
+      wood.box(O, s, f, s0 + 0.25, s1 - 0.25, 0, 0.5, y2 - 0.08, y2, [0.09, 0.06, 0.04]) // 縁の板
+    }
+  }
+  const mk = (o) => keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, ...o }))
+  const latMat = mk({ map: stripeTex(keep, { period: 0.24, bars: 4, bar: 0.42 }) }), railMat = mk({ map: stripeTex(keep, { period: 0.3, bars: 3, bar: 0.35, alpha: true }), alphaTest: 0.5, side: THREE.DoubleSide })
+  const lampMat = mk({ emissive: new THREE.Color(1, 0.72, 0.4), emissiveIntensity: LITE ? (NIGHT ? 1.6 : 0.9) : 0, roughness: 0.6 })
+  const groups = [{ sink: lat, mat: latMat, shadow: true }, { sink: wood, mat: mk({}), shadow: true }, { sink: noren, mat: mk({ side: THREE.DoubleSide, roughness: 0.95 }) }, { sink: lamp, mat: lampMat }, { sink: rail, mat: railMat, shadow: true }]
+  if (withEave) groups.push({ sink: tile, mat: mk({ roughness: 0.6 }), shadow: true })
+  const tris = addMeshes(ctx, groups, 'kyoFront')
+  return { n, tris }
+}
