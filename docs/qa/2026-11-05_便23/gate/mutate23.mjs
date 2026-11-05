@@ -15,6 +15,8 @@ const M0 = [
   { id: 'M6', what: '南の四角の居場所の名を外す', file: 'src/engine/kamoTown.js', a: 'for (const p of SOUTH_PLACES) if (X >= p.x0 && X <= p.x1 && Z >= p.z0 && Z <= p.z1) return p.name', b: 'void SOUTH_PLACES', k: ['K44'] },
   { id: 'M7', what: '外の町が南の四角を抜かない', file: 'src/engine/kamoTown.js', a: 'inSouth: SOUTH_ON ? (x, z, m) => inK(x, z, m) && !inRA(x, z, m) : null', b: 'inSouth: null', k: ['K40'] },
   { id: 'M8', what: '映り込みの鏡を動かさない', file: 'src/engine/kamoTown.js', a: 'if (!/[?&]kamomirror=0/.test(location.search)) waterProf = { z0: RGB.z0, step: STP, v: lv }', b: 'void lv', k: ['K45'] },
+  { id: 'M9', what: '（外の目 直すべき1）南の四角を組む途中で失敗した時に、足した物を外さない', file: 'src/engine/kamoTown.js', a: 'for (const o of scene.children.filter((o) => !sd.before.has(o))) scene.remove(o)', b: 'void 0', k: ['K48'] },
+  { id: 'M1b', what: '（K38 の書き換え）南の四角を足さない', file: 'src/engine/town3dViewer.js', a: 'if (sd) { try { k0.addSouth(sd) }', b: 'if (false) { try { k0.addSouth(sd) }', k: ['K38'] },
   { id: 'D1', what: '（K34 の書き換え）北の水面の三角形を北の四角で切らない（五条まで延びた崩れた水面が戻る）', data: { merge: 'noclip' }, k: ['K34'] },
   { id: 'D2', what: '南の便の水面の基準を1つに戻し、横の一番低い水面にそろえない（継ぎ目の南の鴨川の水面が 4m 高く出る）', data: { build: 'wy' }, k: ['K46'] },
 ]

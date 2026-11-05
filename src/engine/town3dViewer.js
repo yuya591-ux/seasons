@@ -8137,7 +8137,8 @@ export async function mountTown3d(parent, opts = {}) {
             ]).then(([sd, o]) => {
               if (kamo !== k0 || my !== token) return
               if (sd) { try { k0.addSouth(sd) } catch (e) { console.warn('南の四角を組めなかったので、北の四角だけで開きます:', e && e.message) } }
-              if (o) { try { k0.addOuter(o.od, o.m) } catch (e) { console.warn('外の町を組めなかったので、鴨川の町だけで開きます:', e && e.message) } }
+              // 【便23・外の目 直すべき2】南の四角と外の町を続けて組むと、1つの長い仕事で約 1.4 秒画が止まる＝間に1こま描いてから外の町を組む
+              if (o) requestAnimationFrame(() => setTimeout(() => { if (kamo !== k0 || my !== token) return; try { k0.addOuter(o.od, o.m) } catch (e) { console.warn('外の町を組めなかったので、鴨川の町だけで開きます:', e && e.message) } }, 0))
             }) }
         } catch (e) { console.warn('鴨川の町を組めなかったので、前の角部屋で開きます:', e && e.message); if (kamo) { try { kamo.dispose() } catch (e2) { /* 無視 */ } } kamo = null }
       }

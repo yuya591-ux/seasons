@@ -1212,11 +1212,30 @@ void main() {`)
     if (south || !meta.south || !RGB || !sd || outer) return south // 外の町を足した後には足さない（外の町の地形と遠くの網の下げ方が変わるため）
     const t0 = performance.now(), Sm = meta.south, sec = Sm.secs, v = (k) => view(sd.buf, sec[k])
     for (const t of [sd.lmT, sd.lmB]) { t.colorSpace = THREE.SRGBColorSpace; t.channel = 1; t.flipY = true; t.needsUpdate = true; keep(t) }
-    SOUTH_ON = true
     const info = { ms: 0 }
-    sd.before = new Set(scene.children) // 南の四角で足した物を見分ける（映り込みの描き直しで描かない物）
-    addNearTerrain(RGB, sd.lmT, uvB, [3, 6], true)
-    info.roadPts = buildRoads({ p16: v('rpos'), idx: v('ridx'), kind: v('rkind'), al: v('ralong'), wd: v('rwidth'), ps: Sm.roads.pStep, po: Sm.roads.pOff, lmTex: sd.lmT, uvf: uvB })
+    sd.before = new Set(scene.children) // 南の四角で足した物を見分ける（映り込みの描き直しで描かない物・失敗した時に外す物）
+    // 【便23・外の目 直すべき1】組み立て（地形・道・建物・庇・欄干・木・飛び石・ベンチ）を先に行い、途中で失敗したら足した物を外して北の四角だけに戻す（南が穴にならない）。
+    //   水面の差し替え・映り込みの鏡・遠くの網の下げ・道案内の広げ・SOUTH_ON は、組み立てが全部通った後にだけ行う
+    const nL = { r: navSrc.roadsL.length, b: navSrc.bldgL.length, t: navSrc.treesL.length }
+    try {
+      addNearTerrain(RGB, sd.lmT, uvB, [3, 6], true)
+      info.roadPts = buildRoads({ p16: v('rpos'), idx: v('ridx'), kind: v('rkind'), al: v('ralong'), wd: v('rwidth'), ps: Sm.roads.pStep, po: Sm.roads.pOff, lmTex: sd.lmT, uvf: uvB })
+        info.bldgGroups = buildBldg({ bq: v('bpos'), uv16: v('buv'), bidA: v('bid'), styleA: sec.style ? v('style') : null, frontA: sec.front ? v('front') : null, H: Sm.bldg.heights, bStep: Sm.bldg.pStep, bOff: Sm.bldg.pOff, nv: Sm.bldg.nv, lmTex: sd.lmB, isA: false, idOff: 50000 })
+      info.bldgTris = Sm.bldg.nv / 3
+      if (/[?&]dev=1/.test(location.search) && /[?&]kamosouthfail=1/.test(location.search)) throw new Error('検証用の失敗（kamosouthfail=1）') // K48 の検証用（?dev=1 の時だけ）
+      if (KYO && sec.eaves) buildEaves(v('eaves'), v('eaveKind'))
+      if (!/[?&]kamobridge=0/.test(location.search)) buildRails(Sm.bridgeEdges || [], Sm.lamps || [])
+      { let s = 230501; const RS = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }; placeTrees(v('trees'), RS) } // 南の木は別の乱数（町の R を回さない＝北の物の形を変えない）
+      info.trees = v('trees').length / 6; info.canals = (Sm.canals || []).length // 細い水路（高瀬川など・帯の水面は水面の網に入っている）
+      buildStones(v('stones'), sec.stoneKind ? v('stoneKind') : null, false)
+      try { if (!/[?&]kamomarks=0/.test(location.search)) info.benches = buildMarks({ scene, marks: { benches: Sm.benches || [] }, keep, NIGHT, DUSK: TK === 'dusk', SNOW }).benches } catch (e) { console.warn('南の四角のベンチを組めなかった:', e && e.message) }
+      } catch (e) {
+      for (const o of scene.children.filter((o) => !sd.before.has(o))) scene.remove(o)
+      navSrc.roadsL.length = nL.r; navSrc.bldgL.length = nL.b; navSrc.treesL.length = nL.t
+      console.warn('南の四角を組めなかったので、北の四角だけで開きます:', e && e.message)
+      return null
+    }
+    SOUTH_ON = true
     { // 水面: 北の水面の板に南の水面の網を足す（映り込みを描く Water は1つのまま＝映り込みの重さは変えない）
       const g0 = water.geometry, p0 = g0.attributes.position.array, i0 = g0.index.array, wp = v('wpos'), wi = v('widx'), n0 = p0.length / 3, n1 = wp.length / 3
       const P = new Float32Array((n0 + n1) * 3); P.set(p0); for (let i = 0; i < n1; i++) { P[(n0 + i) * 3] = wp[i * 3]; P[(n0 + i) * 3 + 1] = -wp[i * 3 + 2]; P[(n0 + i) * 3 + 2] = wp[i * 3 + 1] - WY }
@@ -1230,14 +1249,6 @@ void main() {`)
       if (!/[?&]kamomirror=0/.test(location.search)) waterProf = { z0: RGB.z0, step: STP, v: lv } // kamomirror=0 は外し回し用（鏡を WY のまま）
       info.mirror = lv.map((y) => +y.toFixed(1))
     }
-    info.bldgGroups = buildBldg({ bq: v('bpos'), uv16: v('buv'), bidA: v('bid'), styleA: sec.style ? v('style') : null, frontA: sec.front ? v('front') : null, H: Sm.bldg.heights, bStep: Sm.bldg.pStep, bOff: Sm.bldg.pOff, nv: Sm.bldg.nv, lmTex: sd.lmB, isA: false, idOff: 50000 })
-    info.bldgTris = Sm.bldg.nv / 3
-    if (KYO && sec.eaves) buildEaves(v('eaves'), v('eaveKind'))
-    if (!/[?&]kamobridge=0/.test(location.search)) buildRails(Sm.bridgeEdges || [], Sm.lamps || [])
-    { let s = 230501; const RS = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }; placeTrees(v('trees'), RS) } // 南の木は別の乱数（町の R を回さない＝北の物の形を変えない）
-    info.trees = v('trees').length / 6; info.canals = (Sm.canals || []).length // 細い水路（高瀬川など・帯の水面は水面の網に入っている）
-    buildStones(v('stones'), sec.stoneKind ? v('stoneKind') : null, false)
-    try { if (!/[?&]kamomarks=0/.test(location.search)) info.benches = buildMarks({ scene, marks: { benches: Sm.benches || [] }, keep, NIGHT, DUSK: TK === 'dusk', SNOW }).benches } catch (e) { console.warn('南の四角のベンチを組めなかった:', e && e.message) }
     // 映り込みの描き直し（Water がもう一度描く舞台）では、目が水面から 60m より高い時だけ、南の四角の建物・木・庇・欄干・灯り・ベンチ・飛び石を描かない（重さのため。高い所からの川の映り込みはほぼ空。川べりの低い目では今のまま映る）。kamomirrorS=0 は外し回し用
     { const before = sd.before, southObjs = scene.children.filter((o) => !before.has(o) && /^(bldg|crown|core|trunk|eaves|bridgeRail|lamps|lantern|glow|marks|stones)$/.test(o.userData.part || ''))
       info.mirrorSkip = southObjs.length

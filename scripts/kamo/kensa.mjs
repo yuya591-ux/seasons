@@ -50,6 +50,7 @@
 //   K45 映り込みの鏡（便23）: 南の鴨川（三条の南）の上で目を水面の 6m 上に置くと、映り込みの鏡の高さがその所の水面（−15〜−20m）に合う（北の四角の窓辺の時は前と同じ −4.56m）。前は北の水面の高さのままで、南の川の映り込みに地面が写った
 //   K46 南の鴨川の水面に段が無い（便23）: 継ぎ目の南（東 −90・南北 860〜1000m）で、下流へ 20m ごとの水面の上がりが 1m 未満（標高の欠けで、下流が上流より 4m 高い所があった）
 //   K47 ?kamoouter=0（外の町を読まない）でも南の四角を足し、継ぎ目の南（南北 924m）と先斗町を道案内が網の縁と見なさない＝歩いて入れる。エラー 0（便23）
+//   K48 南の四角を組む途中で失敗した時（?dev=1&kamosouthfail=1 で起こす）は、足した物を外して北の四角だけで開き、外の町は南の四角を抜かない（南が穴にならない）。エラー 0（便23・外の目）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 //   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
@@ -346,7 +347,7 @@ if (run('K38')) { // 【便22】
   const o = await open('summer-morning-corner-room', { dev: { viewport: { width: 402, height: 874 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true } })
   const got = await outerWait(o.p), k = await kamoInfo(o.p), O = k && k.outer
   await o.p.waitForTimeout(1500)
-  check('K38', got && k.low === true && O && O.boxes >= 100000 && O.trees > 10000 && O.trees < 35000 && !o.errs.length && !o.gl.length, `組めた ${got}・段 ${k && k.low ? '軽い' : '通常'}・箱 ${O && O.boxes}・木 ${O && O.trees}（1 万〜3.5 万）・エラー ${o.errs.length}${o.errs.length ? '（' + o.errs[0].slice(0, 80) + '）' : ''}・GL ${o.gl.length}`)
+  check('K38', got && k.low === true && k.south && k.south.bldgTris >= 300000 && O && O.boxes >= 100000 && O.trees > 10000 && O.trees < 35000 && !o.errs.length && !o.gl.length, `組めた ${got}・段 ${k && k.low ? '軽い' : '通常'}・南の四角 ${k && k.south ? `建物の三角形 ${k.south.bldgTris}・組む時間 ${k.south.ms}ms` : '無し'}（便23）・箱 ${O && O.boxes}・木 ${O && O.trees}（1 万〜3.5 万）・エラー ${o.errs.length}${o.errs.length ? '（' + o.errs[0].slice(0, 80) + '）' : ''}・GL ${o.gl.length}`)
   await o.ctx.close()
 }
 if (run('K39')) { // 【便22】
@@ -401,6 +402,13 @@ if (run('K47')) {
   const q = await o.p.evaluate(() => [[-300, 924], [20, 924], [-134, 2700]].map(([X, Z]) => { const e = window.__town3dKamoTown(X, Z), n = window.__town3dNavAt(e.x, e.z, e.y); return { X, Z, blocked: n.blocked, top: +(n.top - n.ground).toFixed(1) } }))
   const k = await kamoInfo(o.p)
   check('K47', got && k.outer === null && q.every((r) => !r.blocked || r.top >= 2) && !o.errs.length, `南の四角 ${got}・外の町 ${k && k.outer}・網の縁と見なした所 ${q.filter((r) => r.blocked && r.top < 2).map((r) => `東 ${r.X}・南 ${r.Z}`).join('・') || 'なし'}（建物の上 2m 以上の所は建物の当たりとして除く）・エラー ${o.errs.length}`)
+  await o.ctx.close()
+}
+if (run('K48')) {
+  const o = await open('summer-morning-corner-room', { q: 'kamosouthfail=1' })
+  const got = await outerWait(o.p), k = await kamoInfo(o.p), O = k && k.outer
+  const n = await o.p.evaluate(() => { const c = { terr: 0, bldg: 0 }; window.__kamoScene.traverse((m) => { if (m.userData.part === 'terrainNear') c.terr++; if (m.userData.part === 'bldg') c.bldg++ }); return c })
+  check('K48', got && k.south === null && O && O.southCut && O.southCut.boxes === 0 && O.boxes >= 150000 && n.terr === 24 && n.bldg === 134 && !o.errs.length, `南の四角 ${k && k.south}・外の町の箱 ${O && O.boxes}・抜いた箱 ${O && O.southCut && O.southCut.boxes}（0）・近くの地形の塊 ${n.terr}（北の 24）・建物の塊 ${n.bldg}（北の 134）・エラー ${o.errs.length}`)
   await o.ctx.close()
 }
 if (run('K43')) {
