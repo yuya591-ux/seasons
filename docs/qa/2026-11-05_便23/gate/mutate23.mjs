@@ -10,7 +10,7 @@ const M0 = [
   { id: 'M1', what: '南の四角を足さない', file: 'src/engine/town3dViewer.js', a: 'if (sd) { try { k0.addSouth(sd) }', b: 'if (false) { try { k0.addSouth(sd) }', k: ['K40'] },
   { id: 'M2', what: '南の建物に北の焼いた図を使う', file: 'src/engine/kamoTown.js', a: 'lmTex: sd.lmB, isA: false', b: 'lmTex: data.lm.bldg, isA: false', k: ['K41'] },
   { id: 'M3', what: '南の地形に北の焼いた図を使う', file: 'src/engine/kamoTown.js', a: 'addNearTerrain(RGB, sd.lmT, uvB, [3, 6], true)', b: 'addNearTerrain(RGB, data.lm.terrain, uvB, [3, 6], true)', k: ['K41'] },
-  { id: 'M4', what: '道案内の網の縁を北の四角のままにする', file: 'src/engine/kamoTown.js', a: 'const outK = (X, Z) => !inK(X, Z, EDGE)', b: 'const outK = (X, Z) => !inRA(X, Z, EDGE)', k: ['K42'] },
+  { id: 'M4', what: '道案内の網の縁を北の四角のままにする', file: 'src/engine/kamoTown.js', a: 'const outK = (X, Z) => !inK(X, Z, EDGE)', b: 'const outK = (X, Z) => !inRA(X, Z, EDGE)', k: ['K42', 'K47'] },
   { id: 'M5', what: '?kamosouth=0 を見ない', file: 'src/engine/kamoTown.js', a: 'loadSouth: meta.south && !/[?&]kamosouth=0/.test(location.search) ?', b: 'loadSouth: meta.south ?', k: ['K43'] },
   { id: 'M6', what: '南の四角の居場所の名を外す', file: 'src/engine/kamoTown.js', a: 'for (const p of SOUTH_PLACES) if (X >= p.x0 && X <= p.x1 && Z >= p.z0 && Z <= p.z1) return p.name', b: 'void SOUTH_PLACES', k: ['K44'] },
   { id: 'M7', what: '外の町が南の四角を抜かない', file: 'src/engine/kamoTown.js', a: 'inSouth: SOUTH_ON ? (x, z, m) => inK(x, z, m) && !inRA(x, z, m) : null', b: 'inSouth: null', k: ['K40'] },

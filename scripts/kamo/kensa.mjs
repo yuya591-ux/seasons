@@ -49,6 +49,7 @@
 //   K44 南の四角の居場所の名: 先斗町・木屋町・河原町・祇園・南の鴨川の上（水）（便23）
 //   K45 映り込みの鏡（便23）: 南の鴨川（三条の南）の上で目を水面の 6m 上に置くと、映り込みの鏡の高さがその所の水面（−15〜−20m）に合う（北の四角の窓辺の時は前と同じ −4.56m）。前は北の水面の高さのままで、南の川の映り込みに地面が写った
 //   K46 南の鴨川の水面に段が無い（便23）: 継ぎ目の南（東 −90・南北 860〜1000m）で、下流へ 20m ごとの水面の上がりが 1m 未満（標高の欠けで、下流が上流より 4m 高い所があった）
+//   K47 ?kamoouter=0（外の町を読まない）でも南の四角を足し、継ぎ目の南（南北 924m）と先斗町を道案内が網の縁と見なさない＝歩いて入れる。エラー 0（便23）
 //   K25 動く物の表（life.json）が読めない時も、鴨川の町はそのまま開く（動く物が無いだけ・エラー無し）（便20）
 //   K26 鴨川のデータを読んでいる途中で別の情景へ替えても、舞台は1枚だけ（読み終わるまで前の舞台が残らない）（便20・GitHub のスモーク 41749226137）
 // 町の3Dが組めずに検証の口が無い時も、落ちた理由を「×」の行で残す（外し回しの記録に理由が残るように）
@@ -316,7 +317,7 @@ const navAt = (p, X, Y, Z) => p.evaluate(async ([X, Y, Z]) => { const e = window
 if (run('K34') || run('K35') || run('K36')) {
   const o = await open('summer-morning-corner-room')
   const got = await outerWait(o.p), k = await kamoInfo(o.p), O = k && k.outer, mist = await o.p.evaluate(() => (window.__town3dMist ? window.__town3dMist().applied[3] : -1))
-  if (run('K34')) check('K34', got && O && O.boxes >= 100000 && O.trees >= 30000 && O.roads >= 5000 && O.water >= 10000 && O.meisho && Object.values(O.meisho).every(Boolean) && Object.keys(O.meisho).length === 6 && k.waterOut === 0 && mist === 0 && !o.errs.length && !o.gl.length, `組めた ${got}・箱 ${O && O.boxes}・木 ${O && O.trees}・道 ${O && O.roads}・水面 ${O && O.water}・名所 ${O && JSON.stringify(O.meisho)}・四角の和の外の水面 ${k && k.waterOut}（0＝五条まで延びた崩れた水面が無い。便23 で北の水面を北の四角で切った）・落とした水面 ${O && O.waterCut}・低い霧 ${mist}・組む時間 ${O && O.ms}ms・エラー ${o.errs.length}・GL ${o.gl.length}`)
+  if (run('K34')) check('K34', got && O && O.boxes >= 100000 && O.trees >= 30000 && O.roads >= 5000 && O.water >= 10000 && O.meisho && Object.values(O.meisho).every(Boolean) && Object.keys(O.meisho).length === 6 && k.waterOut === 0 && O.waterCut === 0 && mist === 0 && !o.errs.length && !o.gl.length, `組めた ${got}・箱 ${O && O.boxes}・木 ${O && O.trees}・道 ${O && O.roads}・水面 ${O && O.water}・名所 ${O && JSON.stringify(O.meisho)}・四角の和の外の水面 ${k && k.waterOut}（0＝五条まで延びた崩れた水面が無い。便23 で北の水面を北の四角で切った）・外の町を足す時に落とした水面 ${O && O.waterCut}（0＝北の水面に南の四角へ延びた三角形も無い）・低い霧 ${mist}・組む時間 ${O && O.ms}ms・エラー ${o.errs.length}・GL ${o.gl.length}`)
   if (run('K35') || run('K36')) {
     await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
     const kin = await navAt(o.p, -4022, 80, -1056), tow = await navAt(o.p, -1202, 60, 4709), sta = await navAt(o.p, -1280, 60, 4986), gion = await navAt(o.p, 459, 30, 2914), yas = await navAt(o.p, 616, 60, 3488), riv = await navAt(o.p, -60, 20, 2600)
@@ -391,6 +392,15 @@ if (run('K40') || run('K41') || run('K42') || run('K44') || run('K45') || run('K
       check('K44', P.ponto === '先斗町' && P.ponto2 === '先斗町' && P.kiya === '木屋町' && P.kawa === '河原町' && P.gion === '祇園' && P.riv.place === '鴨川の上' && P.riv.wet, `先斗町 ${P.ponto}・${P.ponto2}・木屋町 ${P.kiya}・河原町 ${P.kawa}・祇園 ${P.gion}・南の鴨川 ${P.riv.place}（水 ${P.riv.wet}）`)
     }
   }
+  await o.ctx.close()
+}
+if (run('K47')) {
+  const o = await open('summer-morning-corner-room', { q: 'kamoouter=0' })
+  const got = await o.p.waitForFunction(() => window.__town3dKamo && window.__town3dKamo() && window.__town3dKamo().south, null, { timeout: 90000 }).then(() => true).catch(() => false)
+  await o.p.evaluate(() => window.__town3dFly(true)); await o.p.waitForTimeout(2600)
+  const q = await o.p.evaluate(() => [[-300, 924], [20, 924], [-134, 2700]].map(([X, Z]) => { const e = window.__town3dKamoTown(X, Z), n = window.__town3dNavAt(e.x, e.z, e.y); return { X, Z, blocked: n.blocked, top: +(n.top - n.ground).toFixed(1) } }))
+  const k = await kamoInfo(o.p)
+  check('K47', got && k.outer === null && q.every((r) => !r.blocked || r.top >= 2) && !o.errs.length, `南の四角 ${got}・外の町 ${k && k.outer}・網の縁と見なした所 ${q.filter((r) => r.blocked && r.top < 2).map((r) => `東 ${r.X}・南 ${r.Z}`).join('・') || 'なし'}（建物の上 2m 以上の所は建物の当たりとして除く）・エラー ${o.errs.length}`)
   await o.ctx.close()
 }
 if (run('K43')) {
