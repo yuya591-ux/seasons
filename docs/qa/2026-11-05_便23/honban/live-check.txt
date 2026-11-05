@@ -1,0 +1,5 @@
+組むまで 16796 ms・鴨川 {"lifeMs":8,"calls":230,"tris":2048923,"low":false,"time":"morning"}
+外の町 {"ms":638,"boxes":142001,"waterCut":0}
+js {"south":{"ms":595,"roadPts":101408,"bldgGroups":88,"bldgTris":425697,"trees":3620,"canals":75,"benches":170,"water":28950,"mirror":[-9.1,-10.5,-10.8,-13,-12.9,-13.2,-11.2,-10.8,-13.3,-14.8,-15.4,-14.5,-16.1,-16.9,-17.1,-18.9,-18.8,-15.2,-16.8,-20.5,-20.7,-22.6,-22.9,-22.9,-23.5,-23.6,-23.7,-23.8,-23.8],"mirrorSkip":190},"cut":{"boxes":11917,"polys":2,"roads":15971,"water":8135,"trees":3842,"te
+鴨川のデータの読み先 audio/kamo/leaves.mp3 kamo/kamo.json?v=23 kamo/life.json?v=23 kamo/terrain.bin?v=23 kamo/bldg.bin?v=23 kamo/roads.bin?v=23 ・数 33 ・版の印つき 31
+エラー 0  注意 
