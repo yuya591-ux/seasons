@@ -16,7 +16,7 @@ Wikimedia Commons の素材は元が Ogg Vorbis。freesound の素材（ウグ�
 
 | レイヤー | ファイル | 作品 / 作者 | ライセンス | 出典 |
 | --- | --- | --- | --- | --- |
-| 雨音 | `rain.mp3` | "Rain against the window" / Cori Samuel (cori) | パブリックドメイン | https://commons.wikimedia.org/wiki/File:Rain_against_the_window.ogg |
+| 雨音 | `rain.mp3`（便24: 24 秒目の 4 秒だけ 600Hz より下を 7 割下げた＝低い唸りの塊） | "Rain against the window" / Cori Samuel (cori) | パブリックドメイン | https://commons.wikimedia.org/wiki/File:Rain_against_the_window.ogg |
 | ヒグラシ | `higurashi.mp3` | "Tanna japonensis v01" / Σ64 | CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/ | https://commons.wikimedia.org/wiki/File:Tanna_japonensis_v01.ogg |
 | 遠雷 | `thunder.mp3` | "Thunder" / Bidgee | CC BY 3.0 — https://creativecommons.org/licenses/by/3.0/ | https://commons.wikimedia.org/wiki/File:Thunder.ogg |
 

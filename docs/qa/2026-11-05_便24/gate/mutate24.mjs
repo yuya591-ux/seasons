@@ -20,6 +20,13 @@ const M = [
   { name: 'M10 祇園と先斗町の石畳を外す', file: KT, a: "bool kyoSt = ${", b: "bool kyoSt = false && ${", build: true, tests: [['kensa', 'K52']] },
   { name: 'M11 鴨川の夜を前の値に戻す', file: KT, a: 'exp: 0.74, sun: 0xaec2f2, sunI: 0.7, hemi: [0x3f5cab, 0x201c2c, 1.05], fog: 0x24366a', b: 'exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232', build: true, tests: [['kensa', 'K53']] },
   { name: 'M12 晴れた夜の空の 3 段（地平の町あかり→藍→深い紺）と藍の霞を外す', file: KT, a: "      if (!RAIN && !SNOW && !/[?&]kamonight=0/.test(location.search)) { domeHor", b: "      if (false) { domeHor", build: true, tests: [['kensa', 'K53']] },
+  // 【便24・外の目の後】足した直しと書き換えた検査（MUT=M13,M14… で選んで回す）
+  { name: 'M13 夜の通りの行灯の灯りだまりを外す', file: KK, a: '      if (LITE) { // 【便24・外の目 直すべき6】', b: '      if (false) { // 【便24・外の目 直すべき6】', build: true, tests: [['kensa', 'K53']] },
+  { name: 'M14 納涼床を秋にも出す', file: KK, a: "  if (S !== 'summer' && !/[?&]yuka=1/.test(location.search))", b: "  if (S !== 'summer' && S !== 'autumn' && !/[?&]yuka=1/.test(location.search))", build: true, tests: [['kensa', 'K49']] },
+  { name: 'M15 雨の素材の低い塊を前の素材に戻す', file: 'public/audio/summer-rain-dusk/rain.mp3', copyFrom: '6e3e5a4', build: false, tests: [['hum']] },
+  { name: 'M16 北寺尾の駅の電車の通過音を前の低い帯に戻す', file: AU, a: "hp.frequency.value = 480 // 【便24・外の目 直すべき2】", b: "hp.frequency.value = 130 // 【便24・外の目 直すべき2】", build: false, tests: [['audio', 'A8']] },
+  { name: 'M17 雨の低音切りの下限 560Hz を戻す（雨の情景が痩せる）', file: SF, a: "  'audio/winter-snow-night/wind.mp3'", b: "  'audio/summer-rain-dusk/rain.mp3': 560,
+  'audio/winter-snow-night/wind.mp3'", build: false, tests: [['hum']] },
 ]
 const runTest = ([kind, k]) => {
   if (kind === 'hum') { const r = sh('node', ['scripts/qa-hum.mjs']); return { ok: r.status === 0, line: (r.stdout || '').trim().split('\n').pop() } }
@@ -28,7 +35,14 @@ const runTest = ([kind, k]) => {
   const r = sh('node', ['scripts/kamo/kensa.mjs', k], { PORT: '4961' }); const ls = (r.stdout || '').split('\n').filter((x) => x.includes(' ' + k + ' ')); return { ok: ls.length > 0 && ls.every((x) => x.startsWith('○')), line: ls.join(' ／ ').trim() }
 }
 const out = []
+const pickM = process.env.MUT ? process.env.MUT.split(',') : null
 for (const m of M) {
+  if (pickM && !pickM.some((k) => m.name.startsWith(k + ' '))) continue
+  if (m.copyFrom) { // 素材のファイルを前のコミットの物に替える
+    const r0 = spawnSync('git', ['show', `${m.copyFrom}:${m.file}`], { maxBuffer: 64 * 1024 * 1024 }); fs.writeFileSync(m.file, r0.stdout)
+    try { const failed = []; for (const t of m.tests) { const r = runTest(t); if (!r.ok) failed.push(`${t.join(' ')}: ${r.line}`) } out.push({ name: m.name, caught: failed.length > 0, failed }); console.log(m.name, failed.length ? '落ちた' : '落ちなかった', failed.join(' ／ ').slice(0, 300)) } finally { sh('git', ['checkout', 'HEAD', '--', m.file]) }
+    continue
+  }
   const src = fs.readFileSync(m.file, 'utf8')
   if (!src.includes(m.a)) { out.push({ name: m.name, caught: false, failed: [], note: '外す文が見つからない' }); console.log(m.name, '外す文が見つからない'); continue }
   fs.writeFileSync(m.file, src.replace(m.a, m.b))
@@ -41,6 +55,7 @@ for (const m of M) {
   } finally { sh('git', ['checkout', 'HEAD', '--', m.file]) }
 }
 sh('npm', ['run', 'build']) // 戻した版で dist を作り直す
-fs.writeFileSync('docs/qa/2026-11-05_便24/gate/mutate24-final.json', JSON.stringify(out, null, 1))
+const OUTF = process.env.MUT ? 'docs/qa/2026-11-05_便24/gate/mutate24b.json' : 'docs/qa/2026-11-05_便24/gate/mutate24-final.json'
+fs.writeFileSync(OUTF, JSON.stringify(out, null, 1))
 const diff = sh('git', ['diff', '--stat']).stdout.trim()
 console.log(`外し回しの終わり: ${out.filter((o) => o.caught).length}/${out.length} 通りで検査が落ちた・作業ツリーの変更 ${diff ? diff : 'なし'}`)

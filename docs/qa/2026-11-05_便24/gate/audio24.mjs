@@ -9,6 +9,7 @@
 //   A4（便24 で書き換え）角部屋のループの低音切りは、素材ごとの下限（src/data/soundFloor.js）が効いている: 秋の夕 [虫 420・ヒグラシ 1100・木々 750・川 260]・秋の雨の夜 [雨 560・木々 750]
 //   A6（便24）窓を閉じた時のこもりは 1600Hz（便23 まで 900Hz）、開けると 20000Hz
 //   A7（便24）叡山電車の音を鳴らしても、0.5 秒より長く鳴る正弦（上がり下がりするモーター）が無い（鳴った正弦の長さを数える）
+//   A8（便24・外の目 直すべき2）北寺尾の駅の電車の通過音は低い「ゴーッ」を持たない（作りの低音切り 400Hz 以上・帯の真ん中 800Hz 以上）
 //   A5 叡山電車の音を鳴らすと、鳴らした数が増えてエラーが無い（作りは低い雑音の帯を持たない）
 import { chromium } from 'playwright'
 import fs from 'node:fs'
@@ -70,6 +71,8 @@ const flyTo = async (p, X, Y, Z) => { await p.evaluate(([X, Y, Z]) => { const e 
     return { n: rec.length, max: durs.length ? Math.max(...durs) : 0 }
   })
   check('A7', r7.n > 0 && r7.max <= 0.5, `叡山電車の正弦 ${r7.n} 本・いちばん長いもの ${r7.max.toFixed(2)} 秒（0.5 秒以下）`)
+  { const body8 = src.slice(src.indexOf('const trainPass'), src.indexOf('const tick', src.indexOf('const trainPass'))), hp8 = +((body8.match(/hp.frequency.value = (d+)/) || [])[1] || 0), bp8 = +((body8.match(/bp.frequency.value = (d+)/) || [])[1] || 0)
+    check('A8', hp8 >= 400 && bp8 >= 800, `駅の電車の通過音の低音切り ${hp8}Hz（400 以上）・帯の真ん中 ${bp8}Hz（800 以上）`) }
   await r.ctx.close(); await d.ctx.close()
 }
 await b.close()

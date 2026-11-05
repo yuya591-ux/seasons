@@ -4,13 +4,13 @@
 //   その帯だけが残り「ぶおーん」と聞こえた。測りは scripts/qa-hum.mjs（低い帯 120〜600Hz の盛り上がりを数える）。
 //   ・木々のざわめき（leaves）: 40 秒前後ごとに 300〜600Hz の風の唸りが 2〜3 秒盛り上がる（葉のざわめきは 1kHz より上）
 //   ・ヒグラシ: 鳴き声は 2〜3.5kHz。60〜450Hz に風の唸りの塊が何度も入る
-//   ・雨音: 雨粒の音は 1kHz より上が芯。下の帯に低い唸りが短く入る
+//   ・~~雨音: 雨粒の音は 1kHz より上が芯。下の帯に低い唸りが短く入る~~（【便24・外の目】この素材の雨音は 300Hz より下が芯で、切ると痩せた＝下限を置かない）
 //   ・風: 低い唸りの盛り上がり（風の「ひゅー」は 500Hz より上）
 //   波（waves）は寄せ返しそのものが低い音の満ち引きなので切らない（qa-hum.mjs も数えない）
 export const SOUND_FLOOR = {
   'audio/kamo/leaves.mp3': 750,
   'audio/summer-rain-dusk/higurashi.mp3': 1100,
-  'audio/summer-rain-dusk/rain.mp3': 560,
+  // ~~'audio/summer-rain-dusk/rain.mp3': 560,~~（【便24・外の目 直すべき1】雨音の芯まで切り、雨の情景の音全体が 13〜15dB 痩せた。情景の hp のままにする）
   'audio/winter-snow-night/wind.mp3': 500,
   'audio/spring-dusk-corner-room/frogs.mp3': 300,
 }

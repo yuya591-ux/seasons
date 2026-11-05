@@ -26,7 +26,7 @@ const TIMES = {
   dusk: { el: 4.5, az: 290, turb: 5.5, ray: 1.3, exp: 0.4, sun: 0xffa66a, sunI: 2.0, hemi: [0xa8a8c8, 0x403028, 1.2], fog: 0xc6b2a6, fogD: 0.00016 },
   // ~~night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232, fogD: 0.0002 },~~
   // 【便24】夜が真っ暗で、空を飛んでも家の灯りしか見えなかった（裕也さん「明るすぎない範囲で程良いエモさというか、雰囲気を感じるような明るさというか、色彩に調整して」）。
-  //   月の光（青白く 0.25→0.6）と空の光（藍 0.35→0.95）を上げ、霞を藍の夜気に（遠くの山の形が浮く）。露出は 0.55→0.72（窓の灯りが白く飛ばない所まで）
+  //   月の光（青白く 0.25→0.7）と空の光（藍 0.35→1.05）を上げ、霞を藍の夜気に（遠くの山の形が浮く）。露出は 0.55→0.74（窓の灯りが白く飛ばない所まで）
   night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.74, sun: 0xaec2f2, sunI: 0.7, hemi: [0x3f5cab, 0x201c2c, 1.05], fog: 0x24366a, fogD: 0.00019 },
 }
 const timeKey = (t) => (t === 'morning' ? 'morning' : t === 'dusk' || t === 'evening' ? 'dusk' : t === 'night' ? 'night' : 'noon')
@@ -419,6 +419,7 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
     vec3 st = mix(vec3(0.5, 0.48, 0.44), vec3(0.66, 0.62, 0.55), sh) * (0.9 + 0.2 * dot(diffuseColor.rgb, vec3(0.333))); // 明るい灰ベージュの御影石
     st = mix(st, vec3(0.12, 0.11, 0.1), max(gA, gU) * (1.0 - far) * 0.9);
     diffuseColor.rgb = mix(st, vec3(0.52, 0.5, 0.46), far * 0.6);
+    ${SNOW ? 'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.84, 0.86, 0.89), 0.6 * (1.0 - max(gA, gU) * 0.4));' : ''}${RAIN ? 'diffuseColor.rgb *= 0.62;' : ''} // 【便24・外の目 直すべき4】雪の日は雪を、雨の日は濡れた暗さを石畳にも
   } else
   if (rk == 0) {
     float edge = smoothstep(0.3 - fwU, 0.3, e) * (1.0 - smoothstep(0.45, 0.45 + fwU, e));
@@ -698,6 +699,7 @@ void main() {`)
   const fromKamo = toKamo.clone().invert()
   const removed = []
   const ochayaSegs = [] // 便24: 描く時に町家（お茶屋）へ替えた家の表の壁の線（buildBldg が足す・使ったら空にする）
+  kyoFrontsAt.length = 0 // 【便24・外の目 様子見10】検証用の配列を組むたびに空に
   let plug = null, plugForce = null // 便19: 部屋の窓の所を塞ぐ壁（部屋が隠れている間だけ出す）・検証で決め打ちする値
   // 部屋の原点（町の3Dの座標）と、部屋の箱の部屋の座標（窓の中心が原点・正面 -z・左 -x）での広がり
   const roomO = new THREE.Vector3().setFromMatrixPosition(fromKamo.clone().multiply(new THREE.Matrix4().makeTranslation(meta.view.x - 0.6, meta.view.y - 1.5, meta.view.z)))
@@ -738,15 +740,16 @@ void main() {`)
     // 便24: お茶屋の町（祇園・先斗町）の低い家（高さ 11.5m 以下の今の家と古民家）は、町家（お茶屋）として描く（データは「今の家」が多く、漆喰の壁と窓の並びで祇園らしくなかった）。
     //   その家の表の壁の線（通りに向く壁）をここで求め、庇・出格子・暖簾・行灯・2階の手すりを kamoKyo.js が足す。kamokyo2=0 は外し回し用（前のまま）
     const ovr = new Set()
-    if (KYO && styleA && frontA && !/[?&]kamokyo2=0/.test(location.search)) for (const [b, e] of bb) { if (drop.has(b) || (styleA[b] !== 0 && styleA[b] !== 2)) continue; const cx = (e.min.x + e.max.x) / 2, cz = (e.min.z + e.max.z) / 2; if ((KGION(cx, cz) || KPONTO(cx, cz)) && e.max.y - e.min.y < 11.5 && e.max.x - e.min.x < 40 && e.max.z - e.min.z < 40) ovr.add(b) }
-    const sty = (b) => (ovr.has(b) ? 1 : styleA[b])
+    if (KYO && styleA && frontA && !/[?&]kamokyo2=0/.test(location.search)) for (const [b, e] of bb) { if (drop.has(b) || (styleA[b] !== 0 && styleA[b] !== 2)) continue; const cx = (e.min.x + e.max.x) / 2, cz = (e.min.z + e.max.z) / 2; if ((KGION(cx, cz) || KPONTO(cx, cz)) && e.max.y - e.min.y < 9.5 && e.max.x - e.min.x < 40 && e.max.z - e.min.z < 40) ovr.add(b) }
+    const sty = (b) => (ovrOk.has(b) ? 1 : styleA[b]) // 【便24・外の目 直すべき5】傾いた屋根の 2 階建て（高さ 9.5m 未満）だけを町家として描く（前は平らな屋根の箱に格子が付いた）
+    const ovrOk = new Set()
     if (ovr.size) {
-      const seg = new Map(), n0 = new THREE.Vector3(), u = new THREE.Vector3(), w = new THREE.Vector3()
+      const seg = new Map(), pitched = new Set(), n0 = new THREE.Vector3(), u = new THREE.Vector3(), w = new THREE.Vector3()
       for (let t = 0; t < nv; t += 3) {
         const b = bidA[t]; if (!ovr.has(b)) continue
         const ax = p16[t * 3], ay = p16[t * 3 + 1], az = p16[t * 3 + 2]
         u.set(p16[t * 3 + 3] - ax, p16[t * 3 + 4] - ay, p16[t * 3 + 5] - az); w.set(p16[t * 3 + 6] - ax, p16[t * 3 + 7] - ay, p16[t * 3 + 8] - az); n0.crossVectors(u, w).normalize()
-        if (Math.abs(n0.y) > 0.3) continue
+        if (Math.abs(n0.y) > 0.3) { if (Math.abs(n0.y) < 0.97) pitched.add(b); continue } // 【便24・外の目 直すべき5】傾いた屋根の面がある家だけ
         const e = bb.get(b), cx = (e.min.x + e.max.x) / 2, cz = (e.min.z + e.max.z) / 2, mx = (ax * 3 + u.x + w.x) / 3 - cx, mz = (az * 3 + u.z + w.z) / 3 - cz
         if (n0.x * mx + n0.z * mz < 0) n0.negate()
         const fa = (frontA[b] / 255) * Math.PI * 2 - Math.PI, fx = Math.sin(fa), fz = Math.cos(fa)
@@ -754,7 +757,8 @@ void main() {`)
         let q = seg.get(b); if (!q) { q = { s0: 1e9, s1: -1e9, d0: -1e9, fx, fz, y0: e.min.y }; seg.set(b, q) }
         for (let k = 0; k < 3; k++) { const x = p16[(t + k) * 3], z = p16[(t + k) * 3 + 2], ss = x * fz - z * fx, dd = x * fx + z * fz; q.s0 = Math.min(q.s0, ss); q.s1 = Math.max(q.s1, ss); q.d0 = Math.max(q.d0, dd) }
       }
-      for (const q of seg.values()) if (q.s1 - q.s0 > 2.5 && q.s1 - q.s0 < 30) { const P = (ss, dd) => [ss * q.fz + dd * q.fx, ss * -q.fx + dd * q.fz]; const [Ax, Az] = P(q.s0, q.d0), [Bx, Bz] = P(q.s1, q.d0); ochayaSegs.push({ A: [Ax, Az], B: [Bx, Bz], f: [q.fx, q.fz], base: q.y0 + 0.2 }) }
+      for (const b of pitched) ovrOk.add(b)
+      for (const [b, q] of seg) if (q.s1 - q.s0 > 2.5 && q.s1 - q.s0 < 30 && pitched.has(b)) { const P = (ss, dd) => [ss * q.fz + dd * q.fx, ss * -q.fx + dd * q.fz]; const [Ax, Az] = P(q.s0, q.d0), [Bx, Bz] = P(q.s1, q.d0); ochayaSegs.push({ A: [Ax, Az], B: [Bx, Bz], f: [q.fx, q.fz], base: q.y0 + 0.2 }) }
     }
     for (const [bid, e] of bb) if (styleA && styleA[bid] !== undefined) kyoCount[sty(bid)]++
     for (let t = 0; t < nv; t += 3) {

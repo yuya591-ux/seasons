@@ -63,6 +63,13 @@ function plankTex(keep) {
   return t
 }
 
+// 灯りだまりの図（中心が明るく外へ薄れる・加算で重ねる）
+function poolTex(keep) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const x = cv.getContext('2d')
+  const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)')
+  x.fillStyle = g; x.fillRect(0, 0, 64, 64)
+  const t = keep(new THREE.CanvasTexture(cv)); t.colorSpace = THREE.SRGBColorSpace; return t
+}
 function addMeshes(ctx, groups, part) {
   const { scene, keep } = ctx
   let tris = 0
@@ -95,12 +102,12 @@ export function buildOchayaFronts(ctx, segs, seed = 1) {
   if (/[?&]kamokyo2=0/.test(location.search)) return { n: 0, tris: 0 }
   return frontsFromSegs(ctx, segs.map((q) => ({ ...q, inset: 0 })), 100 + seed, true)
 }
-export const frontsAt = [] // 検証用: お茶屋に替えた家の表の真ん中・外の向き・足もと・幅
+export const frontsAt = [] // 検証用: お茶屋に替えた家の表の真ん中・外の向き・足もと・幅（kamoTown が組むたびに空にする）
 function frontsFromSegs(ctx, segs, seed, withEave) {
   const { keep, NIGHT, DUSK, SNOW, low } = ctx
   const LITE = NIGHT || DUSK
   const R = rng(24000 + seed)
-  const lat = Sink(), wood = Sink(), noren = Sink(), lamp = Sink(), rail = Sink(), tile = Sink()
+  const lat = Sink(), wood = Sink(), noren = Sink(), lamp = Sink(), rail = Sink(), tile = Sink(), pool = Sink()
   let n = 0
   for (const q of segs) {
     let sx = q.B[0] - q.A[0], sz = q.B[1] - q.A[1]; const L = Math.hypot(sx, sz); if (L < 2.4) continue; sx /= L; sz /= L
@@ -131,6 +138,11 @@ function frontsFromSegs(ctx, segs, seed, withEave) {
     if (R() < (ochaya ? 0.9 : 0.2)) {
       const lsP = doorL ? d1 + 0.25 : d0 - 0.55
       lamp.box(O, s, f, lsP, lsP + 0.3, 0.1, 0.36, base + 1.75, base + 2.1, [1, 0.93, 0.8])
+      if (LITE) { // 【便24・外の目 直すべき6】夜の通りの目線が真っ黒だった＝行灯の足もとの道と壁に、温かい灯りだまり（加算・道は外へ 2.6m・壁は 2.4m 四方）
+        const W = (ss, ff, y) => [O[0] + s[0] * ss + f[0] * ff, y, O[2] + s[2] * ss + f[2] * ff], c0 = lsP + 0.15, k = NIGHT ? 1 : 0.55
+        pool.quad(W(c0 - 1.6, 0.05, base - 0.17), W(c0 + 1.6, 0.05, base - 0.17), W(c0 + 1.6, 2.65, base - 0.17), W(c0 - 1.6, 2.65, base - 0.17), [0, 1, 0], 1, 1, [0.55 * k, 0.3 * k, 0.12 * k])
+        pool.quad(W(c0 - 1.2, 0.03, base + 0.75), W(c0 + 1.2, 0.03, base + 0.75), W(c0 + 1.2, 0.03, base + 3.15), W(c0 - 1.2, 0.03, base + 3.15), [f[0], 0, f[2]], 1, 1, [0.32 * k, 0.17 * k, 0.07 * k])
+      }
       wood.box(O, s, f, lsP - 0.02, lsP + 0.32, 0.08, 0.38, base + 2.1, base + 2.14, [0.07, 0.05, 0.035])
     }
     // 駒寄せ（2割・お茶屋の所は無し）: 足もとの低い木の柵（高さ 0.75m・外へ 0.5m）
@@ -148,6 +160,7 @@ function frontsFromSegs(ctx, segs, seed, withEave) {
   const lampMat = mk({ emissive: new THREE.Color(1, 0.5, 0.2), emissiveIntensity: LITE ? (NIGHT ? 1.05 : 0.7) : 0, roughness: 0.6 }) // 便24: 白く飛ばない温かい橙
   const groups = [{ sink: lat, mat: latMat, shadow: true }, { sink: wood, mat: mk({}), shadow: true }, { sink: noren, mat: mk({ side: THREE.DoubleSide, roughness: 0.95 }) }, { sink: lamp, mat: lampMat }, { sink: rail, mat: railMat, shadow: true }]
   if (withEave) groups.push({ sink: tile, mat: mk({ roughness: 0.6 }), shadow: true })
+  if (LITE) groups.push({ sink: pool, mat: keep(new THREE.MeshBasicMaterial({ map: poolTex(keep), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: true, fog: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })) })
   const tris = addMeshes(ctx, groups, 'kyoFront')
   return { n, tris }
 }
@@ -156,7 +169,8 @@ function frontsFromSegs(ctx, segs, seed, withEave) {
 export function buildYuka(ctx, bl, terrK, wetK) {
   if (/[?&]kamokyo2=0/.test(location.search)) return { n: 0, tris: 0 }
   const { keep, NIGHT, DUSK, S, low } = ctx
-  if (!(S === 'summer' || S === 'autumn') && !/[?&]yuka=1/.test(location.search)) return { n: 0, tris: 0, season: S } // 床が出るのは 5〜9 月（?yuka=1 で冬と春も出す・検証用）
+  // ~~夏と秋に出す~~（【便24・外の目 直すべき3】秋の情景は紅葉の頃で、本物の床〈5/1〜9/30〉と季節がずれた。春の情景は桜の頃〈4 月〉で床の前）＝夏だけ。?yuka=1 で夏のほかも出す（検証用）
+  if (S !== 'summer' && !/[?&]yuka=1/.test(location.search)) return { n: 0, tris: 0, season: S }
   const LITE = NIGHT || DUSK
   const R = rng(5101)
   // 鴨川の西岸の川に面した家: 二条（z 1950）〜南の四角の南の端（z 3600）。橋の所（三条 z≈2330・四条 z≈2950）は空ける

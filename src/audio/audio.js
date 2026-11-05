@@ -560,8 +560,8 @@ export function createAudio(opts) {
     // 発車ベルは「チン」が不快との実機FBで廃止（合成のベル関数ごと削除＝死蔵コードを残さない）。駅は遠い電車の通過音だけ。
     const trainPass = (tt) => {  // 電車の通過音（中域のゴーッ＋レールのカタンカタン。寄せて返す）
       const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true
-      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 130
-      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 260; bp.Q.value = 0.7
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 480 // 【便24・外の目 直すべき2】~~130~~ 低い「ゴーッ」（エンジンのような唸り）を切る
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 0.6 // 【便24】~~260Hz~~ レールを渡る「シャー」の帯へ
       const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, tt); g.gain.linearRampToValueAtTime(0.2, tt + 2.6); g.gain.linearRampToValueAtTime(0.0001, tt + 5.6) // 控えめに（遠い電車）
       src.connect(hp).connect(bp).connect(g).connect(sg); try { src.start(tt); src.stop(tt + 6) } catch { /* 無視 */ }
       for (let k = 0; k < 20; k++) { const ct = tt + 0.7 + k * 0.2, env = Math.sin((k / 20) * Math.PI)  // 近づき遠ざかるカタンカタン
