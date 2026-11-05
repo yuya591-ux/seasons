@@ -24,7 +24,10 @@ const TIMES = {
   noon: { el: 38, az: 0, turb: 3.5, ray: 1.0, exp: 0.32, sun: 0xfff6ea, sunI: 3.2, hemi: [0xcfe0f2, 0x6a6050, 0.7], fog: 0xc6d4e2, fogD: 0.00014 },
   // 【便21】夕方の空の光 0.45 → 1.2（日の反対側の壁と町家の格子が真っ暗に沈んだ）
   dusk: { el: 4.5, az: 290, turb: 5.5, ray: 1.3, exp: 0.4, sun: 0xffa66a, sunI: 2.0, hemi: [0xa8a8c8, 0x403028, 1.2], fog: 0xc6b2a6, fogD: 0.00016 },
-  night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232, fogD: 0.0002 },
+  // ~~night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232, fogD: 0.0002 },~~
+  // 【便24】夜が真っ暗で、空を飛んでも家の灯りしか見えなかった（裕也さん「明るすぎない範囲で程良いエモさというか、雰囲気を感じるような明るさというか、色彩に調整して」）。
+  //   月の光（青白く 0.25→0.6）と空の光（藍 0.35→0.95）を上げ、霞を藍の夜気に（遠くの山の形が浮く）。露出は 0.55→0.72（窓の灯りが白く飛ばない所まで）
+  night: { el: -12, az: 220, turb: 2, ray: 0.6, exp: 0.74, sun: 0xaec2f2, sunI: 0.7, hemi: [0x3f5cab, 0x201c2c, 1.05], fog: 0x24366a, fogD: 0.00019 },
 }
 const timeKey = (t) => (t === 'morning' ? 'morning' : t === 'dusk' || t === 'evening' ? 'dusk' : t === 'night' ? 'night' : 'noon')
 // 空の模様（情景の axes.weather）。曇り・雨・雪は空をにごらせ、日差しを弱め、霞を濃くする
@@ -113,24 +116,26 @@ export function buildKamo(data, { renderer, toKamo, roomBox, season = 'autumn', 
   const invTone = (r, g, b) => { const one = (y) => { let lo = 0, hi = 64; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (ACESfit(m) < y) lo = m; else hi = m } return (lo * 0.6) / T.exp }; return new THREE.Color(one(r), one(g), one(b)) }
   const DOME = RAIN || SNOW || NIGHT
   let skyMesh = null, su = null
-  const domeMat = (top, hor, R0) => new THREE.ShaderMaterial({
+  const domeMat = (top, hor, mid = null) => new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { uTop: { value: top }, uHor: { value: hor } },
+    uniforms: { uTop: { value: top }, uHor: { value: hor }, uMid: { value: mid || hor.clone().lerp(top, 0.5) }, uUseMid: { value: mid ? 1 : 0 } },
     vertexShader: 'varying vec3 vD; void main() { vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform vec3 uTop, uHor; varying vec3 vD;
-void main() { float h = normalize(vD).y; gl_FragColor = vec4(mix(uHor, uTop, smoothstep(-0.02, 0.55, h)), 1.0); }`,
+    fragmentShader: `uniform vec3 uTop, uHor, uMid; uniform float uUseMid; varying vec3 vD;
+void main() { float h = normalize(vD).y; vec3 c2 = mix(uHor, uTop, smoothstep(-0.02, 0.55, h)); vec3 c3 = mix(mix(uHor, uMid, smoothstep(-0.03, 0.13, h)), uTop, smoothstep(0.1, 0.62, h)); gl_FragColor = vec4(mix(c2, c3, uUseMid), 1.0); }`, // 便24: 晴れた夜は 3 段（地平の町あかり → 藍 → 深い紺）
   })
-  let domeTop = null, domeHor = null
+  let domeTop = null, domeHor = null, domeMid = null
   if (DOME) {
     if (NIGHT) {
       domeHor = invTone(RAIN ? 0.07 : 0.05, RAIN ? 0.062 : 0.05, RAIN ? 0.06 : 0.062) // 町の灯りが雲の底に映る地平
       domeTop = invTone(0.007, 0.009, 0.018)
       scene.fog.color.copy(domeHor) // 遠くは地平の色へ溶ける
+      // 【便24】晴れた夜（雨と雪の夜は前のまま）: 地平は町あかりがほんのり温かく映り、その上は藍、天頂は深い紺。霞は藍の夜気（前は灰色で、町が灰色に沈んだ）
+      if (!RAIN && !SNOW && !/[?&]kamonight=0/.test(location.search)) { domeHor = invTone(0.115, 0.08, 0.085); domeMid = invTone(0.035, 0.048, 0.1); domeTop = invTone(0.008, 0.013, 0.042); scene.fog.color.copy(invTone(0.05, 0.062, 0.11)) }
     } else {
       domeHor = scene.fog.color.clone()
       domeTop = domeHor.clone().multiply(new THREE.Color(RAIN ? 0.74 : 0.84, RAIN ? 0.78 : 0.88, RAIN ? 0.86 : 0.96))
     }
-    skyMesh = new THREE.Mesh(keep(new THREE.SphereGeometry(20000, 32, 16)), keep(domeMat(domeTop, domeHor)))
+    skyMesh = new THREE.Mesh(keep(new THREE.SphereGeometry(20000, 32, 16)), keep(domeMat(domeTop, domeHor, domeMid)))
   } else {
     skyMesh = new Sky(); skyMesh.scale.setScalar(24000)
     su = skyMesh.material.uniforms
@@ -194,10 +199,10 @@ void main() {
   {
     const envScene = new THREE.Scene()
     let s2
-    if (DOME) s2 = new THREE.Mesh(new THREE.SphereGeometry(8000, 32, 16), domeMat(domeTop, domeHor))
+    if (DOME) s2 = new THREE.Mesh(new THREE.SphereGeometry(8000, 32, 16), domeMat(domeTop, domeHor, domeMid))
     else { s2 = new Sky(); s2.scale.setScalar(8000); s2.material.uniforms.sunPosition.value.copy(sunDir); for (const k of ['turbidity', 'rayleigh', 'mieCoefficient', 'mieDirectionalG']) s2.material.uniforms[k].value = su[k].value }
     envScene.add(s2)
-    scene.environment = keep(pmrem.fromScene(envScene, 0, 1, 10000).texture); scene.environmentIntensity = NIGHT ? 0.25 : RAIN ? 0.6 : TK === 'dusk' ? 1.5 : 0.8 // 便21: 夕方は日の反対側の壁が真っ暗に沈んだので、空の映り込みの光を上げる
+    scene.environment = keep(pmrem.fromScene(envScene, 0, 1, 10000).texture); scene.environmentIntensity = NIGHT ? 0.5 : RAIN ? 0.6 : TK === 'dusk' ? 1.5 : 0.8 // 便21: 夕方は日の反対側の壁が真っ暗に沈んだので、空の映り込みの光を上げる
     s2.geometry.dispose(); s2.material.dispose(); pmrem.dispose()
   }
 
