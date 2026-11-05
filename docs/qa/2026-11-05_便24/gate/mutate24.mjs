@@ -25,8 +25,7 @@ const M = [
   { name: 'M14 納涼床を秋にも出す', file: KK, a: "  if (S !== 'summer' && !/[?&]yuka=1/.test(location.search))", b: "  if (S !== 'summer' && S !== 'autumn' && !/[?&]yuka=1/.test(location.search))", build: true, tests: [['kensa', 'K49']] },
   { name: 'M15 雨の素材の低い塊を前の素材に戻す', file: 'public/audio/summer-rain-dusk/rain.mp3', copyFrom: '6e3e5a4', build: false, tests: [['hum']] },
   { name: 'M16 北寺尾の駅の電車の通過音を前の低い帯に戻す', file: AU, a: "hp.frequency.value = 480 // 【便24・外の目 直すべき2】", b: "hp.frequency.value = 130 // 【便24・外の目 直すべき2】", build: false, tests: [['audio', 'A8']] },
-  { name: 'M17 雨の低音切りの下限 560Hz を戻す（雨の情景が痩せる）', file: SF, a: "  'audio/winter-snow-night/wind.mp3'", b: "  'audio/summer-rain-dusk/rain.mp3': 560,
-  'audio/winter-snow-night/wind.mp3'", build: false, tests: [['hum']] },
+  { name: 'M17 雨の低音切りの下限 560Hz を戻す（雨の情景が痩せる）', file: SF, a: "  'audio/winter-snow-night/wind.mp3'", b: "  'audio/summer-rain-dusk/rain.mp3': 560, 'audio/winter-snow-night/wind.mp3'", build: false, tests: [['hum']] },
 ]
 const runTest = ([kind, k]) => {
   if (kind === 'hum') { const r = sh('node', ['scripts/qa-hum.mjs']); return { ok: r.status === 0, line: (r.stdout || '').trim().split('\n').pop() } }
