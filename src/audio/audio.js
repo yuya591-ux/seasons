@@ -6,6 +6,7 @@
 //  - 遠雷の揺らぎ（鳴るたび音量・低域・再生速度をランダム化＝毎回違う距離の雷）
 // 素材はCC0等ライセンス明確なフリー素材のみ。出典は CREDITS.md に全数記録。
 // 連打切替に備え世代トークン（gen）で古い情景の読み込み・タイマー連鎖を無効化する。
+import { floorHp, WINDOW_CLOSED_LP } from '../data/soundFloor.js' // 便24: 素材ごとの低音切りの下限と、窓を閉じた時のこもりの高さ
 
 export function createAudio(opts) {
   const onCue = (opts && opts.onCue) || null // 音の発火を画面に伝える（遠雷フラッシュ等）
@@ -126,7 +127,7 @@ export function createAudio(opts) {
       duskShelf.type = 'highshelf'; duskShelf.frequency.value = 2600; duskShelf.gain.value = 0 // 既定0=昼。日が傾くと負へ＝高域がやわらぐ
       openFilter = ctx.createBiquadFilter()
       openFilter.type = 'lowpass'
-      openFilter.frequency.value = windowOpenAmt > 0.5 ? 20000 : 900 // 閉=ガラス越しに大きくこもる(虫の高域も抑える)／開=澄む
+      openFilter.frequency.value = windowOpenAmt > 0.5 ? 20000 : WINDOW_CLOSED_LP // 閉=ガラス越しにこもる／開=澄む（便24: 900Hz では低い帯だけが残り「ぶおーん」と唸った＝1600Hz）
       openFilter.Q.value = 0.5
       muffleGain = ctx.createGain()
       muffleGain.gain.value = windowOpenAmt > 0.5 ? 1 : 0.4 // 閉=しっかり防音で小さく／開=外気の音が戻る
@@ -250,7 +251,8 @@ export function createAudio(opts) {
     const baseGain = def.gain != null ? def.gain : 0.5
     g.gain.value = baseGain * (def.cue ? 0.55 + Math.random() * 0.55 : 0.7 + Math.random() * 0.5)
     let node = src.connect(g)
-    if (def.hp > 0 && ctx.createBiquadFilter) { const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = def.hp; h.Q.value = 0.6; node = node.connect(h) } // 便22: 素材の低い唸りを切る
+    const cueHp = floorHp(def.src, def.hp || 0) // 便24: 素材ごとの下限
+    if (cueHp > 0 && ctx.createBiquadFilter) { const h = ctx.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = cueHp; h.Q.value = 0.6; node = node.connect(h) } // 便22: 素材の低い唸りを切る
     if (ctx.createBiquadFilter) {
       const lp = ctx.createBiquadFilter()
       lp.type = 'lowpass'
@@ -359,7 +361,7 @@ export function createAudio(opts) {
         li++
         const lgain = def.gain != null ? def.gain : 1
         // 鈴虫(16kHz素材)は高域が8kHzで切れ、48kHzの虫(crickets)と並ぶと高域落差が目立つ→控えめにし虫を主役へ（評価サウンド）。
-        startLoop(buffer, /suzumushi/.test(def.src || '') ? lgain * 0.72 : lgain, pan, myGen, !!def.swell, def.dayFade, def.hp || 0)
+        startLoop(buffer, /suzumushi/.test(def.src || '') ? lgain * 0.72 : lgain, pan, myGen, !!def.swell, def.dayFade, floorHp(def.src, def.hp || 0)) // 便24: 素材ごとの低音切りの下限（src/data/soundFloor.js）
       } else if (def.interval) {
         scheduleInterval(def, buffer, myGen)
       } else {
@@ -696,7 +698,7 @@ export function createAudio(opts) {
   }
   function eidenPass(at, amt, pan, dep) {
     // 叡山電車（便22 で作り直した）: ほんのり。前の低い「ゴー」（雑音の帯 240Hz・11 秒）は車の走る音に聞こえたので外した（裕也さん「車のような音はいらない」）。
-    //   残すのは、レールの継ぎ目の「カタン・コトン」（短い乾いた音と、ごく短い胴の響き）と、細いモーターの音だけ。遠いほど小さく高い音がこもる
+    //   残すのは、レールの継ぎ目の「カタン・コトン」（短い乾いた音と、ごく短い胴の響き）だけ（~~細いモーターの音~~【便24】外した）。遠いほど小さく高い音がこもる
     if (!ctx.createBufferSource) return
     if (!evNoise) { const len = Math.floor(4 * ctx.sampleRate); evNoise = ctx.createBuffer(1, len, ctx.sampleRate); const d = evNoise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1 }
     const out0 = evOut(pan), A = Math.max(0.06, Math.min(1, amt))
@@ -710,14 +712,7 @@ export function createAudio(opts) {
       if (ctx.createOscillator) { const th = ctx.createOscillator(); th.type = 'sine'; th.frequency.setValueAtTime(off ? 300 : 340, ct); th.frequency.exponentialRampToValueAtTime(off ? 210 : 240, ct + 0.05) // 胴の響き（中域・ごく短い）
         const tg = ctx.createGain(); tg.gain.setValueAtTime(0.0001, ct); tg.gain.exponentialRampToValueAtTime(0.02 * A * env + 0.0002, ct + 0.004); tg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.06); th.connect(tg).connect(out); try { th.start(ct); th.stop(ct + 0.08) } catch { /* 無視 */ } }
     }
-    if (ctx.createOscillator) { // モーター（細い音・控えめ）。出る時は上がり、着く時は下がる
-      for (const [mul, amp] of [[1, 0.0055], [2.0, 0.0018]]) {
-        const m = ctx.createOscillator(); m.type = 'sine'
-        if (dep) { m.frequency.setValueAtTime(320 * mul, at + 0.5); m.frequency.linearRampToValueAtTime(820 * mul, at + 7.5) } else { m.frequency.setValueAtTime(800 * mul, at + 0.5); m.frequency.linearRampToValueAtTime(300 * mul, at + 8) }
-        const mg = ctx.createGain(); mg.gain.setValueAtTime(0.0001, at + 0.5); mg.gain.linearRampToValueAtTime(amp * A, at + 2); mg.gain.linearRampToValueAtTime(0.0001, at + 8.5)
-        m.connect(mg).connect(out); try { m.start(at + 0.5); m.stop(at + 8.6) } catch { /* 無視 */ }
-      }
-    }
+    // 便24: モーター（320→820Hz・800→300Hz と上がり下がりする正弦）は外した。発着ごとに「ぶおーん」とエンジンのように聞こえた（裕也さん「エンジン音のような音が頻繁に鳴って非常にストレス」）。残すのはレールの継ぎ目の音だけ
   }
   function playEvent(kind, o) {
     if (!started || !ctx || muted) return
@@ -814,7 +809,7 @@ export function createAudio(opts) {
     setWindowOpen(open) {
       windowOpenAmt = open ? 1 : 0
       if (!openFilter || !ctx) return
-      const f = open ? 20000 : 900 // 閉=ガラス越しに大きくこもる（虫の高域も抑える）／開=澄む
+      const f = open ? 20000 : WINDOW_CLOSED_LP // 閉=ガラス越しにこもる／開=澄む（便24: 900Hz → 1600Hz）
       try {
         openFilter.frequency.cancelScheduledValues(now())
         openFilter.frequency.setValueAtTime(openFilter.frequency.value, now())
@@ -1043,7 +1038,7 @@ export function createAudio(opts) {
     Object.assign(api, {
       _dbg() { return { altDuck: +altDuckV.toFixed(3), loops: layers.filter((l) => !l.stopped).map((l) => +l.layerGain.gain.value.toFixed(4)), duskShelf: duskShelf ? +duskShelf.gain.value.toFixed(2) : null, flyWind: flyWindV, cache: [...bufferCache.keys()], timers: timers.length, timersFired, chime: chimeDbg, started } },
       getLookPan() { return lookPan },
-      getDebug() { return { state: ctx ? ctx.state : 'none', water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2), ev: { ...evDbg }, voice: +voiceState.amt.toFixed(2), voiceOn: !!voiceNode, voiceLp: voiceNode ? Math.round(voiceNode.lp.frequency.value) : null, loopHp: layers.filter((l) => !l.stopped).map((l) => l.hp || 0) } },
+      getDebug() { return { state: ctx ? ctx.state : 'none', water: !!waterNode, sea: +waterState.sea.toFixed(2), river: +waterState.river.toFixed(2), crowd: +waterState.crowd.toFixed(2), fest: +festState.amt.toFixed(2), sta: +staState.amt.toFixed(2), ev: { ...evDbg }, voice: +voiceState.amt.toFixed(2), voiceOn: !!voiceNode, voiceLp: voiceNode ? Math.round(voiceNode.lp.frequency.value) : null, loopHp: layers.filter((l) => !l.stopped).map((l) => l.hp || 0), winLp: openFilter ? Math.round(openFilter.frequency.value) : null } },
     })
   }
   return api
