@@ -21,7 +21,7 @@ const M = [
   { name: 'M11 鴨川の夜を前の値に戻す', file: KT, a: 'exp: 0.74, sun: 0xaec2f2, sunI: 0.7, hemi: [0x3f5cab, 0x201c2c, 1.05], fog: 0x24366a', b: 'exp: 0.55, sun: 0x8ea6d0, sunI: 0.25, hemi: [0x2a3550, 0x0c0c12, 0.35], fog: 0x1c2232', build: true, tests: [['kensa', 'K53']] },
   { name: 'M12 晴れた夜の空の 3 段（地平の町あかり→藍→深い紺）と藍の霞を外す', file: KT, a: "      if (!RAIN && !SNOW && !/[?&]kamonight=0/.test(location.search)) { domeHor", b: "      if (false) { domeHor", build: true, tests: [['kensa', 'K53']] },
   // 【便24・外の目の後】足した直しと書き換えた検査（MUT=M13,M14… で選んで回す）
-  { name: 'M13 夜の通りの行灯の灯りだまりを外す', file: KK, a: '      if (LITE) { // 【便24・外の目 直すべき6】', b: '      if (false) { // 【便24・外の目 直すべき6】', build: true, tests: [['kensa', 'K53']] },
+  { name: 'M13 夜の通りの行灯の灯りだまりを外す', file: KK, a: '      if (LITE && !/[?&]kamopool=0/', b: '      if (false && !/[?&]kamopool=0/', build: true, tests: [['kensa', 'K53']] },
   { name: 'M14 納涼床を秋にも出す', file: KK, a: "  if (S !== 'summer' && !/[?&]yuka=1/.test(location.search))", b: "  if (S !== 'summer' && S !== 'autumn' && !/[?&]yuka=1/.test(location.search))", build: true, tests: [['kensa', 'K49']] },
   { name: 'M15 雨の素材の低い塊を前の素材に戻す', file: 'public/audio/summer-rain-dusk/rain.mp3', copyFrom: '6e3e5a4', build: false, tests: [['hum']] },
   { name: 'M16 北寺尾の駅の電車の通過音を前の低い帯に戻す', file: AU, a: "hp.frequency.value = 480 // 【便24・外の目 直すべき2】", b: "hp.frequency.value = 130 // 【便24・外の目 直すべき2】", build: false, tests: [['audio', 'A8']] },
