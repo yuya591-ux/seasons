@@ -36,8 +36,9 @@ for (const s of steps) {
   const out = (r.stdout || '') + (r.stderr || '')
   const ok = r.status === 0 && (!s.check || s.check(out))
   if (!s.name.startsWith('撮る ')) { n++; if (ok) pass++ } else if (!ok) n++ // 撮るだけの段は、落ちた時だけ数える
+  const xs = out.split('\n').filter((l) => /^× /.test(l)).join(" ／ ") // 【便24】外れた行は必ず全部残す（1回目の全テストで外れた1本が最後の 40 行の外で分からなかった）
   const last = out.trim().split('\n').filter((l) => !/DEP0190|trace-deprecation/.test(l)).slice(-(s.name.startsWith('前後') ? 12 : s.name.startsWith('鴨川') ? 40 : s.name.startsWith('音') ? 9 : s.name.startsWith('唸り') || s.name.startsWith('画面') ? 3 : 2)).join(' ／ ')
-  console.log(`${s.name} ${ok ? '合格' : '不合格'}（${((Date.now() - t0) / 1000).toFixed(0)}秒） ${last.slice(0, 4000)}`)
+  console.log(`${s.name} ${ok ? '合格' : '不合格'}（${((Date.now() - t0) / 1000).toFixed(0)}秒） ${xs ? '外れ: ' + xs + ' ／ ' : ''}${last.slice(0, 4000)}`)
 }
 console.log(`全テストの終わり: ${pass}/${n} 合格`)
 process.exit(pass === n ? 0 : 1)
