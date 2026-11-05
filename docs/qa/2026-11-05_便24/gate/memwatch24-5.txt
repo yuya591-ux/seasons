@@ -1,0 +1,408 @@
+=== 23:09
+空ぁEMB: 16304
+   3704    842MB Memory Compression 
+  26620    478MB MsMpEng.exe      
+  47176    455MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    420MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    409MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  18244    398MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:10
+空ぁEMB: 14612
+  52884   1014MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    842MB Memory Compression 
+  15700    476MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  26620    467MB MsMpEng.exe      
+  47176    451MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    416MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:11
+空ぁEMB: 14389
+  52884    993MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    841MB Memory Compression 
+  26620    452MB MsMpEng.exe      
+  47176    446MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    407MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  51428    402MB node.exe         node  scripts/qa-smoke.mjs
+=== 23:12
+空ぁEMB: 14065
+  52884   1067MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    840MB Memory Compression 
+  51428    560MB node.exe         node  scripts/qa-smoke.mjs
+  15700    509MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  26620    443MB MsMpEng.exe      
+  47176    442MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:13
+空ぁEMB: 13476
+  52884   1295MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    839MB Memory Compression 
+  15700    801MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  51428    562MB node.exe         node  scripts/qa-smoke.mjs
+  26620    443MB MsMpEng.exe      
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:14
+空ぁEMB: 13359
+  52884   1488MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    835MB Memory Compression 
+  15700    677MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  51428    576MB node.exe         node  scripts/qa-smoke.mjs
+  26620    445MB MsMpEng.exe      
+  47176    443MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:15
+空ぁEMB: 13776
+  52884   1544MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    834MB Memory Compression 
+  51428    597MB node.exe         node  scripts/qa-smoke.mjs
+  26620    442MB MsMpEng.exe      
+  47176    415MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    411MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:16
+空ぁEMB: 13119
+  52884   1522MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    833MB Memory Compression 
+  15700    822MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  51428    603MB node.exe         node  scripts/qa-smoke.mjs
+  21548    442MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  26620    441MB MsMpEng.exe      
+=== 23:17
+空ぁEMB: 13384
+  52884   1456MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    833MB Memory Compression 
+  15700    800MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  51428    601MB node.exe         node  scripts/qa-smoke.mjs
+  26620    441MB MsMpEng.exe      
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:18
+空ぁEMB: 13504
+  52884   1679MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    832MB Memory Compression 
+  51428    602MB node.exe         node  scripts/qa-smoke.mjs
+  26620    441MB MsMpEng.exe      
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    411MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:19
+空ぁEMB: 13678
+  52884   1316MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    831MB Memory Compression 
+  51428    615MB node.exe         node  scripts/qa-smoke.mjs
+  50812    426MB node.exe         node --experimental-strip-types scripts/verify-sannen.mjs
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    412MB MsMpEng.exe      
+=== 23:20
+空ぁEMB: 14151
+  52884    890MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    831MB Memory Compression 
+  51428    629MB node.exe         node  scripts/qa-smoke.mjs
+  15700    448MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  26620    408MB MsMpEng.exe      
+  47176    405MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:21
+空ぁEMB: 13716
+  52884   1104MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+   3704    828MB Memory Compression 
+  51428    636MB node.exe         node  scripts/qa-smoke.mjs
+  15700    553MB chrome-headless-shell.exe "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chr
+  51724    417MB node.exe         node --experimental-strip-types scripts/verify-sannen.mjs
+  26620    408MB MsMpEng.exe      
+=== 23:22
+空ぁEMB: 14616
+  47064    865MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704    828MB Memory Compression 
+  51824    598MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    419MB MsMpEng.exe      
+  41220    396MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    391MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:23
+空ぁEMB: 14079
+  51824    954MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  43920    951MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704    836MB Memory Compression 
+  26620    424MB MsMpEng.exe      
+  41220    395MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    391MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:24
+空ぁEMB: 15305
+   3704   1077MB Memory Compression 
+  51824    684MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  54220    517MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  26620    412MB MsMpEng.exe      
+  41220    395MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:25
+空ぁEMB: 15087
+   3704   1067MB Memory Compression 
+  51824    682MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  51716    529MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  29556    426MB node.exe         node --experimental-strip-types scripts/verify-sannen.mjs
+  26620    409MB MsMpEng.exe      
+  41220    397MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:26
+空ぁEMB: 15146
+   3704   1066MB Memory Compression 
+  51824    882MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  34412    489MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  26620    408MB MsMpEng.exe      
+  41220    397MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    391MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:27
+空ぁEMB: 14974
+   3704   1064MB Memory Compression 
+  26628    810MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  51824    758MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    409MB MsMpEng.exe      
+  41220    397MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    391MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:28
+空ぁEMB: 15052
+   3704   1064MB Memory Compression 
+  51824    807MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  41176    590MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  26620    409MB MsMpEng.exe      
+  41220    397MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    391MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:29
+空ぁEMB: 13585
+  43372   1327MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1064MB Memory Compression 
+  51824    954MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+   4224    572MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  26620    408MB MsMpEng.exe      
+  41220    398MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:30
+空ぁEMB: 13928
+  38980   1432MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1063MB Memory Compression 
+  51824   1061MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    403MB MsMpEng.exe      
+  41220    398MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:32
+空ぁEMB: 14649
+   3704   1063MB Memory Compression 
+  52784   1029MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  51824    815MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    405MB MsMpEng.exe      
+  41220    397MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    391MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+=== 23:33
+空ぁEMB: 14511
+  40404   1063MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1062MB Memory Compression 
+  51824    815MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  41220    398MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    384MB MsMpEng.exe      
+=== 23:34
+空ぁEMB: 14480
+   6032   1129MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1060MB Memory Compression 
+  51824    818MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    403MB MsMpEng.exe      
+  41220    398MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:35
+空ぁEMB: 15120
+   3704   1059MB Memory Compression 
+  51824    873MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  19536    434MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  41220    395MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    378MB MsMpEng.exe      
+=== 23:36
+空ぁEMB: 14967
+   3704   1058MB Memory Compression 
+  51824    796MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  42908    553MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  41220    395MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    382MB MsMpEng.exe      
+=== 23:37
+空ぁEMB: 14379
+   3704   1057MB Memory Compression 
+  42908   1016MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  51824    796MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  32172    415MB node.exe         node --experimental-strip-types scripts/verify-sannen.mjs
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    383MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:38
+空ぁEMB: 13813
+  24364   1314MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  51824   1169MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+   3704   1057MB Memory Compression 
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    390MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  41220    383MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:39
+空ぁEMB: 14420
+   3704   1058MB Memory Compression 
+  51824    859MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  35124    831MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  48896    421MB node.exe         node --experimental-strip-types scripts/verify-sannen.mjs
+  47176    390MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    383MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:40
+空ぁEMB: 14032
+  35124   1252MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1211MB Memory Compression 
+  51824   1005MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  19372    535MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  47176    388MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    368MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:41
+空ぁEMB: 14753
+  51324   1276MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1199MB Memory Compression 
+  51824    947MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    388MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    368MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    367MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+=== 23:42
+空ぁEMB: 14249
+  49952   1343MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1200MB Memory Compression 
+  51824   1133MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    387MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    377MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  41220    368MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:43
+空ぁEMB: 14066
+  20724   1349MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1199MB Memory Compression 
+  51824   1141MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+   2864    431MB node.exe         node --experimental-strip-types scripts/verify-sannen.mjs
+  47176    389MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    385MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+=== 23:44
+空ぁEMB: 14865
+   3704   1199MB Memory Compression 
+  26632    936MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  51824    889MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    389MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    369MB MsMpEng.exe      
+  41220    368MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:45
+空ぁEMB: 14826
+   3704   1198MB Memory Compression 
+  49724   1122MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  51824    917MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    370MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    361MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  35464    358MB node.exe         node scripts/kamo/kensa.mjs
+=== 23:46
+空ぁEMB: 14324
+   3704   1197MB Memory Compression 
+  43492   1194MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  51824   1156MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    370MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    364MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  41220    361MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:47
+空ぁEMB: 16789
+   3704   1189MB Memory Compression 
+  47176    407MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    393MB MsMpEng.exe      
+  21548    386MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  41220    362MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  12684    299MB explorer.exe     C:\WINDOWS\Explorer.EXE
+=== 23:48
+空ぁEMB: 14895
+   3704   1182MB Memory Compression 
+  23584   1163MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  48472    748MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    404MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    373MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  26620    371MB MsMpEng.exe      
+=== 23:49
+空ぁEMB: 15315
+   3704   1181MB Memory Compression 
+  35024    903MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   1296    507MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    403MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    386MB MsMpEng.exe      
+  41220    361MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:50
+空ぁEMB: 13832
+  49040   1287MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1181MB Memory Compression 
+   1296    837MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    417MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    407MB MsMpEng.exe      
+  31268    373MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+=== 23:51
+空ぁEMB: 12731
+  31268   1359MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  49040   1214MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   3704   1181MB Memory Compression 
+   1296   1099MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    422MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    406MB MsMpEng.exe      
+=== 23:52
+空ぁEMB: 15639
+   3704   1166MB Memory Compression 
+  18352    511MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  43152    485MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  26620    418MB MsMpEng.exe      
+  47176    413MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    375MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+=== 23:53
+空ぁEMB: 15181
+   3704   1166MB Memory Compression 
+  42376    920MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  32212    529MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  47176    412MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  26620    409MB MsMpEng.exe      
+  41220    361MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:54
+空ぁEMB: 14056
+   3704   1166MB Memory Compression 
+  34408    929MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+   8848    535MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  15884    522MB node.exe         "node"   "C:\Users\yuya.satake\ClaudeCode\mikazuki-arcade\node_modules\.bin\\..\vite\bin\vite.js" --host 127.0
+  26620    426MB MsMpEng.exe      
+  47176    412MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:55
+空ぁEMB: 14649
+   3704   1163MB Memory Compression 
+  50172    512MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  28084    511MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    433MB MsMpEng.exe      
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    384MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+=== 23:56
+空ぁEMB: 14807
+   3704   1162MB Memory Compression 
+  17432   1104MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  29188    598MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    433MB MsMpEng.exe      
+  47176    413MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    361MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:57
+空ぁEMB: 14750
+   3704   1162MB Memory Compression 
+  48688    792MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  26620    438MB MsMpEng.exe      
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    362MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
+  41220    362MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:58
+空ぁEMB: 14700
+   3704   1162MB Memory Compression 
+  27208    763MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+   7172    755MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  26620    430MB MsMpEng.exe      
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  41220    361MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 23:59
+空ぁEMB: 13861
+   3704   1161MB Memory Compression 
+  38784    963MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=renderer --noe
+  30376    725MB chrome.exe       "C:\Users\yuya.satake\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe" --type=gpu-process --
+  50400    546MB msedge.exe       "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --type=renderer --noerrdialogs --user-data-dir=
+  26620    426MB MsMpEng.exe      
+  47176    414MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+=== 00:00
+空ぁEMB: 15718
+   3704   1075MB Memory Compression 
+  50400    593MB msedge.exe       "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --type=renderer --noerrdialogs --user-data-dir=
+  26620    443MB MsMpEng.exe      
+  41220    407MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  47176    394MB claude.exe       "C:\Users\yuya.satake\.local\bin\claude.exe"
+  21548    354MB Code.exe         "C:\Users\yuya.satake\AppData\Local\Programs\Microsoft VS Code\Code.exe" --type=renderer --user-data-dir="C:\U
