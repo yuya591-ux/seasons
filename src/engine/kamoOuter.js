@@ -10,7 +10,8 @@ import { ShapeUtils, Vector2 } from 'three'
 import { buildMeisho } from './kamoMeisho.js'
 import * as BGU from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
-const OV = '?v=22' // データの版の印（控えが前の版を返して混ざらないように）
+/* global __OUTER_V__ */
+const OV = '?v=' + (typeof __OUTER_V__ !== 'undefined' ? __OUTER_V__ : '22') // データの版の印（控えが前の版を返して混ざらないように）。~~'?v=22'~~【便24】public/kamo/outer の中身の指紋（vite.config.js）
 
 async function gunzip(url) {
   const r = await fetch(url)

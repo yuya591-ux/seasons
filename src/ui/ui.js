@@ -1,6 +1,7 @@
 // 画面のUI。眺める邪魔をしないよう最小限・控えめ。無操作でHUDは静かに消える。
 // 文言は静かで上質に。システム用語は出さない。
 
+import { withV } from '../util/mediaV.js' // 便24: サムネの読み先に中身の指紋の印
 import { SCENES, pickNowScene } from '../data/scenes/index.js'
 import { CREDIT_INTRO, CREDIT_SOUNDS, CREDIT_IMAGES, CREDIT_MAPS, CREDIT_TOOLS, CREDIT_OUTRO } from '../data/credits.js'
 
@@ -373,7 +374,7 @@ export function buildUI(opts) {
           const cell = h('div', 'journal__cell')
           const sw = h('span', 'journal__thumb')
           const pal = sc.palette.early
-          sw.style.backgroundImage = `url("${BASE}thumbs/${id}.jpg"), linear-gradient(165deg, ${pal.skyTop}, ${pal.horizon})`
+          sw.style.backgroundImage = `url("${BASE}${withV(`thumbs/${id}.jpg`)}"), linear-gradient(165deg, ${pal.skyTop}, ${pal.horizon})`
           cell.appendChild(sw)
           cell.appendChild(h('span', 'journal__name', sc.label))
           grid.appendChild(cell)
@@ -527,7 +528,7 @@ export function buildUI(opts) {
       const sw = h('span', 'scene-card__swatch')
       const pal = scene.palette.early
       const grad = `linear-gradient(165deg, ${pal.skyTop}, ${pal.skyMid} 55%, ${pal.horizon})`
-      sw.style.backgroundImage = `url("${BASE}thumbs/${scene.id}.jpg"), ${grad}` // 実描画サムネ→無ければパレット
+      sw.style.backgroundImage = `url("${BASE}${withV(`thumbs/${scene.id}.jpg`)}"), ${grad}` // 実描画サムネ→無ければパレット（便24: 中身の指紋の印つき＝控えが前の画を返さない）
       const body = h('span', 'scene-card__body')
       body.appendChild(h('span', 'scene-card__label', label))
       if (count) body.appendChild(h('span', 'scene-card__count', count)) // 場所のカードの眺めの数（説明の切り詰めで消えないよう別の行に・V55）

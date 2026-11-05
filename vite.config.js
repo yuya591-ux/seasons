@@ -44,11 +44,26 @@ function precacheManifest() {
   }
 }
 
+// 便24: 名前が変わらない画像・音・鴨川のデータに、中身の指紋の印（?v=…）を付ける。
+//   控え（service worker）は画像と音を「控えを先に返し、裏で取り直す」ので、同じ名前で中身を替えると、初めて開いた時に前の画が出た
+//   （裕也さん「サムネ画像もトップの１つだけでそのあとの季節選択画面は前のままでした」2026-11-05）。印が変われば別の物として取り直す。
+//   鴨川の町のデータは手で上げる印（?v=23）だったので、上げ忘れると新しい本体と古いデータが混ざる＝これも中身の指紋にした
+function walk(d) { const out = []; if (!fs.existsSync(d)) return out; for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) { const p = path.join(d, e.name); if (e.isDirectory()) out.push(...walk(p)); else out.push(p) } return out }
+const hashOf = (files) => { const h = createHash('sha1'); for (const f of files) { h.update(path.basename(f)); h.update(fs.readFileSync(f)) } return h.digest('hex').slice(0, 10) }
+function mediaVersions() {
+  const pub = path.resolve('public'), map = {}
+  for (const sub of ['thumbs', 'audio', 'bg']) for (const f of walk(path.join(pub, sub))) map[path.relative(pub, f).split(path.sep).join('/')] = hashOf([f])
+  const kamo = path.join(pub, 'kamo'), outer = path.join(kamo, 'outer')
+  return { map, kamo: hashOf(walk(kamo).filter((f) => !f.startsWith(outer + path.sep))), outer: hashOf(walk(outer)) }
+}
+const MV = mediaVersions()
+
 // GitHub Pages はリポジトリ名のサブパス配下で公開されるため base を合わせる。
 // 例: https://<ユーザー名>.github.io/seasons/
 export default defineConfig({
   base: BASE,
   plugins: [precacheManifest()],
+  define: { __MEDIA_V__: JSON.stringify(MV.map), __KAMO_V__: JSON.stringify(MV.kamo), __OUTER_V__: JSON.stringify(MV.outer) }, // 便24: 中身の指紋の印
   // three.module は意図的に大きい（動的importで分割済み・PWAで事前キャッシュ）。
   // 既定500KBの警告が出続けて保守ノイズになるため許容上限を上げる（評価 技術-L6）。
   build: { chunkSizeWarningLimit: 900 },

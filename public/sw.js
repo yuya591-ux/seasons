@@ -100,7 +100,11 @@ self.addEventListener('fetch', (e) => {
       const cached = await cache.match(req)
       const network = fetch(req)
         .then((res) => {
-          if (res && res.status === 200 && res.type === 'basic') cache.put(req, res.clone())
+          if (res && res.status === 200 && res.type === 'basic') {
+            cache.put(req, res.clone())
+            // 便24: 中身の指紋の印（?v=…）つきの物は、同じ道で印の違う前の控えを消す（中身を替えるたびに控えが積もらない）
+            if (/[?&]v=/.test(url.search)) cache.keys().then((ks) => ks.forEach((k) => { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) cache.delete(k) })).catch(() => {})
+          }
           return res
         })
         .catch(() => null)

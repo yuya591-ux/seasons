@@ -47,7 +47,8 @@ const view = (buf, sec) => new globalThis[sec.type](buf, sec.off, sec.n)
 
 /** 鴨川の町のデータと図を取ってくる。low＝iPhone の段（光の図 2048・素材の写真は縦横半分） */
 // 【便21・外の目】データの版の印。控え（service worker）が前の版の kamo.json と .bin を先に返すと、新しい本体と古いデータが混ざって崩れる（便21 で範囲の形を替えた）。版ごとに読み先を分ける
-const KAMO_V = '?v=23' // 便23: 網を北と南の四角の外接の四角に広げ、南の物を south.bin に分けた
+/* global __KAMO_V__ */
+const KAMO_V = '?v=' + (typeof __KAMO_V__ !== 'undefined' ? __KAMO_V__ : '23') // ~~便23: '?v=23'（手で上げる印）~~【便24】public/kamo（outer を除く）の中身の指紋（vite.config.js）。上げ忘れで新しい本体と古いデータが混ざらない
 export async function loadKamo(base, { low = false } = {}) {
   const meta = await (await fetch(base + 'kamo.json' + KAMO_V)).json()
   const F = meta.files

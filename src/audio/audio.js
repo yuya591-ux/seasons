@@ -6,6 +6,7 @@
 //  - 遠雷の揺らぎ（鳴るたび音量・低域・再生速度をランダム化＝毎回違う距離の雷）
 // 素材はCC0等ライセンス明確なフリー素材のみ。出典は CREDITS.md に全数記録。
 // 連打切替に備え世代トークン（gen）で古い情景の読み込み・タイマー連鎖を無効化する。
+import { withV } from '../util/mediaV.js'
 import { floorHp, WINDOW_CLOSED_LP } from '../data/soundFloor.js' // 便24: 素材ごとの低音切りの下限と、窓を閉じた時のこもりの高さ
 
 export function createAudio(opts) {
@@ -37,7 +38,7 @@ export function createAudio(opts) {
   }
 
   const base = import.meta.env.BASE_URL || '/'
-  const urlOf = (src) => base + src
+  const urlOf = (src) => base + withV(src) // 便24: 中身の指紋の印（素材を差し替えた時に控えが前の音を返さない）
   const now = () => ctx.currentTime
   const targetVol = () => (muted ? 0.0001 : Math.max(0.0001, volume))
 
