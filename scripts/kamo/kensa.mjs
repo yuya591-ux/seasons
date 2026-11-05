@@ -507,8 +507,9 @@ if (run('K49') || run('K50') || run('K51') || run('K52')) {
 if (run('K51')) { const o = await open('summer-morning-corner-room', { q: 'kamotree2=0' }); await waitSouth(o.p); const k = await kamoInfo(o.p); await o.ctx.close(); check('K51', (k.trees2 || {}).w === 0, `?kamotree2=0 の柳 ${(k.trees2 || {}).w}（0）`) }
 if (run('K53')) {
   const o = await open('summer-night-corner-room'); await waitSouth(o.p); await camAt(o.p, [-20, 28, 2990, -112, -8, 2680, 55]); const e = await edges(o.p, 'crop=iw:ih*0.55:0:ih*0.45'), sky = await edges(o.p, 'crop=iw:ih*0.25:0:0')
-  await o.p.evaluate(() => { window.__kamoCam = { p: [366, -10.5, 3060], l: [366, -12.5, 3100], fov: 60 } }); await o.p.waitForTimeout(2500); const st = await edges(o.p, 'crop=iw:ih*0.55:0:ih*0.45'); await o.ctx.close()
-  check('K53', e.y >= 26 && e.y <= 70 && e.sat >= 3 && sky.sat >= 8 && st.y >= 30 && st.y <= 80, `晴れた夏の夜の下 55% の明るさ ${e.y}（26〜70）・色の濃さ ${e.sat}（3 以上）・空の上 25% の色の濃さ ${sky.sat}（8 以上＝地平の町あかりから藍への 3 段）・祇園の通りの目線の下 55% の明るさ ${st.y}（30〜80＝行灯の灯りだまり）`)
+  await o.p.evaluate(() => { window.__kamoCam = { p: [366, -10.5, 3060], l: [366, -12.5, 3100], fov: 60 } }); await o.p.waitForTimeout(2500); const st = await edges(o.p, 'crop=iw:ih*0.55:0:ih*0.45'), stL = await edges(o.p, 'crop=iw*0.5:ih*0.3:0:ih*0.38'); await o.ctx.close()
+  const o2 = await open('summer-night-corner-room', { q: 'kamopool=0' }); await waitSouth(o2.p); await camAt(o2.p, [366, -10.5, 3060, 366, -12.5, 3100, 60]); const st0 = await edges(o2.p, 'crop=iw*0.5:ih*0.3:0:ih*0.38'); await o2.ctx.close()
+  check('K53', e.y >= 26 && e.y <= 70 && e.sat >= 3 && sky.sat >= 8 && st.y >= 30 && st.y <= 80 && stL.y >= st0.y + 1.5, `晴れた夏の夜の下 55% の明るさ ${e.y}（26〜70）・色の濃さ ${e.sat}（3 以上）・空の上 25% の色の濃さ ${sky.sat}（8 以上＝地平の町あかりから藍への 3 段）・祇園の通りの目線の下 55% の明るさ ${st.y}（30〜80）・軒下の帯（左半分の高さ 38〜68%）の明るさ ${stL.y}・行灯の灯りだまり無し ${st0.y}（それより 1.5 以上明るい。同じ所の測りの揺れは 0.02）`)
 }
 await b.close()
 const bad = results.filter((r) => !r.pass)

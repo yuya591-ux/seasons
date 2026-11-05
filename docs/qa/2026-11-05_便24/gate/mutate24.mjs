@@ -8,7 +8,7 @@ assertCleanTree()
 const sh = (cmd, args, env = {}) => spawnSync(cmd, args, { encoding: 'utf8', env: { ...process.env, ...env }, shell: process.platform === 'win32' && cmd === 'npm', maxBuffer: 256 * 1024 * 1024 })
 const KT = 'src/engine/kamoTown.js', KK = 'src/engine/kamoKyo.js', AU = 'src/audio/audio.js', SF = 'src/data/soundFloor.js', MV = 'src/util/mediaV.js'
 const M = [
-  { name: 'M1 木々のざわめきの低音切りの下限（750Hz）を外す', file: SF, a: "  'audio/kamo/leaves.mp3': 750,\n", b: '', build: false, tests: [['hum'], ['audio', 'A4']] },
+  { name: 'M1 木々のざわめきの低音切りの下限（750Hz）を外す', file: SF, a: "  'audio/kamo/leaves.mp3': 750,", b: '', build: false, tests: [['hum'], ['audio', 'A4']] },
   { name: 'M2 窓を閉じた時のこもりを 900Hz に戻す', file: SF, a: 'export const WINDOW_CLOSED_LP = 1600', b: 'export const WINDOW_CLOSED_LP = 900', build: false, tests: [['audio', 'A6']] },
   { name: 'M3 叡山電車の上がり下がりするモーター音を戻す', file: AU, a: '    // 便24: モーター（320→820Hz・800→300Hz と上がり下がりする正弦）は外した。', b: "    if (ctx.createOscillator) { const m = ctx.createOscillator(); m.type = 'sine'; m.frequency.setValueAtTime(320, at + 0.5); m.frequency.linearRampToValueAtTime(820, at + 7.5); const mg = ctx.createGain(); mg.gain.setValueAtTime(0.0001, at + 0.5); mg.gain.linearRampToValueAtTime(0.0055 * A, at + 2); mg.gain.linearRampToValueAtTime(0.0001, at + 8.5); m.connect(mg).connect(out); m.start(at + 0.5); m.stop(at + 8.6) }\n    // 便24: モーター（320→820Hz・800→300Hz と上がり下がりする正弦）は外した。", build: false, tests: [['audio', 'A7']] },
   { name: 'M4 サムネの読み先の中身の指紋の印を外す', file: MV, a: '  return v ? `${p}?v=${v}` : p', b: '  return p', build: true, tests: [['sweep']] },

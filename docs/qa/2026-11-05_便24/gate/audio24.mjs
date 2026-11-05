@@ -47,7 +47,7 @@ const flyTo = async (p, X, Y, Z) => { await p.evaluate(([X, Y, Z]) => { const e 
   check('A3', rd.life && rd.life.voice === 0 && rd.a.voice === 0 && dd.life && dd.life.voice > 0 && dd.a.voice > 0, `秋の雨の夜 ${rd.life && rd.life.voice}（${rd.a && rd.a.voice}）・秋の夕暮れ ${dd.life && dd.life.voice}（${dd.a && dd.a.voice}）`)
   // A4: 生きているループの低音切り（情景データの順）。秋の夕＝虫・ヒグラシ・木々・川／秋の雨の夜＝雨・木々
   const hpD = dd.a.loopHp, hpR = rd.a.loopHp
-  check('A4', JSON.stringify(hpD) === JSON.stringify([420, 1100, 750, 260]) && JSON.stringify(hpR) === JSON.stringify([560, 750]), `秋の夕のループの低音切り ${JSON.stringify(hpD)}（[420,1100,750,260]）・秋の雨の夜 ${JSON.stringify(hpR)}（[560,750]）`)
+  check('A4', JSON.stringify(hpD) === JSON.stringify([420, 1100, 750, 260]) && JSON.stringify(hpR) === JSON.stringify([230, 750]), `秋の夕のループの低音切り ${JSON.stringify(hpD)}（[420,1100,750,260]）・秋の雨の夜 ${JSON.stringify(hpR)}（[230,750]＝【便24・外の目】雨は下限を置かず情景の 230Hz）`)
   const e0 = dd.a.ev.eiden
   const r5 = await d.p.evaluate(() => { try { window.__audio.playEvent('eiden', { amt: 1, pan: 0.2, dep: true }); window.__audio.playEvent('eiden', { amt: 0.3 }); return 'ok' } catch (e) { return 'ERR ' + e.message } })
   await d.p.waitForTimeout(1200)
@@ -71,7 +71,7 @@ const flyTo = async (p, X, Y, Z) => { await p.evaluate(([X, Y, Z]) => { const e 
     return { n: rec.length, max: durs.length ? Math.max(...durs) : 0 }
   })
   check('A7', r7.n > 0 && r7.max <= 0.5, `叡山電車の正弦 ${r7.n} 本・いちばん長いもの ${r7.max.toFixed(2)} 秒（0.5 秒以下）`)
-  { const body8 = src.slice(src.indexOf('const trainPass'), src.indexOf('const tick', src.indexOf('const trainPass'))), hp8 = +((body8.match(/hp.frequency.value = (d+)/) || [])[1] || 0), bp8 = +((body8.match(/bp.frequency.value = (d+)/) || [])[1] || 0)
+  { const body8 = src.slice(src.indexOf('const trainPass'), src.indexOf('const tick', src.indexOf('const trainPass'))), hp8 = +((body8.match(/hp\.frequency\.value = (\d+)/) || [])[1] || 0), bp8 = +((body8.match(/bp\.frequency\.value = (\d+)/) || [])[1] || 0)
     check('A8', hp8 >= 400 && bp8 >= 800, `駅の電車の通過音の低音切り ${hp8}Hz（400 以上）・帯の真ん中 ${bp8}Hz（800 以上）`) }
   await r.ctx.close(); await d.ctx.close()
 }
