@@ -908,6 +908,7 @@ void main() {`)
   // iPhone の段は芯の球と幹の面も減らす
   const windU = []
   const view0 = new THREE.Vector3(meta.view.x, meta.view.y, meta.view.z)
+  const treeV = { w: 0, v0: 0, v1: 0, v2: 0, v3: 0 } // 便24: 木の形の通りの数（柳・前の形・ばらつき 3 通り）
   let placeTrees = null // 便23: 木を植える（北は組む時に町の乱数 R で・南は addSouth で別の乱数で）。葉の小片の形と材は北と南で同じ物
   {
     const tr = view(data.buf.misc, meta.files.misc.secs.trees)
@@ -946,7 +947,7 @@ void main() {`)
       const m = keep(BGU.mergeGeometries(quads)); quads.forEach((g) => g.dispose()); return m
     }
     // 形の 3 通り: 塊が 3〜6 つ・高さと横の広がりの違う樹冠
-    const variants = TV ? [0, 1, 2].map((v) => { const lb = [], nl = 3 + v + Math.floor(VR() * 2); for (let k = 0; k < nl; k++) lb.push([(VR() - 0.5) * (0.9 + v * 0.2), (VR() - 0.35) * (0.5 + v * 0.2), (VR() - 0.5) * (0.9 + v * 0.2), 0.4 + VR() * 0.35]); return { near: cardsL(low ? 140 : 240, lb, 0.7), far: cardsL(low ? 40 : 64, lb, 0.95) } }) : []
+    const variants = TV && !low ? [0, 1, 2].map((v) => { const lb = [], nl = 3 + v + Math.floor(VR() * 2); for (let k = 0; k < nl; k++) lb.push([(VR() - 0.5) * (0.9 + v * 0.2), (VR() - 0.35) * (0.5 + v * 0.2), (VR() - 0.5) * (0.9 + v * 0.2), 0.4 + VR() * 0.35]); return { near: cardsL(low ? 140 : 240, lb, 0.7), far: cardsL(low ? 40 : 64, lb, 0.95) } }) : []
     // 柳: 上の小さな傘から細い枝が地面近くまで垂れる（枝ごとに細長い葉の小片を縦に連ねる）
     const willowCards = (count) => {
       const quads = [], NS = 30, per = Math.max(3, Math.round(count / NS))
@@ -1004,10 +1005,10 @@ void main() {`)
       let cell = cells.get(key); if (!cell) { cell = { near: [], far: [], all: [] }; cells.set(key, cell) }
       // 便24: 形の通り（0 前の形・1〜3 のばらつき・w 柳）。柳は川岸の木（種類 1）のうち二条より南（木屋町・先斗町・高瀬川・白川のあたり）の 6 割。乱数 R は回さない（位置の hash）
       const hv = hash(tx * 0.371 + tz * 0.713)
-      const vi = !TV ? 0 : kind === 1 && tz > 1900 && hv < 0.6 ? 'w' : Math.floor(hash(tx * 1.913 + tz * 0.277 + 0.7) * 4)
+      const vi = !TV ? 0 : kind === 1 && tz > 1900 && hv < 0.6 ? 'w' : low ? 0 : Math.floor(hash(tx * 1.913 + tz * 0.277 + 0.7) * 4) // iPhone の段は形のばらつきを外す（描く回数が窓辺で 194→242 に増え 0.8ms 重くなった）。柳は残す
       if (vi === 'w') { c.setHex(WILLOW).offsetHSL(0, 0, (hv - 0.3) * 0.08); if (SNOW) c.lerp(WHITE, 0.25) }
       if (vi === 'w') trunkM.multiply(new THREE.Matrix4().makeScale(0.62, 1, 0.62)) // 便24: 柳の幹は細く
-      const t = { crownM, trunkM, col: c.clone(), vi }
+      const t = { crownM, trunkM, col: c.clone(), vi }; treeV[vi === 'w' ? 'w' : 'v' + vi]++ // 便24: 形の通りの数（検査 K51）
       cell.all.push(t); (Math.hypot(tx - view0.x, tz - view0.z) < 260 ? cell.near : cell.far).push(t)
     }
     const coreCol = new THREE.Color()
@@ -1531,7 +1532,7 @@ void main() { gl_FragColor = vec4(ACESFilmicToneMapping(texture2D(tDiffuse, vUv)
     addSouth, // 便23: 南の四角を足す（外の町より先に）
     setRoomShown(b) { if (plug) plug.visible = plugForce === null ? !b : plugForce }, // 便19: 部屋が見えている間は窓の所を空け、隠れている間（空・地上）は塞ぐ
     forcePlug(v) { plugForce = v === null || v === undefined ? null : !!v }, // 検証用（便19）: 塞ぐ壁を出す・出さないに決める（null で戻す）
-    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, kyo: KYO ? { count: kyoCount, eaves: eaveN, fronts: kyo2.fronts, yuka: kyo2.yuka, ochaya: kyo2.ochaya, ochayaAt: kyoFrontsAt } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, south, mirrorY: +water.position.y.toFixed(2), waterOut: (() => { const g = water.geometry, p = g.attributes.position, ix = g.index.array; let n = 0; for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (!inK(cx, cz, -0.5)) n++ } return n })(), outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
+    info() { return { calls, tris, removed: removed.length, low, time: TK, sky, shadow: sunL.castShadow, exposure: state.exposure, parts, nav: nav.info(), waveTop20, waterMs, waterRot, waterShallow, caus: CAUS, stones: stoneKinds, clouds: !!cloudMesh, bridges: lampsInfo, marks: marksInfo, people: people ? people.info() : null, trees2: treeV, kyo: KYO ? { count: kyoCount, eaves: eaveN, fronts: kyo2.fronts, yuka: kyo2.yuka, ochaya: kyo2.ochaya, ochayaAt: kyoFrontsAt } : null, navDec, plugShown: !!(plug && plug.visible), lifeMs, south, mirrorY: +water.position.y.toFixed(2), waterOut: (() => { const g = water.geometry, p = g.attributes.position, ix = g.index.array; let n = 0; for (let t = 0; t < ix.length; t += 3) { const cx = (p.getX(ix[t]) + p.getX(ix[t + 1]) + p.getX(ix[t + 2])) / 3, cz = -(p.getY(ix[t]) + p.getY(ix[t + 1]) + p.getY(ix[t + 2])) / 3; if (!inK(cx, cz, -0.5)) n++ } return n })(), outer: outer ? { ...outer.info, ms: outerMs, waterCut, nav: ON ? ON.info() : null, bound: { ...nav.bound } } : null } },
     countFrame(r) { calls = r.info.render.calls; tris = r.info.render.triangles },
     dispose() {
       try {
