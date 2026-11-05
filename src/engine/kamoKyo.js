@@ -145,7 +145,7 @@ function frontsFromSegs(ctx, segs, seed, withEave) {
   }
   const mk = (o) => keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, ...o }))
   const latMat = mk({ map: stripeTex(keep, { period: 0.24, bars: 4, bar: 0.42 }) }), railMat = mk({ map: stripeTex(keep, { period: 0.3, bars: 3, bar: 0.35, alpha: true }), alphaTest: 0.5, side: THREE.DoubleSide })
-  const lampMat = mk({ emissive: new THREE.Color(1, 0.72, 0.4), emissiveIntensity: LITE ? (NIGHT ? 1.6 : 0.9) : 0, roughness: 0.6 })
+  const lampMat = mk({ emissive: new THREE.Color(1, 0.5, 0.2), emissiveIntensity: LITE ? (NIGHT ? 1.05 : 0.7) : 0, roughness: 0.6 }) // 便24: 白く飛ばない温かい橙
   const groups = [{ sink: lat, mat: latMat, shadow: true }, { sink: wood, mat: mk({}), shadow: true }, { sink: noren, mat: mk({ side: THREE.DoubleSide, roughness: 0.95 }) }, { sink: lamp, mat: lampMat }, { sink: rail, mat: railMat, shadow: true }]
   if (withEave) groups.push({ sink: tile, mat: mk({ roughness: 0.6 }), shadow: true })
   const tris = addMeshes(ctx, groups, 'kyoFront')
@@ -221,9 +221,9 @@ export function buildYuka(ctx, bl, terrK, wetK) {
     if (R() < 0.5) lamp.box(O, sx, fx, (w0 + w1) / 2 - 0.2, (w0 + w1) / 2 + 0.2, 0.05, 0.35, yD + 0.05, yD + 0.75, [1, 0.92, 0.78]) // 置き行灯
   }
   const mk = (o) => keep(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, ...o }))
-  const deckMat = mk({ map: plankTex(keep), color: 0xb08868 })
+  const deckMat = mk({ map: plankTex(keep), color: 0x8a6a4e })
   const railMat = mk({ map: stripeTex(keep, { period: 0.16, bars: 2, bar: 0.4, alpha: true, horiz: 0 }), alphaTest: 0.5, side: THREE.DoubleSide })
-  const lampMat = mk({ emissive: new THREE.Color(1, 0.6, 0.32), emissiveIntensity: LITE ? (NIGHT ? 1.9 : 1.1) : 0.05, roughness: 0.6 })
+  const lampMat = mk({ emissive: new THREE.Color(1, 0.42, 0.16), emissiveIntensity: LITE ? (NIGHT ? 1.25 : 0.8) : 0.05, roughness: 0.6 }) // 便24: 提灯は赤みの橙（白く飛ばない）
   const tris = addMeshes(ctx, [{ sink: deck, mat: deckMat, shadow: true }, { sink: wood, mat: mk({}), shadow: true }, { sink: rail, mat: railMat }, { sink: lamp, mat: lampMat }, { sink: cloth, mat: mk({ roughness: 1 }) }], 'yuka')
   return { n, tris, season: S, why }
 }

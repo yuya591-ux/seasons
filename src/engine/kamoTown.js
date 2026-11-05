@@ -407,6 +407,19 @@ float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453)
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec4 vRd;').replace('vec2 tuv = gmix > 0.5 ? tuvB : tuvA;', `vec2 tuv = gmix > 0.5 ? tuvB : tuvA;
 { int rk = int(vRd.w + 0.5); float hw = vRd.z * 0.5, u = vRd.x * hw, e = hw - abs(u), al = vRd.y;
   float fwU = max(fwidth(u), 1e-4), fwA = max(fwidth(al), 1e-4);
+  // 便24: 祇園（花見小路・新橋・白川）と先斗町の道（幅 9.2m 未満＝花見小路まで）は御影石の石畳（30cm の段・段ごとに半分ずらした 55cm の石・目地・石ごとの色むら）。kamostone=0 は外し回し用
+  bool kyoSt = ${/[?&]kamostone=0/.test(location.search) ? 'false &&' : ''} hw < 4.6 && ((vGW.x > 200.0 && vGW.x < 750.0 && vGW.z > 2750.0 && vGW.z < 3350.0) || (vGW.x > -175.0 && vGW.x < -85.0 && vGW.z > 2200.0 && vGW.z < 2940.0));
+  if (kyoSt) {
+    // 京都の通りはほぼ東西と南北＝石の並びは世界の向き（細い道のデータは道に沿った長さを持たない物がある）
+    float ra = vGW.z, rc = vGW.x, fwR = max(fwidth(ra), 1e-4), fwC = max(fwidth(rc), 1e-4);
+    float row = floor(ra / 0.32), cu = rc / 0.55 + 0.5 * mod(row, 2.0), col = floor(cu);
+    float sh = fract(sin(dot(vec2(row, col), vec2(12.99, 78.23))) * 43758.55);
+    float gA = smoothstep(0.145 - fwR, 0.16, abs(fract(ra / 0.32) - 0.5) * 0.32), gU = smoothstep(0.255 - fwC, 0.275, abs(fract(cu) - 0.5) * 0.55);
+    float far = smoothstep(0.08, 0.3, max(fwR, fwC));
+    vec3 st = mix(vec3(0.5, 0.48, 0.44), vec3(0.66, 0.62, 0.55), sh) * (0.9 + 0.2 * dot(diffuseColor.rgb, vec3(0.333))); // 明るい灰ベージュの御影石
+    st = mix(st, vec3(0.12, 0.11, 0.1), max(gA, gU) * (1.0 - far) * 0.9);
+    diffuseColor.rgb = mix(st, vec3(0.52, 0.5, 0.46), far * 0.6);
+  } else
   if (rk == 0) {
     float edge = smoothstep(0.3 - fwU, 0.3, e) * (1.0 - smoothstep(0.45, 0.45 + fwU, e));
     float cen = hw >= 4.5 ? (1.0 - smoothstep(0.07, 0.07 + fwU, abs(u))) * step(fract(al / 9.0), 0.66) : 0.0;
@@ -917,6 +930,41 @@ void main() {`)
       const m = keep(BGU.mergeGeometries(quads)); quads.forEach((g) => g.dispose()); return m
     }
     const nearGeo = cards(low ? 140 : 240), farGeo = cards(low ? 40 : 64)
+    // 便24: 樹冠の形のばらつき（前はすべての木が同じ 5 つの塊の並びで、どの木も同じ丸い塊に見えた）と、川岸と高瀬川・白川の柳（枝垂れ）。
+    //   形は自分の乱数で作る（町の乱数 R を回さない＝北の木の並びと色は前のまま）。kamotree2=0 は外し回し用（前の 1 つの形だけ）
+    const TV = !/[?&]kamotree2=0/.test(location.search)
+    const VR = (() => { let s2 = 91024; return () => { s2 = (s2 * 1664525 + 1013904223) >>> 0; return s2 / 4294967296 } })()
+    const cardsL = (count, lb, sz0) => {
+      const quads = []
+      for (let k = 0; k < count; k++) {
+        const [lx, ly, lz, lr] = lb[k % lb.length], u = VR() * 2 - 1, th = VR() * 6.283, rr = lr * Math.cbrt(VR())
+        const p = new THREE.Vector3(Math.sqrt(1 - u * u) * Math.cos(th), u * 0.8, Math.sqrt(1 - u * u) * Math.sin(th)).multiplyScalar(rr).add(new THREE.Vector3(lx, ly, lz))
+        const g = new THREE.PlaneGeometry(sz0, sz0); g.rotateX(VR() * 6.283); g.rotateY(VR() * 6.283); g.translate(p.x, p.y, p.z)
+        const nn = p.clone().normalize(), na = g.attributes.normal; for (let i = 0; i < na.count; i++) na.setXYZ(i, nn.x, nn.y, nn.z)
+        quads.push(g)
+      }
+      const m = keep(BGU.mergeGeometries(quads)); quads.forEach((g) => g.dispose()); return m
+    }
+    // 形の 3 通り: 塊が 3〜6 つ・高さと横の広がりの違う樹冠
+    const variants = TV ? [0, 1, 2].map((v) => { const lb = [], nl = 3 + v + Math.floor(VR() * 2); for (let k = 0; k < nl; k++) lb.push([(VR() - 0.5) * (0.9 + v * 0.2), (VR() - 0.35) * (0.5 + v * 0.2), (VR() - 0.5) * (0.9 + v * 0.2), 0.4 + VR() * 0.35]); return { near: cardsL(low ? 140 : 240, lb, 0.7), far: cardsL(low ? 40 : 64, lb, 0.95) } }) : []
+    // 柳: 上の小さな傘から細い枝が地面近くまで垂れる（枝ごとに細長い葉の小片を縦に連ねる）
+    const willowCards = (count) => {
+      const quads = [], NS = 30, per = Math.max(3, Math.round(count / NS))
+      for (let k = 0; k < NS; k++) {
+        const th = (k / NS) * 6.283 + VR() * 0.3, r0 = 0.35 + VR() * 0.55, y0 = 0.55 - r0 * 0.35, y1 = -1.15 - VR() * 0.2
+        for (let j = 0; j < per; j++) {
+          const t2 = j / (per - 1), y = y0 + (y1 - y0) * t2, r = r0 + 0.18 * Math.sin(t2 * 1.4)
+          const g = new THREE.PlaneGeometry(0.2, 0.46); g.rotateZ((VR() - 0.5) * 0.3); g.rotateY(th + (VR() - 0.5) * 0.8); g.translate(Math.cos(th) * r, y, Math.sin(th) * r)
+          const na = g.attributes.normal; for (let i = 0; i < na.count; i++) na.setXYZ(i, Math.cos(th) * 0.8, 0.6, Math.sin(th) * 0.8)
+          quads.push(g)
+        }
+      }
+      for (let k = 0; k < count * 0.25; k++) { const th = VR() * 6.283, r = Math.sqrt(VR()) * 0.75; const g = new THREE.PlaneGeometry(0.4, 0.4); g.rotateX(VR() * 6.283); g.rotateY(VR() * 6.283); g.translate(Math.cos(th) * r, 0.5 + VR() * 0.25 - r * 0.3, Math.sin(th) * r); const na = g.attributes.normal; for (let i = 0; i < na.count; i++) na.setXYZ(i, Math.cos(th) * 0.5, 0.85, Math.sin(th) * 0.5); quads.push(g) }
+      const m = keep(BGU.mergeGeometries(quads)); quads.forEach((g) => g.dispose()); return m
+    }
+    const willow = TV ? { near: willowCards(low ? 220 : 460), far: willowCards(low ? 70 : 110) } : null
+    const WILLOW = { spring: 0x9cbc5e, summer: 0x7fa04a, autumn: 0xa6a050, winter: 0x7a8456 }[S]
+    const crownGeo = (vi, near) => (vi === 'w' ? (near ? willow.near : willow.far) : vi > 0 ? (near ? variants[vi - 1].near : variants[vi - 1].far) : near ? nearGeo : farGeo)
     const leafMat = keep(new THREE.MeshStandardMaterial({ map: leafTex, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.8 }))
     leafMat.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = { value: 0 }; windU.push(sh.uniforms.uTime)
@@ -954,19 +1002,27 @@ void main() {`)
       const trunkM = m4.compose(at.set(tx, ty, tz), q, sc.set(sR * 0.7, h - sc.y * 0.9, sR * 0.7)).clone()
       const key = Math.floor(tx / CELL) + ',' + Math.floor(tz / CELL)
       let cell = cells.get(key); if (!cell) { cell = { near: [], far: [], all: [] }; cells.set(key, cell) }
-      const t = { crownM, trunkM, col: c.clone() }
+      // 便24: 形の通り（0 前の形・1〜3 のばらつき・w 柳）。柳は川岸の木（種類 1）のうち二条より南（木屋町・先斗町・高瀬川・白川のあたり）の 6 割。乱数 R は回さない（位置の hash）
+      const hv = hash(tx * 0.371 + tz * 0.713)
+      const vi = !TV ? 0 : kind === 1 && tz > 1900 && hv < 0.6 ? 'w' : Math.floor(hash(tx * 1.913 + tz * 0.277 + 0.7) * 4)
+      if (vi === 'w') { c.setHex(WILLOW).offsetHSL(0, 0, (hv - 0.3) * 0.08); if (SNOW) c.lerp(WHITE, 0.25) }
+      if (vi === 'w') trunkM.multiply(new THREE.Matrix4().makeScale(0.62, 1, 0.62)) // 便24: 柳の幹は細く
+      const t = { crownM, trunkM, col: c.clone(), vi }
       cell.all.push(t); (Math.hypot(tx - view0.x, tz - view0.z) < 260 ? cell.near : cell.far).push(t)
     }
     const coreCol = new THREE.Color()
     for (const cell of cells.values()) {
-      for (const [list, geo] of [[cell.near, nearGeo], [cell.far, farGeo]]) {
-        if (!list.length) continue
-        const im = new THREE.InstancedMesh(geo, leafMat, list.length)
-        list.forEach((t, k) => { im.setMatrixAt(k, t.crownM); im.setColorAt(k, t.col) })
-        im.castShadow = im.receiveShadow = true; im.userData.part = 'crown'; im.computeBoundingSphere(); scene.add(im)
+      for (const [list0, isNear] of [[cell.near, true], [cell.far, false]]) {
+        const byV = new Map(); for (const t of list0) { const k = t.vi; if (!byV.has(k)) byV.set(k, []); byV.get(k).push(t) } // 便24: 形の通りごとに並べる
+        for (const [vi, list] of byV) {
+          const im = new THREE.InstancedMesh(crownGeo(vi, isNear), leafMat, list.length)
+          list.forEach((t, k) => { im.setMatrixAt(k, t.crownM); im.setColorAt(k, t.col) })
+          im.castShadow = im.receiveShadow = true; im.userData.part = 'crown'; im.computeBoundingSphere(); scene.add(im)
+        }
       }
       const core = new THREE.InstancedMesh(coreGeo, coreMat, cell.all.length), trunk = new THREE.InstancedMesh(trunkGeo, trunkMat, cell.all.length)
-      cell.all.forEach((t, k) => { core.setMatrixAt(k, t.crownM); core.setColorAt(k, coreCol.copy(t.col).multiplyScalar(0.28)); trunk.setMatrixAt(k, t.trunkM) })
+      const wm = new THREE.Matrix4().makeScale(0.001, 0.001, 0.001) // 便24: 柳には暗い芯を置かない（上に暗い皿のように見えた）
+      cell.all.forEach((t, k) => { core.setMatrixAt(k, t.vi === 'w' ? t.crownM.clone().multiply(wm) : t.crownM); core.setColorAt(k, coreCol.copy(t.col).multiplyScalar(0.28)); trunk.setMatrixAt(k, t.trunkM) })
       core.castShadow = true; trunk.castShadow = true; core.userData.part = 'core'; trunk.userData.part = 'trunk'
       core.computeBoundingSphere(); trunk.computeBoundingSphere(); scene.add(core, trunk)
     }
