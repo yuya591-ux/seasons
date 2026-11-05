@@ -9,14 +9,15 @@ const PORT = process.env.PORT || 4961, BASE = `http://localhost:${PORT}/seasons/
 const OUT = `docs/qa/2026-11-05_便24/shots/sweep-${NAME}`
 fs.mkdirSync(OUT, { recursive: true })
 const OLD = [/窓辺\s*\/\s*Madobe/i, /MADOBE/, /高台の角部屋/, /高台の窓/, /\(仮\)|（仮）|TODO|undefined|NaN|null/]
-const b = await chromium.launch()
+// 【便24・全テスト4回目】GPU を使わない開き方では、最初の画面（日付と時刻で替わる＝夜は秋の夜の情景など）を描ききれず、撮影が 30 秒で時間切れになった（前の版 4962 でも同じ）。probe24・鴨川の検査と同じ GPU を使う開き方にする
+const b = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu'] })
 const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, serviceWorkers: 'block' })
 const p = await ctx.newPage(); const errs = []
 p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 160)) })
 let n = 0, badThumb = 0
 const wake = async () => { await p.mouse.move(200 + Math.random() * 10, 300 + Math.random() * 10); await p.mouse.move(210, 320); await p.waitForTimeout(500) } // 眺めている間は UI が消える＝動かして出す
 const texts = []
-async function shot(name) { await p.waitForTimeout(700); await p.screenshot({ path: `${OUT}/${String(++n).padStart(2, '0')}_${name}.png` }); const t = await p.evaluate(() => document.body.innerText); texts.push(`## ${name}\n${t}`) }
+async function shot(name) { await p.waitForTimeout(700); await p.screenshot({ path: `${OUT}/${String(++n).padStart(2, '0')}_${name}.png`, timeout: 90000 }); const t = await p.evaluate(() => document.body.innerText); texts.push(`## ${name}\n${t}`) }
 async function thumbs(name) {
   const r = await p.evaluate(async () => {
     const cards = [...document.querySelectorAll('.panel--scene .scene-card')].filter((c) => c.offsetParent)
